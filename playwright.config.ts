@@ -1,6 +1,6 @@
 import { defineConfig } from "@playwright/test"
 
-// End-to-end tests launch the built Electron app, so `pnpm build` must run
+// End-to-end tests launch the unpacked app, so `pnpm package:dir` must run
 // first. Electron needs no browser download.
 export default defineConfig({
   testDir: "e2e",

@@ -8,10 +8,45 @@ import {
 } from "@playwright/test"
 import { fakeSpotifyAccounts, serveFakeWebApi } from "./fake-spotify"
 
-const appDirectory = path.join(import.meta.dirname, "..")
+const releaseDirectory = path.join(import.meta.dirname, "..", "release")
+
+// Where `pnpm package:dir` puts the unpacked app on each OS. Testing the
+// packaged app catches what only packaging can break, such as a dependency
+// left out of the bundle or a file missing from electron-builder.yml.
+function packagedAppExecutable(): string {
+  if (process.platform === "win32") {
+    return path.join(releaseDirectory, "win-unpacked", "Open Spotify.exe")
+  }
+  if (process.platform === "darwin") {
+    const macFolder = process.arch === "arm64" ? "mac-arm64" : "mac"
+    return path.join(
+      releaseDirectory,
+      macFolder,
+      "Open Spotify.app",
+      "Contents",
+      "MacOS",
+      "Open Spotify",
+    )
+  }
+  return path.join(releaseDirectory, "linux-unpacked", "open-spotify")
+}
 
 // The history shortcuts each platform's browsers use (use-history-shortcuts.ts).
 const goBackShortcut = process.platform === "darwin" ? "Meta+BracketLeft" : "Alt+ArrowLeft"
+
+// The fixtures' cover art lives on a made-up host that the content security
+// policy blocks, so every cover logs an error that says nothing about the app.
+const fakeCoverHost = "covers.open-spotify.invalid"
+
+// Read back from the page's history rather than from listeners, which would
+// miss whatever the window logged before the test attached them.
+async function windowErrors(appWindow: Page): Promise<Array<string>> {
+  const consoleErrors = (await appWindow.consoleMessages())
+    .filter((message) => message.type() === "error" && !message.text().includes(fakeCoverHost))
+    .map((message) => message.text())
+  const pageErrors = (await appWindow.pageErrors()).map((error) => error.message)
+  return [...consoleErrors, ...pageErrors]
+}
 
 const test = base.extend<{ electronApp: ElectronApplication; appWindow: Page }>({
   // oxlint-disable-next-line no-empty-pattern -- Playwright reads a fixture's dependencies from this pattern, and this fixture has none
@@ -19,7 +54,8 @@ const test = base.extend<{ electronApp: ElectronApplication; appWindow: Page }>(
     // A fresh output folder per test, so every launch starts from an empty profile.
     const userDataDirectory = testInfo.outputPath("user-data")
     const electronApp = await _electron.launch({
-      args: [appDirectory, `--user-data-dir=${userDataDirectory}`],
+      executablePath: packagedAppExecutable(),
+      args: [`--user-data-dir=${userDataDirectory}`],
     })
     await use(electronApp)
     await electronApp.close()
@@ -29,19 +65,10 @@ const test = base.extend<{ electronApp: ElectronApplication; appWindow: Page }>(
   },
 })
 
-test("opens on the onboarding screen without console errors on an empty profile", async ({
-  appWindow,
-}) => {
+test("opens on the onboarding screen without errors on an empty profile", async ({ appWindow }) => {
   await expect(appWindow.getByRole("heading", { name: "Connect Open Spotify" })).toBeVisible()
   await expect(appWindow.getByRole("textbox", { name: "Client ID" })).toBeVisible()
-
-  // Read back from the page's history rather than from listeners, which
-  // would miss whatever the window logged before the test attached them.
-  const consoleErrors = (await appWindow.consoleMessages())
-    .filter((message) => message.type() === "error")
-    .map((message) => message.text())
-  expect(consoleErrors).toEqual([])
-  expect(await appWindow.pageErrors()).toEqual([])
+  expect(await windowErrors(appWindow)).toEqual([])
 })
 
 test("logs in against fake Spotify and moves between pages with the keyboard", async ({
@@ -65,4 +92,5 @@ test("logs in against fake Spotify and moves between pages with the keyboard", a
 
   await appWindow.keyboard.press(goBackShortcut)
   await expect(appWindow.getByRole("heading", { name: "Open Spotify", exact: true })).toBeVisible()
+  expect(await windowErrors(appWindow)).toEqual([])
 })
