@@ -12,7 +12,7 @@ export type QueueContents =
 
 // Spotify offers no way to watch the queue. It moves on when the playing item
 // changes, so it is read again whenever the playing item or the player's
-// status changes.
+// status changes, and after the player moves through it.
 const playingItemKey = (state: PlayerState) =>
   state.status === "active" ? `active ${state.playback.item?.uri ?? "nothing"}` : state.status
 
@@ -32,14 +32,19 @@ export const makeQueueContents = (): Stream.Stream<QueueContents, never, Player 
     Effect.gen(function* () {
       const player = yield* Player
       const spotify = yield* SpotifyApi
-      return player.state.pipe(
-        Stream.changesWith((previous, next) => playingItemKey(previous) === playingItemKey(next)),
-        // A queue read for an item that is no longer playing would be out of date.
-        Stream.switchMap((state) =>
-          state.status === "active"
-            ? Stream.fromEffect(readQueue(spotify))
-            : Stream.succeed<QueueContents>({ status: state.status }),
+      const contentsForState = (state: PlayerState) =>
+        state.status === "active"
+          ? Stream.fromEffect(readQueue(spotify))
+          : Stream.succeed<QueueContents>({ status: state.status })
+      return Stream.merge(
+        player.state.pipe(
+          Stream.changesWith((previous, next) => playingItemKey(previous) === playingItemKey(next)),
+          Stream.map(contentsForState),
         ),
+        player.queueChanges.pipe(Stream.map(() => Stream.fromEffect(readQueue(spotify)))),
+      ).pipe(
+        // A queue read that a newer change overtook would be out of date.
+        Stream.switchMap((contents) => contents),
       )
     }),
   )

@@ -1,7 +1,14 @@
 import { Option, Schema } from "effect"
 import type { HttpClientRequest } from "effect/http"
-import { fakeDevices, fakePlayOrder, fakePlaybackState } from "./spotify-fixtures"
+import { fakeDevices, fakeEpisode, fakePlaybackState, fakeTrack } from "./spotify-fixtures"
 import { RepeatMode } from "./spotify-playback-state"
+
+const fakePlayOrderStart = [fakeTrack(0), fakeTrack(1), fakeEpisode, fakeTrack(2), fakeTrack(1)]
+
+// What the fake player plays, in order: a podcast episode third and the
+// second track again fifth, so the queue holds both kinds and one item twice.
+export const fakePlayOrder = (position: number) =>
+  fakePlayOrderStart[position] ?? fakeTrack(position - 2)
 
 interface FakePlayerState {
   activeDevice: (typeof fakeDevices)[number]

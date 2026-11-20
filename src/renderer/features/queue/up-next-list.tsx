@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useRovingFocus } from "../../ui/use-roving-focus"
 import { PlayableItemSummary } from "../playback/playable-item-summary"
 import { withOccurrences } from "../playback/queued-item"
@@ -6,22 +7,25 @@ import type { PlayableItem } from "../spotify/spotify-playable-item"
 
 interface UpNextListProps {
   readonly items: ReadonlyArray<PlayableItem>
-  readonly playingUri: string | null
 }
 
 // Spotify cannot remove or reorder queued items, so a row only plays its item.
-export function UpNextList({ items, playingUri }: UpNextListProps) {
+export function UpNextList({ items }: UpNextListProps) {
   const { failure, isSending, send } = usePlayerCommand()
   const { onKeyDown, rowProps } = useRovingFocus(items.length)
+  const [pressedItems, setPressedItems] = useState<ReadonlyArray<PlayableItem> | null>(null)
 
-  // Each press would skip again from where the first one left off, so a
-  // double-click or a second row pressed meanwhile is ignored.
+  // A row points into the list it was shown in, which the queue leaves behind
+  // once a press plays an item. Until the queue read after that press arrives,
+  // a second click of a double-click or another row pressed meanwhile would
+  // skip again from the wrong place, so it is ignored.
   const play = (item: PlayableItem, occurrence: number) => {
-    if (isSending) {
+    if (isSending || pressedItems === items) {
       return
     }
+    setPressedItems(items)
     send(
-      (player) => player.playQueuedItem({ uri: item.uri, occurrence }, playingUri),
+      (player) => player.playQueuedItem({ uri: item.uri, occurrence }),
       `Couldn't play ${item.name}.`,
     )
   }

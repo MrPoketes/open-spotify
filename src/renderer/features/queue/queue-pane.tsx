@@ -83,7 +83,7 @@ function QueueSections({ queue: { currentlyPlaying, upNext } }: { readonly queue
         </QueueSection>
       )}
       <QueueSection heading="Next up">
-        <UpNextList items={upNext} playingUri={currentlyPlaying?.uri ?? null} />
+        <UpNextList items={upNext} />
       </QueueSection>
     </div>
   )

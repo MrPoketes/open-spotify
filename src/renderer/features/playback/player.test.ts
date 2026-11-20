@@ -7,7 +7,8 @@ import {
   SpotifyRequestError,
   SpotifyResponseError,
 } from "../spotify/spotify-api"
-import { fakeDevices, fakePlayOrder, fakeTrack } from "../spotify/spotify-fixtures"
+import { fakePlayOrder } from "../spotify/spotify-fake-player"
+import { fakeDevices, fakeTrack } from "../spotify/spotify-fixtures"
 import { Player, type PlayerState } from "./player"
 
 // Counts playback state requests and fails the ones listed in failingRequests
@@ -261,35 +262,13 @@ describe("Player", () => {
     }).pipe(Effect.scoped, Effect.provide(playerOver(SpotifyApi.layerFake))),
   )
 
-  // The second click of a double-click can arrive after the first one has
-  // played the item, still pointing at the list it was shown in. With the
-  // item queued twice, it must not skip on to the second copy.
-  it.effect(
-    "does nothing when playback has moved to the chosen item since the queue was shown",
-    () =>
-      Effect.gen(function* () {
-        const player = yield* Player
-        const spotify = yield* SpotifyApi
-        const secondTrack = { uri: fakeTrack(1).uri, occurrence: 0 }
-        const playingWhenShown = fakeTrack(0).uri
-
-        yield* player.playQueuedItem(secondTrack, playingWhenShown)
-        yield* player.playQueuedItem(secondTrack, playingWhenShown)
-        const { currentlyPlaying, upNext } = yield* spotify.getQueue
-
-        assert.strictEqual(currentlyPlaying?.uri, fakePlayOrder(1).uri)
-        assert.strictEqual(upNext[0]?.uri, fakePlayOrder(2).uri)
-      }).pipe(Effect.provide(Player.layer.pipe(Layer.provideMerge(SpotifyApi.layerFake)))),
-  )
-
   it.effect("plays a later copy of the item that is playing when that copy is chosen", () =>
     Effect.gen(function* () {
       const player = yield* Player
       const spotify = yield* SpotifyApi
       yield* spotify.skipToNext
-      const playingUri = fakeTrack(1).uri
 
-      yield* player.playQueuedItem({ uri: playingUri, occurrence: 0 }, playingUri)
+      yield* player.playQueuedItem({ uri: fakeTrack(1).uri, occurrence: 0 })
       const { upNext } = yield* spotify.getQueue
 
       assert.strictEqual(upNext[0]?.uri, fakePlayOrder(5).uri)
