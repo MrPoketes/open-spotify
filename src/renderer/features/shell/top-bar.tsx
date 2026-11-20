@@ -1,5 +1,5 @@
-import { useRouter } from "@tanstack/react-router"
-import { ChevronLeft, ChevronRight, Search } from "lucide-react"
+import { Link, useRouter } from "@tanstack/react-router"
+import { ChevronLeft, ChevronRight, Search, Settings } from "lucide-react"
 import { IconButton } from "../../ui/icon-button"
 
 export function TopBar() {
@@ -22,6 +22,14 @@ export function TopBar() {
           className="h-8 w-full rounded-small bg-surface-raised pr-3 pl-8 text-base shadow-raised placeholder:text-muted"
         />
       </div>
+      <Link
+        to="/settings"
+        aria-label="Settings"
+        title="Settings"
+        className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-120 ease-out hover:bg-surface-raised hover:text-foreground"
+      >
+        <Settings aria-hidden size={20} />
+      </Link>
     </header>
   )
 }

@@ -51,8 +51,13 @@ const renderAppShell = async ({
     path: "/album",
     component: () => <h1>Album</h1>,
   })
+  const settingsRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/settings",
+    component: () => <h1>Settings</h1>,
+  })
   const router = createRouter({
-    routeTree: rootRoute.addChildren([homeRoute, albumRoute]),
+    routeTree: rootRoute.addChildren([homeRoute, albumRoute, settingsRoute]),
     history: createMemoryHistory({ initialEntries: ["/", "/album"], initialIndex: 1 }),
   })
   const view = render(
@@ -140,6 +145,14 @@ describe("AppShell", () => {
     await renderAppShell({ savedSidebarWidth })
 
     expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "350")
+  })
+
+  it("opens settings from the top bar", async () => {
+    await renderAppShell()
+
+    await userEvent.click(screen.getByRole("link", { name: "Settings" }))
+
+    expect(await screen.findByRole("heading", { name: "Settings" })).toBeInTheDocument()
   })
 
   it("goes back when the back button is pressed", async () => {

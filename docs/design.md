@@ -49,7 +49,7 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 
 ```
 ┌──────────────┬─────────────────────────────────────┬──────────────┐
-│              │ top bar: back, forward, search      │              │
+│              │ top bar: history, search, settings  │              │
 │   sidebar    ├─────────────────────────────────────┤  right pane  │
 │              │                                     │  (optional)  │
 │  200–420 px  │  main view, fluid                   │  280–400 px  │
@@ -62,11 +62,16 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 
 - Panes sit on the `canvas` color, separated by an 8 px gap. Each pane is a `surface` with
   `radius-medium` corners. The gap doubles as the resize handle.
-- The top bar is 56 px tall and belongs to the main view, not the window.
+- The top bar is 56 px tall and belongs to the main view, not the window. A gear link to
+  Settings sits at its right end.
 - Card grids (albums, artists, folders) use `repeat(auto-fill, minmax(160px, 1fr))` with a
   24 px gap, so the column count follows the pane width.
 - Track lists use fixed columns: index, title and artist, album, date added, duration. Columns
-  that do not fit the pane width are hidden from the right, never squeezed.
+  that do not fit the pane width are hidden from the right, never squeezed: date added goes
+  first, below 768 px, then the album, below 576 px. Duration always stays.
+- Track lists scroll with the main view, so a page header above one scrolls away. Only the rows
+  near the screen are in the DOM; a row whose track has not loaded keeps its full height and
+  shows a placeholder artwork tile and a bar, so the scrollbar is right from the start.
 
 ### Before login
 
@@ -184,6 +189,23 @@ one tab stop, starting on the first device, and moves like any other list (see K
 `Escape` or choosing a device closes the picker and returns focus to its button; clicking or
 tabbing outside closes it.
 
+### Settings and the theme picker
+
+Settings is a page in the main view, opened from the gear icon at the right end of the top bar.
+Its sections (Appearance first) sit in one column at most 576 px wide.
+
+The theme picker is a list of 64 px rows, one per theme: a 64 × 40 px swatch, the theme's name
+in `text-sm`, and "by author" in `text-xs` `muted`. The swatch sets the theme's own token
+properties on itself, so it shows that theme's `surface`, `foreground`, and `accent` without
+applying it. The chosen row is `accent` at 15 % opacity, 600 weight, and has a 16 px `Check`
+icon.
+
+Hovering or focusing a row previews its theme across the whole app at once. The pointer wins
+over focus, so a mouse user can compare themes while keyboard focus stays on one row. The saved
+theme returns when the pointer and focus both leave the picker, or the page closes. Clicking a
+row or pressing `Enter` or `Space` on it chooses and saves its theme. The list is one tab stop
+that starts on the chosen row, and moves like any other list (see Keyboard).
+
 ### Folder page
 
 The header shows a breadcrumb of the parent folders (only for a nested folder), a `text-xs`
@@ -204,16 +226,17 @@ others are plain rows until their page exists.
 ### Loading, empty, and error states
 
 - While a list or page loads, it says so in `muted` text inside an `output` element, so screen
-  readers announce it.
+  readers announce it. No spinner, since nothing animates on page load.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, with a Retry button next to it
   (`src/renderer/ui/error-with-retry.tsx`). When a later page of a long list fails, the rows
-  already loaded stay and the error sits below them.
+  already loaded stay and the error sits below them. A virtualised list can fail in the middle,
+  so its error sticks to the bottom of the view and shows wherever the user has scrolled.
 - When filters match nothing, the list says so inside an `output` element. The element stays on
   the page while entries match, because screen readers only announce changes to a live region
   that already exists.
 - Long lists load their next page when the end of the list scrolls into view, with no "Load
-  more" button.
+  more" button. A virtualised list loads the pages under the rows on screen, in any order.
 
 ### Motion
 

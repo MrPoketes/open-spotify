@@ -15,10 +15,10 @@ export interface LibraryEntry {
   readonly details: string
   readonly images: ReadonlyArray<Image>
   // Null for kinds whose page does not exist yet.
-  readonly page: {
-    readonly to: "/show/$showId"
-    readonly params: { readonly showId: string }
-  } | null
+  readonly page:
+    | { readonly to: "/playlist/$playlistId"; readonly params: { readonly playlistId: string } }
+    | { readonly to: "/show/$showId"; readonly params: { readonly showId: string } }
+    | null
 }
 
 const likedSongsEntry = (songCount: number): LibraryEntry => ({
@@ -36,7 +36,7 @@ const playlistEntry = (playlist: SimplifiedPlaylist): LibraryEntry => ({
   name: playlist.name,
   details: `Playlist · ${playlist.owner.displayName ?? playlist.owner.id}`,
   images: playlist.images ?? [],
-  page: null,
+  page: { to: "/playlist/$playlistId", params: { playlistId: playlist.id } },
 })
 
 const albumEntry = ({ album }: SavedAlbum): LibraryEntry => ({
