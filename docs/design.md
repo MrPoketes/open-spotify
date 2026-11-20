@@ -75,9 +75,9 @@ default). Use only these steps:
 
 | Step | Default | Use                                |
 | ---- | ------- | ---------------------------------- |
-| 1    | 4 px    | Icon to label, inside chips        |
+| 1    | 4 px    | Icon to label; chip top and bottom |
 | 2    | 8 px    | Between related controls; pane gap |
-| 3    | 12 px   | Inside list rows and buttons       |
+| 3    | 12 px   | Inside list rows, buttons, chips   |
 | 4    | 16 px   | Between groups in a pane           |
 | 6    | 24 px   | Main view padding; card grid gap   |
 | 8    | 32 px   | Between page sections              |
@@ -145,12 +145,27 @@ the kind stands in: `ListMusic` for playlists, `Disc3` for albums, `MicVocal` fo
 `Radio` for shows. Liked Songs has no artwork from Spotify and always shows `Heart` on
 `accent`.
 
+### Filter chips
+
+Filter chips are pills (`rounded-full`) with `text-sm` labels, 12 px across and 4 px down
+inside, and an 8 px gap between chips that wraps onto a second line in a narrow pane. A resting
+chip is `surface-raised`; a pressed chip is `accent` with `on-accent` text, a 600 weight, and a
+16 px `Check` icon, so the state does not rely on color. Chips set `aria-pressed`, and a group
+of them sits in a `fieldset` whose `legend` names it for screen readers.
+
+The sidebar library has a chip per kind (Playlists, Albums, Artists, Shows) and a name filter
+under them. Pressing the active chip shows every kind again. The filters stay at the top of the
+pane while the list scrolls. When they match nothing, the list says so instead of going blank.
+
 ### Loading, empty, and error states
 
 - While a list loads, it says so in `muted` text inside an `output` element, so screen readers
   announce it.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, with a Retry button next to it.
+- When filters match nothing, the list says so inside an `output` element. The element stays on
+  the page while entries match, because screen readers only announce changes to a live region
+  that already exists.
 
 ### Motion
 
