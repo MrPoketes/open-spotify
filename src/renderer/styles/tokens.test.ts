@@ -8,5 +8,8 @@ const tokensUsedByStyles = new Set(appCss.match(/(?<=var\()--theme-[a-z-]+(?=\))
 // An unused token would let a theme author set a value that changes nothing on
 // screen; a used but undeclared token would render as an empty value.
 it("uses every declared design token and only declared ones", () => {
+  // Guards against the stylesheets loading as empty strings, which would make
+  // the comparison below pass without checking anything.
+  expect(declaredTokens.size).toBeGreaterThan(0)
   expect(tokensUsedByStyles).toEqual(declaredTokens)
 })

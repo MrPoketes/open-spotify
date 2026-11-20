@@ -146,7 +146,7 @@ warm coral accent.
 
 ## Design tokens
 
-A theme sets these tokens and nothing else. Their default dark values live in
+A theme sets these tokens, plus whether it is dark or light (see the end of this section). Their default dark values live in
 [`src/renderer/styles/tokens.css`](../src/renderer/styles/tokens.css) as CSS custom properties
 named `--theme-<token>`. [`app.css`](../src/renderer/styles/app.css) maps each one into
 Tailwind under the same name without the `theme-` prefix, so `--theme-color-muted` becomes the
@@ -163,7 +163,7 @@ does not exist, so components cannot bypass the theme.
 | `color-surface`         | `surface`         | Pane backgrounds: sidebar, main view, right pane                |
 | `color-surface-raised`  | `surface-raised`  | Hovered rows and cards, inputs, the now-playing bar             |
 | `color-surface-overlay` | `surface-overlay` | Menus, dialogs, the command palette, toasts                     |
-| `color-border`          | `border`          | Dividers and outlines that separate content                     |
+| `color-border`          | `border`          | Decorative dividers only; never the only edge of a control      |
 | `color-foreground`      | `foreground`      | Primary text and icons                                          |
 | `color-muted`           | `muted`           | Secondary text: artists, metadata, placeholders, inactive icons |
 | `color-accent`          | `accent`          | Primary actions, the playing track, active navigation, progress |
@@ -202,7 +202,7 @@ does not exist, so components cannot bypass the theme.
 Every token is a promise to theme authors, so add one only when a design need cannot be met by
 an existing token. A test checks that `tokens.css` and `app.css` list the same tokens.
 
-Each theme also says whether it is dark or light. That sets CSS `color-scheme`, so native
+Whether a theme is dark or light is not a token. It sets CSS `color-scheme`, so native
 scrollbars and form controls match the theme.
 
 ## Accessibility
@@ -211,7 +211,9 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
 
 - **Contrast.** `foreground` and `muted` text reach 4.5:1 against every surface they sit on
   (`canvas`, `surface`, `surface-raised`, `surface-overlay`). `on-accent` reaches 4.5:1 against
-  `accent`. Icons, `accent`, `danger`, and `focus` reach 3:1 against those surfaces. The
+  `accent`. Icons, `accent`, `danger`, and `focus` reach 3:1 against those surfaces. `border`
+  is decorative and has no target, so a control's edge is shown by its surface color or an
+  icon, not by a border alone. The
   default dark theme's lowest ratio is `muted` on `surface-overlay`, at 5.6:1.
 - **Focus.** Every interactive element shows a 2 px `focus` outline with a 2 px offset when
   focused from the keyboard (`:focus-visible`). `app.css` sets this globally. Never remove it;
