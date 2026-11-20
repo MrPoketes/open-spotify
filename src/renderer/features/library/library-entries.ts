@@ -1,4 +1,5 @@
 import { Effect, Stream } from "effect"
+import { songCountText } from "../liked-songs/song-count-text"
 import type { SavedAlbum } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { Artist } from "../spotify/spotify-artist"
@@ -16,6 +17,7 @@ export interface LibraryEntry {
   readonly images: ReadonlyArray<Image>
   // Null for kinds whose page does not exist yet.
   readonly page:
+    | { readonly to: "/collection/tracks" }
     | { readonly to: "/playlist/$playlistId"; readonly params: { readonly playlistId: string } }
     | { readonly to: "/show/$showId"; readonly params: { readonly showId: string } }
     | null
@@ -25,9 +27,9 @@ const likedSongsEntry = (songCount: number): LibraryEntry => ({
   uri: "spotify:collection:tracks",
   kind: "liked-songs",
   name: "Liked Songs",
-  details: `Playlist · ${songCount} ${songCount === 1 ? "song" : "songs"}`,
+  details: `Playlist · ${songCountText(songCount)}`,
   images: [],
-  page: null,
+  page: { to: "/collection/tracks" },
 })
 
 const playlistEntry = (playlist: SimplifiedPlaylist): LibraryEntry => ({

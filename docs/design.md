@@ -158,7 +158,7 @@ on the current screen.
 When artwork is missing or fails to load, a `surface-raised` tile with a `muted` Lucide icon for
 the kind stands in: `ListMusic` for playlists, `Disc3` for albums, `MicVocal` for artists,
 `Radio` for shows, `Music` for tracks, `Folder` for folders. Liked Songs has no artwork from
-Spotify and always shows `Heart` on `accent`.
+Spotify and always shows `Heart` on `accent`. Its page header shows the same tile at cover size.
 
 ### Filter chips
 

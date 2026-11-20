@@ -112,6 +112,21 @@ layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
     }),
   )
 
+  test.effect("fetches the page of liked songs that starts at the given offset", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+
+      const page = yield* spotify.getLikedSongsPage(4950)
+
+      assert.strictEqual(page.total, fakeLikedSongs.length)
+      assert.deepStrictEqual(
+        page.items.map(({ track }) => track.id),
+        fakeLikedSongs.slice(4950).map(({ track }) => track.id),
+      )
+      assert.instanceOf(page.items[0]?.addedAt, Date)
+    }),
+  )
+
   // A single local file, podcast episode, or removed track must not make a
   // whole playlist fail to load.
   test.effect("decodes local files, episodes, and removed tracks in a playlist", () =>

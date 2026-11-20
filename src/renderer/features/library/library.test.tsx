@@ -64,13 +64,21 @@ describe("Library", () => {
     )
     expect(await entryTexts()).toEqual(
       expect.arrayContaining([
-        "Liked SongsPlaylist · 57 songs",
+        "Liked SongsPlaylist · 5,000 songs",
         "Road Trip with SamPlaylist · Sam Okafor",
         "Small HoursAlbum · Lena Varga",
         "Velvet ChoirArtist",
         "Slow ScienceShow",
       ]),
     )
+  })
+
+  it("links Liked Songs to the Liked Songs page", async () => {
+    renderLibrary()
+
+    const likedSongsLink = await screen.findByRole("link", { name: /^Liked Songs/ })
+
+    expect(likedSongsLink).toHaveAttribute("href", "/collection/tracks")
   })
 
   it("links a playlist to its playlist page", async () => {
@@ -188,7 +196,7 @@ describe("Library", () => {
     )
     const playlistTexts = await entryTexts()
     expect(playlistTexts).toHaveLength(1 + fakePlaylists.length)
-    expect(playlistTexts).toContain("Liked SongsPlaylist · 57 songs")
+    expect(playlistTexts).toContain("Liked SongsPlaylist · 5,000 songs")
     expect(playlistTexts.every((text) => text.includes("Playlist · "))).toBe(true)
   })
 
