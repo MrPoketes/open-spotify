@@ -1,8 +1,8 @@
-import { Link, Navigate } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router"
 import { useState } from "react"
 import { useLoad } from "../../lib/use-load"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { type RovingRowProps, useRovingFocus } from "../../ui/use-roving-focus"
+import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { type LibraryEntry, loadLibraryEntries } from "./library-entries"
 import { LibraryEntryArtwork } from "./library-entry-artwork"
 import { LibraryFilterBar } from "./library-filter-bar"
@@ -15,19 +15,14 @@ export function Library() {
     return <output className="px-2 text-sm text-muted">Loading your library…</output>
   }
 
-  // Retry cannot bring back a session, so these go straight to login.
-  if (state.status === "failed" && state.error._tag === "NotLoggedIn") {
-    return <Navigate to="/login" />
-  }
-
-  if (state.status === "failed" && state.error._tag === "SessionExpired") {
-    return <Navigate to="/login" search={{ sessionExpired: true }} />
-  }
-
   if (state.status === "failed") {
     return (
       <div className="px-2">
-        <ErrorWithRetry message="Your library didn't load." onRetry={retry} />
+        <SpotifyLoadFailure
+          error={state.error}
+          message="Your library didn't load."
+          onRetry={retry}
+        />
       </div>
     )
   }

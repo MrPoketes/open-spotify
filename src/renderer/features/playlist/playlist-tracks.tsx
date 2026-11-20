@@ -1,27 +1,17 @@
 import { Effect } from "effect"
 import { useCallback } from "react"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { SpotifyApi, maximumPageSize } from "../spotify/spotify-api"
 import type { Playlist, PlaylistItem, PlaylistItemsPage } from "../spotify/spotify-playlist"
-import { formatTotalDuration } from "../track-list/format-duration"
+import { formatListDuration } from "../track-list/format-duration"
+import { PageFailedAlert } from "../track-list/page-failed-alert"
 import { TrackList } from "../track-list/track-list"
 import { usePagedItems } from "../track-list/use-paged-items"
 import { PlaylistHeader } from "./playlist-header"
 import { playlistTrackEntry } from "./playlist-track-entry"
 
-const totalDurationText = (items: ReadonlyArray<PlaylistItem | undefined>, trackCount: number) => {
-  const loadedItems = items.filter((item) => item !== undefined)
-  let loadedMs = 0
-  for (const { item } of loadedItems) {
-    loadedMs += item?.durationMs ?? 0
-  }
-  if (loadedItems.length === trackCount) {
-    return formatTotalDuration(loadedMs)
-  }
-  // Spotify does not report a playlist's length, and loading every page of a
-  // long playlist up front would be slow, so the rest is estimated.
-  return `about ${formatTotalDuration((loadedMs / loadedItems.length) * trackCount)}`
-}
+// A removed track counts as loaded, with no length.
+const loadedDurationsMs = (items: ReadonlyArray<PlaylistItem | undefined>) =>
+  items.filter((item) => item !== undefined).map(({ item }) => item?.durationMs ?? 0)
 
 const loadItemsPage = Effect.fn("loadItemsPage")(function* (playlistId: string, offset: number) {
   const spotify = yield* SpotifyApi
@@ -48,7 +38,7 @@ export function PlaylistTracks({ playlist, firstPage }: PlaylistTracksProps) {
     <div className="flex flex-col gap-8">
       <PlaylistHeader
         playlist={playlist}
-        totalDuration={totalDurationText(tracks.items, firstPage.total)}
+        totalDuration={formatListDuration(loadedDurationsMs(tracks.items), firstPage.total)}
       />
       <TrackList
         label="Tracks"
@@ -56,13 +46,7 @@ export function PlaylistTracks({ playlist, firstPage }: PlaylistTracksProps) {
         trackAt={trackAt}
         onRowsRendered={tracks.loadRange}
       />
-      {/* Below the list and stuck to the bottom of the view, so it shows
-          wherever the user has scrolled without moving any row. */}
-      {tracks.pageFailed ? (
-        <div className="sticky bottom-0 bg-surface py-2">
-          <ErrorWithRetry message="Some tracks didn't load." onRetry={tracks.retry} />
-        </div>
-      ) : null}
+      {tracks.pageFailed ? <PageFailedAlert onRetry={tracks.retry} /> : null}
     </div>
   )
 }
