@@ -22,6 +22,23 @@ A themeable, open-source desktop client for Spotify, for Windows, macOS, and Lin
   3. Under **User Management**, add the email of your Spotify account.
   4. Paste the Client ID into Open Spotify on first launch.
 
+## Install
+
+Download the installer for your system from the
+[latest release](https://github.com/MrPoketes/open-spotify/releases/latest). The builds are not
+signed with a paid certificate, so your system warns you the first time you open the app.
+
+- **Windows** (`.exe`): run the installer. If SmartScreen shows "Windows protected your PC",
+  click **More info**, then **Run anyway**.
+- **macOS** (`.dmg`, Apple Silicon only): open the disk image and drag Open Spotify into
+  Applications. The first time you open it, macOS says it could not verify the app. Click
+  **Done**, open **System Settings → Privacy & Security**, scroll to the message about Open
+  Spotify, click **Open Anyway**, and confirm with your password. You only do this once.
+- **Linux**: on Debian or Ubuntu, install the `.deb` with
+  `sudo apt install ./open-spotify-<version>-amd64.deb`. On other distributions, make the
+  `.AppImage` executable (`chmod +x open-spotify-*.AppImage`) and run it. AppImages need FUSE 2
+  (the `libfuse2`, `fuse2`, or `fuse-libs` package, depending on the distribution).
+
 ## Development
 
 ```sh
