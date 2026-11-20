@@ -36,7 +36,11 @@ const renderAppShell = async ({
 }: ShellOptions = {}) => {
   const rootRoute = createRootRoute({
     component: () => (
-      <AppShell savedSidebarWidth={savedSidebarWidth} platform={platform}>
+      <AppShell
+        savedSidebarWidth={savedSidebarWidth}
+        savedTrackListDensity="comfortable"
+        platform={platform}
+      >
         <Outlet />
       </AppShell>
     ),

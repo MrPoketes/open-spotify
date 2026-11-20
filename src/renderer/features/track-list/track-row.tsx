@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router"
 import { Clock, Music } from "lucide-react"
 import type { CSSProperties, KeyboardEvent } from "react"
+import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
 import { ArtistLinks } from "../artist/artist-links"
 import { formatArtistNames } from "../spotify/format-artist-names"
@@ -38,6 +39,17 @@ const columnsByLayout: Record<TrackListLayout, string> = {
 
 const trackColumns = (layout: TrackListLayout) =>
   `grid items-center gap-4 px-3 ${columnsByLayout[layout]}`
+
+// Album rows would repeat the album's cover, and dense rows are too short for
+// artwork.
+const showsArtwork = (layout: TrackListLayout, density: TrackListDensity) =>
+  layout === "playlist" && density === "comfortable"
+
+// A dense row has room for one line, so the artists follow the title on it.
+const titleLinesByDensity: Record<TrackListDensity, string> = {
+  comfortable: "flex min-w-0 flex-col",
+  dense: "flex min-w-0 items-baseline gap-2",
+}
 
 const addedAtFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" })
 
@@ -80,6 +92,7 @@ interface TrackRowSlot {
 const rowAttributes = (
   { index, tabIndex, offset, onFocus, onKeyDown }: TrackRowSlot,
   layout: TrackListLayout,
+  density: TrackListDensity,
 ) => ({
   "aria-rowindex": index + 2,
   "data-index": index,
@@ -89,7 +102,7 @@ const rowAttributes = (
   style: {
     position: "absolute",
     insetInline: 0,
-    height: trackRowHeight,
+    height: trackRowHeight[density],
     transform: `translateY(${offset}px)`,
   } satisfies CSSProperties,
   className: `${trackColumns(layout)} rounded-small text-sm transition-colors duration-120 ease-out hover:bg-surface-raised focus-visible:bg-surface-raised`,
@@ -132,14 +145,15 @@ function AlbumCell({ album, tabIndex }: AlbumCellProps) {
 interface TrackCellsProps {
   readonly entry: TrackListEntry
   readonly layout: TrackListLayout
+  readonly density: TrackListDensity
   readonly tabIndex: 0 | -1
 }
 
-function TrackCells({ entry, layout, tabIndex }: TrackCellsProps) {
+function TrackCells({ entry, layout, density, tabIndex }: TrackCellsProps) {
   return (
     <>
       <td className="flex min-w-0 items-center gap-3">
-        {layout === "playlist" ? (
+        {showsArtwork(layout, density) ? (
           <Artwork
             sources={entry.artwork}
             size={40}
@@ -147,7 +161,7 @@ function TrackCells({ entry, layout, tabIndex }: TrackCellsProps) {
             placeholderIcon={Music}
           />
         ) : null}
-        <span className="flex min-w-0 flex-col">
+        <span className={titleLinesByDensity[density]}>
           <span className="truncate">{entry.title}</span>
           <span className="truncate text-xs text-muted">
             <ArtistLinks artists={entry.artists} tabIndex={tabIndex} />
@@ -169,10 +183,17 @@ function TrackCells({ entry, layout, tabIndex }: TrackCellsProps) {
   )
 }
 
-function PlaceholderCells() {
+interface PlaceholderCellsProps {
+  readonly layout: TrackListLayout
+  readonly density: TrackListDensity
+}
+
+function PlaceholderCells({ layout, density }: PlaceholderCellsProps) {
   return (
     <td className="flex items-center gap-3">
-      <Artwork sources={[]} size={40} className="rounded-small" placeholderIcon={Music} />
+      {showsArtwork(layout, density) ? (
+        <Artwork sources={[]} size={40} className="rounded-small" placeholderIcon={Music} />
+      ) : null}
       <span className="h-3 w-2/5 rounded-small bg-surface-raised" />
     </td>
   )
@@ -182,20 +203,21 @@ interface TrackRowProps {
   // Undefined until the track's page has loaded.
   readonly entry: TrackListEntry | undefined
   readonly layout: TrackListLayout
+  readonly density: TrackListDensity
   readonly slot: TrackRowSlot
 }
 
 // A placeholder and the track that replaces it are the same element, so a
 // row keeps keyboard focus when its page arrives. Each disc of an album is
 // its own list, so a row's position is also its track number.
-export function TrackRow({ entry, layout, slot }: TrackRowProps) {
+export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
   return (
-    <tr {...rowAttributes(slot, layout)} aria-label={accessibleName(slot.index, entry)}>
+    <tr {...rowAttributes(slot, layout, density)} aria-label={accessibleName(slot.index, entry)}>
       <td className="text-right text-muted tabular-nums">{slot.index + 1}</td>
       {entry === undefined ? (
-        <PlaceholderCells />
+        <PlaceholderCells layout={layout} density={density} />
       ) : (
-        <TrackCells entry={entry} layout={layout} tabIndex={slot.tabIndex} />
+        <TrackCells entry={entry} layout={layout} density={density} tabIndex={slot.tabIndex} />
       )}
     </tr>
   )

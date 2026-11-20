@@ -4,21 +4,29 @@ import {
   maximumSidebarWidth,
   minimumSidebarWidth,
 } from "../../../shared/sidebar-width"
+import type { TrackListDensity } from "../../../shared/track-list-density"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { saveSetting } from "../../lib/saved-setting"
 import { PaneDivider } from "../../ui/pane-divider"
 import { NowPlayingBar } from "../playback/now-playing-bar"
+import { TrackListDensityProvider } from "../track-list/track-list-density-provider"
 import { Sidebar } from "./sidebar"
 import { TopBar } from "./top-bar"
 import { useHistoryShortcuts } from "./use-history-shortcuts"
 
 interface AppShellProps {
   readonly savedSidebarWidth: number
+  readonly savedTrackListDensity: TrackListDensity
   readonly platform: string
   readonly children: ReactNode
 }
 
-export function AppShell({ savedSidebarWidth, platform, children }: AppShellProps) {
+export function AppShell({
+  savedSidebarWidth,
+  savedTrackListDensity,
+  platform,
+  children,
+}: AppShellProps) {
   const runtime = use(RendererRuntimeContext)
   const [sidebarWidth, setSidebarWidth] = useState(savedSidebarWidth)
   useHistoryShortcuts(platform)
@@ -38,7 +46,11 @@ export function AppShell({ savedSidebarWidth, platform, children }: AppShellProp
         />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
           <TopBar />
-          <main className="min-h-0 flex-1 overflow-y-auto p-6">{children}</main>
+          <main className="min-h-0 flex-1 overflow-y-auto p-6">
+            <TrackListDensityProvider savedDensity={savedTrackListDensity}>
+              {children}
+            </TrackListDensityProvider>
+          </main>
         </div>
       </div>
       <NowPlayingBar />

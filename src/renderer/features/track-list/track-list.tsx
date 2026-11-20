@@ -1,6 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { type RefObject, use, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { type TrackListEntry, TrackListHeader, type TrackListLayout, TrackRow } from "./track-row"
+import { TrackListDensityContext } from "./track-list-density-context"
 import { trackRowHeight } from "./track-row-height"
 import { useRowFocus } from "./use-row-focus"
 
@@ -36,6 +37,7 @@ interface TrackListProps {
 }
 
 export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }: TrackListProps) {
+  const { density } = use(TrackListDensityContext)
   const rowsRef = useRef<HTMLTableSectionElement>(null)
   const [mainViewWidth, setMainViewWidth] = useState<number>()
   const rowsOffset = useRowsOffset(rowsRef, mainViewWidth)
@@ -43,11 +45,14 @@ export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }
   const virtualizer = useVirtualizer({
     count: trackCount,
     getScrollElement: () => scrollingMainView(rowsRef),
-    estimateSize: () => trackRowHeight,
+    estimateSize: () => trackRowHeight[density],
     overscan: 10,
     scrollMargin: rowsOffset,
     onChange: (instance) => setMainViewWidth(instance.scrollRect?.width),
   })
+  // The virtualiser keeps the row sizes it worked out and does not notice a
+  // new estimate, so a change of density must make it start over.
+  useLayoutEffect(() => virtualizer.measure(), [virtualizer, density])
   const rows = virtualizer.getVirtualItems()
   const firstIndex = rows.at(0)?.index
   const lastIndex = rows.at(-1)?.index
@@ -90,7 +95,15 @@ export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }
               onFocus: () => rowFocus.setFocusedIndex(index),
               onKeyDown: rowFocus.onKeyDown,
             } as const
-            return <TrackRow key={index} entry={trackAt(index)} layout={layout} slot={slot} />
+            return (
+              <TrackRow
+                key={index}
+                entry={trackAt(index)}
+                layout={layout}
+                density={density}
+                slot={slot}
+              />
+            )
           })}
         </tbody>
       </table>

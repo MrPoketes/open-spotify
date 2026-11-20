@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { AppearanceSettings } from "../../features/themes/appearance-settings"
 import { loadSavedThemeLibrary } from "../../features/themes/saved-theme"
+import { TrackListDensitySetting } from "../../features/track-list/track-list-density-setting"
 import { rendererRuntime } from "../../lib/renderer-runtime"
 
 export const Route = createFileRoute("/_app/settings")({
@@ -22,6 +23,7 @@ function SettingsPage() {
           Appearance
         </h2>
         <AppearanceSettings library={library} />
+        <TrackListDensitySetting />
       </section>
     </div>
   )
