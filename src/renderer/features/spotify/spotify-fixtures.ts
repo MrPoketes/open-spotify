@@ -333,6 +333,15 @@ export const fakeDevices = [
 
 export const fakePlayingTrack = fakeTrack(0)
 
+// What the fake player plays, in order: tracks with a podcast episode third,
+// so the queue holds both kinds.
+export const fakePlayOrder = (position: number) => {
+  if (position === 2) {
+    return fakeEpisode
+  }
+  return fakeTrack(position < 2 ? position : position - 1)
+}
+
 export const fakePlaybackState = (activeDevice: (typeof fakeDevices)[number]) => ({
   device: { ...activeDevice, is_active: true },
   repeat_state: "off",

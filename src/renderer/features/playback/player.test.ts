@@ -7,7 +7,7 @@ import {
   SpotifyRequestError,
   SpotifyResponseError,
 } from "../spotify/spotify-api"
-import { fakeDevices, fakeTrack } from "../spotify/spotify-fixtures"
+import { fakeDevices, fakePlayOrder, fakeTrack } from "../spotify/spotify-fixtures"
 import { Player, type PlayerState } from "./player"
 
 // Counts playback state requests and fails the ones listed in failingRequests
@@ -258,6 +258,19 @@ describe("Player", () => {
       const stateAfterSkip = yield* Queue.take(states)
 
       assert.strictEqual(playingName(stateAfterSkip), fakeTrack(1).name)
+    }).pipe(Effect.scoped, Effect.provide(playerOver(SpotifyApi.layerFake))),
+  )
+
+  it.effect("skips ahead past every queued item before the chosen one", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+
+      yield* player.skipAhead(3)
+      const stateAfterSkip = yield* Queue.take(states)
+
+      assert.strictEqual(playingName(stateAfterSkip), fakePlayOrder(3).name)
     }).pipe(Effect.scoped, Effect.provide(playerOver(SpotifyApi.layerFake))),
   )
 

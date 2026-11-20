@@ -50,6 +50,7 @@ export class Player extends Context.Service<
     readonly pause: PlayerCommand
     readonly skipToNext: PlayerCommand
     readonly skipToPrevious: PlayerCommand
+    readonly skipAhead: (itemCount: number) => PlayerCommand
     readonly setShuffle: (isOn: boolean) => PlayerCommand
     readonly setRepeat: (mode: RepeatMode) => PlayerCommand
   }
@@ -119,6 +120,12 @@ export class Player extends Context.Service<
         pause: pendingChanges.showWhileSending({ isPlaying: false }, send(spotify.pause)),
         skipToNext: sendThenRefresh(spotify.skipToNext),
         skipToPrevious: sendThenRefresh(spotify.skipToPrevious),
+        // Spotify has no endpoint that plays an item from the queue, so the
+        // player skips past every item before it, one request each.
+        skipAhead: (itemCount) =>
+          sendThenRefresh(
+            spotify.skipToNext.pipe(Effect.replicateEffect(itemCount, { discard: true })),
+          ),
         setShuffle: (isOn) =>
           pendingChanges.showWhileSending({ shuffle: isOn }, send(spotify.setShuffle(isOn))),
         setRepeat: (mode) =>

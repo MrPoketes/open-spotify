@@ -1,11 +1,10 @@
-import { Disc3, Radio } from "lucide-react"
-import { useState } from "react"
+import { ListMusic } from "lucide-react"
+import { type RefObject, useState } from "react"
 import { AccentButton } from "../../ui/accent-button"
-import { Artwork } from "../../ui/artwork"
-import { formatArtistNames } from "../spotify/format-artist-names"
-import type { PlaybackState } from "../spotify/spotify-playback-state"
 import { DevicePicker } from "./device-picker"
+import { PlayableItemSummary } from "./playable-item-summary"
 import { PlaybackControls } from "./playback-controls"
+import { PlayerControlButton } from "./player-control-button"
 import { type PlayerStateOrLoading, usePlayerState } from "./use-player-state"
 
 const deviceLabel = (playerState: PlayerStateOrLoading) => {
@@ -18,7 +17,13 @@ const deviceLabel = (playerState: PlayerStateOrLoading) => {
   return "Devices"
 }
 
-export function NowPlayingBar() {
+interface NowPlayingBarProps {
+  readonly isQueueOpen: boolean
+  readonly onQueueToggle: () => void
+  readonly queueButtonRef: RefObject<HTMLButtonElement | null>
+}
+
+export function NowPlayingBar({ isQueueOpen, onQueueToggle, queueButtonRef }: NowPlayingBarProps) {
   const playerState = usePlayerState()
   const [isPickerOpen, setPickerOpen] = useState(false)
 
@@ -31,11 +36,21 @@ export function NowPlayingBar() {
         <NowPlayingSummary playerState={playerState} onChooseDevice={() => setPickerOpen(true)} />
       </div>
       <PlaybackControls playerState={playerState} />
-      <DevicePicker
-        deviceLabel={deviceLabel(playerState)}
-        isOpen={isPickerOpen}
-        onOpenChange={setPickerOpen}
-      />
+      <div className="flex items-center justify-end gap-2">
+        <PlayerControlButton
+          ref={queueButtonRef}
+          label="Queue"
+          icon={ListMusic}
+          isOn={isQueueOpen}
+          unavailableReason={null}
+          onPress={onQueueToggle}
+        />
+        <DevicePicker
+          deviceLabel={deviceLabel(playerState)}
+          isOpen={isPickerOpen}
+          onOpenChange={setPickerOpen}
+        />
+      </div>
     </section>
   )
 }
@@ -73,25 +88,5 @@ function NowPlayingSummary({ playerState, onChooseDevice }: NowPlayingSummaryPro
     return <p className="text-sm text-muted">Nothing is playing</p>
   }
 
-  return <PlayingItem item={item} />
-}
-
-function PlayingItem({ item }: { readonly item: NonNullable<PlaybackState["item"]> }) {
-  const isTrack = item.type === "track"
-  return (
-    <div className="flex min-w-0 items-center gap-3">
-      <Artwork
-        sources={isTrack ? item.album.images : item.images}
-        size={40}
-        className="rounded-small"
-        placeholderIcon={isTrack ? Disc3 : Radio}
-      />
-      <div className="flex min-w-0 flex-col">
-        <p className="truncate text-sm">{item.name}</p>
-        {isTrack && (
-          <p className="truncate text-xs text-muted">{formatArtistNames(item.artists)}</p>
-        )}
-      </div>
-    </div>
-  )
+  return <PlayableItemSummary item={item} />
 }
