@@ -11,7 +11,6 @@ export class ImportedThemes extends Context.Service<
   ImportedThemes,
   {
     readonly list: Effect.Effect<ReadonlyArray<LibraryTheme>, StorageError>
-    // Whether a theme with this theme's name and author was imported before.
     readonly hasSameNameAndAuthor: (theme: Theme) => Effect.Effect<boolean, StorageError>
     // Replaces the imported theme with the same name and author, keeping its
     // id, so a theme the user picked stays picked when it is updated.

@@ -19,7 +19,7 @@ export const fakeMainProcess = ({
   exportThemeReply = null,
 }: FakeMainProcessOptions = {}): DesktopApi => {
   const storedSettings = new Map<string, unknown>()
-  const importedThemes: Array<unknown> = []
+  const importedThemes = new Map<string, unknown>()
   const answerByChannel: Partial<Record<IpcChannel, (request: unknown) => unknown>> = {
     [ipcChannels.getSetting]: (request) => {
       const { key } = Schema.decodeUnknownSync(GetSettingRequest)(request)
@@ -29,10 +29,11 @@ export const fakeMainProcess = ({
       const { key, value } = Schema.decodeUnknownSync(SetSettingRequest)(request)
       storedSettings.set(key, value)
     },
-    [ipcChannels.listImportedThemes]: () => importedThemes,
+    [ipcChannels.listImportedThemes]: () => [...importedThemes.values()],
     [ipcChannels.importThemeFile]: () => {
+      // Like the real main process, a theme imported again replaces its row.
       if (importThemeReply._tag === "ThemeImported") {
-        importedThemes.push(importThemeReply.importedTheme)
+        importedThemes.set(importThemeReply.importedTheme.id, importThemeReply.importedTheme)
       }
       return importThemeReply
     },
