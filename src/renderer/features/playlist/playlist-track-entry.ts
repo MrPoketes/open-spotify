@@ -2,12 +2,16 @@ import type { PlaylistItem } from "../spotify/spotify-playlist"
 import { trackEntry } from "../track-list/track-entry"
 import type { TrackListEntry } from "../track-list/track-row"
 
-export function playlistTrackEntry({ addedAt, item }: PlaylistItem): TrackListEntry {
+export function playlistTrackEntry(
+  { addedAt, item }: PlaylistItem,
+  position: number,
+): TrackListEntry {
   if (item === null) {
     return {
+      number: position,
       title: "Unavailable track",
       artists: "",
-      album: "",
+      album: null,
       artwork: [],
       addedAt,
       durationMs: null,
@@ -15,13 +19,14 @@ export function playlistTrackEntry({ addedAt, item }: PlaylistItem): TrackListEn
   }
   if (item.type === "episode") {
     return {
+      number: position,
       title: item.name,
       artists: "",
-      album: "",
+      album: null,
       artwork: [],
       addedAt,
       durationMs: item.durationMs,
     }
   }
-  return trackEntry(item, addedAt)
+  return trackEntry(item, addedAt, position)
 }

@@ -68,7 +68,11 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
   24 px gap, so the column count follows the pane width.
 - Track lists use fixed columns: index, title and artist, album, date added, duration. Columns
   that do not fit the pane width are hidden from the right, never squeezed: date added goes
-  first, below 768 px, then the album, below 576 px. Duration always stays.
+  first, below 768 px, then the album, below 576 px. Duration always stays. An album name links
+  to its album page.
+- An album's track list shows track numbers and leaves out artwork, album, and date added,
+  which every track on it shares or lacks. A multi-disc album gets one list per disc, each under
+  a "Disc 1", "Disc 2" heading; a single-disc album gets no heading.
 - Track lists scroll with the main view, so a page header above one scrolls away. Only the rows
   near the screen are in the DOM; a row whose track has not loaded keeps its full height and
   shows a placeholder artwork tile and a bar, so the scrollbar is right from the start.

@@ -26,7 +26,7 @@ export function LikedSongsTracks({ firstPage }: { readonly firstPage: SavedTrack
 
   const trackAt = (index: number) => {
     const song = songs.items[index]
-    return song === undefined ? undefined : trackEntry(song.track, song.addedAt)
+    return song === undefined ? undefined : trackEntry(song.track, song.addedAt, index + 1)
   }
 
   return (
@@ -37,6 +37,7 @@ export function LikedSongsTracks({ firstPage }: { readonly firstPage: SavedTrack
       />
       <TrackList
         label="Liked Songs"
+        layout="playlist"
         trackCount={firstPage.total}
         trackAt={trackAt}
         onRowsRendered={songs.loadRange}

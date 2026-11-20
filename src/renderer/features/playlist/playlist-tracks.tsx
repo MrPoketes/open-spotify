@@ -31,7 +31,7 @@ export function PlaylistTracks({ playlist, firstPage }: PlaylistTracksProps) {
 
   const trackAt = (index: number) => {
     const playlistItem = tracks.items[index]
-    return playlistItem === undefined ? undefined : playlistTrackEntry(playlistItem)
+    return playlistItem === undefined ? undefined : playlistTrackEntry(playlistItem, index + 1)
   }
 
   return (
@@ -42,6 +42,7 @@ export function PlaylistTracks({ playlist, firstPage }: PlaylistTracksProps) {
       />
       <TrackList
         label="Tracks"
+        layout="playlist"
         trackCount={firstPage.total}
         trackAt={trackAt}
         onRowsRendered={tracks.loadRange}

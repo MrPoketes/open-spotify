@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppAlbumAlbumIdRouteImport } from './routes/_app/album.$albumId'
 import { Route as AppCollectionTracksRouteImport } from './routes/_app/collection.tracks'
 import { Route as AppFolderFolderIdRouteImport } from './routes/_app/folder.$folderId'
 import { Route as AppPlaylistPlaylistIdRouteImport } from './routes/_app/playlist.$playlistId'
@@ -43,6 +44,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAlbumAlbumIdRoute = AppAlbumAlbumIdRouteImport.update({
+  id: '/album/$albumId',
+  path: '/album/$albumId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCollectionTracksRoute = AppCollectionTracksRouteImport.update({
   id: '/collection/tracks',
   path: '/collection/tracks',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof AppSettingsRoute
+  '/album/$albumId': typeof AppAlbumAlbumIdRoute
   '/collection/tracks': typeof AppCollectionTracksRoute
   '/folder/$folderId': typeof AppFolderFolderIdRoute
   '/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
+  '/album/$albumId': typeof AppAlbumAlbumIdRoute
   '/collection/tracks': typeof AppCollectionTracksRoute
   '/folder/$folderId': typeof AppFolderFolderIdRoute
   '/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/album/$albumId': typeof AppAlbumAlbumIdRoute
   '/_app/collection/tracks': typeof AppCollectionTracksRoute
   '/_app/folder/$folderId': typeof AppFolderFolderIdRoute
   '/_app/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/settings'
+    | '/album/$albumId'
     | '/collection/tracks'
     | '/folder/$folderId'
     | '/playlist/$playlistId'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/'
+    | '/album/$albumId'
     | '/collection/tracks'
     | '/folder/$folderId'
     | '/playlist/$playlistId'
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/_app/settings'
     | '/_app/'
+    | '/_app/album/$albumId'
     | '/_app/collection/tracks'
     | '/_app/folder/$folderId'
     | '/_app/playlist/$playlistId'
@@ -173,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/album/$albumId': {
+      id: '/_app/album/$albumId'
+      path: '/album/$albumId'
+      fullPath: '/album/$albumId'
+      preLoaderRoute: typeof AppAlbumAlbumIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/collection/tracks': {
       id: '/_app/collection/tracks'
       path: '/collection/tracks'
@@ -207,6 +226,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAlbumAlbumIdRoute: typeof AppAlbumAlbumIdRoute
   AppCollectionTracksRoute: typeof AppCollectionTracksRoute
   AppFolderFolderIdRoute: typeof AppFolderFolderIdRoute
   AppPlaylistPlaylistIdRoute: typeof AppPlaylistPlaylistIdRoute
@@ -216,6 +236,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAlbumAlbumIdRoute: AppAlbumAlbumIdRoute,
   AppCollectionTracksRoute: AppCollectionTracksRoute,
   AppFolderFolderIdRoute: AppFolderFolderIdRoute,
   AppPlaylistPlaylistIdRoute: AppPlaylistPlaylistIdRoute,

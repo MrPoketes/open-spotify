@@ -4,6 +4,7 @@ import { SpotifyAccessToken } from "./spotify-access-token"
 import { fakePlayer } from "./spotify-fake-player"
 import {
   type FakePlaylist,
+  fakeAlbums,
   fakeCurrentUser,
   fakeEpisode,
   fakeFollowedArtists,
@@ -19,6 +20,9 @@ export const fakeAccessToken = "fake-access-token"
 
 // Spotify embeds at most this many items in a full playlist object.
 const embeddedItemLimit = 100
+
+// Spotify embeds at most this many tracks in a full album object.
+const embeddedAlbumTrackLimit = 50
 
 // The page size Spotify uses when a request has no limit parameter.
 const defaultPageLimit = 20
@@ -139,6 +143,19 @@ const respondToShow = (url: URL): readonly [number, unknown] => {
   return [200, pageOf(show.episodes, url, defaultPageLimit)]
 }
 
+const respondToAlbum = (url: URL): readonly [number, unknown] => {
+  const [, albumId, tracksPath] = /^\/v1\/albums\/([^/]+)(\/tracks)?$/.exec(url.pathname) ?? []
+  const album = fakeAlbums.find(({ id }) => id === albumId)
+  if (!album) {
+    return notFound
+  }
+  if (tracksPath !== undefined) {
+    return [200, pageOf(album.tracks, url, defaultPageLimit)]
+  }
+  const tracksUrl = new URL(`${url.origin}${url.pathname}/tracks`)
+  return [200, { ...album, tracks: pageOf(album.tracks, tracksUrl, embeddedAlbumTrackLimit) }]
+}
+
 const currentUserResources: Record<string, (url: URL) => unknown> = {
   "/v1/me": () => fakeCurrentUser,
   "/v1/me/playlists": (url) => pageOf(fakePlaylists.map(simplifiedPlaylist), url, defaultPageLimit),
@@ -150,6 +167,9 @@ const currentUserResources: Record<string, (url: URL) => unknown> = {
 const respondTo = (url: URL): readonly [number, unknown] => {
   if (url.pathname.startsWith("/v1/shows/")) {
     return respondToShow(url)
+  }
+  if (url.pathname.startsWith("/v1/albums/")) {
+    return respondToAlbum(url)
   }
   const currentUserResource = currentUserResources[url.pathname]
   if (currentUserResource) {

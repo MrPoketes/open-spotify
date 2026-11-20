@@ -127,6 +127,24 @@ describe("PlaylistPage", () => {
     expect(screen.getByRole("row", { name: "How Playlists Are Made" })).toHaveTextContent("40:12")
   })
 
+  it("opens a track's album page from its album name", async () => {
+    const { router } = await renderPlaylistPage("fake-playlist-late-night-drive")
+    const row = await screen.findByRole("row", { name: "Quiet Rivers by Northbound Static" })
+
+    await userEvent.click(within(row).getByRole("link", { name: "Glass Harbour" }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/album/fake-album-0"))
+  })
+
+  // A local file's album has no Spotify id, so there is no page to open.
+  it("shows a local file's album as text instead of a link", async () => {
+    await renderPlaylistPage("fake-playlist-morning-coffee")
+    const row = await screen.findByRole("row", { name: "Demo Take 3 by Mira Kaelin" })
+
+    expect(row).toHaveTextContent("Voice Memos")
+    expect(within(row).queryByRole("link")).toBeNull()
+  })
+
   // Retry cannot bring back a session, so the page sends the user to log in.
   it("goes to the login screen, saying why, when the session has expired", async () => {
     const { router } = await renderPlaylistPage(

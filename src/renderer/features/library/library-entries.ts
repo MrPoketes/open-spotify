@@ -19,6 +19,7 @@ export interface LibraryEntry {
   readonly page:
     | { readonly to: "/collection/tracks" }
     | { readonly to: "/playlist/$playlistId"; readonly params: { readonly playlistId: string } }
+    | { readonly to: "/album/$albumId"; readonly params: { readonly albumId: string } }
     | { readonly to: "/show/$showId"; readonly params: { readonly showId: string } }
     | null
 }
@@ -47,7 +48,7 @@ const albumEntry = ({ album }: SavedAlbum): LibraryEntry => ({
   name: album.name,
   details: `Album · ${album.artists.map(({ name }) => name).join(", ")}`,
   images: album.images,
-  page: null,
+  page: { to: "/album/$albumId", params: { albumId: album.id } },
 })
 
 const artistEntry = (artist: Artist): LibraryEntry => ({

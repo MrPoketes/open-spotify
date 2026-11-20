@@ -1,9 +1,10 @@
 import { Schema } from "effect"
 import { SimplifiedArtist } from "./spotify-artist"
 import { Image } from "./spotify-image"
+import { Paging } from "./spotify-paging"
 
 // Local files have no Spotify id.
-export const Album = Schema.Struct({
+export const SimplifiedAlbum = Schema.Struct({
   id: Schema.NullOr(Schema.String),
   name: Schema.String,
   images: Schema.Array(Image),
@@ -20,3 +21,36 @@ export const SavedAlbum = Schema.Struct({
 })
 
 export type SavedAlbum = typeof SavedAlbum.Type
+
+export const AlbumTrack = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  durationMs: Schema.Number,
+  discNumber: Schema.Number,
+  trackNumber: Schema.Number,
+  artists: Schema.Array(SimplifiedArtist),
+}).pipe(
+  Schema.encodeKeys({
+    durationMs: "duration_ms",
+    discNumber: "disc_number",
+    trackNumber: "track_number",
+  }),
+)
+
+export type AlbumTrack = typeof AlbumTrack.Type
+
+export const AlbumTracksPage = Paging(AlbumTrack)
+
+export const Album = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  images: Schema.Array(Image),
+  artists: Schema.Array(SimplifiedArtist),
+  // A year, a year and month, or a full date, depending on what Spotify knows.
+  releaseDate: Schema.String,
+  totalTracks: Schema.Number,
+  // Spotify embeds only the first page of tracks.
+  tracks: AlbumTracksPage,
+}).pipe(Schema.encodeKeys({ releaseDate: "release_date", totalTracks: "total_tracks" }))
+
+export type Album = typeof Album.Type

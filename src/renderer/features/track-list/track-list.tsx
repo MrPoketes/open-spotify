@@ -1,6 +1,6 @@
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react"
-import { type TrackListEntry, TrackListHeader, TrackRow } from "./track-row"
+import { type TrackListEntry, TrackListHeader, type TrackListLayout, TrackRow } from "./track-row"
 import { trackRowHeight } from "./track-row-height"
 import { useRowFocus } from "./use-row-focus"
 
@@ -28,12 +28,14 @@ function useRowsOffset(rowsRef: RefObject<HTMLElement | null>, mainViewWidth: nu
 
 interface TrackListProps {
   readonly label: string
+  readonly layout: TrackListLayout
   readonly trackCount: number
   readonly trackAt: (index: number) => TrackListEntry | undefined
-  readonly onRowsRendered: (firstIndex: number, lastIndex: number) => void
+  // For lists that load their tracks as they scroll into view.
+  readonly onRowsRendered?: (firstIndex: number, lastIndex: number) => void
 }
 
-export function TrackList({ label, trackCount, trackAt, onRowsRendered }: TrackListProps) {
+export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }: TrackListProps) {
   const rowsRef = useRef<HTMLTableSectionElement>(null)
   const [mainViewWidth, setMainViewWidth] = useState<number>()
   const rowsOffset = useRowsOffset(rowsRef, mainViewWidth)
@@ -57,7 +59,7 @@ export function TrackList({ label, trackCount, trackAt, onRowsRendered }: TrackL
 
   useEffect(() => {
     if (firstIndex !== undefined && lastIndex !== undefined) {
-      onRowsRendered(firstIndex, lastIndex)
+      onRowsRendered?.(firstIndex, lastIndex)
     }
   }, [firstIndex, lastIndex, onRowsRendered])
 
@@ -73,7 +75,7 @@ export function TrackList({ label, trackCount, trackAt, onRowsRendered }: TrackL
     <div className="@container">
       <table aria-label={label} aria-rowcount={trackCount + 1} className="block">
         <thead className="block">
-          <TrackListHeader />
+          <TrackListHeader layout={layout} />
         </thead>
         <tbody
           ref={rowsRef}
@@ -88,7 +90,7 @@ export function TrackList({ label, trackCount, trackAt, onRowsRendered }: TrackL
               onFocus: () => rowFocus.setFocusedIndex(index),
               onKeyDown: rowFocus.onKeyDown,
             } as const
-            return <TrackRow key={index} entry={trackAt(index)} slot={slot} />
+            return <TrackRow key={index} entry={trackAt(index)} layout={layout} slot={slot} />
           })}
         </tbody>
       </table>

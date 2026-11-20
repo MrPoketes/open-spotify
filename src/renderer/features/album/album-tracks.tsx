@@ -1,0 +1,53 @@
+import type { Album, AlbumTrack } from "../spotify/spotify-album"
+import { TrackList } from "../track-list/track-list"
+import type { TrackListEntry } from "../track-list/track-row"
+
+interface Disc {
+  readonly discNumber: number
+  readonly entries: ReadonlyArray<TrackListEntry>
+}
+
+const albumTrackEntry = (album: Album, track: AlbumTrack): TrackListEntry => ({
+  number: track.trackNumber,
+  title: track.name,
+  artists: track.artists.map(({ name }) => name).join(", "),
+  album: { id: album.id, name: album.name },
+  artwork: album.images,
+  addedAt: null,
+  durationMs: track.durationMs,
+})
+
+// Spotify lists an album's tracks in order, disc by disc.
+const discsOf = (album: Album, tracks: ReadonlyArray<AlbumTrack>) => {
+  const entriesByDisc = new Map<number, Array<TrackListEntry>>()
+  for (const track of tracks) {
+    const discEntries = entriesByDisc.get(track.discNumber) ?? []
+    discEntries.push(albumTrackEntry(album, track))
+    entriesByDisc.set(track.discNumber, discEntries)
+  }
+  return Array.from(entriesByDisc, ([discNumber, entries]): Disc => ({ discNumber, entries }))
+}
+
+interface AlbumTracksProps {
+  readonly album: Album
+  readonly tracks: ReadonlyArray<AlbumTrack>
+}
+
+export function AlbumTracks({ album, tracks }: AlbumTracksProps) {
+  const discs = discsOf(album, tracks)
+  const hasDiscHeadings = discs.length > 1
+  return discs.map(({ discNumber, entries }) => {
+    const label = hasDiscHeadings ? `Disc ${discNumber}` : "Tracks"
+    return (
+      <div key={discNumber} className="flex flex-col gap-4">
+        {hasDiscHeadings ? <h2 className="font-display text-xl font-bold">{label}</h2> : null}
+        <TrackList
+          label={label}
+          layout="album"
+          trackCount={entries.length}
+          trackAt={(index) => entries[index]}
+        />
+      </div>
+    )
+  })
+}
