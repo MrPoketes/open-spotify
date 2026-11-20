@@ -108,8 +108,9 @@ time, so two releases never claim the same version.
    - Otherwise find the workflow run for the tag
      (`gh run list --workflow release.yml --branch v<version>`). If it is still running, leave
      it. If it failed on its first attempt (`gh run view <id> --json attempt,conclusion`), rerun
-     it with `gh run rerun <id> --failed`. If it failed again, create a High-priority `Bug` issue titled `Release v<version> failed` with
-     the failed log; the fix ships in the next milestone's release.
+     it with `gh run rerun <id> --failed`. If it failed again, create a High-priority `Bug`
+     issue titled `Release v<version> failed` with the failed log; the fix ships in the next
+     milestone's release.
 
 3. **The earliest finished milestone is not released.** Take the version in `package.json` on
    `origin/main` and bump its minor part (`0.1.0` becomes `0.2.0`). On a branch
