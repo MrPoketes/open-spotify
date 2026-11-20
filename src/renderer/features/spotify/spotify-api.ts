@@ -37,6 +37,10 @@ const spotifyApiBaseUrl = "https://api.spotify.com/v1"
 // The largest page Spotify allows for playlists and playlist items.
 const pageSize = 50
 
+// Without this, Spotify only promises to return tracks, and a playlist that
+// contains a podcast episode would fail to decode.
+const playlistItemTypes = "additional_types=track,episode"
+
 const SpotifyErrorBody = Schema.Struct({
   error: Schema.Struct({ message: Schema.String }),
 })
@@ -88,26 +92,25 @@ export class SpotifyApi extends Context.Service<
         }),
       )
 
-      const getJson = <A>(
+      const getJson = Effect.fn("SpotifyApi.getJson")(function* <A>(
         url: string,
-        body: Schema.Decoder<A>,
-      ): Effect.Effect<A, SpotifyApiError> =>
-        Effect.gen(function* () {
-          const response = yield* client
-            .get(url)
-            .pipe(
-              Effect.catchTag("HttpClientError", (cause) =>
-                Effect.fail(new SpotifyRequestError({ cause })),
-              ),
-            )
-          if (response.status < 200 || response.status >= 300) {
-            return yield* failForStatus(response)
-          }
-          return yield* response.json.pipe(
-            Effect.flatMap(Schema.decodeUnknownEffect(body)),
-            Effect.mapError((cause) => new SpotifyDecodeError({ url, cause })),
+        responseSchema: Schema.Decoder<A>,
+      ): Effect.fn.Return<A, SpotifyApiError> {
+        const response = yield* client
+          .get(url)
+          .pipe(
+            Effect.catchTag("HttpClientError", (cause) =>
+              Effect.fail(new SpotifyRequestError({ cause })),
+            ),
           )
-        })
+        if (response.status < 200 || response.status >= 300) {
+          return yield* failForStatus(response)
+        }
+        return yield* response.json.pipe(
+          Effect.flatMap(Schema.decodeUnknownEffect(responseSchema)),
+          Effect.mapError((cause) => new SpotifyDecodeError({ url, cause })),
+        )
+      })
 
       return SpotifyApi.of({
         getCurrentUser: getJson(`${spotifyApiBaseUrl}/me`, CurrentUser),
@@ -116,10 +119,13 @@ export class SpotifyApi extends Context.Service<
           (url) => getJson(url, Paging(SimplifiedPlaylist)),
         ),
         getPlaylist: (playlistId) =>
-          getJson(`${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}`, Playlist),
+          getJson(
+            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}?${playlistItemTypes}`,
+            Playlist,
+          ),
         playlistItems: (playlistId) =>
           streamPages(
-            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items?limit=${pageSize}&additional_types=track,episode`,
+            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items?limit=${pageSize}&${playlistItemTypes}`,
             (url) => getJson(url, Paging(PlaylistItem)),
           ),
       })

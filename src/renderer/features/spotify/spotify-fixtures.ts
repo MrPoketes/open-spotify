@@ -62,7 +62,7 @@ const localTrack = {
   artists: [{ id: null, name: "Mira Kaelin" }],
 }
 
-const episode = {
+export const fakeEpisode = {
   type: "episode",
   id: "fake-episode-0",
   name: "How Playlists Are Made",
@@ -71,7 +71,7 @@ const episode = {
 }
 
 const playlistEntry = (item: unknown, index: number) => ({
-  added_at: `2026-0${(index % 9) + 1}-1${index % 10}T08:30:00Z`,
+  added_at: new Date(Date.UTC(2026, 0, 1 + index)).toISOString(),
   added_by: { id: fakeListenerId },
   is_local: item === localTrack,
   item,
@@ -110,7 +110,7 @@ export const fakePlaylists: ReadonlyArray<FakePlaylist> = [
     owner: listener,
     collaborative: false,
     // A removed track shows up as a null item.
-    entries: [...tracks(12, 200), localTrack, episode, null].map(playlistEntry),
+    entries: [...tracks(12, 200), localTrack, fakeEpisode, null].map(playlistEntry),
   },
   {
     id: "fake-playlist-ideas",

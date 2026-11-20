@@ -1,115 +1,109 @@
-import { assert, describe, it } from "@effect/vitest"
+import { assert, describe, it, layer } from "@effect/vitest"
 import { Effect, Fiber, Layer, Stream } from "effect"
-import { HttpClient, HttpClientResponse } from "effect/http"
+import { HttpClient, HttpClientError, HttpClientResponse } from "effect/http"
 import { TestClock } from "effect/testing"
 import { SpotifyApi } from "./spotify-api"
 import { spotifyFakeAccessToken } from "./spotify-fake-server"
 import { fakeCurrentUser, fakePlaylists } from "./spotify-fixtures"
 
-const withFakeSpotify = <A, E>(effect: Effect.Effect<A, E, SpotifyApi>) =>
-  Effect.provide(effect, SpotifyApi.layerFake)
+const spotifyApiUsing = (client: HttpClient.HttpClient) =>
+  SpotifyApi.layerWithoutHttpClient.pipe(
+    Layer.provide([Layer.succeed(HttpClient.HttpClient, client), spotifyFakeAccessToken]),
+  )
 
 interface ScriptedResponse {
   readonly status: number
-  readonly body: unknown
+  readonly body: string
   readonly headers?: Record<string, string>
 }
 
-// Answers each request with the next scripted response, repeating the last.
-const scriptedSpotify = (responses: readonly [ScriptedResponse, ...Array<ScriptedResponse>]) => {
+// Answers the n-th request with the n-th scripted response. An unscripted
+// request is a bug in the test, so it dies.
+const scriptedSpotify = (responses: ReadonlyArray<ScriptedResponse>) => {
   let requestCount = 0
-  const client = HttpClient.make((request) =>
-    Effect.sync(() => {
-      const { status, body, headers } = responses[requestCount] ?? responses[0]
-      requestCount += 1
-      return HttpClientResponse.fromWeb(
-        request,
-        new Response(JSON.stringify(body), { status, headers: headers ?? {} }),
+  const client = HttpClient.make((request) => {
+    const scripted = responses[requestCount]
+    requestCount += 1
+    if (scripted === undefined) {
+      return Effect.die(`Unscripted request to ${request.url}`)
+    }
+    const { status, body, headers } = scripted
+    return Effect.succeed(
+      HttpClientResponse.fromWeb(request, new Response(body, { status, headers: headers ?? {} })),
+    )
+  })
+  return { requestCount: () => requestCount, layer: spotifyApiUsing(client) }
+}
+
+const spotifyErrorBody = (status: number, message: string) =>
+  JSON.stringify({ error: { status, message } })
+
+layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
+  test.effect("decodes the current user and every fixture playlist", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+
+      const user = yield* spotify.getCurrentUser
+      const playlists = yield* Stream.runCollect(spotify.currentUserPlaylists)
+      const fullPlaylists = yield* Effect.forEach(playlists, ({ id }) => spotify.getPlaylist(id))
+
+      assert.strictEqual(user.displayName, "Mira Kaelin")
+      assert.deepStrictEqual(
+        fullPlaylists.map(({ name }) => name),
+        fakePlaylists.map(({ name }) => name),
+      )
+      assert.deepStrictEqual(
+        playlists.map(({ items }) => items.total),
+        fakePlaylists.map(({ entries }) => entries.length),
       )
     }),
   )
-  return {
-    requestCount: () => requestCount,
-    layer: SpotifyApi.layerWithoutHttpClient.pipe(
-      Layer.provide([Layer.succeed(HttpClient.HttpClient, client), spotifyFakeAccessToken]),
-    ),
-  }
-}
 
-describe("SpotifyApi.layerFake", () => {
-  it.effect("decodes the current user and every fixture playlist", () =>
-    withFakeSpotify(
-      Effect.gen(function* () {
-        const spotify = yield* SpotifyApi
+  test.effect("streams a playlist's items across several pages in order", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
 
-        const user = yield* spotify.getCurrentUser
-        const playlists = yield* Stream.runCollect(spotify.currentUserPlaylists)
-        const fullPlaylists = yield* Effect.forEach(playlists, ({ id }) => spotify.getPlaylist(id))
+      const items = yield* Stream.runCollect(
+        spotify.playlistItems("fake-playlist-late-night-drive"),
+      )
 
-        assert.strictEqual(user.displayName, "Mira Kaelin")
-        assert.deepStrictEqual(
-          fullPlaylists.map(({ name }) => name),
-          fakePlaylists.map(({ name }) => name),
-        )
-        assert.deepStrictEqual(
-          playlists.map(({ items }) => items.total),
-          fakePlaylists.map(({ entries }) => entries.length),
-        )
-      }),
-    ),
-  )
-
-  it.effect("streams a playlist's items across several pages in order", () =>
-    withFakeSpotify(
-      Effect.gen(function* () {
-        const spotify = yield* SpotifyApi
-
-        const items = yield* Stream.runCollect(
-          spotify.playlistItems("fake-playlist-late-night-drive"),
-        )
-
-        assert.strictEqual(items.length, 120)
-        assert.deepStrictEqual(
-          items.map(({ item }) => item?.id),
-          Array.from({ length: 120 }, (_, index) => `fake-track-${index}`),
-        )
-      }),
-    ),
+      assert.strictEqual(items.length, 120)
+      assert.deepStrictEqual(
+        items.map(({ item }) => item?.id),
+        Array.from({ length: 120 }, (_, index) => `fake-track-${index}`),
+      )
+    }),
   )
 
   // A single local file, podcast episode, or removed track must not make a
   // whole playlist fail to load.
-  it.effect("decodes local files, episodes, and removed tracks in a playlist", () =>
-    withFakeSpotify(
-      Effect.gen(function* () {
-        const spotify = yield* SpotifyApi
+  test.effect("decodes local files, episodes, and removed tracks in a playlist", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
 
-        const items = yield* Stream.runCollect(
-          spotify.playlistItems("fake-playlist-morning-coffee"),
-        )
-        const [localFile, episode, removedTrack] = items.slice(-3)
+      const items = yield* Stream.runCollect(spotify.playlistItems("fake-playlist-morning-coffee"))
+      const playlist = yield* spotify.getPlaylist("fake-playlist-morning-coffee")
+      const [localFile, episode, removedTrack] = items.slice(-3)
 
-        assert.strictEqual(localFile?.isLocal, true)
-        assert.strictEqual(localFile?.item?.id, null)
-        assert.strictEqual(episode?.item?.type, "episode")
-        assert.strictEqual(removedTrack?.item, null)
-      }),
-    ),
+      assert.strictEqual(localFile?.isLocal, true)
+      assert.strictEqual(localFile?.item?.id, null)
+      assert.strictEqual(episode?.item?.type, "episode")
+      assert.strictEqual(removedTrack?.item, null)
+      assert.deepStrictEqual(playlist.items?.items, items)
+    }),
   )
 
-  it.effect("fails with a 403 SpotifyResponseError for items of a followed playlist", () =>
-    withFakeSpotify(
-      Effect.gen(function* () {
-        const spotify = yield* SpotifyApi
+  test.effect("fails with a 403 SpotifyResponseError for items of a followed playlist", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
 
-        const error = yield* Effect.flip(
-          Stream.runCollect(spotify.playlistItems("fake-playlist-indie-finds")),
-        )
+      const error = yield* Effect.flip(
+        Stream.runCollect(spotify.playlistItems("fake-playlist-indie-finds")),
+      )
 
-        assert.strictEqual(error._tag, "SpotifyResponseError")
-        assert.include(error, { status: 403, message: "Forbidden" })
-      }),
-    ),
+      assert.strictEqual(error._tag, "SpotifyResponseError")
+      assert.include(error, { status: 403, message: "Forbidden" })
+    }),
   )
 })
 
@@ -118,10 +112,10 @@ describe("SpotifyApi responses", () => {
     const spotify = scriptedSpotify([
       {
         status: 429,
-        body: { error: { status: 429, message: "API rate limit exceeded" } },
+        body: spotifyErrorBody(429, "API rate limit exceeded"),
         headers: { "retry-after": "5" },
       },
-      { status: 200, body: fakeCurrentUser },
+      { status: 200, body: JSON.stringify(fakeCurrentUser) },
     ])
     return Effect.gen(function* () {
       const api = yield* SpotifyApi
@@ -140,7 +134,7 @@ describe("SpotifyApi responses", () => {
 
   it.effect("fails with SpotifyAuthError carrying Spotify's message on 401", () => {
     const spotify = scriptedSpotify([
-      { status: 401, body: { error: { status: 401, message: "The access token expired" } } },
+      { status: 401, body: spotifyErrorBody(401, "The access token expired") },
     ])
     return Effect.gen(function* () {
       const api = yield* SpotifyApi
@@ -153,7 +147,9 @@ describe("SpotifyApi responses", () => {
   })
 
   it.effect("fails with SpotifyDecodeError when a response does not match the schema", () => {
-    const spotify = scriptedSpotify([{ status: 200, body: { id: 42, images: "none" } }])
+    const spotify = scriptedSpotify([
+      { status: 200, body: JSON.stringify({ id: 42, images: "none" }) },
+    ])
     return Effect.gen(function* () {
       const api = yield* SpotifyApi
 
@@ -161,5 +157,35 @@ describe("SpotifyApi responses", () => {
 
       assert.strictEqual(error._tag, "SpotifyDecodeError")
     }).pipe(Effect.provide(spotify.layer))
+  })
+
+  // Proxies and outages answer with HTML instead of Spotify's error object.
+  it.effect("falls back to a generic message when an error body is not Spotify's", () => {
+    const spotify = scriptedSpotify([{ status: 404, body: "<html>Not Found</html>" }])
+    return Effect.gen(function* () {
+      const api = yield* SpotifyApi
+
+      const error = yield* Effect.flip(api.getCurrentUser)
+
+      assert.strictEqual(error._tag, "SpotifyResponseError")
+      assert.include(error, { status: 404, message: "Spotify responded with HTTP 404" })
+    }).pipe(Effect.provide(spotify.layer))
+  })
+
+  it.effect("fails with SpotifyRequestError when Spotify cannot be reached", () => {
+    const offline = HttpClient.make((request) =>
+      Effect.fail(
+        new HttpClientError.HttpClientError({
+          reason: new HttpClientError.TransportError({ request, description: "Failed to fetch" }),
+        }),
+      ),
+    )
+    return Effect.gen(function* () {
+      const api = yield* SpotifyApi
+
+      const error = yield* Effect.flip(api.getCurrentUser)
+
+      assert.strictEqual(error._tag, "SpotifyRequestError")
+    }).pipe(Effect.provide(spotifyApiUsing(offline)))
   })
 })
