@@ -15,7 +15,7 @@ import {
   fakeShows,
 } from "./spotify-fixtures"
 
-const fakeAccessToken = "fake-access-token"
+export const fakeAccessToken = "fake-access-token"
 
 // Spotify embeds at most this many items in a full playlist object.
 const embeddedItemLimit = 100
