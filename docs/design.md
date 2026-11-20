@@ -49,7 +49,7 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 
 ```
 ┌──────────────┬─────────────────────────────────────┬──────────────┐
-│              │ top bar: back, forward, search, ⚙   │              │
+│              │ top bar: history, search, settings  │              │
 │   sidebar    ├─────────────────────────────────────┤  right pane  │
 │              │                                     │  (optional)  │
 │  200–420 px  │  main view, fluid                   │  280–400 px  │
