@@ -88,15 +88,18 @@ A milestone counts as released once it has an open or merged release PR; a close
 does not count.
 
 Handle the first case that applies, then go on to step 6. Only one release PR is open at a
-time, so two releases never claim the same version.
+time, so two releases never claim the same version. Do branch work in a temporary worktree
+(`git worktree add <scratchpad dir> <branch>`) and remove it after pushing, so the project root
+stays on `main` for step 0.
 
 1. **A release PR is open.** Release nothing else. Move it toward merge with the first
    action that applies:
-   - a check failed or it has conflicts: fix it as in steps 5.3 and 5.4 of
-     [worker.md](worker.md);
-   - it has three `## Agent review: CHANGES REQUESTED` comments: close it with
-     `gh pr close <number> --delete-branch` and create a High-priority `Bug` issue titled
-     `Release v<version> blocked`, with the unresolved findings, in the milestone being
+   - it has conflicts: rebase it on `origin/main`, run `npm pkg set version=<version>` again if
+     `package.json` conflicts, and push with `--force-with-lease`;
+   - a check failed on its first attempt: rerun it with `gh run rerun <id> --failed`;
+   - a check failed again, or it has three `## Agent review: CHANGES REQUESTED` comments: close
+     it with `gh pr close <number> --delete-branch` and create a High-priority `Bug` issue
+     titled `Release v<version> blocked`, with the unresolved findings, in the milestone being
      released. The milestone is then unfinished until that issue is `Done`;
    - its head commit has no passing `agent-review` status: get it reviewed as in step 4 of
      worker.md;
@@ -120,9 +123,9 @@ time, so two releases never claim the same version.
      milestone's release.
 
 3. **The earliest finished milestone is not released.** Take the version in `package.json` on
-   `origin/main` and bump its minor part (`0.1.0` becomes `0.2.0`). On a branch
-   `release/v<version>` from `origin/main`, run `npm pkg set version=<version>`, commit with the
-   PR title, push, and open the PR. Release PRs have no Linear issue, so the body names the
+   `origin/main` and bump its minor part (`0.1.0` becomes `0.2.0`). Create the branch with
+   `git worktree add -b release/v<version> <scratchpad dir> origin/main`. In it, run
+   `npm pkg set version=<version>`, commit with the PR title, push, and open the PR. Release PRs have no Linear issue, so the body names the
    milestone and lists its issues for the reviewer. Get it reviewed and enable auto-merge
    exactly as in steps 4 and 5.1 of [worker.md](worker.md).
 
