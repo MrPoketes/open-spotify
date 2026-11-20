@@ -1,25 +1,16 @@
 import { useRovingFocus } from "../../ui/use-roving-focus"
 import { PlayableItemSummary } from "../playback/playable-item-summary"
+import { withOccurrences } from "../playback/queued-item"
 import { usePlayerCommand } from "../playback/use-player-command"
 import type { PlayableItem } from "../spotify/spotify-playable-item"
 
-// The queue can hold the same item twice, so a row is identified by its URI
-// and how many times that URI comes before it.
-const withOccurrences = (items: ReadonlyArray<PlayableItem>) => {
-  const timesSeen = new Map<string, number>()
-  return items.map((item) => {
-    const occurrence = timesSeen.get(item.uri) ?? 0
-    timesSeen.set(item.uri, occurrence + 1)
-    return { item, occurrence }
-  })
-}
-
 interface UpNextListProps {
   readonly items: ReadonlyArray<PlayableItem>
+  readonly playingUri: string | null
 }
 
 // Spotify cannot remove or reorder queued items, so a row only plays its item.
-export function UpNextList({ items }: UpNextListProps) {
+export function UpNextList({ items, playingUri }: UpNextListProps) {
   const { failure, isSending, send } = usePlayerCommand()
   const { onKeyDown, rowProps } = useRovingFocus(items.length)
 
@@ -29,7 +20,10 @@ export function UpNextList({ items }: UpNextListProps) {
     if (isSending) {
       return
     }
-    send((player) => player.playQueuedItem(item.uri, occurrence), `Couldn't play ${item.name}.`)
+    send(
+      (player) => player.playQueuedItem({ uri: item.uri, occurrence }, playingUri),
+      `Couldn't play ${item.name}.`,
+    )
   }
 
   if (items.length === 0) {

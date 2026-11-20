@@ -90,13 +90,13 @@ describe("QueuePane", () => {
   it("plays an item once when its row is double-clicked", async () => {
     renderQueuePane()
 
-    await userEvent.dblClick(await upNextRow(fakePlayOrder(1).name))
+    await userEvent.dblClick(await upNextRow(fakePlayOrder(3).name))
 
     expect(
-      await within(await section("Now playing")).findByText(fakePlayOrder(1).name),
+      await within(await section("Now playing")).findByText(fakePlayOrder(3).name),
     ).toBeInTheDocument()
     const [nextRow] = await upNextRows()
-    expect(nextRow).toHaveTextContent(fakePlayOrder(2).name)
+    expect(nextRow).toHaveTextContent(fakePlayOrder(4).name)
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
@@ -104,15 +104,15 @@ describe("QueuePane", () => {
     const spotify = gatedQueueReads()
     renderQueuePane(spotify.layer)
 
-    await userEvent.click(await upNextRow(fakePlayOrder(1).name))
+    await userEvent.click(await upNextRow(fakeEpisode.name))
     await userEvent.click(await upNextRow(fakePlayOrder(3).name))
     spotify.open()
 
     expect(
-      await within(await section("Now playing")).findByText(fakePlayOrder(1).name),
+      await within(await section("Now playing")).findByText(fakeEpisode.name),
     ).toBeInTheDocument()
     const [nextRow] = await upNextRows()
-    expect(nextRow).toHaveTextContent(fakePlayOrder(2).name)
+    expect(nextRow).toHaveTextContent(fakePlayOrder(3).name)
   })
 
   // The queue on screen can be out of date, for example after shuffle was
@@ -120,7 +120,7 @@ describe("QueuePane", () => {
   it("says so instead of skipping when the item has left the queue since it was shown", async () => {
     renderQueuePane(queueEmptiedAfterFirstRead())
 
-    await userEvent.click(await upNextRow(fakeTrack(1).name))
+    await userEvent.click(await upNextRow(fakeTrack(2).name))
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "That item is no longer in the queue.",
@@ -151,11 +151,9 @@ describe("QueuePane", () => {
       })),
     )
 
-    await userEvent.click(await upNextRow(fakeTrack(1).name))
+    await userEvent.click(await upNextRow(fakeEpisode.name))
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      `Couldn't play ${fakeTrack(1).name}.`,
-    )
+    expect(await screen.findByRole("alert")).toHaveTextContent(`Couldn't play ${fakeEpisode.name}.`)
   })
 
   it("explains that the queue is empty when nothing is playing or queued", async () => {

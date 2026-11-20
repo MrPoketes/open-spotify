@@ -258,10 +258,13 @@ now-playing bar's layout: 40 px artwork, the title, and the artists or "Podcast 
 upcoming item is a row button, and the list is one tab stop with roving focus. Pressing a row
 plays that item. Spotify has no endpoint for that, so the app reads the queue again, finds the
 item, and skips to the next item once for every item before it; if the item has left the queue,
-an alert under the list says so. Presses while an item is being played are ignored, so a
-double-click plays the item once. Spotify cannot remove or reorder queued items, so the pane offers neither.
+an alert under the list says so. A double-click plays the item once: presses while an item is
+being played are ignored, and a press that finds playback has already moved to its item since
+the list was shown does nothing. Spotify cannot remove or reorder queued items, so the pane
+offers neither.
 
-The queue is read again whenever the playing item changes. With no active device the pane asks
+The queue is read again whenever the playing item changes; after a shuffle change, "Next up"
+keeps the old order until then (ARM-87). With no active device the pane asks
 the user to choose one in the bar, and a queue with nothing in it says so.
 
 ### Settings and the theme picker

@@ -10,8 +10,9 @@ export type QueueContents =
   | { readonly status: "noActiveDevice" }
   | { readonly status: "unreachable" }
 
-// The queue moves on when the playing item changes, and Spotify offers no way
-// to watch it, so it is read again on every change the player state shows.
+// Spotify offers no way to watch the queue. It moves on when the playing item
+// changes, so it is read again whenever the playing item or the player's
+// status changes.
 const playingItemKey = (state: PlayerState) =>
   state.status === "active" ? `active ${state.playback.item?.uri ?? "nothing"}` : state.status
 
