@@ -84,12 +84,13 @@ the `projectMilestone` and `status` fields (`get_milestone` does not list them).
 **released** when a merged release PR names it and GitHub has a release for that PR's version.
 Milestones go in Linear's order (`list_milestones`).
 
-A release PR is titled `Release v<version>: <milestone name>` and changes only `version` in
-`package.json`. List release PRs with:
+A release PR is titled `Release v<version>: <milestone name>`, changes only `version` in
+`package.json`, and comes from a branch in this repository, never a fork. List release PRs with:
 
 ```sh
-gh pr list --state all --search "Release in:title" --limit 100 --json number,title,state,mergedAt \
-  --jq '[.[] | select(.title | startswith("Release v"))]'
+gh pr list --state all --search "Release in:title" --limit 100 \
+  --json number,title,state,mergedAt,isCrossRepository \
+  --jq '[.[] | select((.title | startswith("Release v")) and (.isCrossRepository | not))]'
 ```
 
 Do not search for `"Release v in:title"`: GitHub treats `v` as a separate word and finds nothing.
