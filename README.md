@@ -53,7 +53,8 @@ pnpm dev      # app with hot reload
 pnpm check    # lint, format, typecheck, tests
 ```
 
-Read [AGENTS.md](AGENTS.md) for the coding rules (they apply to humans too) and
+Read [CONTRIBUTING.md](CONTRIBUTING.md) to set up the project and send a pull request,
+[AGENTS.md](AGENTS.md) for the coding rules (they apply to humans too), and
 [docs/architecture.md](docs/architecture.md) for how the pieces fit.
 
 ## License
