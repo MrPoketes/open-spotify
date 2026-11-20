@@ -58,7 +58,7 @@ describe("Library", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading your library")
     await screen.findByRole("list")
-    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    expect(screen.queryByText("Loading your library…")).not.toBeInTheDocument()
   })
 
   it("lists Liked Songs, playlists, albums, artists, and shows with what each one is", async () => {
@@ -141,11 +141,11 @@ describe("Library", () => {
     expect(await libraryEntries()).toHaveLength(allEntries.length)
   })
 
-  it("filters entries by name, ignoring case", async () => {
+  it("filters entries by name, ignoring case and surrounding spaces", async () => {
     renderLibrary()
     await screen.findByRole("list")
 
-    await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "SLOW")
+    await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), " SLOW ")
 
     expect(await entryTexts()).toEqual(["Slow ScienceShow"])
   })
@@ -169,7 +169,9 @@ describe("Library", () => {
 
     await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "zzz")
 
-    expect(screen.getByText("Nothing in your library matches these filters.")).toBeInTheDocument()
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Nothing in your library matches these filters.",
+    )
     expect(screen.queryByRole("list")).not.toBeInTheDocument()
   })
 })

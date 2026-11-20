@@ -52,15 +52,17 @@ function LibraryContent({ onRetry }: { readonly onRetry: () => void }) {
 function FilterableLibrary({ entries }: { readonly entries: ReadonlyArray<LibraryEntry> }) {
   const [filters, setFilters] = useState(noLibraryFilters)
   const matchingEntries = filterLibraryEntries(entries, filters)
+  const hasMatches = matchingEntries.length > 0
 
+  // The output stays mounted while entries match: screen readers only announce
+  // changes to a live region that was already on the page.
   return (
     <div className="flex flex-col">
       <LibraryFilterBar filters={filters} onChange={setFilters} />
-      {matchingEntries.length === 0 ? (
-        <p className="px-2 text-sm text-muted">Nothing in your library matches these filters.</p>
-      ) : (
-        <LibraryEntryList entries={matchingEntries} />
-      )}
+      <output className="px-2 text-sm text-muted">
+        {hasMatches ? "" : "Nothing in your library matches these filters."}
+      </output>
+      {hasMatches && <LibraryEntryList entries={matchingEntries} />}
     </div>
   )
 }

@@ -18,7 +18,7 @@ export function LibraryFilterBar({ filters, onChange }: LibraryFilterBarProps) {
     onChange({ ...filters, kind: filters.kind === kind ? null : kind })
 
   return (
-    <div className="sticky top-0 flex flex-col gap-2 bg-surface px-2 pb-2">
+    <div className="sticky top-0 flex flex-col gap-2 bg-surface px-2 pt-1 pb-2">
       <fieldset className="flex flex-wrap gap-2">
         <legend className="sr-only">Filter by kind</legend>
         {kindChips.map(({ kind, label }) => (
@@ -26,7 +26,7 @@ export function LibraryFilterBar({ filters, onChange }: LibraryFilterBarProps) {
             key={kind}
             label={label}
             pressed={filters.kind === kind}
-            onPress={() => toggleKind(kind)}
+            onClick={() => toggleKind(kind)}
           />
         ))}
       </fieldset>

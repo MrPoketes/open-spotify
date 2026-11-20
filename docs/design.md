@@ -75,9 +75,9 @@ default). Use only these steps:
 
 | Step | Default | Use                                |
 | ---- | ------- | ---------------------------------- |
-| 1    | 4 px    | Icon to label, inside chips        |
+| 1    | 4 px    | Icon to label; chip top and bottom |
 | 2    | 8 px    | Between related controls; pane gap |
-| 3    | 12 px   | Inside list rows and buttons       |
+| 3    | 12 px   | Inside list rows, buttons, chips   |
 | 4    | 16 px   | Between groups in a pane           |
 | 6    | 24 px   | Main view padding; card grid gap   |
 | 8    | 32 px   | Between page sections              |
@@ -163,6 +163,9 @@ pane while the list scrolls. When they match nothing, the list says so instead o
   announce it.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, with a Retry button next to it.
+- When filters match nothing, the list says so inside an `output` element. The element stays on
+  the page while entries match, because screen readers only announce changes to a live region
+  that already exists.
 
 ### Motion
 
