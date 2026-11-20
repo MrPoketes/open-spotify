@@ -77,10 +77,15 @@ If fewer than 5 unblocked issues are in `Todo`, create more from
 
 A milestone is finished when every roadmap item under its heading is ticketed and all of its
 Linear issues are `Done` or `Canceled`. Release PRs are titled
-`Release v<version>: <milestone name>`. List them with
-`gh pr list --state all --search "Release v in:title" --json number,title,state,mergeCommit`
-and keep only titles that start with `Release v`. A milestone counts as released once it has an
-open or merged release PR; a closed, unmerged one does not count.
+`Release v<version>: <milestone name>`. List them with:
+
+```sh
+gh pr list --state all --search "Release in:title" --limit 100 \
+  --json number,title,state,mergeCommit --jq '[.[] | select(.title | startswith("Release v"))]'
+```
+
+A milestone counts as released once it has an open or merged release PR; a closed, unmerged one
+does not count.
 
 Handle the first case that applies, then go on to step 6. Only one release PR is open at a
 time, so two releases never claim the same version.
