@@ -15,9 +15,13 @@ import { RendererRuntimeContext } from "./renderer-runtime"
 
 // Renders a screen the way the app does, inside a router and with a runtime
 // whose DesktopBridge talks to the given fake main process and whose
-// SpotifyApi serves fake data. The returned router shows where the screen
-// navigated to.
-export const renderScreen = (screen: ReactNode, mainProcess: DesktopApi) => {
+// SpotifyApi serves fake data unless the test gives its own. The returned
+// router shows where the screen navigated to.
+export const renderScreen = (
+  screen: ReactNode,
+  mainProcess: DesktopApi,
+  spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake,
+) => {
   const rootRoute = createRootRoute()
   const screenRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -29,10 +33,7 @@ export const renderScreen = (screen: ReactNode, mainProcess: DesktopApi) => {
     history: createMemoryHistory({ initialEntries: ["/screen"] }),
   })
   const runtime = ManagedRuntime.make(
-    Layer.merge(
-      Layer.succeed(DesktopBridge)(DesktopBridge.make(mainProcess)),
-      SpotifyApi.layerFake,
-    ),
+    Layer.merge(Layer.succeed(DesktopBridge)(DesktopBridge.make(mainProcess)), spotifyApi),
   )
   render(
     <RendererRuntimeContext value={runtime}>

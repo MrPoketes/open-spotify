@@ -5,9 +5,11 @@ import {
   HttpClientRequest,
   type HttpClientResponse,
 } from "effect/http"
+import { type AccessTokenError, SessionExpired } from "../../../shared/spotify-auth-replies"
+import type { DesktopBridgeError } from "../../lib/desktop-bridge"
 import { SavedAlbum } from "./spotify-album"
 import { Artist } from "./spotify-artist"
-import { SpotifyAccessToken, SpotifyAuthError } from "./spotify-access-token"
+import { SpotifyAccessToken } from "./spotify-access-token"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
 import { Paging, streamPages } from "./spotify-paging"
 import { Playlist, PlaylistItem, SimplifiedPlaylist } from "./spotify-playlist"
@@ -30,7 +32,8 @@ export class SpotifyDecodeError extends Schema.TaggedError<SpotifyDecodeError>()
 ) {}
 
 export type SpotifyApiError =
-  | SpotifyAuthError
+  | AccessTokenError
+  | DesktopBridgeError
   | SpotifyResponseError
   | SpotifyRequestError
   | SpotifyDecodeError
@@ -61,10 +64,12 @@ const errorMessage = (response: HttpClientResponse.HttpClientResponse) =>
 const failForStatus = Effect.fn("SpotifyApi.failForStatus")(function* (
   response: HttpClientResponse.HttpClientResponse,
 ) {
-  const message = yield* errorMessage(response)
+  // The main process refreshes the token before it expires, so a 401 means
+  // the user revoked the app's access and has to log in again.
   if (response.status === 401) {
-    return yield* new SpotifyAuthError({ message })
+    return yield* new SessionExpired()
   }
+  const message = yield* errorMessage(response)
   return yield* new SpotifyResponseError({ status: response.status, message })
 })
 

@@ -1,10 +1,14 @@
-import { render, screen, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Layer, ManagedRuntime, Stream } from "effect"
+import { Effect, Layer, Stream } from "effect"
 import { describe, expect, it } from "vitest"
-import { DesktopBridge } from "../../lib/desktop-bridge"
+import {
+  AccessTokenUnavailable,
+  NotLoggedIn,
+  SessionExpired,
+} from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
-import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { renderScreen } from "../../lib/render-screen"
 import { SpotifyApi, type SpotifyApiError, SpotifyResponseError } from "../spotify/spotify-api"
 import {
   fakeFollowedArtists,
@@ -38,15 +42,11 @@ const failingOnce = <A,>(stream: Stream.Stream<A, SpotifyApiError>) => {
   })
 }
 
-const renderLibrary = (spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake) => {
-  const desktopBridge = Layer.succeed(DesktopBridge)(DesktopBridge.make(fakeMainProcess()))
-  const runtime = ManagedRuntime.make(Layer.merge(spotifyApi, desktopBridge))
-  render(
-    <RendererRuntimeContext value={runtime}>
-      <Library />
-    </RendererRuntimeContext>,
-  )
-}
+const renderLibrary = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
+  renderScreen(<Library />, fakeMainProcess(), spotifyApi)
+
+const failingWith = (error: SpotifyApiError) =>
+  spotifyApiWith(() => ({ savedShows: Stream.fail(error) }))
 
 const libraryEntries = async () => within(await screen.findByRole("list")).getAllByRole("listitem")
 
@@ -56,7 +56,7 @@ describe("Library", () => {
   it("says the library is loading until it arrives", async () => {
     renderLibrary()
 
-    expect(screen.getByRole("status")).toHaveTextContent("Loading your library")
+    expect(await screen.findByRole("status")).toHaveTextContent("Loading your library")
     await screen.findByRole("list")
     expect(screen.queryByText("Loading your library…")).not.toBeInTheDocument()
   })
@@ -110,6 +110,32 @@ describe("Library", () => {
 
     expect(await libraryEntries()).not.toHaveLength(0)
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("goes to the login screen, saying why, when the session has expired", async () => {
+    const router = renderLibrary(failingWith(new SessionExpired()))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
+  })
+
+  it("goes to the login screen when the user is not logged in", async () => {
+    const router = renderLibrary(failingWith(new NotLoggedIn()))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({})
+  })
+
+  // The main process keeps the session when Spotify is briefly unreachable,
+  // so logging in again would not help and Retry can.
+  it("offers Retry instead of login when Spotify cannot refresh the session right now", async () => {
+    const router = renderLibrary(
+      failingWith(new AccessTokenUnavailable({ message: "Spotify is unreachable" })),
+    )
+
+    const failure = await screen.findByRole("alert")
+    expect(within(failure).getByRole("button", { name: "Retry" })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe("/screen")
   })
 
   it("narrows the list to one kind when its chip is pressed, counting Liked Songs as a playlist", async () => {
