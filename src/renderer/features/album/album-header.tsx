@@ -1,3 +1,4 @@
+import { formatArtistNames } from "../spotify/format-artist-names"
 import { Disc3 } from "lucide-react"
 import { PageHeader } from "../../ui/page-header"
 import type { Album } from "../spotify/spotify-album"
@@ -11,7 +12,7 @@ interface AlbumHeaderProps {
 
 export function AlbumHeader({ album, totalDurationMs }: AlbumHeaderProps) {
   const details = [
-    album.artists.map(({ name }) => name).join(", "),
+    formatArtistNames(album.artists),
     // Release dates start with the year, whatever their precision.
     album.releaseDate.slice(0, 4),
     formatTrackCount(album.totalTracks),

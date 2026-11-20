@@ -2,6 +2,7 @@ import { Disc3, Radio } from "lucide-react"
 import { useState } from "react"
 import { AccentButton } from "../../ui/accent-button"
 import { Artwork } from "../../ui/artwork"
+import { formatArtistNames } from "../spotify/format-artist-names"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
 import { DevicePicker } from "./device-picker"
 import { PlaybackControls } from "./playback-controls"
@@ -88,9 +89,7 @@ function PlayingItem({ item }: { readonly item: NonNullable<PlaybackState["item"
       <div className="flex min-w-0 flex-col">
         <p className="truncate text-sm">{item.name}</p>
         {isTrack && (
-          <p className="truncate text-xs text-muted">
-            {item.artists.map(({ name }) => name).join(", ")}
-          </p>
+          <p className="truncate text-xs text-muted">{formatArtistNames(item.artists)}</p>
         )}
       </div>
     </div>

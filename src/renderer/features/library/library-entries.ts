@@ -1,3 +1,4 @@
+import { formatArtistNames } from "../spotify/format-artist-names"
 import { Effect, Stream } from "effect"
 import { songCountText } from "../liked-songs/song-count-text"
 import type { SavedAlbum } from "../spotify/spotify-album"
@@ -46,7 +47,7 @@ const albumEntry = ({ album }: SavedAlbum): LibraryEntry => ({
   uri: album.uri,
   kind: "album",
   name: album.name,
-  details: `Album · ${album.artists.map(({ name }) => name).join(", ")}`,
+  details: `Album · ${formatArtistNames(album.artists)}`,
   images: album.images,
   page: { to: "/album/$albumId", params: { albumId: album.id } },
 })

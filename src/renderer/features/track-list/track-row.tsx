@@ -116,7 +116,7 @@ function AlbumCell({ album, tabIndex }: AlbumCellProps) {
         to="/album/$albumId"
         params={{ albumId: album.id }}
         tabIndex={tabIndex}
-        className="hover:text-foreground hover:underline"
+        className="transition-colors duration-120 ease-out hover:text-foreground hover:underline"
       >
         {album.name}
       </Link>
