@@ -178,6 +178,20 @@ describe("SpotifyApi responses", () => {
     }).pipe(Effect.provide(spotify.layer))
   })
 
+  // Spotify has deprecated genres, and the artist page must still open once
+  // it stops sending them.
+  it.effect("decodes an artist whose response has no genres", () => {
+    const artistWithoutGenres = { id: "fake-artist", name: "Fake Artist", images: [], uri: "" }
+    const spotify = scriptedSpotify([{ status: 200, body: JSON.stringify(artistWithoutGenres) }])
+    return Effect.gen(function* () {
+      const api = yield* SpotifyApi
+
+      const artist = yield* api.getArtist("fake-artist")
+
+      assert.deepStrictEqual(artist.genres, [])
+    }).pipe(Effect.provide(spotify.layer))
+  })
+
   it.effect("fails with SpotifyDecodeError when a response does not match the schema", () => {
     const spotify = scriptedSpotify([
       { status: 200, body: JSON.stringify({ id: 42, images: "none" }) },

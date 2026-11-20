@@ -20,6 +20,12 @@ const renderAlbumPage = (albumId: string, spotifyApi?: Layer.Layer<SpotifyApi>) 
     spotifyApi,
   )
 
+// The lines under the title sit beside it, in the element that holds both.
+const albumHeader = async (albumName: string) => {
+  const title = await screen.findByRole("heading", { name: albumName, level: 1 })
+  return title.parentElement ?? title
+}
+
 const spotifyFailingFirstAlbumRequest = SpotifyApi.layerFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return { getAlbum: (albumId) => failFirst(spotify.getAlbum(albumId)) }
@@ -29,17 +35,41 @@ describe("AlbumPage", () => {
   it("shows the album's name, artists, release year, track count, and duration", async () => {
     renderAlbumPage("fake-album-0")
 
-    expect(
-      await screen.findByRole("heading", { name: "Glass Harbour", level: 1 }),
-    ).toBeInTheDocument()
-    expect(screen.getByText("Northbound Static · 2019 · 10 tracks · 30 min")).toBeInTheDocument()
+    const header = await albumHeader("Glass Harbour")
+    expect(header).toHaveTextContent("Northbound Static · 2019 · 10 tracks · 30 min")
   })
 
   // Spotify embeds only the first 50 tracks, and the total must count them all.
   it("adds the tracks after the first page to the total duration", async () => {
     renderAlbumPage("fake-album-4")
 
-    expect(await screen.findByText("Kite Theory · 2016 · 60 tracks · 3 hr 15 min")).toBeVisible()
+    const header = await albumHeader("Low Orbit")
+    expect(header).toHaveTextContent("Kite Theory · 2016 · 60 tracks · 3 hr 15 min")
+  })
+
+  it("links the album's artist to their artist page", async () => {
+    renderAlbumPage("fake-album-0")
+
+    const header = await albumHeader("Glass Harbour")
+    expect(within(header).getByRole("link", { name: "Northbound Static" })).toHaveAttribute(
+      "href",
+      "/artist/fake-artist-0",
+    )
+  })
+
+  it("links each artist of a track with several artists to their own page", async () => {
+    const router = renderAlbumPage("fake-album-0")
+    const row = await screen.findByRole("row", {
+      name: "Glass Harbour, part 1.3 by Northbound Static, Lena Varga",
+    })
+
+    expect(within(row).getByRole("link", { name: "Northbound Static" })).toHaveAttribute(
+      "href",
+      "/artist/fake-artist-0",
+    )
+    await userEvent.click(within(row).getByRole("link", { name: "Lena Varga" }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/artist/fake-artist-1"))
   })
 
   it("groups the tracks of a two-disc album under a heading for each disc", async () => {

@@ -136,8 +136,17 @@ describe("PlaylistPage", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/album/fake-album-0"))
   })
 
-  // Tab must leave a long list after one row, not walk every album link in it.
-  it("puts only the tab stop row's album link in the tab order", async () => {
+  it("opens a track's artist page from the artist's name", async () => {
+    const { router } = await renderPlaylistPage("fake-playlist-late-night-drive")
+    const row = await screen.findByRole("row", { name: "Quiet Rivers by Northbound Static" })
+
+    await userEvent.click(within(row).getByRole("link", { name: "Northbound Static" }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/artist/fake-artist-0"))
+  })
+
+  // Tab must leave a long list after one row, not walk every link in it.
+  it("puts only the tab stop row's artist and album links in the tab order", async () => {
     await renderPlaylistPage("fake-playlist-late-night-drive")
     const tracks = await screen.findByRole("table", { name: "Tracks" })
     const user = userEvent.setup()
@@ -145,6 +154,8 @@ describe("PlaylistPage", () => {
     const firstRow = screen.getByRole("row", { name: "Quiet Rivers by Northbound Static" })
 
     await user.tab()
+    await user.tab()
+    expect(within(firstRow).getByRole("link", { name: "Northbound Static" })).toHaveFocus()
     await user.tab()
     expect(within(firstRow).getByRole("link", { name: "Glass Harbour" })).toHaveFocus()
 

@@ -15,6 +15,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppAlbumAlbumIdRouteImport } from './routes/_app/album.$albumId'
+import { Route as AppArtistArtistIdRouteImport } from './routes/_app/artist.$artistId'
 import { Route as AppCollectionTracksRouteImport } from './routes/_app/collection.tracks'
 import { Route as AppFolderFolderIdRouteImport } from './routes/_app/folder.$folderId'
 import { Route as AppPlaylistPlaylistIdRouteImport } from './routes/_app/playlist.$playlistId'
@@ -49,6 +50,11 @@ const AppAlbumAlbumIdRoute = AppAlbumAlbumIdRouteImport.update({
   path: '/album/$albumId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppArtistArtistIdRoute = AppArtistArtistIdRouteImport.update({
+  id: '/artist/$artistId',
+  path: '/artist/$artistId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCollectionTracksRoute = AppCollectionTracksRouteImport.update({
   id: '/collection/tracks',
   path: '/collection/tracks',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof AppSettingsRoute
   '/album/$albumId': typeof AppAlbumAlbumIdRoute
+  '/artist/$artistId': typeof AppArtistArtistIdRoute
   '/collection/tracks': typeof AppCollectionTracksRoute
   '/folder/$folderId': typeof AppFolderFolderIdRoute
   '/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
   '/album/$albumId': typeof AppAlbumAlbumIdRoute
+  '/artist/$artistId': typeof AppArtistArtistIdRoute
   '/collection/tracks': typeof AppCollectionTracksRoute
   '/folder/$folderId': typeof AppFolderFolderIdRoute
   '/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
   '/_app/album/$albumId': typeof AppAlbumAlbumIdRoute
+  '/_app/artist/$artistId': typeof AppArtistArtistIdRoute
   '/_app/collection/tracks': typeof AppCollectionTracksRoute
   '/_app/folder/$folderId': typeof AppFolderFolderIdRoute
   '/_app/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/album/$albumId'
+    | '/artist/$artistId'
     | '/collection/tracks'
     | '/folder/$folderId'
     | '/playlist/$playlistId'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/'
     | '/album/$albumId'
+    | '/artist/$artistId'
     | '/collection/tracks'
     | '/folder/$folderId'
     | '/playlist/$playlistId'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/'
     | '/_app/album/$albumId'
+    | '/_app/artist/$artistId'
     | '/_app/collection/tracks'
     | '/_app/folder/$folderId'
     | '/_app/playlist/$playlistId'
@@ -192,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAlbumAlbumIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/artist/$artistId': {
+      id: '/_app/artist/$artistId'
+      path: '/artist/$artistId'
+      fullPath: '/artist/$artistId'
+      preLoaderRoute: typeof AppArtistArtistIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/collection/tracks': {
       id: '/_app/collection/tracks'
       path: '/collection/tracks'
@@ -227,6 +246,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAlbumAlbumIdRoute: typeof AppAlbumAlbumIdRoute
+  AppArtistArtistIdRoute: typeof AppArtistArtistIdRoute
   AppCollectionTracksRoute: typeof AppCollectionTracksRoute
   AppFolderFolderIdRoute: typeof AppFolderFolderIdRoute
   AppPlaylistPlaylistIdRoute: typeof AppPlaylistPlaylistIdRoute
@@ -237,6 +257,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppAlbumAlbumIdRoute: AppAlbumAlbumIdRoute,
+  AppArtistArtistIdRoute: AppArtistArtistIdRoute,
   AppCollectionTracksRoute: AppCollectionTracksRoute,
   AppFolderFolderIdRoute: AppFolderFolderIdRoute,
   AppPlaylistPlaylistIdRoute: AppPlaylistPlaylistIdRoute,

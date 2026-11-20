@@ -1,4 +1,3 @@
-import { formatArtistNames } from "../spotify/format-artist-names"
 import type { AlbumTrack } from "../spotify/spotify-album"
 import { TrackList } from "../track-list/track-list"
 import type { TrackListEntry } from "../track-list/track-row"
@@ -10,7 +9,7 @@ interface Disc {
 
 const albumTrackEntry = (track: AlbumTrack): TrackListEntry => ({
   title: track.name,
-  artists: formatArtistNames(track.artists),
+  artists: track.artists,
   album: null,
   artwork: [],
   addedAt: null,

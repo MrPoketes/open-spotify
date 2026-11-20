@@ -69,7 +69,9 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 - Track lists use fixed columns: index, title and artist, album, date added, duration. Columns
   that do not fit the pane width are hidden from the right, never squeezed: date added goes
   first, below 768 px, then the album, below 576 px. Duration always stays. An album name links
-  to its album page.
+  to its album page, and each artist name links to that artist's page, so a track with several
+  artists has one link per name. Only the row that is the list's tab stop puts these links in
+  the tab order.
 - An album's track list shows track numbers and leaves out artwork, album, and date added,
   which every track on it shares or lacks. A multi-disc album gets one list per disc, each under
   a "Disc 1", "Disc 2" heading; a single-disc album gets no heading.
@@ -258,6 +260,24 @@ chooses it; with a field still invalid or the name or author empty, it says so i
 instead. A theme the main process refuses, such as one named like a built-in theme, shows its
 reason in the same `alert`. Cancel (round `surface-raised`), or leaving the page, discards the
 changes and restores the saved theme.
+
+### Artist page
+
+The header is the page header every page shares, with the artist's image as a round cover, a
+`text-xs` "Artist" label, the name in `text-5xl`, and the genres in `text-sm` `muted` when
+Spotify lists any. Below it the discography comes in up to three sections, in this order:
+Albums, Singles and EPs, Appears On. A section with no releases is left out; an artist with
+none at all says so.
+
+Each section has a `text-xl` heading and a card grid. A card shows the cover, the name in
+`text-sm` at 600, and the release year in `text-xs` `muted`, and links to the album page. A
+section shows one row of cards, as many as fit the pane width. When it has more, a "Show all"
+button at the right end of the heading reveals the rest and becomes "Show fewer"; it sets
+`aria-expanded`. The revealed grid loads its next page when its end scrolls into view, like any
+long list. Each grid is one tab stop with roving focus.
+
+Spotify no longer gives development-mode apps an artist's top tracks, followers, or popularity,
+so the page does not show them.
 
 ### Folder page
 

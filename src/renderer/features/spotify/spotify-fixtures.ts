@@ -3,7 +3,7 @@
 export const fakeListenerId = "fake-listener"
 
 // The .invalid domain never resolves, so the UI shows its image fallback.
-const coverUrl = (id: string) => `https://covers.open-spotify.invalid/${id}.jpg`
+export const coverUrl = (id: string) => `https://covers.open-spotify.invalid/${id}.jpg`
 
 const pickInTurn = <A>(values: readonly [A, ...Array<A>], index: number): A =>
   values[index % values.length] ?? values[0]
@@ -35,6 +35,12 @@ const albums = [
 
 type FakeSimplifiedAlbum = (typeof albums)[number]
 
+// The third track of Glass Harbour features a second artist.
+const artistsOfAlbumTrack = (album: FakeSimplifiedAlbum, trackNumber: number) =>
+  album.id === "fake-album-0" && trackNumber === 3
+    ? [...album.artists, { id: "fake-artist-1", name: "Lena Varga" }]
+    : album.artists
+
 const fakeAlbumTrack = (album: FakeSimplifiedAlbum, discNumber: number, trackNumber: number) => ({
   type: "track",
   id: `${album.id}-track-${discNumber}-${trackNumber}`,
@@ -44,7 +50,7 @@ const fakeAlbumTrack = (album: FakeSimplifiedAlbum, discNumber: number, trackNum
   explicit: false,
   disc_number: discNumber,
   track_number: trackNumber,
-  artists: album.artists,
+  artists: artistsOfAlbumTrack(album, trackNumber),
 })
 
 const fakeFullAlbum = (
@@ -223,10 +229,12 @@ const followedArtistNames = [
 ]
 
 // More artists than fit on one page, so a client has to follow the cursor.
+// Spotify sends an empty list of genres for an artist it has not classified.
 export const fakeFollowedArtists = followedArtistNames.map((name, index) => ({
   id: `fake-artist-${index}`,
   name,
   images: [{ url: coverUrl(`artist-${index}`), width: 320, height: 320 }],
+  genres: index === 0 ? ["dream pop", "shoegaze"] : [],
   uri: `spotify:artist:fake-${index}`,
   type: "artist",
 }))

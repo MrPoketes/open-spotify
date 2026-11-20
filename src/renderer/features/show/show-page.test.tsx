@@ -1,45 +1,19 @@
-import { act, screen, waitFor, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Layer } from "effect"
 import { HttpClient, HttpClientError } from "effect/http"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
+import {
+  installFakeIntersectionObserver,
+  scrollObservedElementsIntoView,
+} from "../../lib/fake-intersection-observer"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "../spotify/spotify-fake-server"
 import { ShowPage } from "./show-page"
 
-type IntersectionCallback = (entries: ReadonlyArray<{ readonly isIntersecting: boolean }>) => void
-
-// jsdom has no IntersectionObserver. This one reports that the observed
-// element is visible only when a test scrolls to it.
-const intersectionCallbacks = new Set<IntersectionCallback>()
-
-class FakeIntersectionObserver {
-  readonly #callback: IntersectionCallback
-  constructor(callback: IntersectionCallback) {
-    this.#callback = callback
-  }
-  observe() {
-    intersectionCallbacks.add(this.#callback)
-  }
-  disconnect() {
-    intersectionCallbacks.delete(this.#callback)
-  }
-}
-
-const scrollToEndOfEpisodes = () => {
-  act(() => {
-    for (const callback of intersectionCallbacks) {
-      callback([{ isIntersecting: true }])
-    }
-  })
-}
-
-beforeEach(() => {
-  intersectionCallbacks.clear()
-  vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver)
-})
+beforeEach(installFakeIntersectionObserver)
 
 // Serves the fixtures while online and fails like fetch does while offline.
 const spotifyWithConnection = () => {
@@ -88,7 +62,7 @@ describe("ShowPage", () => {
     renderShowPage("fake-show-slow-science")
     await screen.findByRole("heading", { level: 1 })
 
-    scrollToEndOfEpisodes()
+    scrollObservedElementsIntoView()
 
     // 60 episodes, one of which Spotify no longer serves.
     await waitFor(() => expect(episodeRows()).toHaveLength(59))
@@ -181,7 +155,7 @@ describe("ShowPage", () => {
     await screen.findByRole("heading", { level: 1 })
 
     spotify.setOnline(false)
-    scrollToEndOfEpisodes()
+    scrollObservedElementsIntoView()
     expect(await screen.findByRole("alert")).toHaveTextContent("More episodes didn't load.")
     spotify.setOnline(true)
     await userEvent.click(screen.getByRole("button", { name: "Retry" }))

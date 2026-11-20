@@ -70,37 +70,23 @@ function LibraryEntryList({ entries }: { readonly entries: ReadonlyArray<Library
   )
 }
 
-const entryRowClassName = "flex items-center gap-3 rounded-small px-2 py-1"
-
 interface LibraryEntryRowProps {
   readonly entry: LibraryEntry
   readonly rovingProps: RovingRowProps
 }
 
 function LibraryEntryRow({ entry, rovingProps }: LibraryEntryRowProps) {
-  const content = (
-    <>
+  return (
+    <Link
+      {...entry.page}
+      {...rovingProps}
+      className="flex items-center gap-3 rounded-small px-2 py-1 transition-colors duration-120 ease-out hover:bg-surface-raised"
+    >
       <LibraryEntryArtwork kind={entry.kind} images={entry.images} />
       <div className="flex min-w-0 flex-col">
         <span className="truncate text-sm">{entry.name}</span>
         <span className="truncate text-xs text-muted">{entry.details}</span>
       </div>
-    </>
-  )
-  if (entry.page === null) {
-    return (
-      <div {...rovingProps} className={entryRowClassName}>
-        {content}
-      </div>
-    )
-  }
-  return (
-    <Link
-      {...entry.page}
-      {...rovingProps}
-      className={`${entryRowClassName} transition-colors duration-120 ease-out hover:bg-surface-raised`}
-    >
-      {content}
     </Link>
   )
 }

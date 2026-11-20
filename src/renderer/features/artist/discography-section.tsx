@@ -1,0 +1,81 @@
+import { Disc3 } from "lucide-react"
+import { useId, useState } from "react"
+import { CardGrid, type GridCard } from "../../ui/card-grid"
+import { useCardGridColumnCount } from "../../ui/use-card-grid-column-count"
+import { ErrorWithRetry } from "../../ui/error-with-retry"
+import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
+import type { ArtistAlbum, ArtistAlbumsPage } from "../spotify/spotify-album"
+import type { AlbumGroup } from "../spotify/spotify-api"
+import { useArtistAlbums } from "./use-artist-albums"
+
+const albumCard = (album: ArtistAlbum): GridCard => ({
+  key: album.id,
+  link: { to: "/album/$albumId", params: { albumId: album.id } },
+  title: album.name,
+  // Release dates start with the year, whatever their precision.
+  details: album.releaseDate.slice(0, 4),
+  artwork: album.images,
+  placeholderIcon: Disc3,
+})
+
+interface DiscographySectionProps {
+  readonly title: string
+  readonly artistId: string
+  readonly albumGroup: AlbumGroup
+  readonly firstPage: ArtistAlbumsPage
+}
+
+// One row of cards until "Show all" reveals the rest, which load page by page
+// as the end of the grid scrolls into view.
+export function DiscographySection({
+  title,
+  artistId,
+  albumGroup,
+  firstPage,
+}: DiscographySectionProps) {
+  const headingId = useId()
+  const gridId = useId()
+  const [isExpanded, setIsExpanded] = useState(false)
+  const { gridRef, columnCount } = useCardGridColumnCount()
+  const { albums, nextOffset, nextPage, loadNextPage } = useArtistAlbums({
+    artistId,
+    albumGroup,
+    firstPage,
+  })
+  const shownAlbums = isExpanded ? albums : albums.slice(0, columnCount)
+  // A wide pane can fit more cards on a row than one page holds.
+  const needsMoreAlbums = isExpanded || albums.length < columnCount
+  const scrollEndRef = useScrolledIntoView(
+    loadNextPage,
+    needsMoreAlbums && nextOffset !== null && nextPage === "idle",
+  )
+
+  return (
+    <section aria-labelledby={headingId} className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4">
+        <h2 id={headingId} className="font-display text-xl font-bold">
+          {title}
+        </h2>
+        {firstPage.total > columnCount ? (
+          <button
+            type="button"
+            aria-expanded={isExpanded}
+            aria-controls={gridId}
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="rounded-small px-2 py-1 text-sm font-semibold text-muted transition-colors duration-120 ease-out hover:text-foreground"
+          >
+            {isExpanded ? "Show fewer" : "Show all"}
+          </button>
+        ) : null}
+      </div>
+      <CardGrid id={gridId} ref={gridRef} label={title} cards={shownAlbums.map(albumCard)} />
+      {nextPage === "loading" ? (
+        <output className="text-sm text-muted">Loading more releases…</output>
+      ) : null}
+      {nextPage === "failed" ? (
+        <ErrorWithRetry message="More releases didn't load." onRetry={loadNextPage} />
+      ) : null}
+      <div ref={scrollEndRef} />
+    </section>
+  )
+}

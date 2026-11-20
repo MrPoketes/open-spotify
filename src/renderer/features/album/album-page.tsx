@@ -1,6 +1,7 @@
 import { Effect, Stream } from "effect"
 import { useLoad } from "../../lib/use-load"
-import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
+import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
+import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { AlbumHeader } from "./album-header"
 import { AlbumTracks } from "./album-tracks"
@@ -17,11 +18,6 @@ const loadAlbum = Effect.fn("loadAlbum")(function* (albumId: string) {
   return { album, tracks: [...album.tracks.items, ...laterTracks] }
 })
 
-// Spotify answers 400 for an id that cannot be an album's and 404 for one
-// that belongs to no album.
-const isUnknownAlbum = (error: SpotifyApiError) =>
-  error._tag === "SpotifyResponseError" && (error.status === 400 || error.status === 404)
-
 function AlbumNotFound() {
   return (
     <section className="flex flex-col gap-2">
@@ -37,7 +33,7 @@ export function AlbumPage({ albumId }: { readonly albumId: string }) {
   if (state.status === "loading") {
     return <output className="text-sm text-muted">Loading album…</output>
   }
-  if (state.status === "failed" && isUnknownAlbum(state.error)) {
+  if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
     return <AlbumNotFound />
   }
   if (state.status === "failed") {
