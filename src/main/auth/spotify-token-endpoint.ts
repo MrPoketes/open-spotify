@@ -54,39 +54,41 @@ export class SpotifyTokenEndpoint extends Context.Service<
     Effect.gen(function* () {
       const client = yield* HttpClient.HttpClient
 
-      const requestTokens = Effect.fn("SpotifyTokenEndpoint.requestTokens")(function* <A>(
-        form: UrlParams.Input,
-        responseSchema: Schema.Decoder<A>,
-      ): Effect.fn.Return<A, TokenRequestError> {
-        const request = HttpClientRequest.post(spotifyTokenUrl).pipe(
-          HttpClientRequest.bodyUrlParams(form),
-          HttpClientRequest.acceptJson,
-        )
-        const response = yield* client.execute(request).pipe(
-          Effect.mapError((cause) => new TokenRequestFailed({ cause })),
-          Effect.timeoutOrElse({
-            duration: tokenRequestTimeout,
-            orElse: () => Effect.fail(new TokenRequestFailed({ cause: "Spotify did not answer" })),
-          }),
-        )
-        const decodeBody = <B>(schema: Schema.Decoder<B>) =>
-          response.json.pipe(
-            Effect.flatMap(Schema.decodeUnknownEffect(schema)),
-            Effect.mapError((cause) => new TokenRequestFailed({ cause })),
+      const requestTokens = Effect.fn("SpotifyTokenEndpoint.requestTokens")(
+        function* <A>(
+          form: UrlParams.Input,
+          responseSchema: Schema.Decoder<A>,
+        ): Effect.fn.Return<A, TokenRequestError> {
+          const request = HttpClientRequest.post(spotifyTokenUrl).pipe(
+            HttpClientRequest.bodyUrlParams(form),
+            HttpClientRequest.acceptJson,
           )
-        // Spotify answers a code or refresh token it will not accept with
-        // 400 or 401. Other statuses, such as 429, say nothing about the token.
-        if (response.status === 400 || response.status === 401) {
-          const { error } = yield* decodeBody(TokenErrorBody)
-          return yield* new TokenRequestRejected({ error })
-        }
-        if (response.status !== 200) {
-          return yield* new TokenRequestFailed({
-            cause: `Spotify responded with HTTP ${response.status}`,
-          })
-        }
-        return yield* decodeBody(responseSchema)
-      })
+          const response = yield* client
+            .execute(request)
+            .pipe(Effect.mapError((cause) => new TokenRequestFailed({ cause })))
+          const decodeBody = <B>(schema: Schema.Decoder<B>) =>
+            response.json.pipe(
+              Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+              Effect.mapError((cause) => new TokenRequestFailed({ cause })),
+            )
+          // Spotify answers a code or refresh token it will not accept with
+          // 400 or 401. Other statuses, such as 429, say nothing about the token.
+          if (response.status === 400 || response.status === 401) {
+            const { error } = yield* decodeBody(TokenErrorBody)
+            return yield* new TokenRequestRejected({ error })
+          }
+          if (response.status !== 200) {
+            return yield* new TokenRequestFailed({
+              cause: `Spotify responded with HTTP ${response.status}`,
+            })
+          }
+          return yield* decodeBody(responseSchema)
+        },
+        Effect.timeoutOrElse({
+          duration: tokenRequestTimeout,
+          orElse: () => Effect.fail(new TokenRequestFailed({ cause: "Spotify did not answer" })),
+        }),
+      )
 
       return SpotifyTokenEndpoint.of({
         exchangeCode: ({ clientId, code, codeVerifier }) =>
