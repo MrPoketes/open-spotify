@@ -1,6 +1,8 @@
-import { useLocation, useRouter } from "@tanstack/react-router"
+import { type ParsedLocation, useRouter } from "@tanstack/react-router"
+import { Option, Schema } from "effect"
 import { Search } from "lucide-react"
 import { type KeyboardEvent, type RefObject, useEffect, useRef, useState } from "react"
+import { SearchParams } from "./search-params"
 
 // Long enough that a word typed at a normal pace sends one search, short
 // enough that results seem to follow the typing.
@@ -8,7 +10,8 @@ const typingPauseMs = 300
 
 const isTextEntry = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
-  (target.isContentEditable || target.matches("input, textarea, select"))
+  (target.isContentEditable ||
+    target.matches("textarea, select, input:not([type='checkbox'], [type='radio'])"))
 
 function useSlashToFocus(input: RefObject<HTMLInputElement | null>) {
   useEffect(() => {
@@ -27,36 +30,48 @@ function useSlashToFocus(input: RefObject<HTMLInputElement | null>) {
   }, [input])
 }
 
-// The query of the search page on screen, or null on any other page.
-function useShownQuery() {
-  const location = useLocation()
-  return location.pathname === "/search" ? (location.search.q ?? "") : null
+const decodeSearchParams = Schema.decodeUnknownOption(SearchParams)
+
+// The query a page shows if it is the search page, or null for any other page.
+const queryShownAt = ({ pathname, search }: ParsedLocation) => {
+  if (pathname !== "/search") {
+    return null
+  }
+  return decodeSearchParams(search).pipe(
+    Option.map(({ q }) => q ?? ""),
+    Option.getOrElse(() => ""),
+  )
 }
 
 export function SearchField() {
   const router = useRouter()
-  const shownQuery = useShownQuery()
-  const [text, setText] = useState(shownQuery ?? "")
+  const [text, setText] = useState(() => queryShownAt(router.state.location) ?? "")
   const input = useRef<HTMLInputElement>(null)
-  const sentQuery = useRef(shownQuery)
+  const sentQuery = useRef(queryShownAt(router.state.location))
   const pendingSearch = useRef<ReturnType<typeof setTimeout>>(undefined)
   useSlashToFocus(input)
 
-  // Back and forward can show another search than the one typed last, and the
-  // field follows it. A query the field sent itself may arrive while the user
-  // types on, so it must not overwrite the field. Away from search the field
+  // The search the field sent may arrive while the user types on, so it
+  // changes nothing. Any other page means the user went elsewhere: a search
+  // still waiting to be sent no longer applies, and a search page reached with
+  // Back or Forward shows its query in the field. Away from search the field
   // can be cleared without sending anything, so what it sent last is
   // forgotten there.
-  useEffect(() => {
-    if (shownQuery === null) {
-      sentQuery.current = null
-      return
-    }
-    if (shownQuery !== sentQuery.current) {
-      sentQuery.current = shownQuery
-      setText(shownQuery)
-    }
-  }, [shownQuery])
+  useEffect(
+    () =>
+      router.subscribe("onBeforeNavigate", ({ toLocation, hrefChanged }) => {
+        const shownQuery = queryShownAt(toLocation)
+        if (!hrefChanged || (shownQuery !== null && shownQuery === sentQuery.current)) {
+          return
+        }
+        clearTimeout(pendingSearch.current)
+        sentQuery.current = shownQuery
+        if (shownQuery !== null) {
+          setText(shownQuery)
+        }
+      }),
+    [router],
+  )
 
   useEffect(() => () => clearTimeout(pendingSearch.current), [])
 

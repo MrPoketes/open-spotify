@@ -244,6 +244,20 @@ describe("Search", () => {
     expect(searchField()).toHaveValue("glass")
   })
 
+  it("drops a search still waiting to be sent when the user opens another page", async () => {
+    const { router } = await renderSearch()
+    await typeSearch("glass")
+    const album = await screen.findByRole("link", { name: /^Glass Harbour/ })
+
+    await userEvent.type(searchField(), "y")
+    await userEvent.click(album)
+    await screen.findByRole("heading", { name: "Album" })
+    // Long enough for the waiting search to have been sent, if it was.
+    await new Promise((resolve) => setTimeout(resolve, 400))
+
+    expect(router.state.location.pathname).toBe("/album/fake-album-0")
+  })
+
   it("focuses the search field when / is pressed outside a text field", async () => {
     await renderSearch()
 
