@@ -18,8 +18,8 @@ function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-2">
-      <h1 className="text-3xl font-bold">Open Spotify</h1>
-      <p className="opacity-70">
+      <h1 className="font-display text-3xl font-bold">Open Spotify</h1>
+      <p className="text-muted">
         Version {appInfo.version} on {appInfo.platform}
       </p>
     </main>

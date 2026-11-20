@@ -1,8 +1,73 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
-:root {
-  color-scheme: dark;
-  background-color: #121212;
-  color: #ffffff;
-  font-family: system-ui, sans-serif;
+/*
+ * `inline` makes each class read the theme variable on the element it is used
+ * on, instead of a copy resolved once on :root. That lets a theme apply to part
+ * of the page, such as a preview in the theme picker.
+ *
+ * Tailwind's default colors, fonts, radii, and shadows of every kind are
+ * removed, so its named classes resolve only to theme tokens.
+ */
+@theme inline {
+  --color-*: initial;
+  --font-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+
+  --color-canvas: var(--theme-color-canvas);
+  --color-surface: var(--theme-color-surface);
+  --color-surface-raised: var(--theme-color-surface-raised);
+  --color-surface-overlay: var(--theme-color-surface-overlay);
+  --color-border: var(--theme-color-border);
+  --color-foreground: var(--theme-color-foreground);
+  --color-muted: var(--theme-color-muted);
+  --color-accent: var(--theme-color-accent);
+  --color-on-accent: var(--theme-color-on-accent);
+  --color-focus: var(--theme-color-focus);
+  --color-danger: var(--theme-color-danger);
+
+  --font-body: var(--theme-font-body);
+  --font-display: var(--theme-font-display);
+  --default-font-family: var(--theme-font-body);
+
+  --radius-small: var(--theme-radius-small);
+  --radius-medium: var(--theme-radius-medium);
+  --radius-large: var(--theme-radius-large);
+
+  --spacing: var(--theme-spacing);
+
+  --shadow-raised: var(--theme-shadow-raised);
+  --shadow-overlay: var(--theme-shadow-overlay);
+}
+
+@layer base {
+  body {
+    background-color: var(--theme-color-canvas);
+    color: var(--theme-color-foreground);
+  }
+
+  /* One focus style everywhere, so no component can ship without one. */
+  :focus-visible {
+    outline: 2px solid var(--theme-color-focus);
+    outline-offset: 2px;
+  }
+
+  /*
+   * Near-zero rather than `none`, so code waiting for transitionend or
+   * animationend still runs.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
