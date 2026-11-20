@@ -3,11 +3,13 @@ import { Clock, Music } from "lucide-react"
 import type { CSSProperties, KeyboardEvent } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
+import { ContextMenu } from "../../ui/context-menu"
 import { useContextMenu } from "../../ui/use-context-menu"
 import { ArtistLinks } from "../artist/artist-links"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SimplifiedArtist } from "../spotify/spotify-artist"
-import { TrackContextMenu } from "../track-actions/track-context-menu"
+import { trackMenuItems } from "../track-actions/track-menu-items"
+import { useTrackActions } from "../track-actions/use-track-actions"
 import { formatTrackDuration } from "./format-duration"
 import { trackRowHeight } from "./track-row-height"
 
@@ -216,8 +218,11 @@ interface TrackRowProps {
 // its own list, so a row's position is also its track number.
 export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
   const trackMenu = useContextMenu()
-  // A row that is still loading has no actions yet.
-  const opensMenu = entry !== undefined
+  const trackActions = useTrackActions()
+  // A row that is still loading has no actions yet, and a row whose actions
+  // would all lead nowhere, such as a local file's, opens no menu.
+  const menuItems = entry === undefined ? [] : trackMenuItems(entry, trackActions)
+  const opensMenu = menuItems.length > 0
 
   return (
     <tr
@@ -237,8 +242,13 @@ export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
       ) : (
         <TrackCells entry={entry} layout={layout} density={density} tabIndex={slot.tabIndex} />
       )}
-      {entry !== undefined && trackMenu.anchor !== null ? (
-        <TrackContextMenu entry={entry} anchor={trackMenu.anchor} onClose={trackMenu.close} />
+      {entry !== undefined && opensMenu && trackMenu.anchor !== null ? (
+        <ContextMenu
+          label={`Actions for ${entry.title}`}
+          items={menuItems}
+          anchor={trackMenu.anchor}
+          onClose={trackMenu.close}
+        />
       ) : null}
     </tr>
   )

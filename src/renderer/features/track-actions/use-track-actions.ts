@@ -3,26 +3,17 @@ import { Effect } from "effect"
 import { use } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { writeClipboardText } from "../../lib/write-clipboard-text"
-import { ContextMenu } from "../../ui/context-menu"
 import { useShowStatusMessage } from "../../ui/status-message-context"
-import type { ContextMenuAnchor } from "../../ui/use-context-menu"
-import type { TrackListEntry } from "../track-list/track-row"
-import { trackMenuItems } from "./track-menu-items"
+import type { TrackActions } from "./track-menu-items"
 
 const trackLink = (trackId: string) => `https://open.spotify.com/track/${trackId}`
 
-interface TrackContextMenuProps {
-  readonly entry: TrackListEntry
-  readonly anchor: ContextMenuAnchor
-  readonly onClose: () => void
-}
-
-export function TrackContextMenu({ entry, anchor, onClose }: TrackContextMenuProps) {
+export function useTrackActions(): TrackActions {
   const runtime = use(RendererRuntimeContext)
   const navigate = useNavigate()
   const showStatusMessage = useShowStatusMessage()
 
-  const copyLink = (trackId: string) =>
+  const copyLink = (trackId: string) => {
     runtime.runFork(
       writeClipboardText(trackLink(trackId)).pipe(
         Effect.andThen(
@@ -39,28 +30,19 @@ export function TrackContextMenu({ entry, anchor, onClose }: TrackContextMenuPro
         ),
       ),
     )
+  }
 
-  const items = trackMenuItems(entry, {
-    goToArtist: (artistId) =>
+  return {
+    goToArtist: (artistId) => {
       runtime.runFork(
         Effect.promise(() => navigate({ to: "/artist/$artistId", params: { artistId } })),
-      ),
-    goToAlbum: (albumId) =>
+      )
+    },
+    goToAlbum: (albumId) => {
       runtime.runFork(
         Effect.promise(() => navigate({ to: "/album/$albumId", params: { albumId } })),
-      ),
+      )
+    },
     copyLink,
-  })
-
-  if (items.length === 0) {
-    return null
   }
-  return (
-    <ContextMenu
-      label={`Actions for ${entry.title}`}
-      items={items}
-      anchor={anchor}
-      onClose={onClose}
-    />
-  )
 }

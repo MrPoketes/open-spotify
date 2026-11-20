@@ -325,17 +325,17 @@ with none opens no menu.
 Every row of a track list has a context menu: Go to artist (a submenu of the artists when the track
 has several), Go to album, and Copy link, which copies `https://open.spotify.com/track/<id>`.
 
+The sidebar's folder menu sits beside the "Your library" heading. What an action did is said
+under the heading: a success in `muted` text inside an `output`, a failure in `danger` text
+inside an `alert`.
+
 ### Status message
 
 What an action from a context menu did is said in a small Overlay message (`surface-overlay`,
 `shadow-overlay`, `rounded-large`, `text-sm`) centered 16 px above the now-playing bar, in `danger`
 text for a failure. It fades in like a menu and goes away after five seconds. It sits in a
-`role="status"` region that stays on the page, so screen readers announce every message
+`output` (`role="status"`) that stays on the page, so screen readers announce every message
 (`useShowStatusMessage` in `src/renderer/ui`).
-
-The sidebar's folder menu sits beside the "Your library" heading. What an action did is said
-under the heading: a success in `muted` text inside an `output`, a failure in `danger` text
-inside an `alert`.
 
 ### Loading, empty, and error states
 

@@ -21,6 +21,13 @@ const trackWithTwoArtists: TrackListEntry = {
   durationMs: 200_000,
 }
 
+const trackWithOneArtist: TrackListEntry = {
+  ...trackWithTwoArtists,
+  trackId: "fake-track-1",
+  title: "Low Tide",
+  artists: [{ id: "fake-artist-2", name: "Kite Theory" }],
+}
+
 const localFile: TrackListEntry = {
   trackId: null,
   title: "Voice memo",
@@ -31,7 +38,7 @@ const localFile: TrackListEntry = {
   durationMs: 60_000,
 }
 
-const entries = [trackWithTwoArtists, localFile]
+const entries = [trackWithTwoArtists, trackWithOneArtist, localFile]
 
 const renderTracks = async () => {
   const user = userEvent.setup()
@@ -54,7 +61,7 @@ const renderTracks = async () => {
   return { user, router, row }
 }
 
-describe("TrackContextMenu", () => {
+describe("Track menu", () => {
   it("goes to the track's album from the menu of the focused row", async () => {
     const { user, router, row } = await renderTracks()
     row.focus()
@@ -74,6 +81,18 @@ describe("TrackContextMenu", () => {
     await user.click(screen.getByRole("menuitem", { name: "Lena Varga" }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/artist/fake-artist-1"))
+  })
+
+  it("goes straight to the artist of a track with one artist", async () => {
+    const { user, router } = await renderTracks()
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("row", { name: "Low Tide by Kite Theory" }),
+    })
+    await user.click(screen.getByRole("menuitem", { name: "Go to artist" }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/artist/fake-artist-2"))
   })
 
   it("copies the track's Spotify link and says so", async () => {
