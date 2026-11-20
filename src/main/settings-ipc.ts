@@ -3,7 +3,9 @@ import { ipcChannels } from "../shared/ipc-channels"
 import {
   GetSettingRequest,
   SetSettingRequest,
+  type SettingKey,
   SettingReply,
+  type SettingValue,
   settingSchemas,
 } from "../shared/settings"
 import { decodeIpcRequest } from "./decode-ipc-request"
@@ -18,7 +20,13 @@ export const getSettingFromIpc = Effect.fn("getSettingFromIpc")(function* (reque
 
 export const setSettingFromIpc = Effect.fn("setSettingFromIpc")(function* (request: unknown) {
   const { key, value } = yield* decodeIpcRequest(ipcChannels.setSetting, SetSettingRequest, request)
-  const decodedValue = yield* decodeIpcRequest(ipcChannels.setSetting, settingSchemas[key], value)
+  // Without the explicit type, TypeScript infers it from one member of the
+  // union of setting Schemas and rejects the others.
+  const decodedValue = yield* decodeIpcRequest<SettingValue<SettingKey>>(
+    ipcChannels.setSetting,
+    settingSchemas[key],
+    value,
+  )
   const settings = yield* Settings
   yield* settings.set(key, decodedValue)
 })

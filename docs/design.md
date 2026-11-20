@@ -126,6 +126,13 @@ There are three levels. Most of the app is flat.
 Hovered and selected list rows change color (`surface-raised`, or `accent` at 15 % opacity
 when selected) but never gain a shadow.
 
+### Icons
+
+Icons come from [Lucide](https://lucide.dev) (`lucide-react`, ISC license), imported one by one
+so only the icons in use are bundled. They draw with `currentColor`, so they follow the theme.
+Use 20 px icons in 32 px icon buttons and 16 px icons next to `text-sm` or smaller text. Icons
+are decorative (`aria-hidden`); the control that holds them carries the accessible name.
+
 ### Motion
 
 Motion confirms an action; it never decorates.
@@ -193,7 +200,8 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
   if a component needs a different shape, change the outline, not its visibility.
 - **Keyboard.** Every action works from the keyboard. Lists use one tab stop and arrow keys
   inside (roving focus). Dialogs and the command palette trap focus and return it on close.
-  Pane dividers are focusable and resize with the arrow keys.
+  Pane dividers are focusable: the arrow keys resize by 16 px, `Home` and `End` jump to the
+  narrowest and widest size, and a double-click restores the default size.
 - **Targets.** Interactive elements are at least 24 × 24 px. Dense rows are 32 px tall.
 - **Not color alone.** State is never shown by color only. The playing track also shows an
   icon, and errors carry text.
