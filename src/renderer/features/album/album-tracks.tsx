@@ -8,6 +8,7 @@ interface Disc {
 }
 
 const albumTrackEntry = (track: AlbumTrack): TrackListEntry => ({
+  trackId: track.id,
   title: track.name,
   artists: track.artists,
   album: null,

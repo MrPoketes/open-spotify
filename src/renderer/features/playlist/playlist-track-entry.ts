@@ -5,6 +5,7 @@ import type { TrackListEntry } from "../track-list/track-row"
 export function playlistTrackEntry({ addedAt, item }: PlaylistItem): TrackListEntry {
   if (item === null) {
     return {
+      trackId: null,
       title: "Unavailable track",
       artists: [],
       album: null,
@@ -15,6 +16,7 @@ export function playlistTrackEntry({ addedAt, item }: PlaylistItem): TrackListEn
   }
   if (item.type === "episode") {
     return {
+      trackId: null,
       title: item.name,
       artists: [],
       album: null,
