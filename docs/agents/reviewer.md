@@ -15,12 +15,14 @@ asking for one more round.
 ## Release PRs
 
 A PR titled `Release v<version>: <milestone name>` comes from the orchestrator
-([orchestrator.md](orchestrator.md) step 5) and has no Linear issue. Skip Prepare step 3 and the
-Review section, and check instead:
+([orchestrator.md](orchestrator.md) step 5) and has no Linear issue. Skip Prepare steps 3 and 4
+and the Review section. Do not check the branch out: you run in the orchestrator's project root,
+which must stay on `main`, and the required `check` job already runs `pnpm check` on the PR.
+Check instead:
 
 - The diff changes only `version` in `package.json`.
-- `<version>` is the version on `main` (`git show origin/main:package.json`) with the minor part
-  raised by one and the patch part set to 0.
+- `<version>` is the version on `main` with the minor part raised by one and the patch part set
+  to 0. Read it with `git fetch origin` and `git show origin/main:package.json`.
 - Every issue in the milestone is `Done` or `Canceled`: use `list_issues` for project
   `Open Spotify` with the `projectMilestone` and `status` fields.
 - The body names the milestone and lists its `Done` issues.

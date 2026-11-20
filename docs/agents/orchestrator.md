@@ -101,10 +101,14 @@ Release nothing else. Read the PR's state:
 
 ```sh
 gh pr view <n> --json headRefOid,mergeable,autoMergeRequest
-gh run list --commit <headRefOid> --json databaseId,workflowName,conclusion,attempt
+gh run list --commit <headRefOid> --json databaseId,workflowName,status,conclusion,attempt
 gh pr view <n> --json statusCheckRollup --jq '.statusCheckRollup[] | select(.context == "agent-review") | .state'
 gh pr view <n> --json comments --jq '[.comments[] | select(.body | startswith("## Agent review: CHANGES REQUESTED"))] | length'
 ```
+
+A run **failed** when its `status` is `completed` and its `conclusion` is anything but `success`
+(`cancelled` and `timed_out` count too). If `gh run rerun` itself fails, treat the run as failed
+on attempt 2.
 
 Take the first row that applies, then read the state again and repeat until you reach the last
 row or close the PR:
@@ -112,9 +116,9 @@ row or close the PR:
 | Situation                                                            | Action                                                                    |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Its milestone is no longer finished (an issue was added or reopened) | Close the PR.                                                             |
-| A run failed (`failure`) on attempt 2, or three `CHANGES REQUESTED`  | Close the PR and file a Bug titled `Release v<version> blocked`.          |
+| A run failed on attempt 2, or there are three `CHANGES REQUESTED`    | Close the PR and file a Bug titled `Release v<version> blocked`.          |
 | `mergeable` is `CONFLICTING`                                         | Close the PR and go to 5.3, which opens a fresh one for the same version. |
-| A run failed (`failure`) on attempt 1                                | `gh run rerun <databaseId> --failed`                                      |
+| A run failed on attempt 1                                            | `gh run rerun <databaseId> --failed`                                      |
 | `agent-review` is not `SUCCESS`                                      | Get it reviewed.                                                          |
 | `autoMergeRequest` is `null`                                         | `gh pr merge <n> --squash --auto`                                         |
 | Anything else                                                        | Checks are still running. Leave it for the next run.                      |
@@ -122,8 +126,9 @@ row or close the PR:
 - **Close the PR** with `gh pr close <n> --delete-branch`. A closed release PR releases nothing,
   so its milestone is picked up again once it is finished.
 - **Get it reviewed** by starting a reviewer exactly as in worker.md step 4. If it requests
-  changes to the PR body, fix them with `gh pr edit <n> --body-file <scratch>/release-body.md`.
-  You cannot fix anything else, so other findings count towards the three that block the PR.
+  changes to the PR body only, fix them with
+  `gh pr edit <n> --body-file <scratch>/release-body.md`. You cannot fix any other finding, so
+  close the PR and file a Bug titled `Release v<version> blocked` that quotes the findings.
 - **File a Bug** with `save_issue`: team `Armintas`, project `Open Spotify`, labels
   `Open-Spotify` and `Bug`, priority High, and the milestone being released. Describe what
   failed (link the failed run or quote the review findings); the acceptance criterion is that
@@ -133,8 +138,8 @@ row or close the PR:
 ### 5.2 The newest merged release PR has no GitHub release
 
 The newest merged release PR is the one with the latest `mergedAt`, and its title holds
-`<version>`. This case applies when `gh release view v<version>` prints `release not found` and Linear has no
-issue titled `Release v<version> failed`.
+`<version>`. This case applies when `gh release view v<version>` prints `release not found` and
+Linear has no issue titled `Release v<version> failed`.
 
 1. Check the tag with `git ls-remote --tags origin refs/tags/v<version>`. If it prints nothing,
    push the tag at the PR's merge commit. That starts the release workflow; check it on the
@@ -148,7 +153,7 @@ issue titled `Release v<version> failed`.
 2. Otherwise read the release workflow's run:
    `gh run list --workflow release.yml --branch v<version> --json databaseId,status,conclusion,attempt`.
    - No run yet, or `status` is not `completed`: leave it for the next run.
-   - Failed on attempt 1: `gh run rerun <databaseId> --failed`.
+   - Failed (as defined in 5.1) on attempt 1: `gh run rerun <databaseId> --failed`.
    - Failed on attempt 2: file a Bug (see 5.1) titled `Release v<version> failed`, linking the
      run. When the Bug is `Done`, the milestone is finished but not released, so 5.3 releases it
      under the next version. A pushed tag is never moved or reused.
