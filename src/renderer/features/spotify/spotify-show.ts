@@ -3,6 +3,7 @@ import { Episode } from "./spotify-episode"
 import { Image } from "./spotify-image"
 import { Paging } from "./spotify-paging"
 
+// Since February 2026, development-mode responses leave out the publisher.
 const showFields = {
   id: Schema.String,
   name: Schema.String,
@@ -10,7 +11,6 @@ const showFields = {
   uri: Schema.String,
 }
 
-// Since February 2026, development-mode responses leave out the publisher.
 export const SavedShow = Schema.Struct({ show: Schema.Struct(showFields) })
 
 export type SavedShow = typeof SavedShow.Type

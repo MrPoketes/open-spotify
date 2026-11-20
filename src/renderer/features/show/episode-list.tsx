@@ -26,14 +26,16 @@ export function EpisodeList({ episodes, hasMoreEpisodes, nextPage, onLoadMore }:
       {episodes.length === 0 && !hasMoreEpisodes && (
         <p className="text-muted">This show has no episodes yet.</p>
       )}
-      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- key presses bubble up from the focused episode, and the list moves focus between its episodes: the roving focus docs/design.md requires for lists */}
-      <ul onKeyDown={onKeyDown} className="flex flex-col">
-        {episodes.map((episode, index) => (
-          <li key={episode.id}>
-            <EpisodeRow episode={episode} rovingProps={rowProps(index)} />
-          </li>
-        ))}
-      </ul>
+      {episodes.length > 0 && (
+        // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- key presses bubble up from the focused episode, and the list moves focus between its episodes: the roving focus docs/design.md requires for lists
+        <ul onKeyDown={onKeyDown} className="flex flex-col">
+          {episodes.map((episode, index) => (
+            <li key={episode.id}>
+              <EpisodeRow episode={episode} rovingProps={rowProps(index)} />
+            </li>
+          ))}
+        </ul>
+      )}
       {nextPage === "loading" && (
         <output className="text-sm text-muted">Loading more episodes…</output>
       )}

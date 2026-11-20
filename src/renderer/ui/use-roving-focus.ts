@@ -17,8 +17,11 @@ const movesByKey: Partial<Record<string, Move>> = {
 // A list is one tab stop (docs/design.md): only the active row is in the tab
 // order, and the arrow keys or j and k move focus between rows.
 export const useRovingFocus = (rowCount: number) => {
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [lastFocusedIndex, setLastFocusedIndex] = useState(0)
   const rows = useRef<Array<HTMLElement | null>>([])
+  // The list can shrink below the last focused row, for example when it is
+  // filtered. Without a cap no row would be in the tab order.
+  const activeIndex = Math.min(lastFocusedIndex, rowCount - 1)
 
   const onKeyDown = (event: KeyboardEvent) => {
     const move = movesByKey[event.key]
@@ -35,7 +38,7 @@ export const useRovingFocus = (rowCount: number) => {
     ref: (row: HTMLElement | null) => {
       rows.current[index] = row
     },
-    onFocus: () => setActiveIndex(index),
+    onFocus: () => setLastFocusedIndex(index),
   })
 
   return { onKeyDown, rowProps }

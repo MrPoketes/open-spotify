@@ -1,11 +1,10 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react"
+import { act, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Layer, ManagedRuntime } from "effect"
+import { Effect, Layer } from "effect"
 import { HttpClient, HttpClientError } from "effect/http"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { DesktopBridge } from "../../lib/desktop-bridge"
 import { fakeMainProcess } from "../../lib/fake-main-process"
-import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { renderScreen } from "../../lib/render-screen"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "../spotify/spotify-fake-server"
 import { ShowPage } from "./show-page"
@@ -68,15 +67,8 @@ const spotifyWithConnection = () => {
   }
 }
 
-const renderShowPage = (showId: string, spotifyApi = SpotifyApi.layerFake) => {
-  const desktopBridge = Layer.succeed(DesktopBridge)(DesktopBridge.make(fakeMainProcess()))
-  const runtime = ManagedRuntime.make(Layer.mergeAll(spotifyApi, desktopBridge))
-  render(
-    <RendererRuntimeContext value={runtime}>
-      <ShowPage showId={showId} />
-    </RendererRuntimeContext>,
-  )
-}
+const renderShowPage = (showId: string, spotifyApi?: Layer.Layer<SpotifyApi>) =>
+  renderScreen(<ShowPage showId={showId} />, fakeMainProcess(), spotifyApi)
 
 const episodeRows = () => screen.getAllByRole("article")
 
@@ -127,6 +119,7 @@ describe("ShowPage", () => {
     renderShowPage("fake-show-long-edit")
 
     expect(await screen.findByText("This show has no episodes yet.")).toBeInTheDocument()
+    expect(screen.queryByRole("list")).not.toBeInTheDocument()
   })
 
   it("moves between episodes with the arrow keys and j and k", async () => {
