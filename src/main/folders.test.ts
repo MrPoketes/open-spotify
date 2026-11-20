@@ -118,7 +118,7 @@ describe("Folders", () => {
     }).pipe(Effect.provide(freshFolders())),
   )
 
-  it.effect("deletes a folder with everything inside it and keeps new folders last", () =>
+  it.effect("deletes a folder with everything inside it", () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient
       const folders = yield* Folders
@@ -128,11 +128,27 @@ describe("Folders", () => {
       yield* folders.createFolder({ name: "Jazz", parentFolderId: null })
 
       yield* folders.deleteFolder({ folderId: rockId })
-      yield* folders.createFolder({ name: "Blues", parentFolderId: null })
 
       const storedRows = yield* sql`SELECT id FROM folder_entries`
-      assert.deepStrictEqual(namesOf(yield* folders.readTree), ["Jazz", "Blues"])
-      assert.strictEqual(storedRows.length, 2)
+      assert.deepStrictEqual(namesOf(yield* folders.readTree), ["Jazz"])
+      assert.strictEqual(storedRows.length, 1)
+    }).pipe(Effect.provide(freshFolders())),
+  )
+
+  // Deletes leave gaps in the positions. A new folder placed at the number of
+  // remaining folders would land before the last one.
+  it.effect("adds a new folder after the others when earlier folders were deleted", () =>
+    Effect.gen(function* () {
+      const folders = yield* Folders
+      const firstId = yield* folders.createFolder({ name: "First", parentFolderId: null })
+      const secondId = yield* folders.createFolder({ name: "Second", parentFolderId: null })
+      yield* folders.createFolder({ name: "Third", parentFolderId: null })
+
+      yield* folders.deleteFolder({ folderId: firstId })
+      yield* folders.deleteFolder({ folderId: secondId })
+      yield* folders.createFolder({ name: "Fourth", parentFolderId: null })
+
+      assert.deepStrictEqual(namesOf(yield* folders.readTree), ["Third", "Fourth"])
     }).pipe(Effect.provide(freshFolders())),
   )
 
@@ -164,9 +180,19 @@ describe("Folders", () => {
     Effect.gen(function* () {
       const folders = yield* Folders
 
-      const error = yield* Effect.flip(folders.addItem({ folderId: unknownFolderId, item: album }))
+      const addError = yield* Effect.flip(
+        folders.addItem({ folderId: unknownFolderId, item: album }),
+      )
+      const createError = yield* Effect.flip(
+        folders.createFolder({ name: "Rock", parentFolderId: unknownFolderId }),
+      )
+      const moveError = yield* Effect.flip(
+        folders.moveFolder({ folderId: unknownFolderId, parentFolderId: null, position: 0 }),
+      )
 
-      assert.strictEqual(error._tag, "FolderNotFound")
+      assert.strictEqual(addError._tag, "FolderNotFound")
+      assert.strictEqual(createError._tag, "FolderNotFound")
+      assert.strictEqual(moveError._tag, "FolderNotFound")
     }).pipe(Effect.provide(freshFolders())),
   )
 

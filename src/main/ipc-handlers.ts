@@ -23,6 +23,8 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.logIn, () => mainRuntime.runPromise(logInFromIpc))
   ipcMain.handle(ipcChannels.getAccessToken, () => mainRuntime.runPromise(getAccessTokenFromIpc))
   ipcMain.handle(ipcChannels.logOut, () => mainRuntime.runPromise(logOutFromIpc))
+  // Each operation returns its own reply type. Widening them to one function
+  // type lets TypeScript call any of them in this loop.
   const folderOperations =
     Object.entries<(request: unknown) => Effect.Effect<unknown, unknown, Folders>>(
       folderIpcOperations,
