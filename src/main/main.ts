@@ -5,8 +5,6 @@ import { mainRuntime } from "./main-runtime"
 import { createMainWindow } from "./main-window"
 import { registerRendererScheme, serveRendererFiles } from "./renderer-protocol"
 
-registerRendererScheme()
-
 const start = Effect.gen(function* () {
   yield* Effect.promise(() => app.whenReady())
   serveRendererFiles()
@@ -19,30 +17,55 @@ const exitAfterStartupFailure = (cause: Cause.Cause<unknown>) =>
     Effect.andThen(Effect.sync(() => app.exit(1))),
   )
 
-// macOS apps stay running with no windows open until the user quits.
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit()
+// Only focuses: during startup the window does not exist yet and `start`
+// is about to create it, so creating one here would open a second window.
+function focusMainWindow(): void {
+  const [mainWindow] = BrowserWindow.getAllWindows()
+  if (mainWindow === undefined) {
+    return
   }
-})
-
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    mainRuntime.runFork(createMainWindow)
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
   }
-})
+  mainWindow.focus()
+}
 
-app.on("will-quit", () => {
-  void mainRuntime.dispose()
-})
+function startPrimaryInstance(): void {
+  registerRendererScheme()
 
-// The runtime builds its layers, including opening and migrating the
-// database, before it runs `start`. Those failures appear only in the exit,
-// never inside `start`, so they are handled here.
-mainRuntime.runCallback(start, {
-  onExit: (exit) => {
-    if (Exit.isFailure(exit)) {
-      Effect.runFork(exitAfterStartupFailure(exit.cause))
+  // macOS apps stay running with no windows open until the user quits.
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit()
     }
-  },
-})
+  })
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      mainRuntime.runFork(createMainWindow)
+    }
+  })
+  app.on("second-instance", focusMainWindow)
+  app.on("will-quit", () => {
+    void mainRuntime.dispose()
+  })
+
+  // The runtime builds its layers, including opening and migrating the
+  // database, before it runs `start`. Those failures appear only in the exit,
+  // never inside `start`, so they are handled here.
+  mainRuntime.runCallback(start, {
+    onExit: (exit) => {
+      if (Exit.isFailure(exit)) {
+        Effect.runFork(exitAfterStartupFailure(exit.cause))
+      }
+    },
+  })
+}
+
+// A second copy would open the same database and login, so launching the app
+// again hands over to the running copy, which brings its window forward. The
+// check comes first so a second copy quits before it touches `mainRuntime`.
+if (app.requestSingleInstanceLock()) {
+  startPrimaryInstance()
+} else {
+  app.quit()
+}

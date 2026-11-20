@@ -32,6 +32,16 @@ Owns everything that needs Node or must stay out of reach of web content:
 Effect programs run through `mainRuntime` (`src/main/main-runtime.ts`), which provides every
 main-process service.
 
+The main process also keeps web content contained:
+
+- Every page carries the Content-Security-Policy from `src/shared/content-security-policy.ts`.
+  The `app://` handler gives each load a fresh nonce for TanStack Start's inline scripts. The
+  dev server sends the same policy with a fixed placeholder nonce.
+- The window navigates only within the app. https links open in the system browser, and
+  everything else is blocked (`src/main/navigation-decision.ts`).
+- Only one instance runs. A second launch quits before it touches `mainRuntime` and focuses the
+  running copy's window instead.
+
 ## Preload
 
 `src/preload/preload.ts` exposes one object, `window.desktop`, with an

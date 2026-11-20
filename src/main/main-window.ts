@@ -2,8 +2,11 @@ import path from "node:path"
 import { BrowserWindow, shell } from "electron"
 import { Effect, Schedule, Schema } from "effect"
 import { rendererDevServerUrl } from "../shared/dev-server"
+import { decideNavigation } from "./navigation-decision"
 import { rendererEntryUrl } from "./renderer-protocol"
 import { loadSavedTheme } from "./saved-theme"
+
+const rendererUrl = import.meta.env.DEV ? rendererDevServerUrl : rendererEntryUrl
 
 class RendererLoadError extends Schema.TaggedError<RendererLoadError>()("RendererLoadError", {
   cause: Schema.Defect(),
@@ -30,8 +33,20 @@ export const createMainWindow = Effect.gen(function* () {
 
   window.once("ready-to-show", () => window.show())
   window.webContents.setWindowOpenHandler(({ url }) => {
-    openInBrowser(url)
+    if (decideNavigation(url, rendererUrl) === "browser") {
+      void shell.openExternal(url)
+    }
     return { action: "deny" }
+  })
+  window.webContents.on("will-navigate", (event) => {
+    const decision = decideNavigation(event.url, rendererUrl)
+    if (decision === "in-app") {
+      return
+    }
+    event.preventDefault()
+    if (decision === "browser") {
+      void shell.openExternal(event.url)
+    }
   })
 
   yield* loadRenderer(window)
@@ -41,25 +56,12 @@ export const createMainWindow = Effect.gen(function* () {
 // In development Electron can start before Vite is listening, so retry for a
 // while instead of leaving a blank window.
 function loadRenderer(window: BrowserWindow): Effect.Effect<void, RendererLoadError> {
-  if (!import.meta.env.DEV) {
-    return loadUrl(window, rendererEntryUrl)
-  }
-  return loadUrl(window, rendererDevServerUrl).pipe(
-    Effect.retry({ schedule: Schedule.spaced("500 millis"), times: 60 }),
-  )
-}
-
-function loadUrl(window: BrowserWindow, url: string): Effect.Effect<void, RendererLoadError> {
-  return Effect.tryPromise({
-    try: () => window.loadURL(url),
+  const load = Effect.tryPromise({
+    try: () => window.loadURL(rendererUrl),
     catch: (cause) => new RendererLoadError({ cause }),
   })
-}
-
-// Links that try to open a new window go to the user's browser instead.
-// Only https is allowed so a page cannot launch arbitrary protocol handlers.
-function openInBrowser(url: string): void {
-  if (new URL(url).protocol === "https:") {
-    void shell.openExternal(url)
+  if (!import.meta.env.DEV) {
+    return load
   }
+  return load.pipe(Effect.retry({ schedule: Schedule.spaced("500 millis"), times: 60 }))
 }
