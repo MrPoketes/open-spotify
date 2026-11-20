@@ -77,7 +77,8 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
   a "Disc 1", "Disc 2" heading; a single-disc album gets no heading.
 - Track lists scroll with the main view, so a page header above one scrolls away. Only the rows
   near the screen are in the DOM; a row whose track has not loaded keeps its full height and
-  shows a placeholder artwork tile and a bar, so the scrollbar is right from the start.
+  shows a bar, after a placeholder artwork tile where the list shows artwork, so the scrollbar
+  is right from the start.
 - Dense track lists (the `trackListDensity` setting) have 32 px rows with no artwork, and the
   artists follow the title on the same line.
 

@@ -44,8 +44,8 @@ const launchApp = async (mainProcess: DesktopApi) => {
 }
 
 describe("TrackListDensitySetting", () => {
-  // The virtualiser must place rows by the new height too, or the rows of a
-  // list already on screen overlap.
+  // Whatever changes the density, a list already on screen must place its rows
+  // by the new height too, or they would overlap.
   it("makes track rows dense when Dense is chosen with the keyboard", async () => {
     await launchApp(fakeMainProcess())
     const user = userEvent.setup()

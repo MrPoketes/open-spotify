@@ -48,7 +48,7 @@ describe("TrackList", () => {
       expect(within(tracks).getAllByRole("rowgroup")[1]).toHaveStyle({
         height: `${50 * rowHeight}px`,
       })
-      expect(secondRow.querySelectorAll("img")).toHaveLength(artworkCount)
+      expect(within(secondRow).queryAllByRole("presentation")).toHaveLength(artworkCount)
     },
   )
 })
