@@ -1,4 +1,4 @@
-import { app, ipcMain } from "electron"
+import { BrowserWindow, app, ipcMain } from "electron"
 import type { Effect } from "effect"
 import type { AppInfo } from "../shared/app-info"
 import { ipcChannels } from "../shared/ipc-channels"
@@ -36,8 +36,12 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.cancelLogIn, () => mainRuntime.runPromise(cancelLogInFromIpc))
   ipcMain.handle(ipcChannels.getAccessToken, () => mainRuntime.runPromise(getAccessTokenFromIpc))
   ipcMain.handle(ipcChannels.logOut, () => mainRuntime.runPromise(logOutFromIpc))
-  ipcMain.handle(ipcChannels.exportFolders, () => mainRuntime.runPromise(exportFoldersFromIpc))
-  ipcMain.handle(ipcChannels.importFolders, () => mainRuntime.runPromise(importFoldersFromIpc))
+  ipcMain.handle(ipcChannels.exportFolders, (event) =>
+    mainRuntime.runPromise(exportFoldersFromIpc(BrowserWindow.fromWebContents(event.sender))),
+  )
+  ipcMain.handle(ipcChannels.importFolders, (event) =>
+    mainRuntime.runPromise(importFoldersFromIpc(BrowserWindow.fromWebContents(event.sender))),
+  )
   // Each operation returns its own reply type. Widening them to one function
   // type lets TypeScript call any of them in this loop.
   const folderOperations =

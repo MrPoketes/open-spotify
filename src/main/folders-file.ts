@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect"
-import { Folder, type FolderTree, SpotifyItem } from "../shared/folders"
+import { type Folder, FolderName, type FolderTree, SpotifyItem } from "../shared/folders"
 import {
   FoldersFileInvalid,
   FoldersFileNotJson,
@@ -15,10 +15,10 @@ export interface PortableFolder {
   readonly entries: ReadonlyArray<PortableFolderEntry>
 }
 
-type PortableFolderEntry = PortableFolder | SpotifyItem
+export type PortableFolderEntry = PortableFolder | SpotifyItem
 
 const PortableFolder = Schema.TaggedStruct("Folder", {
-  name: Folder.fields.name,
+  name: FolderName,
   entries: Schema.Array(
     Schema.suspend((): Schema.Codec<PortableFolderEntry> => PortableFolderEntry),
   ),

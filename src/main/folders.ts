@@ -30,22 +30,21 @@ export class FolderMovedIntoOwnSubtree extends Schema.TaggedError<FolderMovedInt
 
 type StorageError = SqlError.SqlError | Schema.SchemaError
 
-const insertPortableFolder = (
+const insertPortableFolder = Effect.fn("Folders.insertPortableFolder")(function* (
   table: FolderEntriesTable,
   folder: PortableFolder,
   parentId: string | null,
-): Effect.Effect<void, StorageError> =>
-  Effect.gen(function* () {
-    const folderId = yield* table.insertFolder({ name: folder.name, parentId })
-    yield* Effect.forEach(
-      folder.entries,
-      (entry) =>
-        entry._tag === "Folder"
-          ? insertPortableFolder(table, entry, folderId)
-          : table.insertItem(folderId, entry),
-      { discard: true },
-    )
-  })
+): Effect.fn.Return<void, StorageError> {
+  const folderId = yield* table.insertFolder({ name: folder.name, parentId })
+  yield* Effect.forEach(
+    folder.entries,
+    (entry) =>
+      entry._tag === "Folder"
+        ? insertPortableFolder(table, entry, folderId)
+        : table.insertItem(folderId, entry),
+    { discard: true },
+  )
+})
 
 export class Folders extends Context.Service<
   Folders,
@@ -154,10 +153,11 @@ export class Folders extends Context.Service<
         }, sql.withTransaction),
         // New folders go after the existing top-level folders, and the whole
         // import is one transaction, so a failure leaves the tree unchanged.
-        importFolders: (folders) =>
-          Effect.forEach(folders, (folder) => insertPortableFolder(table, folder, null), {
+        importFolders: Effect.fn("Folders.importFolders")(function* (folders) {
+          yield* Effect.forEach(folders, (folder) => insertPortableFolder(table, folder, null), {
             discard: true,
-          }).pipe(sql.withTransaction),
+          })
+        }, sql.withTransaction),
       })
     }),
   )

@@ -1,14 +1,28 @@
+import type { BaseWindow } from "electron"
 import { Effect, FileSystem, Option, Schema } from "effect"
 import { ExportFoldersReply, ImportFoldersReply } from "../shared/folders-file-replies"
 import { FileDialogs } from "./file-dialogs"
 import { Folders } from "./folders"
-import { decodeFoldersFile, encodeFoldersFile } from "./folders-file"
+import { decodeFoldersFile, encodeFoldersFile, type PortableFolderEntry } from "./folders-file"
 
 const fileDialogCanceled = { _tag: "FileDialogCanceled" } as const
 
-export const exportFoldersFromIpc = Effect.gen(function* () {
+// Nested folders count too, so the number matches the folders the user sees added.
+const countFolders = (entries: ReadonlyArray<PortableFolderEntry>): number => {
+  let folderCount = 0
+  for (const entry of entries) {
+    if (entry._tag === "Folder") {
+      folderCount += 1 + countFolders(entry.entries)
+    }
+  }
+  return folderCount
+}
+
+export const exportFoldersFromIpc = Effect.fn("exportFoldersFromIpc")(function* (
+  parentWindow: BaseWindow | null,
+) {
   const fileDialogs = yield* FileDialogs
-  const filePath = yield* fileDialogs.chooseFoldersExportPath
+  const filePath = yield* fileDialogs.chooseFoldersExportPath(parentWindow)
   if (Option.isNone(filePath)) {
     return yield* Schema.encodeEffect(ExportFoldersReply)(fileDialogCanceled)
   }
@@ -19,9 +33,11 @@ export const exportFoldersFromIpc = Effect.gen(function* () {
   return yield* Schema.encodeEffect(ExportFoldersReply)({ _tag: "FoldersExported" })
 })
 
-export const importFoldersFromIpc = Effect.gen(function* () {
+export const importFoldersFromIpc = Effect.fn("importFoldersFromIpc")(function* (
+  parentWindow: BaseWindow | null,
+) {
   const fileDialogs = yield* FileDialogs
-  const filePath = yield* fileDialogs.chooseFoldersImportPath
+  const filePath = yield* fileDialogs.chooseFoldersImportPath(parentWindow)
   if (Option.isNone(filePath)) {
     return yield* Schema.encodeEffect(ImportFoldersReply)(fileDialogCanceled)
   }
@@ -32,7 +48,7 @@ export const importFoldersFromIpc = Effect.gen(function* () {
     Effect.tap(folders.importFolders),
     Effect.map((importedFolders) => ({
       _tag: "FoldersImported" as const,
-      folderCount: importedFolders.length,
+      folderCount: countFolders(importedFolders),
     })),
     Effect.catchTag(
       ["FoldersFileNotJson", "FoldersFileUnsupportedVersion", "FoldersFileInvalid"],

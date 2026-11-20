@@ -10,6 +10,10 @@ const mainProcessReplying = (replies: Partial<Record<string, unknown>>): Desktop
   invoke: (channel) => Promise.resolve(replies[channel]),
 })
 
+const mainProcessFailing = (): DesktopApi => ({
+  invoke: () => Promise.reject(new Error("EACCES: permission denied")),
+})
+
 describe("Sidebar folder menu", () => {
   it("imports folders from the keyboard and says how many were added", async () => {
     renderScreen(
@@ -55,6 +59,28 @@ describe("Sidebar folder menu", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "That file uses folders format version 2, which this version of Open Spotify can't read. No folders were imported.",
+    )
+  })
+
+  // A folder the user cannot write to, or a file that disappears before it is
+  // read, fails in the main process instead of with a reply.
+  it("says so when the folders cannot be exported", async () => {
+    renderScreen(<Sidebar width={280} />, mainProcessFailing())
+
+    await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
+    await userEvent.click(screen.getByRole("menuitem", { name: "Export folders…" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your folders couldn't be exported.")
+  })
+
+  it("says so when a folders file cannot be imported", async () => {
+    renderScreen(<Sidebar width={280} />, mainProcessFailing())
+
+    await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
+    await userEvent.click(screen.getByRole("menuitem", { name: "Import folders…" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The file couldn't be imported. No folders were imported.",
     )
   })
 })

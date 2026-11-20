@@ -15,16 +15,16 @@ const fileDialogsChoosing = (filePath: Option.Option<string>) =>
   Layer.succeed(
     FileDialogs,
     FileDialogs.of({
-      chooseFoldersExportPath: Effect.succeed(filePath),
-      chooseFoldersImportPath: Effect.succeed(filePath),
+      chooseFoldersExportPath: () => Effect.succeed(filePath),
+      chooseFoldersImportPath: () => Effect.succeed(filePath),
     }),
   )
 
 const exportTo = (filePath: string) =>
-  exportFoldersFromIpc.pipe(Effect.provide(fileDialogsChoosing(Option.some(filePath))))
+  exportFoldersFromIpc(null).pipe(Effect.provide(fileDialogsChoosing(Option.some(filePath))))
 
 const importFrom = (filePath: string) =>
-  importFoldersFromIpc.pipe(Effect.provide(fileDialogsChoosing(Option.some(filePath))))
+  importFoldersFromIpc(null).pipe(Effect.provide(fileDialogsChoosing(Option.some(filePath))))
 
 const tempFilePath = Effect.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem
@@ -93,7 +93,7 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
         return { importReply: yield* importFrom(filePath), importedTree: yield* folders.readTree }
       }).pipe(Effect.provide(freshFolders()))
 
-      assert.deepStrictEqual(importReply, { _tag: "FoldersImported", folderCount: 2 })
+      assert.deepStrictEqual(importReply, { _tag: "FoldersImported", folderCount: 3 })
       assert.deepStrictEqual(withoutIds(importedTree), withoutIds(exportedTree))
     }),
   )
@@ -183,7 +183,7 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
     Effect.gen(function* () {
       const folders = yield* Folders
 
-      const reply = yield* importFoldersFromIpc.pipe(
+      const reply = yield* importFoldersFromIpc(null).pipe(
         Effect.provide(fileDialogsChoosing(Option.none())),
       )
 
