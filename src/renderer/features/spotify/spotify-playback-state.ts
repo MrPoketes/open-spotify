@@ -28,8 +28,6 @@ const DisallowedActions = Schema.Struct({
   }),
 )
 
-export type DisallowedActions = typeof DisallowedActions.Type
-
 export const PlaybackState = Schema.Struct({
   device: Device,
   isPlaying: Schema.Boolean,

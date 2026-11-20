@@ -18,13 +18,20 @@ const applyChanges = (playback: PlaybackState, changes: ReadonlyArray<PendingCha
   return changedPlayback
 }
 
-// A poll that started after Spotify accepted a change already shows it, so
-// the change can go. A poll that started earlier may still show the old
-// state, and dropping the change then would flip the control back.
+// Spotify applies a player command after accepting it, and the playback
+// state can still show the old value for a moment. Dropping the change on the
+// first poll after it was accepted would flip the control back until the
+// poll after that.
+const settleTimeMs = 1000
+
+// A poll that started once the change had time to settle shows Spotify's
+// state, which then wins, including changes made in another app.
 const withoutChangesShownBy =
   (pollStartedAt: number) =>
   (changes: ReadonlyArray<PendingChange>): ReadonlyArray<PendingChange> =>
-    changes.filter(({ acceptedAt }) => acceptedAt === null || acceptedAt > pollStartedAt)
+    changes.filter(
+      ({ acceptedAt }) => acceptedAt === null || pollStartedAt < acceptedAt + settleTimeMs,
+    )
 
 const withoutChange =
   (change: PendingChange) =>

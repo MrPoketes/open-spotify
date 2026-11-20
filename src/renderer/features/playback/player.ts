@@ -1,4 +1,4 @@
-import { Clock, Context, Effect, Filter, Layer, Option, PubSub, Ref, Stream } from "effect"
+import { Clock, Context, Effect, Layer, Option, PubSub, Ref, Stream } from "effect"
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { Device } from "../spotify/spotify-device"
 import type { PlaybackState, RepeatMode } from "../spotify/spotify-playback-state"
@@ -93,9 +93,8 @@ export class Player extends Context.Service<
         pendingChanges.updates,
       ).pipe(
         Stream.mapEffect(() => latestState),
-        Stream.filterMap(
-          Filter.fromPredicateOption((latest: Option.Option<PlayerState>) => latest),
-        ),
+        Stream.filter(Option.isSome),
+        Stream.map((latest) => latest.value),
         Stream.share({ capacity: 1, strategy: "sliding", replay: 1 }),
       )
 

@@ -196,6 +196,32 @@ describe("Player", () => {
     }).pipe(Effect.scoped, Effect.provide(playerOver(spotify)))
   })
 
+  // Spotify can report the old state for a moment after accepting a command.
+  // A poll in that moment must not flip the control back.
+  it.effect("keeps an accepted change through a poll that starts right after it", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+      yield* TestClock.adjust("1500 millis")
+
+      yield* player.pause
+      yield* Queue.take(states)
+      yield* Queue.take(states)
+      yield* TestClock.adjust("500 millis")
+      const shownByPollRightAfter = yield* Queue.take(states)
+      yield* TestClock.adjust("2 seconds")
+      const shownByLaterPoll = yield* Queue.take(states)
+
+      assert.isFalse(isPlaying(shownByPollRightAfter))
+      assert.isTrue(isPlaying(shownByLaterPoll))
+    }).pipe(
+      Effect.scoped,
+      // Spotify accepts the pause but its playback state still says playing.
+      Effect.provide(playerOver(SpotifyApi.layerFakeWith(() => ({ pause: Effect.void })))),
+    ),
+  )
+
   // The user can also press play in the Spotify app. Once a poll shows the
   // pause, the bar must follow Spotify again instead of the old change.
   it.effect("follows playback changed elsewhere after a poll shows the user's change", () =>

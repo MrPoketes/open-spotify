@@ -40,6 +40,7 @@ describe("NowPlayingBar controls", () => {
 
   it("turns shuffle on and moves repeat from off to the context to the track", async () => {
     renderNowPlayingBar()
+    await screen.findByText(fakeTrack(0).name)
     const shuffle = await control("Shuffle")
     expect(shuffle).toHaveAttribute("aria-pressed", "false")
     expect(await control("Repeat")).toHaveAttribute("aria-pressed", "false")
@@ -81,6 +82,7 @@ describe("NowPlayingBar controls", () => {
     renderNowPlayingBar(
       SpotifyApi.layerFakeWith(() => ({ skipToNext: Effect.fail(new NoActiveDevice()) })),
     )
+    await screen.findByText(fakeTrack(0).name)
 
     await userEvent.click(await control("Next"))
 

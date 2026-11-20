@@ -47,7 +47,7 @@ export function PlaybackControls({ playerState }: PlaybackControlsProps) {
     playerState.status === "active" ? playerState.playback : idlePlayback
   const disallows = actions.disallows ?? {}
   const controlsUnavailableReason = unavailableReason(playerState)
-  const reasonUnless = (isDisallowed: boolean | undefined) =>
+  const unavailableReasonFor = (isDisallowed: boolean | undefined) =>
     controlsUnavailableReason ?? (isDisallowed === true ? disallowedReason : null)
 
   return (
@@ -57,13 +57,13 @@ export function PlaybackControls({ playerState }: PlaybackControlsProps) {
           label="Shuffle"
           icon={Shuffle}
           isOn={shuffle}
-          unavailableReason={reasonUnless(disallows.togglingShuffle)}
+          unavailableReason={unavailableReasonFor(disallows.togglingShuffle)}
           onPress={() => send((player) => player.setShuffle(!shuffle), "Couldn't change shuffle.")}
         />
         <PlayerControlButton
           label="Previous"
           icon={SkipBack}
-          unavailableReason={reasonUnless(disallows.skippingPrev)}
+          unavailableReason={unavailableReasonFor(disallows.skippingPrev)}
           onPress={() => send((player) => player.skipToPrevious, "Couldn't go back.")}
         />
         <PlayerControlButton
@@ -80,7 +80,7 @@ export function PlaybackControls({ playerState }: PlaybackControlsProps) {
         <PlayerControlButton
           label="Next"
           icon={SkipForward}
-          unavailableReason={reasonUnless(disallows.skippingNext)}
+          unavailableReason={unavailableReasonFor(disallows.skippingNext)}
           onPress={() => send((player) => player.skipToNext, "Couldn't skip to the next track.")}
         />
         <PlayerControlButton
@@ -89,7 +89,7 @@ export function PlaybackControls({ playerState }: PlaybackControlsProps) {
           isOn={repeat !== "off"}
           // From off, a press turns on repeat for the context. From the other
           // modes, it turns repeat for the track on or off.
-          unavailableReason={reasonUnless(
+          unavailableReason={unavailableReasonFor(
             repeat === "off" ? disallows.togglingRepeatContext : disallows.togglingRepeatTrack,
           )}
           onPress={() =>
