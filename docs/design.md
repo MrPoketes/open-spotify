@@ -184,6 +184,23 @@ one tab stop, starting on the first device, and moves like any other list (see K
 `Escape` or choosing a device closes the picker and returns focus to its button; clicking or
 tabbing outside closes it.
 
+### Settings and the theme picker
+
+Settings is a page in the main view, opened from the gear icon at the right end of the top bar.
+Its sections (Appearance first) sit in one column at most 576 px wide.
+
+The theme picker is a list of 64 px rows, one per theme: a 64 × 40 px swatch, the theme's name
+in `text-sm`, and "by author" in `text-xs` `muted`. The swatch sets the theme's own token
+properties on itself, so it shows that theme's `surface`, `foreground`, and `accent` without
+applying it. The chosen row is `accent` at 15 % opacity, 600 weight, and has a 16 px `Check`
+icon.
+
+Hovering or focusing a row previews its theme across the whole app at once. The pointer wins
+over focus, so a mouse user can compare themes while keyboard focus stays on one row. The saved
+theme returns when the pointer and focus both leave the picker, or the page closes. Clicking a
+row or pressing `Enter` or `Space` on it chooses and saves its theme. Only the chosen row is a
+tab stop, and the up and down arrow keys move between rows.
+
 ### Loading, empty, and error states
 
 - While a list or page loads, it says so in `muted` text inside an `output` element, so screen
