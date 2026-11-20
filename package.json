@@ -21,13 +21,15 @@
     "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test"
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
+    "icons": "node scripts/generate-app-icons.ts"
   },
   "devDependencies": {
     "@effect/platform-node": "4.1.5",
     "@effect/sql-sqlite-node": "4.1.5",
     "@effect/vitest": "4.1.5",
     "@oxlint/plugins": "1.94.0",
+    "@resvg/resvg-wasm": "2.6.2",
     "@tailwindcss/vite": "4.3.5",
     "@tanstack/react-router": "1.170.46",
     "@tanstack/react-start": "1.169.7",
@@ -57,5 +59,6 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@11.17.0"
+  "packageManager": "pnpm@11.17.0",
+  "productName": "Open Spotify"
 }

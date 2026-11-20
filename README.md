@@ -1,6 +1,11 @@
+<p align="center"><img src="build/icon.svg" width="128" height="128" alt=""></p>
+
 # Open Spotify
 
 A themeable, open-source desktop client for Spotify, for Windows, macOS, and Linux.
+
+Open Spotify is an unofficial client. It is not affiliated with, endorsed by, or sponsored by
+Spotify. Spotify is a trademark of Spotify AB.
 
 - **Themes:** pick a theme or import your own. Every color, font, and radius is a token; see
   [writing a theme](docs/themes.md).

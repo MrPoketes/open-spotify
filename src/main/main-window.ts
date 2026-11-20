@@ -1,6 +1,7 @@
 import path from "node:path"
 import { BrowserWindow, shell } from "electron"
 import { Effect, Schedule, Schema } from "effect"
+import appIconPath from "../../build/icons/256x256.png?asset"
 import { rendererDevServerUrl } from "../shared/dev-server"
 import { decideNavigation } from "./navigation-decision"
 import { rendererEntryUrl } from "./renderer-protocol"
@@ -20,6 +21,9 @@ export const createMainWindow = Effect.gen(function* () {
     backgroundColor: savedTheme.tokens["color-canvas"],
     width: 1280,
     height: 800,
+    // Without it, Linux and development builds show Electron's default icon.
+    // macOS ignores it and uses the app bundle's icon.
+    icon: appIconPath,
     minWidth: 940,
     minHeight: 600,
     show: false,
