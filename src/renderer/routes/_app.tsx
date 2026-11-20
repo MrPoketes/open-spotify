@@ -1,11 +1,11 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router"
 import { Effect } from "effect"
+import { defaultSidebarWidth } from "../../shared/sidebar-width"
 import { redirectUnlessLoggedIn } from "../features/login/require-login"
 import { AppShell } from "../features/shell/app-shell"
 import { DesktopBridge } from "../lib/desktop-bridge"
 import { rendererRuntime } from "../lib/renderer-runtime"
 import { loadSavedSetting } from "../lib/saved-setting"
-import { defaultSidebarWidth } from "../../shared/sidebar-width"
 
 // A pathless layout route rather than the root route: the root route is
 // prerendered into the SPA shell at build time, where there is no main
