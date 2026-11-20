@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import { type FocusEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from "react"
+import { menuItemTargetForKey } from "./menu-item-target"
 
 export interface MenuAction {
   readonly label: string
@@ -108,13 +109,7 @@ const moveFocusWithKeyboard = (
     return
   }
   const focusedIndex = items.findIndex((item) => item === document.activeElement)
-  const targetIndexByKey: Record<string, number> = {
-    ArrowDown: (focusedIndex + 1) % items.length,
-    ArrowUp: (focusedIndex - 1 + items.length) % items.length,
-    Home: 0,
-    End: items.length - 1,
-  }
-  const targetIndex = targetIndexByKey[event.key]
+  const targetIndex = menuItemTargetForKey(event.key, focusedIndex, items.length)
   if (targetIndex === undefined) return
   event.preventDefault()
   items[targetIndex]?.focus()

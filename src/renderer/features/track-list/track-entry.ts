@@ -3,6 +3,7 @@ import type { TrackListEntry } from "./track-row"
 
 export function trackEntry(track: Track, addedAt: Date | null): TrackListEntry {
   return {
+    trackId: track.id,
     title: track.name,
     artists: track.artists,
     album: { id: track.album.id, name: track.album.name },

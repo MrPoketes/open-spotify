@@ -9,6 +9,7 @@ import { TrackListDensityProvider } from "./track-list-density-provider"
 import type { TrackListEntry } from "./track-row"
 
 const trackWithArtwork = (index: number): TrackListEntry => ({
+  trackId: `fake-track-${index}`,
   title: `Track ${index + 1}`,
   artists: [{ id: null, name: "Mira Kaelin" }],
   album: { id: "fake-album-0", name: "Glass Harbour" },

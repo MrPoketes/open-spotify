@@ -3,9 +3,11 @@ import { Clock, Music } from "lucide-react"
 import type { CSSProperties, KeyboardEvent } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
+import { useContextMenu } from "../../ui/use-context-menu"
 import { ArtistLinks } from "../artist/artist-links"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SimplifiedArtist } from "../spotify/spotify-artist"
+import { TrackContextMenu } from "../track-actions/track-context-menu"
 import { formatTrackDuration } from "./format-duration"
 import { trackRowHeight } from "./track-row-height"
 
@@ -14,6 +16,9 @@ import { trackRowHeight } from "./track-row-height"
 export type TrackListLayout = "playlist" | "album"
 
 export interface TrackListEntry {
+  // Null for a row that is not a Spotify track: a podcast episode, a local
+  // file, or a track Spotify no longer has.
+  readonly trackId: string | null
   readonly title: string
   // Empty for a row without artists, such as a podcast episode.
   readonly artists: ReadonlyArray<SimplifiedArtist>
@@ -90,7 +95,7 @@ interface TrackRowSlot {
 }
 
 const rowAttributes = (
-  { index, tabIndex, offset, onFocus, onKeyDown }: TrackRowSlot,
+  { index, tabIndex, offset, onFocus }: TrackRowSlot,
   layout: TrackListLayout,
   density: TrackListDensity,
 ) => ({
@@ -98,7 +103,6 @@ const rowAttributes = (
   "data-index": index,
   tabIndex,
   onFocus,
-  onKeyDown,
   style: {
     position: "absolute",
     insetInline: 0,
@@ -211,14 +215,31 @@ interface TrackRowProps {
 // row keeps keyboard focus when its page arrives. Each disc of an album is
 // its own list, so a row's position is also its track number.
 export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
+  const trackMenu = useContextMenu()
+  // A row that is still loading has no actions yet.
+  const opensMenu = entry !== undefined
+
   return (
-    <tr {...rowAttributes(slot, layout, density)} aria-label={accessibleName(slot.index, entry)}>
+    <tr
+      {...rowAttributes(slot, layout, density)}
+      aria-label={accessibleName(slot.index, entry)}
+      onContextMenu={opensMenu ? trackMenu.openAtPointer : undefined}
+      onKeyDown={(event) => {
+        if (opensMenu) {
+          trackMenu.openWithKeyboard(event)
+        }
+        slot.onKeyDown(event)
+      }}
+    >
       <td className="text-right text-muted tabular-nums">{slot.index + 1}</td>
       {entry === undefined ? (
         <PlaceholderCells layout={layout} density={density} />
       ) : (
         <TrackCells entry={entry} layout={layout} density={density} tabIndex={slot.tabIndex} />
       )}
+      {entry !== undefined && trackMenu.anchor !== null ? (
+        <TrackContextMenu entry={entry} anchor={trackMenu.anchor} onClose={trackMenu.close} />
+      ) : null}
     </tr>
   )
 }

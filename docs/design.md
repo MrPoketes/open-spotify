@@ -313,6 +313,26 @@ with 4 px of padding, aligned to the button's right edge. Items are `text-sm` ro
 `rounded-small` corners that turn `surface-raised` on hover or focus. An item that opens a
 dialog ends its label with an ellipsis ("Import folders…").
 
+A context menu (`ContextMenu` in `src/renderer/ui`) opens on right-click, `Shift+F10`, or the
+context-menu key, at the pointer or, from the keyboard, under the element. It looks like any other
+menu and follows the WAI-ARIA menu pattern: focus starts on the first item, the arrow keys wrap,
+`Enter` or `Space` activates, and `Escape` or `Tab` closes it and returns focus to the element it
+opened from. An item with a submenu ends in a 16 px `ChevronRight`; `→`, `Enter`, or a click opens
+the submenu beside it, and `←` or `Escape` goes back to its item. A menu that would spill over the
+window edge moves back inside it. A menu lists only the actions that lead somewhere, and an element
+with none opens no menu.
+
+Every row of a track list has a context menu: Go to artist (a submenu of the artists when the track
+has several), Go to album, and Copy link, which copies `https://open.spotify.com/track/<id>`.
+
+### Status message
+
+What an action from a context menu did is said in a small Overlay message (`surface-overlay`,
+`shadow-overlay`, `rounded-large`, `text-sm`) centered 16 px above the now-playing bar, in `danger`
+text for a failure. It fades in like a menu and goes away after five seconds. It sits in a
+`role="status"` region that stays on the page, so screen readers announce every message
+(`useShowStatusMessage` in `src/renderer/ui`).
+
 The sidebar's folder menu sits beside the "Your library" heading. What an action did is said
 under the heading: a success in `muted` text inside an `output`, a failure in `danger` text
 inside an `alert`.
