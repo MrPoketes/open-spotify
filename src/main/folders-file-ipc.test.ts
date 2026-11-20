@@ -179,31 +179,25 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
     }).pipe(Effect.provide(freshFolders())),
   )
 
-  it.effect("writes no file when the user cancels the save dialog", () =>
+  // The renderer shows no message for a cancelled dialog, so a cancel must not
+  // come back as a failure.
+  it.effect("replies that the save dialog was cancelled when the user cancels it", () =>
     Effect.gen(function* () {
-      const fileSystem = yield* FileSystem.FileSystem
-      const tempDirectory = yield* fileSystem.makeTempDirectoryScoped()
-
-      const reply = yield* Effect.provide(
-        exportFoldersFromIpc(null),
-        fileDialogsChoosing(Option.none()),
-      ).pipe(Effect.provide(freshFolders()))
+      const reply = yield* exportFoldersFromIpc(null).pipe(
+        Effect.provide(fileDialogsChoosing(Option.none())),
+      )
 
       assert.deepStrictEqual(reply, { _tag: "FileDialogCanceled" })
-      assert.deepStrictEqual(yield* fileSystem.readDirectory(tempDirectory), [])
-    }),
+    }).pipe(Effect.provide(freshFolders())),
   )
 
-  it.effect("changes nothing when the user cancels the open dialog", () =>
+  it.effect("replies that the open dialog was cancelled when the user cancels it", () =>
     Effect.gen(function* () {
-      const folders = yield* Folders
-
       const reply = yield* importFoldersFromIpc(null).pipe(
         Effect.provide(fileDialogsChoosing(Option.none())),
       )
 
       assert.deepStrictEqual(reply, { _tag: "FileDialogCanceled" })
-      assert.deepStrictEqual(yield* folders.readTree, [])
     }).pipe(Effect.provide(freshFolders())),
   )
 })

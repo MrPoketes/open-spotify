@@ -28,10 +28,10 @@ const exportFolders = Effect.gen(function* () {
 
 const importFolders = Effect.gen(function* () {
   const bridge = yield* DesktopBridge
-  const outcome = yield* bridge.importFolders
-  if (outcome._tag === "FileDialogCanceled") return null
-  const folderNoun = outcome.folderCount === 1 ? "folder" : "folders"
-  return success(`Imported ${outcome.folderCount} ${folderNoun}.`)
+  const reply = yield* bridge.importFolders
+  if (reply._tag === "FileDialogCanceled") return null
+  const folderNoun = reply.folderCount === 1 ? "folder" : "folders"
+  return success(`Imported ${reply.folderCount} ${folderNoun}.`)
 }).pipe(
   Effect.catchTags({
     FoldersFileNotJson: () => Effect.succeed(failure(`That file isn't JSON. ${nothingImported}`)),
@@ -60,7 +60,7 @@ export function useFoldersFileActions() {
 
   // Clearing the outcome first means a repeated outcome changes the page
   // again, so screen readers announce it again.
-  const runAction = (action: typeof exportFolders) => {
+  const runAction = (action: Effect.Effect<FoldersFileOutcome | null, never, DesktopBridge>) => {
     setOutcome(null)
     runtime.runFork(action.pipe(Effect.map(setOutcome)))
   }
