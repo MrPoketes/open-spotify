@@ -8,9 +8,12 @@ import {
 } from "@tanstack/react-router"
 import { render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
+import { Layer, ManagedRuntime } from "effect"
 import { describe, expect, it } from "vitest"
+import { DesktopBridge } from "../../lib/desktop-bridge"
 import { fakeMainProcess } from "../../lib/fake-main-process"
-import { rendererRuntime } from "../../lib/renderer-runtime"
+import { RendererRuntimeContext, rendererRuntime } from "../../lib/renderer-runtime"
+import { SpotifyApi } from "../spotify/spotify-api"
 import { AppShell } from "./app-shell"
 import { loadSavedSidebarWidth } from "./saved-sidebar-width"
 
@@ -18,6 +21,11 @@ Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 // The router scrolls to the top after each navigation, and jsdom does not
 // implement scrolling.
 Object.defineProperty(window, "scrollTo", { value: () => undefined })
+
+// The sidebar loads the library, which must come from the fake Spotify API.
+const runtimeWithFakeSpotify = ManagedRuntime.make(
+  Layer.merge(SpotifyApi.layerFake, DesktopBridge.layer),
+)
 
 interface ShellOptions {
   readonly savedSidebarWidth?: number
@@ -50,7 +58,11 @@ const renderAppShell = async ({
     routeTree: rootRoute.addChildren([homeRoute, albumRoute]),
     history: createMemoryHistory({ initialEntries: ["/", "/album"], initialIndex: 1 }),
   })
-  const view = render(<RouterProvider router={router} />)
+  const view = render(
+    <RendererRuntimeContext value={runtimeWithFakeSpotify}>
+      <RouterProvider router={router} />
+    </RendererRuntimeContext>,
+  )
   await screen.findByRole("heading", { name: "Album" })
   return view
 }

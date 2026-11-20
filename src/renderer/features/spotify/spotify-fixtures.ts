@@ -21,6 +21,7 @@ const fakeAlbum = (albumName: string, artistName: string, index: number) => ({
   name: albumName,
   images: [{ url: coverUrl(`album-${index}`), width: 640, height: 640 }],
   artists: [{ id: `fake-artist-${index}`, name: artistName }],
+  uri: `spotify:album:fake-${index}`,
 })
 
 const albums = [
@@ -141,3 +142,44 @@ export const fakePlaylists: ReadonlyArray<FakePlaylist> = [
     entries: tracks(30, 400).map(playlistEntry),
   },
 ]
+
+const savedAt = (index: number) => new Date(Date.UTC(2025, 5, 1 + index)).toISOString()
+
+export const fakeLikedSongs = tracks(57, 600).map((track, index) => ({
+  added_at: savedAt(index),
+  track,
+}))
+
+export const fakeSavedAlbums = albums
+  .slice(0, 4)
+  .map((album, index) => ({ added_at: savedAt(index), album }))
+
+const bandFirstWords = ["Velvet", "Neon", "Cedar", "Amber", "Lunar", "Copper", "Silver"] as const
+const bandLastWords = ["Choir", "Parade", "Fields", "Engine", "Club", "Season", "Harbor"] as const
+
+const followedArtistNames = [
+  ...albums.flatMap(({ artists }) => artists.map(({ name }) => name)),
+  ...bandFirstWords.flatMap((first) => bandLastWords.map((last) => `${first} ${last}`)),
+]
+
+// More artists than fit on one page, so a client has to follow the cursor.
+export const fakeFollowedArtists = followedArtistNames.map((name, index) => ({
+  id: `fake-artist-${index}`,
+  name,
+  images: [{ url: coverUrl(`artist-${index}`), width: 320, height: 320 }],
+  uri: `spotify:artist:fake-${index}`,
+  type: "artist",
+}))
+
+const fakeShow = (name: string, index: number) => ({
+  added_at: savedAt(index),
+  show: {
+    id: `fake-show-${index}`,
+    name,
+    images: [{ url: coverUrl(`show-${index}`), width: 640, height: 640 }],
+    uri: `spotify:show:fake-${index}`,
+    type: "show",
+  },
+})
+
+export const fakeSavedShows = [fakeShow("Slow Science", 0), fakeShow("The Long Edit", 1)]
