@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppPlaylistPlaylistIdRouteImport } from './routes/_app/playlist.$playlistId'
 import { Route as AppShowShowIdRouteImport } from './routes/_app/show.$showId'
 
 const AppRoute = AppRouteImport.update({
@@ -40,6 +41,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPlaylistPlaylistIdRoute = AppPlaylistPlaylistIdRouteImport.update({
+  id: '/playlist/$playlistId',
+  path: '/playlist/$playlistId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppShowShowIdRoute = AppShowShowIdRouteImport.update({
   id: '/show/$showId',
   path: '/show/$showId',
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof AppSettingsRoute
+  '/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
   '/show/$showId': typeof AppShowShowIdRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
+  '/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
   '/show/$showId': typeof AppShowShowIdRoute
 }
 export interface FileRoutesById {
@@ -67,13 +75,26 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
   '/_app/show/$showId': typeof AppShowShowIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/onboarding' | '/settings' | '/show/$showId'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/onboarding'
+    | '/settings'
+    | '/playlist/$playlistId'
+    | '/show/$showId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/onboarding' | '/settings' | '/' | '/show/$showId'
+  to:
+    | '/login'
+    | '/onboarding'
+    | '/settings'
+    | '/'
+    | '/playlist/$playlistId'
+    | '/show/$showId'
   id:
     | '__root__'
     | '/_app'
@@ -81,6 +102,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/_app/settings'
     | '/_app/'
+    | '/_app/playlist/$playlistId'
     | '/_app/show/$showId'
   fileRoutesById: FileRoutesById
 }
@@ -127,6 +149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/playlist/$playlistId': {
+      id: '/_app/playlist/$playlistId'
+      path: '/playlist/$playlistId'
+      fullPath: '/playlist/$playlistId'
+      preLoaderRoute: typeof AppPlaylistPlaylistIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/show/$showId': {
       id: '/_app/show/$showId'
       path: '/show/$showId'
@@ -140,12 +169,14 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppPlaylistPlaylistIdRoute: typeof AppPlaylistPlaylistIdRoute
   AppShowShowIdRoute: typeof AppShowShowIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppPlaylistPlaylistIdRoute: AppPlaylistPlaylistIdRoute,
   AppShowShowIdRoute: AppShowShowIdRoute,
 }
 

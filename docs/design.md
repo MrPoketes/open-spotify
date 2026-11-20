@@ -67,7 +67,11 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 - Card grids (albums, artists, folders) use `repeat(auto-fill, minmax(160px, 1fr))` with a
   24 px gap, so the column count follows the pane width.
 - Track lists use fixed columns: index, title and artist, album, date added, duration. Columns
-  that do not fit the pane width are hidden from the right, never squeezed.
+  that do not fit the pane width are hidden from the right, never squeezed: date added goes
+  first, below 768 px, then the album, below 576 px. Duration always stays.
+- Track lists scroll with the main view, so a page header above one scrolls away. Only the rows
+  near the screen are in the DOM; a row whose track has not loaded keeps its full height and
+  shows a placeholder artwork tile and a bar, so the scrollbar is right from the start.
 
 ### Before login
 
@@ -205,16 +209,17 @@ that starts on the chosen row, and moves like any other list (see Keyboard).
 ### Loading, empty, and error states
 
 - While a list or page loads, it says so in `muted` text inside an `output` element, so screen
-  readers announce it.
+  readers announce it. No spinner, since nothing animates on page load.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, with a Retry button next to it
   (`src/renderer/ui/error-with-retry.tsx`). When a later page of a long list fails, the rows
-  already loaded stay and the error sits below them.
+  already loaded stay and the error sits below them. A virtualised list can fail in the middle,
+  so its error sticks to the bottom of the view and shows wherever the user has scrolled.
 - When filters match nothing, the list says so inside an `output` element. The element stays on
   the page while entries match, because screen readers only announce changes to a live region
   that already exists.
 - Long lists load their next page when the end of the list scrolls into view, with no "Load
-  more" button.
+  more" button. A virtualised list loads the pages under the rows on screen, in any order.
 
 ### Motion
 

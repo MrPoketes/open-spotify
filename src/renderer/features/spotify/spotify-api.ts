@@ -15,7 +15,7 @@ import { Device } from "./spotify-device"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
 import { Paging, streamPages } from "./spotify-paging"
 import { PlaybackState } from "./spotify-playback-state"
-import { Playlist, PlaylistItem, SimplifiedPlaylist } from "./spotify-playlist"
+import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
 import { CurrentUser } from "./spotify-user"
 
@@ -45,7 +45,7 @@ const spotifyApiBaseUrl = "https://api.spotify.com/v1"
 
 // The largest page Spotify allows for playlists, playlist items, show episodes,
 // and the user's saved and followed collections.
-const pageSize = 50
+export const maximumPageSize = 50
 
 // Without this, Spotify only promises to return tracks: a playlist that
 // contains a podcast episode would fail to decode, and a playing episode
@@ -117,7 +117,10 @@ export class SpotifyApi extends Context.Service<
     readonly getCurrentUser: Effect.Effect<CurrentUser, SpotifyApiError>
     readonly currentUserPlaylists: Stream.Stream<SimplifiedPlaylist, SpotifyApiError>
     readonly getPlaylist: (playlistId: string) => Effect.Effect<Playlist, SpotifyApiError>
-    readonly playlistItems: (playlistId: string) => Stream.Stream<PlaylistItem, SpotifyApiError>
+    readonly getPlaylistItemsPage: (
+      playlistId: string,
+      offset: number,
+    ) => Effect.Effect<PlaylistItemsPage, SpotifyApiError>
     readonly likedSongsCount: Effect.Effect<number, SpotifyApiError>
     readonly savedAlbums: Stream.Stream<SavedAlbum, SpotifyApiError>
     readonly followedArtists: Stream.Stream<Artist, SpotifyApiError>
@@ -174,7 +177,7 @@ export class SpotifyApi extends Context.Service<
       return SpotifyApi.of({
         getCurrentUser: getJson(`${spotifyApiBaseUrl}/me`, CurrentUser),
         currentUserPlaylists: streamPages(
-          `${spotifyApiBaseUrl}/me/playlists?limit=${pageSize}`,
+          `${spotifyApiBaseUrl}/me/playlists?limit=${maximumPageSize}`,
           (url) => getJson(url, Paging(SimplifiedPlaylist)),
         ),
         getPlaylist: (playlistId) =>
@@ -182,30 +185,30 @@ export class SpotifyApi extends Context.Service<
             `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}?${trackAndEpisodeTypes}`,
             Playlist,
           ),
-        playlistItems: (playlistId) =>
-          streamPages(
-            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items?limit=${pageSize}&${trackAndEpisodeTypes}`,
-            (url) => getJson(url, Paging(PlaylistItem)),
+        getPlaylistItemsPage: (playlistId, offset) =>
+          getJson(
+            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items?limit=${maximumPageSize}&offset=${offset}&${trackAndEpisodeTypes}`,
+            PlaylistItemsPage,
           ),
         likedSongsCount: getJson(
           `${spotifyApiBaseUrl}/me/tracks?limit=1`,
           Schema.Struct({ total: Schema.Number }),
         ).pipe(Effect.map(({ total }) => total)),
-        savedAlbums: streamPages(`${spotifyApiBaseUrl}/me/albums?limit=${pageSize}`, (url) =>
+        savedAlbums: streamPages(`${spotifyApiBaseUrl}/me/albums?limit=${maximumPageSize}`, (url) =>
           getJson(url, Paging(SavedAlbum)),
         ),
         followedArtists: streamPages(
-          `${spotifyApiBaseUrl}/me/following?type=artist&limit=${pageSize}`,
+          `${spotifyApiBaseUrl}/me/following?type=artist&limit=${maximumPageSize}`,
           (url) => getJson(url, FollowedArtistsPage).pipe(Effect.map(({ artists }) => artists)),
         ),
-        savedShows: streamPages(`${spotifyApiBaseUrl}/me/shows?limit=${pageSize}`, (url) =>
+        savedShows: streamPages(`${spotifyApiBaseUrl}/me/shows?limit=${maximumPageSize}`, (url) =>
           getJson(url, Paging(SavedShow)),
         ),
         getShow: (showId) =>
           getJson(`${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}`, Show),
         getShowEpisodePage: (showId, offset) =>
           getJson(
-            `${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}/episodes?limit=${pageSize}&offset=${offset}`,
+            `${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}/episodes?limit=${maximumPageSize}&offset=${offset}`,
             ShowEpisodePage,
           ),
         getPlaybackState,

@@ -98,18 +98,16 @@ layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
     }),
   )
 
-  test.effect("streams a playlist's items across several pages in order", () =>
+  test.effect("fetches the page of a playlist's items that starts at the given offset", () =>
     Effect.gen(function* () {
       const spotify = yield* SpotifyApi
 
-      const items = yield* Stream.runCollect(
-        spotify.playlistItems("fake-playlist-late-night-drive"),
-      )
+      const page = yield* spotify.getPlaylistItemsPage("fake-playlist-late-night-drive", 100)
 
-      assert.strictEqual(items.length, 120)
+      assert.strictEqual(page.total, 120)
       assert.deepStrictEqual(
-        items.map(({ item }) => item?.id),
-        Array.from({ length: 120 }, (_, index) => `fake-track-${index}`),
+        page.items.map(({ item }) => item?.id),
+        Array.from({ length: 20 }, (_, index) => `fake-track-${100 + index}`),
       )
     }),
   )
@@ -120,7 +118,7 @@ layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
     Effect.gen(function* () {
       const spotify = yield* SpotifyApi
 
-      const items = yield* Stream.runCollect(spotify.playlistItems("fake-playlist-morning-coffee"))
+      const { items } = yield* spotify.getPlaylistItemsPage("fake-playlist-morning-coffee", 0)
       const playlist = yield* spotify.getPlaylist("fake-playlist-morning-coffee")
       const [localFile, episode, removedTrack] = items.slice(-3)
 
@@ -153,9 +151,7 @@ layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
     Effect.gen(function* () {
       const spotify = yield* SpotifyApi
 
-      const error = yield* Effect.flip(
-        Stream.runCollect(spotify.playlistItems("fake-playlist-indie-finds")),
-      )
+      const error = yield* Effect.flip(spotify.getPlaylistItemsPage("fake-playlist-indie-finds", 0))
 
       assert.strictEqual(error._tag, "SpotifyResponseError")
       assert.include(error, { status: 403, message: "Forbidden" })
@@ -282,6 +278,25 @@ describe("SpotifyApi responses", () => {
       const api = yield* SpotifyApi
 
       const error = yield* Effect.flip(api.getCurrentUser)
+
+      assert.strictEqual(error._tag, "SpotifyDecodeError")
+    }).pipe(Effect.provide(spotify.layer))
+  })
+
+  // A malformed date would otherwise reach the track list and throw while it
+  // renders, taking the whole page down instead of offering Retry.
+  it.effect("fails with SpotifyDecodeError when a playlist item's added date is malformed", () => {
+    const itemWithBadDate = { added_at: "not a date", is_local: false, item: null }
+    const spotify = scriptedSpotify([
+      {
+        status: 200,
+        body: JSON.stringify({ items: [itemWithBadDate], next: null, total: 1 }),
+      },
+    ])
+    return Effect.gen(function* () {
+      const api = yield* SpotifyApi
+
+      const error = yield* Effect.flip(api.getPlaylistItemsPage("fake-playlist", 0))
 
       assert.strictEqual(error._tag, "SpotifyDecodeError")
     }).pipe(Effect.provide(spotify.layer))

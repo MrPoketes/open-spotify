@@ -73,6 +73,14 @@ describe("Library", () => {
     )
   })
 
+  it("links a playlist to its playlist page", async () => {
+    renderLibrary()
+
+    const playlistLink = await screen.findByRole("link", { name: /^Road Trip with Sam/ })
+
+    expect(playlistLink).toHaveAttribute("href", "/playlist/fake-playlist-road-trip")
+  })
+
   it("links a saved show to its show page", async () => {
     renderLibrary()
 
