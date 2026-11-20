@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Deferred, Effect, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
@@ -13,7 +13,7 @@ import {
   SpotifyResponseError,
 } from "../spotify/spotify-api"
 import { fakePlayOrder } from "../spotify/spotify-fake-player"
-import { fakeEpisode, fakeTrack } from "../spotify/spotify-fixtures"
+import { fakeDevices, fakeEpisode, fakeTrack } from "../spotify/spotify-fixtures"
 import { QueuePane } from "./queue-pane"
 
 const renderQueuePane = (spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake) => {
@@ -47,27 +47,25 @@ const queueEmptiedAfterFirstRead = () => {
   }))
 }
 
-// Answers the first queue reads and holds every later one until the test
-// opens the gate. `firstHeldRead` settles when a read starts waiting.
-const gatedQueueReads = (answeredReads: number) => {
+// Lets the first calls through and holds every later one until the test
+// opens the gate. `firstHeld` settles when a call starts waiting.
+const gateAfter = (answeredCalls: number) => {
   const gate = Deferred.makeUnsafe<void>()
-  const readWaiting = Deferred.makeUnsafe<void>()
-  let queueReads = 0
-  const layer = SpotifyApi.layerFakeWith((spotify) => ({
-    getQueue: Effect.suspend(() => {
-      queueReads += 1
-      if (queueReads <= answeredReads) {
-        return spotify.getQueue
-      }
-      return Deferred.succeed(readWaiting, undefined).pipe(
-        Effect.andThen(Deferred.await(gate)),
-        Effect.andThen(spotify.getQueue),
-      )
-    }),
-  }))
+  const callWaiting = Deferred.makeUnsafe<void>()
+  let calls = 0
   return {
-    layer,
-    firstHeldRead: () => Effect.runPromise(Deferred.await(readWaiting)),
+    pass: <A, E>(call: Effect.Effect<A, E>) =>
+      Effect.suspend(() => {
+        calls += 1
+        if (calls <= answeredCalls) {
+          return call
+        }
+        return Deferred.succeed(callWaiting, undefined).pipe(
+          Effect.andThen(Deferred.await(gate)),
+          Effect.andThen(call),
+        )
+      }),
+    firstHeld: () => Effect.runPromise(Deferred.await(callWaiting)),
     open: () => Effect.runSync(Deferred.succeed(gate, undefined)),
   }
 }
@@ -77,6 +75,15 @@ const skipToNext = (runtime: ReturnType<typeof renderQueuePane>) =>
     Effect.gen(function* () {
       const player = yield* Player
       yield* player.skipToNext
+    }),
+  )
+
+// Makes the Player read the playback state at once, as its next poll would.
+const transferToActiveDevice = (runtime: ReturnType<typeof renderQueuePane>) =>
+  runtime.runPromise(
+    Effect.gen(function* () {
+      const player = yield* Player
+      yield* player.transferPlayback(fakeDevices[0].id)
     }),
   )
 
@@ -106,34 +113,55 @@ describe("QueuePane", () => {
     expect(nextRow).toHaveTextContent(fakePlayOrder(4).name)
   })
 
-  // Double-clicking is how the official client plays an item. The second
-  // click must not skip again, or report the item that it just played as gone.
-  it("plays an item once when its row is double-clicked", async () => {
+  it("plays the second copy of an item queued twice when that copy is pressed", async () => {
     renderQueuePane()
+    const episodeRow = await upNextRow(fakeEpisode.name)
 
-    await userEvent.dblClick(await upNextRow(fakePlayOrder(3).name))
+    // Both copies have the same name, so the second one is reached by moving
+    // down two rows from the episode.
+    act(() => episodeRow.focus())
+    await userEvent.keyboard("{ArrowDown}{ArrowDown}{Enter}")
 
-    expect(
-      await within(await section("Now playing")).findByText(fakePlayOrder(3).name),
-    ).toBeInTheDocument()
-    const [nextRow] = await upNextRows()
-    expect(nextRow).toHaveTextContent(fakePlayOrder(4).name)
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    await waitFor(async () => {
+      const [firstRow] = await upNextRows()
+      expect(firstRow).toHaveTextContent(fakePlayOrder(5).name)
+    })
   })
 
-  it("ignores a second press while an item is still being played", async () => {
-    const spotify = gatedQueueReads(1)
-    renderQueuePane(spotify.layer)
+  // Rows of a list shown partway through a press point at positions the
+  // press is still skipping past.
+  it("ignores presses on a list that arrives while an item is still being played", async () => {
+    const skips = gateAfter(1)
+    const runtime = renderQueuePane(
+      SpotifyApi.layerFakeWith((spotify) => ({ skipToNext: skips.pass(spotify.skipToNext) })),
+    )
 
+    await userEvent.click(await upNextRow(fakeTrack(2).name))
+    await skips.firstHeld()
+    await transferToActiveDevice(runtime)
+    await nowPlaying(fakePlayOrder(1).name)
+    expect(within(await section("Next up")).getByRole("list")).toHaveAttribute("aria-busy", "true")
     await userEvent.click(await upNextRow(fakeEpisode.name))
-    await userEvent.click(await upNextRow(fakePlayOrder(3).name))
-    spotify.open()
+    skips.open()
 
-    expect(
-      await within(await section("Now playing")).findByText(fakeEpisode.name),
-    ).toBeInTheDocument()
-    const [nextRow] = await upNextRows()
-    expect(nextRow).toHaveTextContent(fakePlayOrder(3).name)
+    expect(await nowPlaying(fakePlayOrder(3).name)).toBeInTheDocument()
+    await waitFor(async () => {
+      const [firstRow] = await upNextRows()
+      expect(firstRow).toHaveTextContent(fakePlayOrder(4).name)
+    })
+  })
+
+  // The pressed row leaves "Next up" once its item plays. Without this, a
+  // keyboard user would land on the page body and tab back from the start.
+  it("keeps focus at the pressed row's position when its item starts playing", async () => {
+    renderQueuePane()
+    const episodeRow = await upNextRow(fakeEpisode.name)
+
+    act(() => episodeRow.focus())
+    await userEvent.keyboard("{Enter}")
+
+    await nowPlaying(fakeEpisode.name)
+    expect(await upNextRow(fakePlayOrder(4).name)).toHaveFocus()
   })
 
   // The queue on screen can be out of date, for example after shuffle was
@@ -174,21 +202,24 @@ describe("QueuePane", () => {
     })
   })
 
-  // The second click lands on the list the first click left behind, where the
-  // copy it points at no longer exists.
+  // Double-clicking is how the official client plays an item. A slow second
+  // click lands on the list the first click left behind, where the copy it
+  // points at no longer exists.
   it("ignores a second press on the old list after the first press played its item", async () => {
     // The pane's first read, its read after the skip, and the press's lookup.
-    const spotify = gatedQueueReads(3)
-    const runtime = renderQueuePane(spotify.layer)
+    const queueReads = gateAfter(3)
+    const runtime = renderQueuePane(
+      SpotifyApi.layerFakeWith((spotify) => ({ getQueue: queueReads.pass(spotify.getQueue) })),
+    )
     await section("Now playing")
     await skipToNext(runtime)
     await nowPlaying(fakePlayOrder(1).name)
     const laterCopyRow = await upNextRow(fakePlayOrder(4).name)
 
     await userEvent.click(laterCopyRow)
-    await spotify.firstHeldRead()
+    await queueReads.firstHeld()
     await userEvent.click(laterCopyRow)
-    spotify.open()
+    queueReads.open()
 
     await waitFor(async () => {
       const [firstRow] = await upNextRows()

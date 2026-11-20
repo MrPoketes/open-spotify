@@ -43,6 +43,10 @@ export const useRovingFocus = (rowCount: number, initialIndex = 0) => {
     rows.current[targetRow]?.focus()
   }
 
+  // Focuses the row at a position, or the last row if the list has shrunk
+  // below it.
+  const focusRow = (index: number) => rows.current[Math.min(index, rowCount - 1)]?.focus()
+
   const rowProps = (index: number) => ({
     tabIndex: index === activeIndex ? 0 : -1,
     ref: (row: HTMLElement | null) => {
@@ -51,7 +55,7 @@ export const useRovingFocus = (rowCount: number, initialIndex = 0) => {
     onFocus: () => setLastFocusedIndex(index),
   })
 
-  return { onKeyDown, rowProps }
+  return { onKeyDown, rowProps, focusRow }
 }
 
 export type RovingRowProps = ReturnType<ReturnType<typeof useRovingFocus>["rowProps"]>

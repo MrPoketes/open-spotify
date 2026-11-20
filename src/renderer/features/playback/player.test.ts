@@ -7,7 +7,6 @@ import {
   SpotifyRequestError,
   SpotifyResponseError,
 } from "../spotify/spotify-api"
-import { fakePlayOrder } from "../spotify/spotify-fake-player"
 import { fakeDevices, fakeTrack } from "../spotify/spotify-fixtures"
 import { Player, type PlayerState } from "./player"
 
@@ -260,19 +259,6 @@ describe("Player", () => {
 
       assert.strictEqual(playingName(stateAfterSkip), fakeTrack(1).name)
     }).pipe(Effect.scoped, Effect.provide(playerOver(SpotifyApi.layerFake))),
-  )
-
-  it.effect("plays a later copy of the item that is playing when that copy is chosen", () =>
-    Effect.gen(function* () {
-      const player = yield* Player
-      const spotify = yield* SpotifyApi
-      yield* spotify.skipToNext
-
-      yield* player.playQueuedItem({ uri: fakeTrack(1).uri, occurrence: 0 })
-      const { upNext } = yield* spotify.getQueue
-
-      assert.strictEqual(upNext[0]?.uri, fakePlayOrder(5).uri)
-    }).pipe(Effect.provide(Player.layer.pipe(Layer.provideMerge(SpotifyApi.layerFake)))),
   )
 
   it.effect("reads the playback state again when a command finds no active device", () => {

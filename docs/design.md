@@ -211,9 +211,9 @@ Pins are the `pinnedLibraryEntries` setting and the section order and states are
 ### Now-playing bar and device picker
 
 The bar has three columns: what is playing on the left, the playback controls in the middle,
-and the queue button and device picker on the right. The left column shows 40 px artwork, as in library rows,
-then the title in `text-sm` and the artists in `text-xs` `muted` ("Podcast episode" for an
-episode).
+and the queue button and device picker on the right. The left column shows 40 px artwork, as in
+library rows, then the title in `text-sm` and the artists in `text-xs` `muted` ("Podcast
+episode" for an episode).
 
 The controls are, in order: shuffle, previous, play or pause, next, repeat. They are 32 px
 round icon buttons; play or pause is `accent` with `on-accent` icons, and the others are
@@ -230,9 +230,9 @@ a device that other apps cannot control, or an action Spotify disallows right no
 `aria-disabled` at 50 % opacity and keeps its focus, and its `title` says why, which also
 makes it the accessible description.
 
-The bar's right end holds the queue button (`ListMusic`, a toggle drawn like shuffle) and
-always the device picker button, labelled with the playing device
-("Playing on Kitchen Speaker") or "No active device". With no active device, the bar's left
+The bar's right end holds the queue button (`ListMusic`, a toggle drawn like shuffle) and always
+the device picker button, labelled with the playing device ("Playing on Kitchen Speaker") or
+"No active device". With no active device, the bar's left
 side says that audio plays in the Spotify app or on another device, next to a "Choose a device"
 button that opens the picker.
 
@@ -258,14 +258,16 @@ now-playing bar's layout: 40 px artwork, the title, and the artists or "Podcast 
 upcoming item is a row button, and the list is one tab stop with roving focus. Pressing a row
 plays that item. Spotify has no endpoint for that, so the app reads the queue again, finds the
 item, and skips to the next item once for every item before it; if the item has left the queue,
-an alert under the list says so. A double-click plays the item once: presses while an item is
-being played are ignored, and a press that finds playback has already moved to its item since
-the list was shown does nothing. Spotify cannot remove or reorder queued items, so the pane
-offers neither.
+an alert under the list says so. A row points into the list it was shown in, so from the moment
+a row is pressed until the queue read after that press arrives, the list ignores presses and is
+`aria-busy`. A double-click therefore plays the item once. When the new list arrives, focus goes
+to the row at the pressed row's position (or the last row, if the list got shorter), because the
+pressed row has moved to "Now playing". Spotify cannot remove or reorder queued items, so the
+pane offers neither.
 
-The queue is read again whenever the playing item changes; after a shuffle change, "Next up"
-keeps the old order until then (ARM-87). With no active device the pane asks
-the user to choose one in the bar, and a queue with nothing in it says so.
+The queue is read again whenever the playing item changes and after every press; after a shuffle
+change, "Next up" keeps the old order until the next track (ARM-87). With no active device the
+pane asks the user to choose one in the bar, and a queue with nothing in it says so.
 
 ### Settings and the theme picker
 
