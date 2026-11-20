@@ -12,8 +12,16 @@ export class FoldersFileUnsupportedVersion extends Schema.TaggedError<FoldersFil
   { version: Schema.Number },
 ) {}
 
+// The JSON is not a folders file at all, such as a theme.
 export class FoldersFileInvalid extends Schema.TaggedError<FoldersFileInvalid>()(
   "FoldersFileInvalid",
+  {},
+) {}
+
+// A folders file of a known version holds a folder or item that is not valid,
+// for example after a hand edit.
+export class FoldersFileDamaged extends Schema.TaggedError<FoldersFileDamaged>()(
+  "FoldersFileDamaged",
   {},
 ) {}
 
@@ -21,6 +29,7 @@ export const ImportFoldersError = Schema.Union([
   FoldersFileNotJson,
   FoldersFileUnsupportedVersion,
   FoldersFileInvalid,
+  FoldersFileDamaged,
 ])
 
 export type ImportFoldersError = typeof ImportFoldersError.Type

@@ -7,7 +7,7 @@ import { SpotifyTokenEndpoint } from "./auth/spotify-token-endpoint"
 import { SystemBrowser } from "./auth/system-browser"
 import { TokenStore } from "./auth/token-store"
 import { databaseLayer } from "./database"
-import { FileDialogs } from "./file-dialogs"
+import { FoldersFileDialogs } from "./folders-file-dialogs"
 import { Folders } from "./folders"
 import { Settings } from "./settings"
 
@@ -30,7 +30,7 @@ const spotifySessionLayer = SpotifySession.layer.pipe(
 // Runs Effect programs from Electron callbacks. Every service the main
 // process depends on is provided here, in one place.
 export const mainRuntime = ManagedRuntime.make(
-  Layer.mergeAll(storageLayer, spotifySessionLayer, FileDialogs.layer(dialog)).pipe(
+  Layer.mergeAll(storageLayer, spotifySessionLayer, FoldersFileDialogs.layer(dialog)).pipe(
     Layer.provideMerge(NodeFileSystem.layer),
   ),
 )

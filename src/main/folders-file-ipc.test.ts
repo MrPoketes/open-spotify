@@ -4,7 +4,7 @@ import { assert, layer } from "@effect/vitest"
 import { Effect, FileSystem, Layer, Option } from "effect"
 import type { FolderEntry, SpotifyItem } from "../shared/folders"
 import { databaseLayer } from "./database"
-import { FileDialogs } from "./file-dialogs"
+import { FoldersFileDialogs } from "./folders-file-dialogs"
 import { Folders } from "./folders"
 import { exportFoldersFromIpc, importFoldersFromIpc } from "./folders-file-ipc"
 
@@ -13,10 +13,10 @@ const freshFolders = () => Folders.layer.pipe(Layer.provide(databaseLayer(":memo
 // Both dialogs answer as if the user had chosen this path, or cancelled.
 const fileDialogsChoosing = (filePath: Option.Option<string>) =>
   Layer.succeed(
-    FileDialogs,
-    FileDialogs.of({
-      chooseFoldersExportPath: () => Effect.succeed(filePath),
-      chooseFoldersImportPath: () => Effect.succeed(filePath),
+    FoldersFileDialogs,
+    FoldersFileDialogs.of({
+      chooseExportPath: () => Effect.succeed(filePath),
+      chooseImportPath: () => Effect.succeed(filePath),
     }),
   )
 
@@ -141,7 +141,7 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
     }).pipe(Effect.provide(freshFolders())),
   )
 
-  it.effect("rejects a folders file in which any folder is invalid", () =>
+  it.effect("rejects a damaged folders file in which any folder is invalid", () =>
     Effect.gen(function* () {
       const reply = yield* expectRejectedWithoutChanges(
         foldersFile([
@@ -150,7 +150,7 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
         ]),
       )
 
-      assert.deepStrictEqual(reply, { _tag: "FoldersFileInvalid" })
+      assert.deepStrictEqual(reply, { _tag: "FoldersFileDamaged" })
     }).pipe(Effect.provide(freshFolders())),
   )
 
@@ -177,6 +177,21 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
         { name: "Rock", entries: [album] },
       ])
     }).pipe(Effect.provide(freshFolders())),
+  )
+
+  it.effect("writes no file when the user cancels the save dialog", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem
+      const tempDirectory = yield* fileSystem.makeTempDirectoryScoped()
+
+      const reply = yield* Effect.provide(
+        exportFoldersFromIpc(null),
+        fileDialogsChoosing(Option.none()),
+      ).pipe(Effect.provide(freshFolders()))
+
+      assert.deepStrictEqual(reply, { _tag: "FileDialogCanceled" })
+      assert.deepStrictEqual(yield* fileSystem.readDirectory(tempDirectory), [])
+    }),
   )
 
   it.effect("changes nothing when the user cancels the open dialog", () =>

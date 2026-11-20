@@ -1,7 +1,7 @@
 import type { BaseWindow } from "electron"
 import { Effect, FileSystem, Option, Schema } from "effect"
 import { ExportFoldersReply, ImportFoldersReply } from "../shared/folders-file-replies"
-import { FileDialogs } from "./file-dialogs"
+import { FoldersFileDialogs } from "./folders-file-dialogs"
 import { Folders } from "./folders"
 import { decodeFoldersFile, encodeFoldersFile, type PortableFolderEntry } from "./folders-file"
 
@@ -21,8 +21,8 @@ const countFolders = (entries: ReadonlyArray<PortableFolderEntry>): number => {
 export const exportFoldersFromIpc = Effect.fn("exportFoldersFromIpc")(function* (
   parentWindow: BaseWindow | null,
 ) {
-  const fileDialogs = yield* FileDialogs
-  const filePath = yield* fileDialogs.chooseFoldersExportPath(parentWindow)
+  const fileDialogs = yield* FoldersFileDialogs
+  const filePath = yield* fileDialogs.chooseExportPath(parentWindow)
   if (Option.isNone(filePath)) {
     return yield* Schema.encodeEffect(ExportFoldersReply)(fileDialogCanceled)
   }
@@ -36,8 +36,8 @@ export const exportFoldersFromIpc = Effect.fn("exportFoldersFromIpc")(function* 
 export const importFoldersFromIpc = Effect.fn("importFoldersFromIpc")(function* (
   parentWindow: BaseWindow | null,
 ) {
-  const fileDialogs = yield* FileDialogs
-  const filePath = yield* fileDialogs.chooseFoldersImportPath(parentWindow)
+  const fileDialogs = yield* FoldersFileDialogs
+  const filePath = yield* fileDialogs.chooseImportPath(parentWindow)
   if (Option.isNone(filePath)) {
     return yield* Schema.encodeEffect(ImportFoldersReply)(fileDialogCanceled)
   }
@@ -51,7 +51,12 @@ export const importFoldersFromIpc = Effect.fn("importFoldersFromIpc")(function* 
       folderCount: countFolders(importedFolders),
     })),
     Effect.catchTag(
-      ["FoldersFileNotJson", "FoldersFileUnsupportedVersion", "FoldersFileInvalid"],
+      [
+        "FoldersFileNotJson",
+        "FoldersFileUnsupportedVersion",
+        "FoldersFileInvalid",
+        "FoldersFileDamaged",
+      ],
       Effect.succeed,
     ),
   )

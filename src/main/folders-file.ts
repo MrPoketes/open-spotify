@@ -1,6 +1,7 @@
 import { Effect, Schema } from "effect"
 import { type Folder, FolderName, type FolderTree, SpotifyItem } from "../shared/folders"
 import {
+  FoldersFileDamaged,
   FoldersFileInvalid,
   FoldersFileNotJson,
   FoldersFileUnsupportedVersion,
@@ -59,8 +60,8 @@ export const encodeFoldersFile = (tree: FolderTree) =>
     folders: tree.map(toPortableFolder),
   })
 
-// Decodes in three steps so the user learns why a file was refused: it is not
-// JSON, it comes from an unknown version, or it is not a folders file.
+// Decodes in steps so the user learns why a file was refused: it is not JSON,
+// it is not a folders file, it comes from an unknown version, or it is damaged.
 export const decodeFoldersFile = Effect.fn("decodeFoldersFile")(function* (fileText: string) {
   const json = yield* Schema.decodeEffect(Json)(fileText).pipe(
     Effect.mapError(() => new FoldersFileNotJson()),
@@ -72,7 +73,7 @@ export const decodeFoldersFile = Effect.fn("decodeFoldersFile")(function* (fileT
     return yield* new FoldersFileUnsupportedVersion({ version: header.version })
   }
   const contents = yield* Schema.decodeUnknownEffect(FoldersFileContents)(json).pipe(
-    Effect.mapError(() => new FoldersFileInvalid()),
+    Effect.mapError(() => new FoldersFileDamaged()),
   )
   return contents.folders
 })

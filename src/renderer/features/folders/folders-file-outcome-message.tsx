@@ -1,11 +1,11 @@
-import type { FolderFileOutcome } from "./use-folder-file-actions"
+import type { FoldersFileOutcome } from "./use-folders-file-actions"
 
 // The output stays mounted because screen readers only announce changes to a
 // live region that was already on the page. An alert is announced on insertion.
-export function FolderFileOutcomeMessage({
+export function FoldersFileOutcomeMessage({
   outcome,
 }: {
-  readonly outcome: FolderFileOutcome | null
+  readonly outcome: FoldersFileOutcome | null
 }) {
   return (
     <>

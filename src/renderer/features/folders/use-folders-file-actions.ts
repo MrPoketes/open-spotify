@@ -4,14 +4,14 @@ import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import type { MenuAction } from "../../ui/menu-button"
 
-export interface FolderFileOutcome {
+export interface FoldersFileOutcome {
   readonly kind: "success" | "failure"
   readonly message: string
 }
 
-const success = (message: string): FolderFileOutcome => ({ kind: "success", message })
+const success = (message: string): FoldersFileOutcome => ({ kind: "success", message })
 
-const failure = (message: string): FolderFileOutcome => ({ kind: "failure", message })
+const failure = (message: string): FoldersFileOutcome => ({ kind: "failure", message })
 
 const nothingImported = "No folders were imported."
 
@@ -43,24 +43,31 @@ const importFolders = Effect.gen(function* () {
       ),
     FoldersFileInvalid: () =>
       Effect.succeed(failure(`That file isn't an Open Spotify folders file. ${nothingImported}`)),
+    FoldersFileDamaged: () =>
+      Effect.succeed(
+        failure(
+          `That folders file is damaged: a folder or item in it isn't valid. ${nothingImported}`,
+        ),
+      ),
     DesktopBridgeError: () =>
       Effect.succeed(failure(`The file couldn't be imported. ${nothingImported}`)),
   }),
 )
 
-export function useFolderFileActions() {
+export function useFoldersFileActions() {
   const runtime = use(RendererRuntimeContext)
-  const [outcome, setOutcome] = useState<FolderFileOutcome | null>(null)
+  const [outcome, setOutcome] = useState<FoldersFileOutcome | null>(null)
+
+  // Clearing the outcome first means a repeated outcome changes the page
+  // again, so screen readers announce it again.
+  const runAction = (action: typeof exportFolders) => {
+    setOutcome(null)
+    runtime.runFork(action.pipe(Effect.map(setOutcome)))
+  }
 
   const actions: ReadonlyArray<MenuAction> = [
-    {
-      label: "Export folders…",
-      onSelect: () => runtime.runFork(exportFolders.pipe(Effect.map(setOutcome))),
-    },
-    {
-      label: "Import folders…",
-      onSelect: () => runtime.runFork(importFolders.pipe(Effect.map(setOutcome))),
-    },
+    { label: "Export folders…", onSelect: () => runAction(exportFolders) },
+    { label: "Import folders…", onSelect: () => runAction(importFolders) },
   ]
 
   return { actions, outcome }

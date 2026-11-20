@@ -1,9 +1,12 @@
 import type { BaseWindow, Dialog, FileFilter, OpenDialogOptions, SaveDialogOptions } from "electron"
 import { Context, Effect, Layer, Option, Schema } from "effect"
 
-export class FileDialogError extends Schema.TaggedError<FileDialogError>()("FileDialogError", {
-  cause: Schema.Defect(),
-}) {}
+export class FoldersFileDialogError extends Schema.TaggedError<FoldersFileDialogError>()(
+  "FoldersFileDialogError",
+  {
+    cause: Schema.Defect(),
+  },
+) {}
 
 type DialogModule = Pick<Dialog, "showSaveDialog" | "showOpenDialog">
 
@@ -34,22 +37,22 @@ const showOpenDialog = (
 
 // Takes Electron's dialog module as a parameter so that it can be tested with
 // a fake dialog module in plain Node.
-export class FileDialogs extends Context.Service<
-  FileDialogs,
+export class FoldersFileDialogs extends Context.Service<
+  FoldersFileDialogs,
   {
-    readonly chooseFoldersExportPath: (
+    readonly chooseExportPath: (
       parentWindow: BaseWindow | null,
-    ) => Effect.Effect<Option.Option<string>, FileDialogError>
-    readonly chooseFoldersImportPath: (
+    ) => Effect.Effect<Option.Option<string>, FoldersFileDialogError>
+    readonly chooseImportPath: (
       parentWindow: BaseWindow | null,
-    ) => Effect.Effect<Option.Option<string>, FileDialogError>
+    ) => Effect.Effect<Option.Option<string>, FoldersFileDialogError>
   }
->()("open-spotify/FileDialogs") {
+>()("open-spotify/FoldersFileDialogs") {
   static readonly layer = (dialog: DialogModule) =>
     Layer.succeed(
-      FileDialogs,
-      FileDialogs.of({
-        chooseFoldersExportPath: (parentWindow) =>
+      FoldersFileDialogs,
+      FoldersFileDialogs.of({
+        chooseExportPath: (parentWindow) =>
           Effect.tryPromise({
             try: () =>
               showSaveDialog(dialog, parentWindow, {
@@ -57,13 +60,13 @@ export class FileDialogs extends Context.Service<
                 defaultPath: "open-spotify-folders.json",
                 filters: foldersFileFilters,
               }),
-            catch: (cause) => new FileDialogError({ cause }),
+            catch: (cause) => new FoldersFileDialogError({ cause }),
           }).pipe(
             Effect.map((choice) =>
               choice.canceled ? Option.none() : Option.some(choice.filePath),
             ),
           ),
-        chooseFoldersImportPath: (parentWindow) =>
+        chooseImportPath: (parentWindow) =>
           Effect.tryPromise({
             try: () =>
               showOpenDialog(dialog, parentWindow, {
@@ -71,7 +74,7 @@ export class FileDialogs extends Context.Service<
                 properties: ["openFile"],
                 filters: foldersFileFilters,
               }),
-            catch: (cause) => new FileDialogError({ cause }),
+            catch: (cause) => new FoldersFileDialogError({ cause }),
           }).pipe(
             Effect.map((choice) =>
               choice.canceled ? Option.none() : Option.fromNullishOr(choice.filePaths[0]),
