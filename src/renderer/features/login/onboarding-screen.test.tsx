@@ -23,11 +23,15 @@ describe("OnboardingScreen", () => {
   })
 
   it("asks for a Client ID instead of saving an empty one", async () => {
-    const router = renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
+    const mainProcess = fakeMainProcess()
+    renderScreen(<OnboardingScreen initialClientId="" />, mainProcess)
 
     await userEvent.click(await screen.findByRole("button", { name: "Save and continue" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Paste the Client ID")
-    expect(router.state.location.pathname).toBe("/screen")
+    const savedClientId = await Effect.runPromise(
+      DesktopBridge.make(mainProcess).getSetting("spotifyClientId"),
+    )
+    expect(savedClientId).toStrictEqual(Option.none())
   })
 })

@@ -74,8 +74,9 @@ Onboarding and login come before the app exists, so they skip the pane layout: o
 panel with `radius-large` corners, centered on the `canvas`, 24 px from the window edge. The
 panel's one primary action is a round `accent` button with `on-accent` text; secondary actions
 are round `surface-raised` buttons or muted links. An action that waits, such as logging in in
-the browser, says what it waits for and offers Cancel in place of the button that started it,
-so keyboard focus stays put.
+the browser, says what it waits for, disables the button that started it, and offers Cancel
+beside it. Focus moves to Cancel and back when the wait ends, and a double-click cannot cancel
+what its first click started.
 
 ### Spacing
 

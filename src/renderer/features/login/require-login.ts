@@ -23,8 +23,9 @@ const findLoginState = Effect.gen(function* () {
 })
 
 // A route's beforeLoad runs on every visit, so a session that expired since
-// the last visit is caught. TanStack Router changes route only when a
-// redirect is thrown from it.
+// the last visit is caught. The redirect is thrown, as TanStack Router
+// documents, because TanStack Start's types reject a returned one: whatever
+// beforeLoad returns becomes route context, which must be serializable.
 export const redirectUnlessLoggedIn =
   (runtime: ManagedRuntime.ManagedRuntime<DesktopBridge, never>) => async () => {
     const loginState = await runtime.runPromise(findLoginState)

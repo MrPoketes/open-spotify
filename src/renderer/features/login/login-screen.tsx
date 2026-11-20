@@ -4,6 +4,7 @@ import { use, useState } from "react"
 import type { LogInError } from "../../../shared/spotify-auth-replies"
 import { DesktopBridge, type DesktopBridgeError } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { LoginButtons } from "./login-buttons"
 import { loginErrorText } from "./login-error-text"
 
 type LoginStatus =
@@ -55,25 +56,11 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
             Finish logging in in your browser. Open Spotify continues when Spotify sends you back.
           </output>
         )}
-        {/* Both branches are a button in the same place, so React keeps the
-            element and keyboard focus stays on it when the label changes. */}
-        {status._tag === "WaitingForBrowser" ? (
-          <button
-            type="button"
-            onClick={() => runtime.runFork(cancelLogIn)}
-            className="self-start rounded-full bg-surface-raised px-6 py-3 text-sm font-semibold"
-          >
-            Cancel
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={logIn}
-            className="self-start rounded-full bg-accent px-6 py-3 text-sm font-semibold text-on-accent"
-          >
-            Log in with Spotify
-          </button>
-        )}
+        <LoginButtons
+          isWaiting={status._tag === "WaitingForBrowser"}
+          onLogIn={logIn}
+          onCancel={() => runtime.runFork(cancelLogIn)}
+        />
         {status._tag === "Failed" && (
           <p role="alert" className="text-danger">
             {status.explanation}

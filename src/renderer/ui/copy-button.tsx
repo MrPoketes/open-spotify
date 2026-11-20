@@ -1,6 +1,10 @@
-import { Effect } from "effect"
+import { Effect, Schema } from "effect"
 import { use, useState } from "react"
 import { RendererRuntimeContext } from "../lib/renderer-runtime"
+
+class ClipboardWriteError extends Schema.TaggedError<ClipboardWriteError>()("ClipboardWriteError", {
+  cause: Schema.Defect(),
+}) {}
 
 export function CopyButton({ text, subject }: { readonly text: string; readonly subject: string }) {
   const runtime = use(RendererRuntimeContext)
@@ -8,9 +12,14 @@ export function CopyButton({ text, subject }: { readonly text: string; readonly 
 
   const copy = () => {
     runtime.runFork(
-      Effect.tryPromise(() => navigator.clipboard.writeText(text)).pipe(
+      Effect.tryPromise({
+        try: () => navigator.clipboard.writeText(text),
+        catch: (cause) => new ClipboardWriteError({ cause }),
+      }).pipe(
         Effect.andThen(Effect.sync(() => setIsCopied(true))),
-        Effect.catch((error) => Effect.logWarning(`Could not copy the ${subject}`, error)),
+        Effect.catchTag("ClipboardWriteError", (error) =>
+          Effect.logWarning(`Could not copy the ${subject}`, error),
+        ),
       ),
     )
   }

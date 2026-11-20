@@ -67,6 +67,28 @@ describe("LoginScreen", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
+  // Starting the login disables the focused button and cancelling removes
+  // the next one, either of which would drop a keyboard user's focus.
+  it("keeps keyboard focus on the login controls while waiting and after Cancel", async () => {
+    renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser())
+    const logInButton = await screen.findByRole("button", { name: "Log in with Spotify" })
+    logInButton.focus()
+
+    await userEvent.keyboard("{Enter}")
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus()
+    await userEvent.keyboard("{Enter}")
+
+    await waitFor(() => expect(logInButton).toHaveFocus())
+  })
+
+  it("keeps waiting when Log in is double-clicked", async () => {
+    renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser())
+
+    await userEvent.dblClick(await screen.findByRole("button", { name: "Log in with Spotify" }))
+
+    expect(screen.getByRole("status")).toHaveTextContent("Finish logging in in your browser")
+  })
+
   it("explains that the session expired", async () => {
     renderScreen(<LoginScreen sessionExpired />, mainProcessReplyingToLogIn({ _tag: "LoggedIn" }))
 
