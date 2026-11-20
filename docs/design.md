@@ -185,8 +185,9 @@ icon, so the state does not rely on color, and set `aria-pressed`. Repeat cycles
 context, and the track; for the track it uses the `Repeat1` icon and is named "Repeat one
 track".
 
-A control updates as soon as it is pressed and keeps that state until a poll shows Spotify
-caught up. If Spotify rejects the command, the control goes back and a `text-xs` `danger`
+A control updates as soon as it is pressed. It keeps that state while the command is on its
+way and for one second after Spotify accepts it, because Spotify can report the old state for a
+moment; after that, the polled state wins again. If Spotify rejects the command, the control goes back and a `text-xs` `danger`
 alert under the controls says what failed. A control that cannot be used (no active device,
 a device that other apps cannot control, or an action Spotify disallows right now) is
 `aria-disabled` at 50 % opacity and keeps its focus, and its `title` says why, which also

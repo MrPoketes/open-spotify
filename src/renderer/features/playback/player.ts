@@ -114,13 +114,14 @@ export class Player extends Context.Service<
         state,
         listDevices: spotify.getAvailableDevices,
         transferPlayback: (deviceId) => sendThenRefresh(spotify.transferPlayback(deviceId)),
-        play: pendingChanges.track({ isPlaying: true }, send(spotify.play)),
-        pause: pendingChanges.track({ isPlaying: false }, send(spotify.pause)),
+        play: pendingChanges.showWhileSending({ isPlaying: true }, send(spotify.play)),
+        pause: pendingChanges.showWhileSending({ isPlaying: false }, send(spotify.pause)),
         skipToNext: sendThenRefresh(spotify.skipToNext),
         skipToPrevious: sendThenRefresh(spotify.skipToPrevious),
         setShuffle: (isOn) =>
-          pendingChanges.track({ shuffle: isOn }, send(spotify.setShuffle(isOn))),
-        setRepeat: (mode) => pendingChanges.track({ repeat: mode }, send(spotify.setRepeat(mode))),
+          pendingChanges.showWhileSending({ shuffle: isOn }, send(spotify.setShuffle(isOn))),
+        setRepeat: (mode) =>
+          pendingChanges.showWhileSending({ repeat: mode }, send(spotify.setRepeat(mode))),
       })
     }),
   )

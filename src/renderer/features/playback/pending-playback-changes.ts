@@ -56,14 +56,18 @@ export const makePendingPlaybackChanges = Effect.gen(function* () {
       Effect.andThen(PubSub.publish(updates, undefined)),
     )
 
-  const track = <E>(settings: Partial<PlaybackSettings>, request: Effect.Effect<void, E>) =>
-    Effect.gen(function* () {
-      const change: PendingChange = { settings, acceptedAt: null }
-      yield* update((changes) => [...changes, change])
-      yield* request.pipe(Effect.tapError(() => update(withoutChange(change))))
-      const acceptedAt = yield* Clock.currentTimeMillis
-      yield* update(withChangeAccepted(change, acceptedAt))
-    })
+  // An interrupted or crashed request removes the change too, or it would
+  // stay on screen over every poll.
+  const showWhileSending = Effect.fn("PendingPlaybackChanges.showWhileSending")(function* <E>(
+    settings: Partial<PlaybackSettings>,
+    request: Effect.Effect<void, E>,
+  ) {
+    const change: PendingChange = { settings, acceptedAt: null }
+    yield* update((changes) => [...changes, change])
+    yield* request.pipe(Effect.onError(() => update(withoutChange(change))))
+    const acceptedAt = yield* Clock.currentTimeMillis
+    yield* update(withChangeAccepted(change, acceptedAt))
+  })
 
   return {
     updates: Stream.fromPubSub(updates),
@@ -71,6 +75,6 @@ export const makePendingPlaybackChanges = Effect.gen(function* () {
       Ref.get(pendingChanges).pipe(Effect.map((changes) => applyChanges(playback, changes))),
     forgetShownBy: (pollStartedAt: number) =>
       Ref.update(pendingChanges, withoutChangesShownBy(pollStartedAt)),
-    track,
+    showWhileSending,
   }
 })
