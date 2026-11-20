@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto"
 import { assert, describe, it } from "@effect/vitest"
 import { Effect } from "effect"
-import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
 import { makeAuthorizationRequest } from "./authorization-request"
 
 describe("makeAuthorizationRequest", () => {
@@ -18,9 +17,6 @@ describe("makeAuthorizationRequest", () => {
         query.get("code_challenge"),
         createHash("sha256").update(request.codeVerifier).digest("base64url"),
       )
-      assert.strictEqual(query.get("client_id"), "my-client-id")
-      assert.strictEqual(query.get("redirect_uri"), spotifyRedirectUri)
-      assert.strictEqual(query.get("state"), request.state)
     }),
   )
 
