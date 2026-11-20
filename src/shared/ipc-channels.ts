@@ -5,6 +5,9 @@ export const ipcChannels = {
   getAppInfo: "app:get-info",
   getSetting: "settings:get",
   setSetting: "settings:set",
+  logIn: "auth:log-in",
+  getAccessToken: "auth:get-access-token",
+  logOut: "auth:log-out",
 } as const
 
 export type IpcChannel = (typeof ipcChannels)[keyof typeof ipcChannels]
