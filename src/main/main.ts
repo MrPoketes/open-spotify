@@ -1,12 +1,23 @@
-import { BrowserWindow, app } from "electron"
+import { BrowserWindow, app, session } from "electron"
 import { type Cause, Effect, Exit } from "effect"
 import { registerIpcHandlers } from "./ipc-handlers"
 import { mainRuntime } from "./main-runtime"
 import { createMainWindow } from "./main-window"
 import { registerRendererScheme, serveRendererFiles } from "./renderer-protocol"
+import { isWebPermissionGranted } from "./web-permission-decision"
+
+function restrictWebPermissions(): void {
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, grant) =>
+    grant(isWebPermissionGranted(permission)),
+  )
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) =>
+    isWebPermissionGranted(permission),
+  )
+}
 
 const start = Effect.gen(function* () {
   yield* Effect.promise(() => app.whenReady())
+  restrictWebPermissions()
   serveRendererFiles()
   registerIpcHandlers()
   yield* createMainWindow

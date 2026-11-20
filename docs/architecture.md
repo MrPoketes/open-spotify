@@ -39,6 +39,9 @@ The main process also keeps web content contained:
   dev server sends the same policy with a fixed placeholder nonce.
 - The window navigates only within the app. https links open in the system browser, and
   everything else is blocked (`src/main/navigation-decision.ts`).
+- Web permission requests (camera, microphone, location, notifications, and the rest) are
+  denied. Only clipboard writes are granted, for the copy buttons
+  (`src/main/web-permission-decision.ts`).
 - Only one instance runs. A second launch quits before it touches `mainRuntime` and focuses the
   running copy's window instead.
 
