@@ -12,7 +12,7 @@ question is not answered here, decide, build it, and add the answer to this file
 3. **The user arranges the app.** Pane sizes, list density, sidebar contents, and every color
    belong to the user, and the app remembers them.
 4. **The theme owns every pixel.** Components never hard-code a color, font, radius, or shadow.
-   They use the tokens below, so a theme can restyle all of them.
+   They use the design tokens, so a theme can restyle all of them.
 
 The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, or fonts.
 
@@ -145,7 +145,7 @@ warm coral accent.
 
 ## Design tokens
 
-A theme sets these tokens, plus whether it is dark or light (see Themes below). The token
+A theme sets the design tokens, plus whether it is dark or light (see Themes below). The token
 list and the default dark values live in [`src/shared/theme.ts`](../src/shared/theme.ts). The
 theme engine sets each one on the document root as a CSS custom property named
 `--theme-<token>`, and [`app.css`](../src/renderer/styles/app.css) maps each one into
@@ -157,73 +157,18 @@ are removed. Named classes such as `bg-red-500` or `drop-shadow-md` do not exist
 cannot bypass the theme. Arbitrary values such as `bg-[#fff]` still would: never use them for
 colors, fonts, radii, or shadows.
 
-### Colors
-
-| Token                   | Class suffix      | Purpose                                                         |
-| ----------------------- | ----------------- | --------------------------------------------------------------- |
-| `color-canvas`          | `canvas`          | The window background, visible in the gaps between panes        |
-| `color-surface`         | `surface`         | Pane backgrounds: sidebar, main view, right pane                |
-| `color-surface-raised`  | `surface-raised`  | Hovered rows and cards, inputs, the now-playing bar             |
-| `color-surface-overlay` | `surface-overlay` | Menus, dialogs, the command palette, toasts                     |
-| `color-border`          | `border`          | Decorative dividers only; never the only edge of a control      |
-| `color-foreground`      | `foreground`      | Primary text and icons                                          |
-| `color-muted`           | `muted`           | Secondary text: artists, metadata, placeholders, inactive icons |
-| `color-accent`          | `accent`          | Primary actions, the playing track, active navigation, progress |
-| `color-on-accent`       | `on-accent`       | Text and icons drawn on top of `accent`                         |
-| `color-focus`           | `focus`           | The keyboard focus ring                                         |
-| `color-danger`          | `danger`          | Errors and destructive actions                                  |
-
-### Typography
-
-| Token          | Class          | Purpose                                                         |
-| -------------- | -------------- | --------------------------------------------------------------- |
-| `font-body`    | `font-body`    | All text unless stated otherwise; the default for the whole app |
-| `font-display` | `font-display` | Page titles and section headings                                |
-
-### Radii
-
-| Token           | Class            | Purpose                             |
-| --------------- | ---------------- | ----------------------------------- |
-| `radius-small`  | `rounded-small`  | Rows, inputs, small artwork         |
-| `radius-medium` | `rounded-medium` | Panes, cards, artwork in grids      |
-| `radius-large`  | `rounded-large`  | Dialogs, menus, the command palette |
-
-### Spacing
-
-| Token     | Classes                     | Purpose                                                                   |
-| --------- | --------------------------- | ------------------------------------------------------------------------- |
-| `spacing` | `p-*`, `gap-*`, `w-*`, etc. | One step of the spacing scale; a larger value makes the whole app roomier |
-
-### Shadows
-
-| Token            | Class            | Purpose                         |
-| ---------------- | ---------------- | ------------------------------- |
-| `shadow-raised`  | `shadow-raised`  | Raised elements (see Elevation) |
-| `shadow-overlay` | `shadow-overlay` | Overlays (see Elevation)        |
+The full list of tokens, with the class each one drives and what it is for, is the
+[token reference in themes.md](themes.md#token-reference). Use each token only for the purpose
+listed there.
 
 Every token is a promise to theme authors, so add one only when a design need cannot be met by
-an existing token. A test checks that the `Theme` Schema and `app.css` list the same tokens.
+an existing token. Tests check that the `Theme` Schema, `app.css`, and the token reference list
+the same tokens.
 
 ## Themes
 
-A theme is a JSON document:
-
-```json
-{
-  "name": "Sunset",
-  "author": "Ada",
-  "version": "1.0.0",
-  "colorScheme": "dark",
-  "tokens": { "color-accent": "#ffaa00", "radius-medium": "12px" }
-}
-```
-
-- `colorScheme` is `dark` or `light`. It sets CSS `color-scheme`, so native scrollbars and form
-  controls match the theme. It is not a token.
-- Colors are hex (`#rgb` or `#rrggbb`), so the contrast of any theme can be checked. Radii and
-  `spacing` are lengths in `px`, `rem`, or `em`. Fonts and shadows are CSS values.
-- A token the theme leaves out takes the default dark theme's value. An unknown token is an
-  error, so a misspelled token is reported instead of changing nothing.
+A theme is a JSON document that sets any of the tokens, plus whether it is dark or light. Its
+format, and how to write, check, and share one, are in [themes.md](themes.md).
 
 Two themes ship with the app, defined in
 [`src/shared/built-in-themes.ts`](../src/shared/built-in-themes.ts): the default dark theme and

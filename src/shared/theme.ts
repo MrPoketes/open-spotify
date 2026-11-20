@@ -12,7 +12,7 @@ const CssLength = Schema.String.check(
 
 const CssValue = Schema.String.check(Schema.isNonEmpty())
 
-// docs/design.md describes each token. Each one becomes the CSS custom
+// docs/themes.md describes each token. Each one becomes the CSS custom
 // property `--theme-<token>`.
 const themeTokenSchemas = {
   "color-canvas": HexColor,

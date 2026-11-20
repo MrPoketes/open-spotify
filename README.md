@@ -2,7 +2,8 @@
 
 A themeable, open-source desktop client for Spotify, for Windows, macOS, and Linux.
 
-- **Themes:** pick a theme or import your own. Every color, font, and radius is a token.
+- **Themes:** pick a theme or import your own. Every color, font, and radius is a token; see
+  [writing a theme](docs/themes.md).
 - **Folders for anything:** group playlists, artists, albums, and shows however you like.
 - **A better layout:** resizable panes, keyboard-first navigation, and a denser list view.
 
