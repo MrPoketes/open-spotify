@@ -181,6 +181,27 @@ The sidebar library has a chip per kind (Playlists, Albums, Artists, Shows) and 
 under them. Pressing the active chip shows every kind again. The filters stay at the top of the
 pane while the list scrolls. When they match nothing, the list says so instead of going blank.
 
+### Sidebar sections and pins
+
+The sidebar library is split into sections: Liked Songs, Playlists, Albums, Artists, and Shows,
+in the order the user chose. Each section starts with a heading button (`text-sm`, 600,
+`muted`, with a 16 px chevron) that collapses or expands it and sets `aria-expanded`, and a
+"section options" menu with Move up, Move down, and Hide section. Moves swap with the
+neighbouring section on screen, so hidden and empty sections never make a move look like it did
+nothing. Hidden sections are listed under the library as round `surface-raised` "Show Albums"
+buttons. A section with no entries left after the filters is not shown.
+
+Any entry can be pinned. Pinned entries leave their section for a "Pinned" section that always
+sits at the top, in the order they were pinned. Each row has a pin button that shows on hover
+or while the row has focus. It stays out of the tab order so each section's list is still one
+tab stop; keyboard users press `P` on a focused row instead, which the button's tooltip and the
+row's `aria-keyshortcuts` announce. When a change moves or removes the focused control, focus
+follows: a pinned row keeps focus in its new place, a moved section's heading keeps it, hiding a
+section moves it to that section's Show button, and showing one moves it to its heading.
+
+Pins are the `pinnedLibraryEntries` setting and the section order and states are the
+`librarySections` setting, so both survive a restart.
+
 ### Now-playing bar and device picker
 
 The bar has three columns: what is playing on the left, the playback controls in the middle,

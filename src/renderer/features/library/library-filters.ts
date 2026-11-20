@@ -1,4 +1,5 @@
-import type { LibraryEntry, LibraryEntryKind } from "./library-entries"
+import type { LibraryEntryKind } from "../../../shared/library-layout"
+import type { LibraryEntry } from "./library-entries"
 
 export type LibraryKindFilter = Exclude<LibraryEntryKind, "liked-songs">
 
@@ -8,6 +9,9 @@ export interface LibraryFilters {
 }
 
 export const noLibraryFilters: LibraryFilters = { kind: null, nameQuery: "" }
+
+export const hasLibraryFilters = ({ kind, nameQuery }: LibraryFilters) =>
+  kind !== null || nameQuery.trim() !== ""
 
 // Spotify keeps Liked Songs apart from playlists, but users think of it as one.
 const kindFilterOf = (kind: LibraryEntryKind): LibraryKindFilter =>

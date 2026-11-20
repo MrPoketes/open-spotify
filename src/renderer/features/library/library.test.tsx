@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react"
+import { act, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import type { Layer } from "effect"
 import { Effect, Stream } from "effect"
@@ -37,7 +37,11 @@ const renderLibrary = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
 const failingWith = (error: SpotifyApiError) =>
   SpotifyApi.layerFakeWith(() => ({ savedShows: Stream.fail(error) }))
 
-const libraryEntries = async () => within(await screen.findByRole("list")).getAllByRole("listitem")
+const libraryEntries = async () =>
+  (await screen.findAllByRole("list")).flatMap((list) => within(list).getAllByRole("listitem"))
+
+const kindChip = (name: string) =>
+  within(screen.getByRole("group", { name: "Filter by kind" })).getByRole("button", { name })
 
 const entryTexts = async () => (await libraryEntries()).map(({ textContent }) => textContent)
 
@@ -46,7 +50,7 @@ describe("Library", () => {
     renderLibrary()
 
     expect(await screen.findByRole("status")).toHaveTextContent("Loading your library")
-    await screen.findByRole("list")
+    await screen.findAllByRole("list")
     expect(screen.queryByText("Loading your library…")).not.toBeInTheDocument()
   })
 
@@ -114,34 +118,43 @@ describe("Library", () => {
   })
 
   // The sidebar holds every saved item, so Tab must not walk through each one.
-  it("keeps the library list to one tab stop that the arrow keys move within", async () => {
+  it("keeps each section's entries to one tab stop that the arrow keys move within", async () => {
     renderLibrary()
-    const [likedSongs, secondEntry] = await libraryEntries()
+    const playlists = within(await screen.findByRole("region", { name: "Playlists" }))
+    const [firstPlaylist, secondPlaylist] = playlists.getAllByRole("link")
+    const playlistsOptions = playlists.getByRole("button", { name: "Playlists section options" })
 
-    await userEvent.click(screen.getByRole("searchbox", { name: "Filter by name" }))
+    act(() => playlistsOptions.focus())
     await userEvent.tab()
-    expect(likedSongs?.firstElementChild).toHaveFocus()
+    expect(firstPlaylist).toHaveFocus()
     await userEvent.keyboard("{ArrowDown}")
-    expect(secondEntry?.firstElementChild).toHaveFocus()
+    expect(secondPlaylist).toHaveFocus()
     await userEvent.tab()
 
-    expect(document.body).toHaveFocus()
+    expect(
+      within(screen.getByRole("region", { name: "Albums" })).getByRole("button", {
+        name: "Albums",
+      }),
+    ).toHaveFocus()
   })
 
-  // The list remembers the last focused entry, and a filter can leave fewer
-  // entries than that, which would take the list out of the tab order.
-  it("keeps the list reachable with Tab after a filter shortens it", async () => {
+  // A section remembers its last focused entry, and a filter can leave fewer
+  // entries than that, which would take the section out of the tab order.
+  it("keeps a section's entries reachable with Tab after a filter shortens it", async () => {
     renderLibrary()
-    await screen.findByRole("list")
-    const nameFilter = screen.getByRole("searchbox", { name: "Filter by name" })
+    const playlistsOptions = await screen.findByRole("button", {
+      name: "Playlists section options",
+    })
 
-    await userEvent.click(nameFilter)
+    act(() => playlistsOptions.focus())
     await userEvent.tab()
     await userEvent.keyboard("{End}")
-    await userEvent.type(nameFilter, "slow")
+    await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "road")
+    await userEvent.tab()
+    await userEvent.tab()
     await userEvent.tab()
 
-    expect(screen.getByRole("link", { name: /Slow Science/ })).toHaveFocus()
+    expect(screen.getByRole("link", { name: /^Road Trip with Sam/ })).toHaveFocus()
   })
 
   it("explains where entries come from when the library is empty", async () => {
@@ -202,14 +215,11 @@ describe("Library", () => {
 
   it("narrows the list to one kind when its chip is pressed, counting Liked Songs as a playlist", async () => {
     renderLibrary()
-    await screen.findByRole("list")
+    await screen.findAllByRole("list")
 
-    await userEvent.click(screen.getByRole("button", { name: "Playlists" }))
+    await userEvent.click(kindChip("Playlists"))
 
-    expect(screen.getByRole("button", { name: "Playlists" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    )
+    expect(kindChip("Playlists")).toHaveAttribute("aria-pressed", "true")
     const playlistTexts = await entryTexts()
     expect(playlistTexts).toHaveLength(1 + fakePlaylists.length)
     expect(playlistTexts).toContain("Liked SongsPlaylist · 5,000 songs")
@@ -219,7 +229,7 @@ describe("Library", () => {
   it("shows every entry again when the active chip is pressed a second time", async () => {
     renderLibrary()
     const allEntries = await libraryEntries()
-    const albumsChip = screen.getByRole("button", { name: "Albums" })
+    const albumsChip = kindChip("Albums")
 
     await userEvent.click(albumsChip)
     expect(await libraryEntries()).toHaveLength(fakeSavedAlbums.length)
@@ -231,7 +241,7 @@ describe("Library", () => {
 
   it("filters entries by name, ignoring case and surrounding spaces", async () => {
     renderLibrary()
-    await screen.findByRole("list")
+    await screen.findAllByRole("list")
 
     await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), " SLOW ")
 
@@ -240,9 +250,9 @@ describe("Library", () => {
 
   it("applies the kind and name filters together", async () => {
     renderLibrary()
-    await screen.findByRole("list")
+    await screen.findAllByRole("list")
 
-    await userEvent.click(screen.getByRole("button", { name: "Playlists" }))
+    await userEvent.click(kindChip("Playlists"))
     await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "in")
 
     expect(await entryTexts()).toEqual([
@@ -253,7 +263,7 @@ describe("Library", () => {
 
   it("says nothing matches when the filters exclude every entry", async () => {
     renderLibrary()
-    await screen.findByRole("list")
+    await screen.findAllByRole("list")
 
     await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "zzz")
 

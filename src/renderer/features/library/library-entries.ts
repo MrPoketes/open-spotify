@@ -1,4 +1,5 @@
 import { Effect, Stream } from "effect"
+import type { LibraryEntryKind } from "../../../shared/library-layout"
 import { songCountText } from "../liked-songs/song-count-text"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SavedAlbum } from "../spotify/spotify-album"
@@ -7,8 +8,6 @@ import type { Artist } from "../spotify/spotify-artist"
 import type { Image } from "../spotify/spotify-image"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import type { SavedShow } from "../spotify/spotify-show"
-
-export type LibraryEntryKind = "liked-songs" | "playlist" | "album" | "artist" | "show"
 
 export interface LibraryEntry {
   readonly uri: string
