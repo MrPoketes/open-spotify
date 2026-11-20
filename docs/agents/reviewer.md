@@ -12,6 +12,24 @@ asking for one more round.
 3. Read the linked Linear issue (`ARM-…` in the title) to learn what was asked.
 4. Check out the branch (`gh pr checkout <number>`) and run `pnpm install && pnpm check`.
 
+## Release PRs
+
+A PR titled `Release v<version>: <milestone name>` comes from the orchestrator
+([orchestrator.md](orchestrator.md) step 5) and has no Linear issue. Skip Prepare steps 3 and 4
+and the Review section. Do not check the branch out: you run in the orchestrator's project root,
+which must stay on `main`, and the required `check` job already runs `pnpm check` on the PR.
+Check instead:
+
+- The diff changes only `version` in `package.json`.
+- `<version>` is the version on `main` with the minor part raised by one and the patch part set
+  to 0. Read it with `git fetch origin` and `git show origin/main:package.json`.
+- Every issue in the milestone is `Done` or `Canceled`: use `list_issues` for project
+  `Open Spotify` with the `projectMilestone` and `status` fields.
+- Every item under the milestone's heading in `docs/roadmap.md` has an issue in the milestone.
+- The body names the milestone and lists its `Done` issues.
+
+Request changes for anything that does not hold, then continue with the Verdict.
+
 ## Review
 
 Read every changed line. For each file, ask:

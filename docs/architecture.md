@@ -92,4 +92,5 @@ decodes the reply and turns the error cases back into typed failures.
 `dist/server` is a by-product of prerendering the SPA shell and is not shipped.
 
 Pushing a `v*` tag runs `.github/workflows/release.yml`, which builds the installers on each OS
-and attaches them to a GitHub release.
+and attaches them to a GitHub release. The orchestrator pushes that tag after a finished
+milestone's release PR merges ([orchestrator.md](agents/orchestrator.md) step 5).
