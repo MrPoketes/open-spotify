@@ -247,3 +247,35 @@ export const fakeSavedShows = fakeShows.map(({ id, name, images, uri, type }, in
   added_at: savedAt(index),
   show: { id, name, images, uri, type },
 }))
+
+const fakeDevice = (id: string, name: string, type: string) => ({
+  id,
+  name,
+  type,
+  is_active: false,
+  is_private_session: false,
+  is_restricted: false,
+  volume_percent: 60,
+  supports_volume: true,
+})
+
+export const fakeDevices = [
+  fakeDevice("fake-device-laptop", "Mira's Laptop", "Computer"),
+  fakeDevice("fake-device-phone", "Mira's Phone", "Smartphone"),
+  fakeDevice("fake-device-kitchen", "Kitchen Speaker", "Speaker"),
+] as const
+
+export const fakePlayingTrack = fakeTrack(0)
+
+export const fakePlaybackState = (activeDevice: (typeof fakeDevices)[number]) => ({
+  device: { ...activeDevice, is_active: true },
+  repeat_state: "off",
+  shuffle_state: false,
+  context: null,
+  timestamp: Date.UTC(2026, 10, 20, 18, 0),
+  progress_ms: 42_000,
+  is_playing: true,
+  item: fakePlayingTrack,
+  currently_playing_type: "track",
+  actions: { disallows: { resuming: true } },
+})

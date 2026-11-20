@@ -1,7 +1,8 @@
-import { Context, Effect, Layer, Schedule, Schema, type Stream } from "effect"
+import { Context, Effect, Layer, Option, Schedule, Schema, type Stream } from "effect"
 import {
   FetchHttpClient,
   HttpClient,
+  type HttpClientError,
   HttpClientRequest,
   type HttpClientResponse,
 } from "effect/http"
@@ -10,8 +11,10 @@ import type { DesktopBridgeError } from "../../lib/desktop-bridge"
 import { SavedAlbum } from "./spotify-album"
 import { Artist } from "./spotify-artist"
 import { SpotifyAccessToken } from "./spotify-access-token"
+import { Device } from "./spotify-device"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
 import { Paging, streamPages } from "./spotify-paging"
+import { PlaybackState } from "./spotify-playback-state"
 import { Playlist, PlaylistItem, SimplifiedPlaylist } from "./spotify-playlist"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
 import { CurrentUser } from "./spotify-user"
@@ -44,11 +47,14 @@ const spotifyApiBaseUrl = "https://api.spotify.com/v1"
 // and the user's saved and followed collections.
 const pageSize = 50
 
-// Without this, Spotify only promises to return tracks, and a playlist that
-// contains a podcast episode would fail to decode.
-const playlistItemTypes = "additional_types=track,episode"
+// Without this, Spotify only promises to return tracks: a playlist that
+// contains a podcast episode would fail to decode, and a playing episode
+// would show up as a null item.
+const trackAndEpisodeTypes = "additional_types=track,episode"
 
 const FollowedArtistsPage = Schema.Struct({ artists: Paging(Artist) })
+
+const AvailableDevices = Schema.Struct({ devices: Schema.Array(Device) })
 
 const SpotifyErrorBody = Schema.Struct({
   error: Schema.Struct({ message: Schema.String }),
@@ -73,6 +79,38 @@ const failForStatus = Effect.fn("SpotifyApi.failForStatus")(function* (
   return yield* new SpotifyResponseError({ status: response.status, message })
 })
 
+// The client also fails with the access token's errors, such as when the
+// user is not logged in.
+const sendWith = (
+  client: HttpClient.HttpClient.With<
+    HttpClientError.HttpClientError | AccessTokenError | DesktopBridgeError
+  >,
+) =>
+  Effect.fn("SpotifyApi.send")(function* (
+    request: HttpClientRequest.HttpClientRequest,
+  ): Effect.fn.Return<HttpClientResponse.HttpClientResponse, SpotifyApiError> {
+    const response = yield* client
+      .execute(request)
+      .pipe(
+        Effect.catchTag("HttpClientError", (cause) =>
+          Effect.fail(new SpotifyRequestError({ cause })),
+        ),
+      )
+    if (response.status < 200 || response.status >= 300) {
+      return yield* failForStatus(response)
+    }
+    return response
+  })
+
+const decodeJson = <A>(
+  response: HttpClientResponse.HttpClientResponse,
+  responseSchema: Schema.Decoder<A>,
+) =>
+  response.json.pipe(
+    Effect.flatMap(Schema.decodeUnknownEffect(responseSchema)),
+    Effect.mapError((cause) => new SpotifyDecodeError({ url: response.request.url, cause })),
+  )
+
 export class SpotifyApi extends Context.Service<
   SpotifyApi,
   {
@@ -89,6 +127,9 @@ export class SpotifyApi extends Context.Service<
       showId: string,
       offset: number,
     ) => Effect.Effect<ShowEpisodePage, SpotifyApiError>
+    readonly getPlaybackState: Effect.Effect<Option.Option<PlaybackState>, SpotifyApiError>
+    readonly getAvailableDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
+    readonly transferPlayback: (deviceId: string) => Effect.Effect<void, SpotifyApiError>
   }
 >()("open-spotify/SpotifyApi") {
   static readonly layerWithoutHttpClient = Layer.effect(
@@ -112,25 +153,23 @@ export class SpotifyApi extends Context.Service<
         }),
       )
 
-      const getJson = Effect.fn("SpotifyApi.getJson")(function* <A>(
-        url: string,
-        responseSchema: Schema.Decoder<A>,
-      ): Effect.fn.Return<A, SpotifyApiError> {
-        const response = yield* client
-          .get(url)
-          .pipe(
-            Effect.catchTag("HttpClientError", (cause) =>
-              Effect.fail(new SpotifyRequestError({ cause })),
-            ),
-          )
-        if (response.status < 200 || response.status >= 300) {
-          return yield* failForStatus(response)
-        }
-        return yield* response.json.pipe(
-          Effect.flatMap(Schema.decodeUnknownEffect(responseSchema)),
-          Effect.mapError((cause) => new SpotifyDecodeError({ url, cause })),
+      const send = sendWith(client)
+
+      const getJson = <A>(url: string, responseSchema: Schema.Decoder<A>) =>
+        send(HttpClientRequest.get(url)).pipe(
+          Effect.flatMap((response) => decodeJson(response, responseSchema)),
         )
-      })
+
+      // Spotify answers 204 with no body when no device is active.
+      const getPlaybackState = send(
+        HttpClientRequest.get(`${spotifyApiBaseUrl}/me/player?${trackAndEpisodeTypes}`),
+      ).pipe(
+        Effect.flatMap((response) =>
+          response.status === 204
+            ? Effect.succeedNone
+            : decodeJson(response, PlaybackState).pipe(Effect.map(Option.some)),
+        ),
+      )
 
       return SpotifyApi.of({
         getCurrentUser: getJson(`${spotifyApiBaseUrl}/me`, CurrentUser),
@@ -140,12 +179,12 @@ export class SpotifyApi extends Context.Service<
         ),
         getPlaylist: (playlistId) =>
           getJson(
-            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}?${playlistItemTypes}`,
+            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}?${trackAndEpisodeTypes}`,
             Playlist,
           ),
         playlistItems: (playlistId) =>
           streamPages(
-            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items?limit=${pageSize}&${playlistItemTypes}`,
+            `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items?limit=${pageSize}&${trackAndEpisodeTypes}`,
             (url) => getJson(url, Paging(PlaylistItem)),
           ),
         likedSongsCount: getJson(
@@ -169,6 +208,17 @@ export class SpotifyApi extends Context.Service<
             `${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}/episodes?limit=${pageSize}&offset=${offset}`,
             ShowEpisodePage,
           ),
+        getPlaybackState,
+        getAvailableDevices: getJson(
+          `${spotifyApiBaseUrl}/me/player/devices`,
+          AvailableDevices,
+        ).pipe(Effect.map(({ devices }) => devices)),
+        transferPlayback: (deviceId) =>
+          send(
+            HttpClientRequest.put(`${spotifyApiBaseUrl}/me/player`).pipe(
+              HttpClientRequest.bodyJsonUnsafe({ device_ids: [deviceId] }),
+            ),
+          ).pipe(Effect.asVoid),
       })
     }),
   )
@@ -180,4 +230,17 @@ export class SpotifyApi extends Context.Service<
   static readonly layerFake = SpotifyApi.layerWithoutHttpClient.pipe(
     Layer.provide([spotifyFakeServer, spotifyFakeAccessToken]),
   )
+
+  // The fake with some operations replaced, for tests of states the fixtures
+  // do not cover, such as failures and empty results.
+  static readonly layerFakeWith = (
+    overrides: (spotify: SpotifyApi["Service"]) => Partial<SpotifyApi["Service"]>,
+  ) =>
+    Layer.effect(
+      SpotifyApi,
+      Effect.gen(function* () {
+        const spotify = yield* SpotifyApi
+        return SpotifyApi.of({ ...spotify, ...overrides(spotify) })
+      }),
+    ).pipe(Layer.provide(SpotifyApi.layerFake))
 }

@@ -8,21 +8,18 @@ import {
 } from "@tanstack/react-router"
 import { render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Layer, ManagedRuntime } from "effect"
 import { describe, expect, it } from "vitest"
-import { DesktopBridge } from "../../lib/desktop-bridge"
 import { fakeMainProcess } from "../../lib/fake-main-process"
+import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext, rendererRuntime } from "../../lib/renderer-runtime"
-import { SpotifyApi } from "../spotify/spotify-api"
 import { AppShell } from "./app-shell"
 import { loadSavedSidebarWidth } from "./saved-sidebar-width"
 
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 
-// The sidebar loads the library, which must come from the fake Spotify API.
-const runtimeWithFakeSpotify = ManagedRuntime.make(
-  Layer.merge(SpotifyApi.layerFake, DesktopBridge.layer),
-)
+// The sidebar and the now-playing bar must load from the fake Spotify API,
+// and the sidebar width must be saved where rendererRuntime reads it back.
+const runtimeWithFakeSpotify = fakeRendererRuntime({ mainProcess: window.desktop })
 
 interface ShellOptions {
   readonly savedSidebarWidth?: number

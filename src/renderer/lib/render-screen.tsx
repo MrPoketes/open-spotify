@@ -6,11 +6,11 @@ import {
   createRouter,
 } from "@tanstack/react-router"
 import { render } from "@testing-library/react"
-import { Layer, ManagedRuntime } from "effect"
+import type { Layer } from "effect"
 import type { ReactNode } from "react"
 import type { DesktopApi } from "../../preload/desktop-api"
 import { SpotifyApi } from "../features/spotify/spotify-api"
-import { DesktopBridge } from "./desktop-bridge"
+import { fakeRendererRuntime } from "./fake-renderer-runtime"
 import { RendererRuntimeContext } from "./renderer-runtime"
 
 // Renders a screen the way the app does, inside a router and with a runtime
@@ -32,11 +32,8 @@ export const renderScreen = (
     routeTree: rootRoute.addChildren([screenRoute]),
     history: createMemoryHistory({ initialEntries: ["/screen"] }),
   })
-  const runtime = ManagedRuntime.make(
-    Layer.merge(Layer.succeed(DesktopBridge)(DesktopBridge.make(mainProcess)), spotifyApi),
-  )
   render(
-    <RendererRuntimeContext value={runtime}>
+    <RendererRuntimeContext value={fakeRendererRuntime({ mainProcess, spotifyApi })}>
       <RouterProvider router={router} />
     </RendererRuntimeContext>,
   )
