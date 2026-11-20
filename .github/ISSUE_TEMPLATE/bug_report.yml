@@ -31,7 +31,8 @@ body:
     attributes:
       label: App version
       description: >
-        The version on the app's home page. If you built the app yourself, add the commit from
+        The version on the app's home page, or in the name of the installer you downloaded if
+        you cannot log in. If you built the app yourself, add the commit from
         `git rev-parse --short HEAD`.
       placeholder: 0.1.0
     validations:
