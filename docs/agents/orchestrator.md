@@ -111,7 +111,7 @@ A run **failed** when its `status` is `completed` and its `conclusion` is anythi
 on attempt 2.
 
 Take the first row that applies, then read the state again and repeat until you reach the last
-row or close the PR:
+row, close the PR, or find it merged (auto-merge merges at once when every check has passed):
 
 | Situation                                                            | Action                                                                    |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
