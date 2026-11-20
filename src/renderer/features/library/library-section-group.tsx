@@ -6,7 +6,7 @@ import type { LibraryEntry } from "./library-entries"
 import { LibraryEntryList } from "./library-entry-list"
 import type { LibraryEntryActions } from "./library-entry-row"
 import { librarySectionNames } from "./library-section-names"
-import { sectionFocusKey } from "./use-library-layout"
+import { sectionFocusKey } from "./use-focus-after-change"
 
 interface LibrarySectionGroupProps {
   readonly section: LibrarySection

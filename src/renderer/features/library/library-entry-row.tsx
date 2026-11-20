@@ -4,10 +4,11 @@ import type { KeyboardEvent } from "react"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import type { LibraryEntry } from "./library-entries"
 import { LibraryEntryArtwork } from "./library-entry-artwork"
+import type { FocusAfterChange } from "./use-focus-after-change"
 
 export interface LibraryEntryActions {
-  readonly togglePin: (uri: string) => void
-  readonly focusAfterChange: (focusKey: string) => (element: HTMLElement | null) => void
+  readonly togglePin: (entry: LibraryEntry) => void
+  readonly focusAfterChange: FocusAfterChange
 }
 
 interface LibraryEntryRowProps {
@@ -26,9 +27,10 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
   const focusAfterPin = actions.focusAfterChange(entry.uri)
 
   const togglePinWithKey = (event: KeyboardEvent) => {
-    if (event.key !== "p" || event.ctrlKey || event.metaKey || event.altKey) return
+    // Lowercased so the shortcut also works with Caps Lock on.
+    if (event.key.toLowerCase() !== "p" || event.ctrlKey || event.metaKey || event.altKey) return
     event.preventDefault()
-    actions.togglePin(entry.uri)
+    actions.togglePin(entry)
   }
 
   const rowProps = {
@@ -55,7 +57,7 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
         tabIndex={-1}
         aria-label={pinLabel}
         title={`${pinLabel} (P)`}
-        onClick={() => actions.togglePin(entry.uri)}
+        onClick={() => actions.togglePin(entry)}
         className="mr-2 flex size-8 shrink-0 items-center justify-center rounded-full text-muted opacity-0 transition-opacity duration-120 ease-out group-focus-within:opacity-100 group-hover:opacity-100 hover:text-foreground"
       >
         {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}

@@ -1,11 +1,11 @@
 import type { LibraryEntryKind, LibrarySection } from "../../../shared/library-layout"
 import { librarySectionNames } from "./library-section-names"
-import { showSectionFocusKey } from "./use-library-layout"
+import { type FocusAfterChange, showSectionFocusKey } from "./use-focus-after-change"
 
 interface HiddenLibrarySectionsProps {
   readonly sections: ReadonlyArray<LibrarySection>
   readonly onShow: (kind: LibraryEntryKind) => void
-  readonly focusAfterChange: (focusKey: string) => (element: HTMLElement | null) => void
+  readonly focusAfterChange: FocusAfterChange
 }
 
 export function HiddenLibrarySections({

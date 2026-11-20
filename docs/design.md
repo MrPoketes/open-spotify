@@ -197,7 +197,13 @@ or while the row has focus. It stays out of the tab order so each section's list
 tab stop; keyboard users press `P` on a focused row instead, which the button's tooltip and the
 row's `aria-keyshortcuts` announce. When a change moves or removes the focused control, focus
 follows: a pinned row keeps focus in its new place, a moved section's heading keeps it, hiding a
-section moves it to that section's Show button, and showing one moves it to its heading.
+section moves it to that section's Show button, and showing one moves it to its heading. An
+unpinned row goes back to its section and keeps focus there, or the section's heading takes it
+when the section is collapsed. When the control that should take focus is not on screen (its
+section is hidden, or the filters leave it empty), the name filter takes it.
+
+When the filters match nothing, the library says so. When everything that matches is in a
+hidden section, it says that instead, so a hidden section never looks like a missing entry.
 
 Pins are the `pinnedLibraryEntries` setting and the section order and states are the
 `librarySections` setting, so both survive a restart.

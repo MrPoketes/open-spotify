@@ -125,4 +125,39 @@ describe("Library pins and sections", () => {
       await screen.findByText("Everything in your library is in a hidden section."),
     ).toBeVisible()
   })
+
+  // Saying nothing matches would be wrong: the entry exists, only its section is hidden.
+  it("says the matching entries are in a hidden section when the filters only match those", async () => {
+    renderLibrary()
+
+    await chooseSectionOption("Shows", "Hide section")
+    await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "slow")
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Everything that matches these filters is in a hidden section.",
+    )
+  })
+
+  it("moves focus to the section heading when an entry is unpinned into a collapsed section", async () => {
+    renderLibrary()
+    await userEvent.click(await screen.findByRole("button", { name: "Pin Small Hours to the top" }))
+    await userEvent.click(await sectionToggle("Albums"))
+    const pinnedLink = within(await section("Pinned")).getByRole("link", { name: /^Small Hours/ })
+    act(() => pinnedLink.focus())
+
+    await userEvent.keyboard("p")
+
+    expect(await sectionToggle("Albums")).toHaveFocus()
+  })
+
+  // Every other control a change could focus may be gone, but the filter never is.
+  it("moves focus to the name filter when a shown section has no entries to show", async () => {
+    renderLibrary()
+    await chooseSectionOption("Albums", "Hide section")
+    await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "slow")
+
+    await userEvent.click(screen.getByRole("button", { name: "Show Albums" }))
+
+    expect(screen.getByRole("searchbox", { name: "Filter by name" })).toHaveFocus()
+  })
 })

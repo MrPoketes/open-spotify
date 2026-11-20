@@ -10,6 +10,7 @@ import { type LibraryEntry, loadLibraryEntries } from "./library-entries"
 import { LibraryFilterBar } from "./library-filter-bar"
 import { filterLibraryEntries, hasLibraryFilters, noLibraryFilters } from "./library-filters"
 import { LibrarySectionGroup, PinnedLibrarySection } from "./library-section-group"
+import { nameFilterFocusKey } from "./use-focus-after-change"
 import { type SavedLibraryLayout, useLibraryLayout } from "./use-library-layout"
 
 const loadLibrary = Effect.all(
@@ -52,6 +53,14 @@ export function Library() {
   return <ArrangedLibraryView entries={entries} savedLayout={savedLayout} />
 }
 
+// The library is not empty here, so when nothing shows, either the filters
+// match nothing or every match is in a hidden section.
+const emptyLibraryMessage = (hasMatches: boolean, isFiltered: boolean) => {
+  if (!hasMatches) return "Nothing in your library matches these filters."
+  if (isFiltered) return "Everything that matches these filters is in a hidden section."
+  return "Everything in your library is in a hidden section."
+}
+
 interface ArrangedLibraryViewProps {
   readonly entries: ReadonlyArray<LibraryEntry>
   readonly savedLayout: SavedLibraryLayout
@@ -60,24 +69,29 @@ interface ArrangedLibraryViewProps {
 function ArrangedLibraryView({ entries, savedLayout }: ArrangedLibraryViewProps) {
   const [filters, setFilters] = useState(noLibraryFilters)
   const layout = useLibraryLayout(savedLayout)
+  const matchingEntries = filterLibraryEntries(entries, filters)
   const { pinnedEntries, shownSections } = arrangeLibrary(
-    filterLibraryEntries(entries, filters),
+    matchingEntries,
     layout.pinnedUris,
     layout.sections,
   )
   const isEmpty = pinnedEntries.length === 0 && shownSections.length === 0
-  const emptyMessage = hasLibraryFilters(filters)
-    ? "Nothing in your library matches these filters."
-    : "Everything in your library is in a hidden section."
+  const entryActions = { togglePin: layout.togglePin, focusAfterChange: layout.focusAfterChange }
 
   // The output stays mounted while entries show: screen readers only announce
   // changes to a live region that was already on the page.
   return (
     <div className="flex flex-col">
-      <LibraryFilterBar filters={filters} onChange={setFilters} />
-      <output className="px-2 text-sm text-muted">{isEmpty ? emptyMessage : ""}</output>
+      <LibraryFilterBar
+        filters={filters}
+        onChange={setFilters}
+        nameFilterRef={layout.focusAfterChange(nameFilterFocusKey)}
+      />
+      <output className="px-2 text-sm text-muted">
+        {isEmpty ? emptyLibraryMessage(matchingEntries.length > 0, hasLibraryFilters(filters)) : ""}
+      </output>
       {pinnedEntries.length > 0 && (
-        <PinnedLibrarySection entries={pinnedEntries} entryActions={layout} />
+        <PinnedLibrarySection entries={pinnedEntries} entryActions={entryActions} />
       )}
       {shownSections.map(({ section, entries: sectionEntries }, index) => (
         <LibrarySectionGroup
@@ -89,7 +103,7 @@ function ArrangedLibraryView({ entries, savedLayout }: ArrangedLibraryViewProps)
             next: shownSections[index + 1]?.section,
           })}
           onToggleCollapsed={() => layout.toggleCollapsed(section)}
-          entryActions={layout}
+          entryActions={entryActions}
         />
       ))}
       <HiddenLibrarySections

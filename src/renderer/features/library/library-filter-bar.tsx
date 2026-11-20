@@ -1,19 +1,17 @@
+import type { Ref } from "react"
 import { FilterChip } from "../../ui/filter-chip"
 import type { LibraryFilters, LibraryKindFilter } from "./library-filters"
+import { librarySectionNames } from "./library-section-names"
 
-const kindChips: ReadonlyArray<{ readonly kind: LibraryKindFilter; readonly label: string }> = [
-  { kind: "playlist", label: "Playlists" },
-  { kind: "album", label: "Albums" },
-  { kind: "artist", label: "Artists" },
-  { kind: "show", label: "Shows" },
-]
+const chipKinds: ReadonlyArray<LibraryKindFilter> = ["playlist", "album", "artist", "show"]
 
 interface LibraryFilterBarProps {
   readonly filters: LibraryFilters
   readonly onChange: (filters: LibraryFilters) => void
+  readonly nameFilterRef: Ref<HTMLInputElement>
 }
 
-export function LibraryFilterBar({ filters, onChange }: LibraryFilterBarProps) {
+export function LibraryFilterBar({ filters, onChange, nameFilterRef }: LibraryFilterBarProps) {
   const toggleKind = (kind: LibraryKindFilter) =>
     onChange({ ...filters, kind: filters.kind === kind ? null : kind })
 
@@ -21,16 +19,17 @@ export function LibraryFilterBar({ filters, onChange }: LibraryFilterBarProps) {
     <div className="sticky top-0 flex flex-col gap-2 bg-surface px-2 pt-1 pb-2">
       <fieldset className="flex flex-wrap gap-2">
         <legend className="sr-only">Filter by kind</legend>
-        {kindChips.map(({ kind, label }) => (
+        {chipKinds.map((kind) => (
           <FilterChip
             key={kind}
-            label={label}
+            label={librarySectionNames[kind]}
             pressed={filters.kind === kind}
             onClick={() => toggleKind(kind)}
           />
         ))}
       </fieldset>
       <input
+        ref={nameFilterRef}
         type="search"
         aria-label="Filter by name"
         placeholder="Filter by name"
