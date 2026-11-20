@@ -7,6 +7,12 @@ import {
   SettingReply,
   settingSchemas,
 } from "../../shared/settings"
+import {
+  type AccessTokenError,
+  AccessTokenReply,
+  type LogInError,
+  LogInReply,
+} from "../../shared/spotify-auth-replies"
 import type { DesktopApi } from "../../preload/desktop-api"
 
 export class DesktopBridgeError extends Schema.TaggedError<DesktopBridgeError>()(
@@ -27,6 +33,9 @@ export class DesktopBridge extends Context.Service<
       key: K,
       value: SettingValue<K>,
     ) => Effect.Effect<void, DesktopBridgeError>
+    readonly logIn: Effect.Effect<void, LogInError | DesktopBridgeError>
+    readonly getAccessToken: Effect.Effect<string, AccessTokenError | DesktopBridgeError>
+    readonly logOut: Effect.Effect<void, DesktopBridgeError>
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
@@ -52,6 +61,15 @@ export class DesktopBridge extends Context.Service<
       getAppInfo: send(ipcChannels.getAppInfo, AppInfo),
       getSetting: (key) => send(ipcChannels.getSetting, SettingReply(key), { key }),
       setSetting,
+      logIn: send(ipcChannels.logIn, LogInReply).pipe(
+        Effect.flatMap((reply) => (reply._tag === "LoggedIn" ? Effect.void : Effect.fail(reply))),
+      ),
+      getAccessToken: send(ipcChannels.getAccessToken, AccessTokenReply).pipe(
+        Effect.flatMap((reply) =>
+          reply._tag === "AccessToken" ? Effect.succeed(reply.accessToken) : Effect.fail(reply),
+        ),
+      ),
+      logOut: send(ipcChannels.logOut, Schema.Undefined),
     })
   }
 

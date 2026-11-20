@@ -1,6 +1,7 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Option } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
+import { LoginFailed, SessionExpired } from "../../shared/spotify-auth-replies"
 import { DesktopBridge } from "./desktop-bridge"
 import { fakeMainProcess } from "./fake-main-process"
 
@@ -45,6 +46,40 @@ describe("DesktopBridge", () => {
 
       assert.deepStrictEqual(clientIdBeforeSave, Option.none())
       assert.deepStrictEqual(clientIdAfterSave, Option.some("my-client-id"))
+    }),
+  )
+
+  it.effect("returns the access token the main process replies with", () =>
+    Effect.gen(function* () {
+      const bridge = DesktopBridge.make(
+        desktopApiReplying({ _tag: "AccessToken", accessToken: "my-access-token" }),
+      )
+
+      assert.strictEqual(yield* bridge.getAccessToken, "my-access-token")
+    }),
+  )
+
+  // The renderer sends the user back to the login screen on SessionExpired,
+  // so the error must keep its tag across IPC.
+  it.effect("fails with SessionExpired when the main process reports an expired session", () =>
+    Effect.gen(function* () {
+      const bridge = DesktopBridge.make(desktopApiReplying({ _tag: "SessionExpired" }))
+
+      const error = yield* Effect.flip(bridge.getAccessToken)
+
+      assert.instanceOf(error, SessionExpired)
+    }),
+  )
+
+  it.effect("fails with the login error the main process reports", () =>
+    Effect.gen(function* () {
+      const bridge = DesktopBridge.make(
+        desktopApiReplying({ _tag: "LoginFailed", message: "Could not open the browser." }),
+      )
+
+      const error = yield* Effect.flip(bridge.logIn)
+
+      assert.deepStrictEqual(error, new LoginFailed({ message: "Could not open the browser." }))
     }),
   )
 })

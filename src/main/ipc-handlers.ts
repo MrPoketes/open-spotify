@@ -1,6 +1,7 @@
 import { app, ipcMain } from "electron"
 import type { AppInfo } from "../shared/app-info"
 import { ipcChannels } from "../shared/ipc-channels"
+import { getAccessTokenFromIpc, logInFromIpc, logOutFromIpc } from "./auth/spotify-session-ipc"
 import { mainRuntime } from "./main-runtime"
 import { getSettingFromIpc, setSettingFromIpc } from "./settings-ipc"
 
@@ -16,4 +17,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.setSetting, (_event, request: unknown) =>
     mainRuntime.runPromise(setSettingFromIpc(request)),
   )
+  ipcMain.handle(ipcChannels.logIn, () => mainRuntime.runPromise(logInFromIpc))
+  ipcMain.handle(ipcChannels.getAccessToken, () => mainRuntime.runPromise(getAccessTokenFromIpc))
+  ipcMain.handle(ipcChannels.logOut, () => mainRuntime.runPromise(logOutFromIpc))
 }
