@@ -54,7 +54,10 @@ Read every changed line. For each file, ask:
 Classify each finding as **blocking** (must change before merge) or **nit** (optional).
 Anything that violates `AGENTS.md` is blocking.
 
-1. Post the review as one PR comment:
+1. Post the review as one PR comment. Write it to `review-<number>.md` in your session
+   scratchpad directory (or in `$TEMP/arm-<n>/` named after the issue, never a fixed path
+   directly in `$TEMP`, which parallel agents share) and post it with
+   `gh pr comment <number> --body-file <that path>`:
 
    ```
    ## Agent review: APPROVE | CHANGES REQUESTED
