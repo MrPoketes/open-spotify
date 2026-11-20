@@ -18,9 +18,6 @@ import { AppShell } from "./app-shell"
 import { loadSavedSidebarWidth } from "./saved-sidebar-width"
 
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
-// The router scrolls to the top after each navigation, and jsdom does not
-// implement scrolling.
-Object.defineProperty(window, "scrollTo", { value: () => undefined })
 
 // The sidebar loads the library, which must come from the fake Spotify API.
 const runtimeWithFakeSpotify = ManagedRuntime.make(

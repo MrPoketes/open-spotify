@@ -7,7 +7,7 @@ export const ipcChannels = {
   setSetting: "settings:set",
   getEnvironmentClientId: "settings:get-environment-client-id",
   logIn: "auth:log-in",
-  cancelLogIn: "auth:cancel-login",
+  cancelLogIn: "auth:cancel-log-in",
   getAccessToken: "auth:get-access-token",
   logOut: "auth:log-out",
   getFolderTree: "folders:get-tree",
