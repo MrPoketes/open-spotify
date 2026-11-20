@@ -46,7 +46,8 @@ fewer than 5:
 3. Launch its worker with `t3_thread_launch`:
    - `projectId`: `276c2197-0a35-4b86-8cd4-7af8cc7023e2`
    - `title`: `ARM-<n>: <issue title>`
-   - `workspaceStrategy`: `{ "type": "worktree", "baseRef": "origin/main", "startFromOrigin": true, "branch": "<gitBranchName>" }`
+   - `workspaceStrategy`: `{ "type": "worktree", "baseRef": "origin/main", "startFromOrigin": true, "branch": "<gitBranchName>" }`,
+     unless the branch already exists (see 3.1)
    - `runtimeMode`: `full-access`
    - `message`:
 
@@ -57,6 +58,25 @@ fewer than 5:
      ```
 
 4. Comment on the issue with the thread link.
+
+### 3.1 The issue's branch already exists
+
+An issue that went back to `Todo` may still have a branch from an earlier worker, often with an
+open PR. T3 cannot create a worktree on a branch that already exists, so before every launch
+choose the `workspaceStrategy` and `message` here. In the project root:
+
+1. Run `git fetch origin` and `git worktree list`. If a line ends in `[<gitBranchName>]`, use
+   `{ "type": "existing_worktree", "worktreePath": "<its path>" }` and go to step 4 of this list.
+2. If `git branch --list <gitBranchName>` prints the branch, its worktree is gone but the branch
+   is left. Run `git push origin <gitBranchName>` so no commit of the earlier worker is lost (a
+   rejected push means `origin` holds the newer history), then `git branch -D <gitBranchName>`.
+3. If `git ls-remote --heads origin <gitBranchName>` prints the branch, use
+   `{ "type": "worktree", "baseRef": "origin/<gitBranchName>", "startFromOrigin": true, "branch": "<gitBranchName>" }`.
+   If it prints nothing, the branch does not exist: use the usual `workspaceStrategy` and
+   `message`.
+4. Add to the end of `message`: `An earlier worker left commits on this branch. Build on them.`
+   If `gh pr list --head <gitBranchName> --state open --json number` lists a PR, also add:
+   `Its PR #<number> is still open. Continue that PR; do not open a new one.`
 
 ## 4. Keep the queue full
 
