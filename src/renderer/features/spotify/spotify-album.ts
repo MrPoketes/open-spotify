@@ -22,6 +22,21 @@ export const SavedAlbum = Schema.Struct({
 
 export type SavedAlbum = typeof SavedAlbum.Type
 
+// What an artist's discography lists for each release.
+export const ArtistAlbum = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  images: Schema.Array(Image),
+  // A year, a year and month, or a full date, depending on what Spotify knows.
+  releaseDate: Schema.String,
+}).pipe(Schema.encodeKeys({ releaseDate: "release_date" }))
+
+export type ArtistAlbum = typeof ArtistAlbum.Type
+
+export const ArtistAlbumsPage = Paging(ArtistAlbum)
+
+export type ArtistAlbumsPage = typeof ArtistAlbumsPage.Type
+
 export const AlbumTrack = Schema.Struct({
   id: Schema.String,
   name: Schema.String,

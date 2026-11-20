@@ -8,7 +8,13 @@ import {
 } from "effect/http"
 import { type AccessTokenError, SessionExpired } from "../../../shared/spotify-auth-replies"
 import type { DesktopBridgeError } from "../../lib/desktop-bridge"
-import { Album, AlbumTracksPage, type AlbumTrack, SavedAlbum } from "./spotify-album"
+import {
+  Album,
+  AlbumTracksPage,
+  type AlbumTrack,
+  ArtistAlbumsPage,
+  SavedAlbum,
+} from "./spotify-album"
 import { Artist } from "./spotify-artist"
 import { SpotifyAccessToken } from "./spotify-access-token"
 import { Device } from "./spotify-device"
@@ -53,6 +59,14 @@ const playerUrl = `${spotifyApiBaseUrl}/me/player`
 // The largest page Spotify allows for playlists, playlist items, album tracks,
 // show episodes, and the user's saved and followed collections.
 export const maximumPageSize = 50
+
+// Spotify caps a page of an artist's albums at 10.
+export const artistAlbumsPageSize = 10
+
+// The include_groups values for the parts of an artist's discography. Spotify
+// no longer says which group an album belongs to, so each group is requested
+// on its own.
+export type AlbumGroup = "album" | "single" | "appears_on"
 
 // Without this, Spotify only promises to return tracks: a playlist that
 // contains a podcast episode would fail to decode, and a playing episode
@@ -180,6 +194,12 @@ export class SpotifyApi extends Context.Service<
       albumId: string,
       offset: number,
     ) => Stream.Stream<AlbumTrack, SpotifyApiError>
+    readonly getArtist: (artistId: string) => Effect.Effect<Artist, SpotifyApiError>
+    readonly getArtistAlbumsPage: (
+      artistId: string,
+      albumGroup: AlbumGroup,
+      offset: number,
+    ) => Effect.Effect<ArtistAlbumsPage, SpotifyApiError>
     readonly likedSongsCount: Effect.Effect<number, SpotifyApiError>
     readonly getLikedSongsPage: (offset: number) => Effect.Effect<SavedTracksPage, SpotifyApiError>
     readonly savedAlbums: Stream.Stream<SavedAlbum, SpotifyApiError>
@@ -244,6 +264,13 @@ export class SpotifyApi extends Context.Service<
           streamPages(
             `${spotifyApiBaseUrl}/albums/${encodeURIComponent(albumId)}/tracks?limit=${maximumPageSize}&offset=${offset}`,
             (url) => getJson(url, AlbumTracksPage),
+          ),
+        getArtist: (artistId) =>
+          getJson(`${spotifyApiBaseUrl}/artists/${encodeURIComponent(artistId)}`, Artist),
+        getArtistAlbumsPage: (artistId, albumGroup, offset) =>
+          getJson(
+            `${spotifyApiBaseUrl}/artists/${encodeURIComponent(artistId)}/albums?include_groups=${albumGroup}&limit=${artistAlbumsPageSize}&offset=${offset}`,
+            ArtistAlbumsPage,
           ),
         likedSongsCount: getJson(
           `${spotifyApiBaseUrl}/me/tracks?limit=1`,

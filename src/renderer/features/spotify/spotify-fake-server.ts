@@ -1,6 +1,8 @@
 import { Effect, Layer } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
 import { SpotifyAccessToken } from "./spotify-access-token"
+import type { AlbumGroup } from "./spotify-api"
+import { fakeDiscography } from "./spotify-discography-fixtures"
 import { fakePlayer } from "./spotify-fake-player"
 import {
   type FakePlaylist,
@@ -26,6 +28,10 @@ const embeddedAlbumTrackLimit = 50
 
 // The page size Spotify uses when a request has no limit parameter.
 const defaultPageLimit = 20
+
+// The page size Spotify uses for an artist's albums when a request has no
+// limit parameter.
+const defaultArtistAlbumsLimit = 5
 
 // A 204 response must not carry a body, not even "null".
 const jsonResponse = (
@@ -156,6 +162,26 @@ const respondToAlbum = (url: URL): readonly [number, unknown] => {
   return [200, { ...album, tracks: pageOf(album.tracks, tracksUrl, embeddedAlbumTrackLimit) }]
 }
 
+const albumGroups: ReadonlyArray<AlbumGroup> = ["album", "single", "appears_on"]
+
+// An artist's albums are filtered by the comma-separated include_groups.
+const respondToArtist = (url: URL): readonly [number, unknown] => {
+  const [, artistId, albumsPath] = /^\/v1\/artists\/([^/]+)(\/albums)?$/.exec(url.pathname) ?? []
+  const artist = fakeFollowedArtists.find(({ id }) => id === artistId)
+  if (!artist) {
+    return notFound
+  }
+  if (albumsPath === undefined) {
+    return [200, artist]
+  }
+  const discography = fakeDiscography(artist.id)
+  const requestedGroups = (url.searchParams.get("include_groups") ?? "").split(",")
+  const albums = albumGroups
+    .filter((albumGroup) => requestedGroups.includes(albumGroup))
+    .flatMap((albumGroup) => discography[albumGroup])
+  return [200, pageOf(albums, url, defaultArtistAlbumsLimit)]
+}
+
 const currentUserResources: Record<string, (url: URL) => unknown> = {
   "/v1/me": () => fakeCurrentUser,
   "/v1/me/playlists": (url) => pageOf(fakePlaylists.map(simplifiedPlaylist), url, defaultPageLimit),
@@ -170,6 +196,9 @@ const respondTo = (url: URL): readonly [number, unknown] => {
   }
   if (url.pathname.startsWith("/v1/albums/")) {
     return respondToAlbum(url)
+  }
+  if (url.pathname.startsWith("/v1/artists/")) {
+    return respondToArtist(url)
   }
   const currentUserResource = currentUserResources[url.pathname]
   if (currentUserResource) {

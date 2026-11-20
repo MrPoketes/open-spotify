@@ -97,6 +97,14 @@ describe("Library", () => {
     expect(albumLink).toHaveAttribute("href", "/album/fake-album-1")
   })
 
+  it("links a followed artist to its artist page", async () => {
+    renderLibrary()
+
+    const artistLink = await screen.findByRole("link", { name: /^Velvet Choir/ })
+
+    expect(artistLink).toHaveAttribute("href", "/artist/fake-artist-6")
+  })
+
   it("links a saved show to its show page", async () => {
     renderLibrary()
 

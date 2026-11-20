@@ -2,6 +2,9 @@ import { Link } from "@tanstack/react-router"
 import { Clock, Music } from "lucide-react"
 import type { CSSProperties, KeyboardEvent } from "react"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
+import { ArtistLinks } from "../artist/artist-links"
+import { formatArtistNames } from "../spotify/format-artist-names"
+import type { SimplifiedArtist } from "../spotify/spotify-artist"
 import { formatTrackDuration } from "./format-duration"
 import { trackRowHeight } from "./track-row-height"
 
@@ -11,7 +14,8 @@ export type TrackListLayout = "playlist" | "album"
 
 export interface TrackListEntry {
   readonly title: string
-  readonly artists: string
+  // Empty for a row without artists, such as a podcast episode.
+  readonly artists: ReadonlyArray<SimplifiedArtist>
   // Null when the row has no album to show, such as a podcast episode or a
   // track on an album page. Local files have no id.
   readonly album: { readonly id: string | null; readonly name: string } | null
@@ -95,7 +99,9 @@ const accessibleName = (index: number, entry: TrackListEntry | undefined) => {
   if (entry === undefined) {
     return `Loading track ${index + 1}`
   }
-  return entry.artists === "" ? entry.title : `${entry.title} by ${entry.artists}`
+  return entry.artists.length === 0
+    ? entry.title
+    : `${entry.title} by ${formatArtistNames(entry.artists)}`
 }
 
 interface AlbumCellProps {
@@ -143,7 +149,9 @@ function TrackCells({ entry, layout, tabIndex }: TrackCellsProps) {
         ) : null}
         <span className="flex min-w-0 flex-col">
           <span className="truncate">{entry.title}</span>
-          <span className="truncate text-xs text-muted">{entry.artists}</span>
+          <span className="truncate text-xs text-muted">
+            <ArtistLinks artists={entry.artists} tabIndex={tabIndex} />
+          </span>
         </span>
       </td>
       {layout === "playlist" ? (

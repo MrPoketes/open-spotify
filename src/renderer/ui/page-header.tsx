@@ -9,6 +9,9 @@ interface PageCover {
   readonly sources: ReadonlyArray<ArtworkSource>
   readonly placeholderIcon: LucideIcon
   readonly placeholderColors?: string
+  // Artists have round artwork and everything else square, so the two are
+  // told apart at a glance.
+  readonly isRound?: boolean
 }
 
 interface PageHeaderProps {
@@ -21,9 +24,14 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ kind, title, cover, children }: PageHeaderProps) {
+  const { isRound = false, ...artwork } = cover
   return (
     <header className="flex items-end gap-6">
-      <Artwork {...cover} size={coverSize} className="rounded-medium shadow-raised" />
+      <Artwork
+        {...artwork}
+        size={coverSize}
+        className={`${isRound ? "rounded-full" : "rounded-medium"} shadow-raised`}
+      />
       <div className="flex min-w-0 flex-col gap-2">
         <p className="text-xs font-semibold text-muted">{kind}</p>
         <h1 className="font-display text-5xl font-bold break-words">{title}</h1>

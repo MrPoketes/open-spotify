@@ -6,7 +6,7 @@ export function playlistTrackEntry({ addedAt, item }: PlaylistItem): TrackListEn
   if (item === null) {
     return {
       title: "Unavailable track",
-      artists: "",
+      artists: [],
       album: null,
       artwork: [],
       addedAt,
@@ -16,7 +16,7 @@ export function playlistTrackEntry({ addedAt, item }: PlaylistItem): TrackListEn
   if (item.type === "episode") {
     return {
       title: item.name,
-      artists: "",
+      artists: [],
       album: null,
       artwork: [],
       addedAt,
