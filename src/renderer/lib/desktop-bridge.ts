@@ -1,6 +1,12 @@
-import { Context, Effect, Layer, Schema } from "effect"
+import { Context, Effect, Layer, type Option, Schema } from "effect"
 import { AppInfo } from "../../shared/app-info"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
+import {
+  type SettingKey,
+  type SettingValue,
+  SettingReply,
+  settingSchemas,
+} from "../../shared/settings"
 import type { DesktopApi } from "../../preload/desktop-api"
 
 export class DesktopBridgeError extends Schema.TaggedError<DesktopBridgeError>()(
@@ -14,17 +20,38 @@ export class DesktopBridge extends Context.Service<
   DesktopBridge,
   {
     readonly getAppInfo: Effect.Effect<AppInfo, DesktopBridgeError>
+    readonly getSetting: <K extends SettingKey>(
+      key: K,
+    ) => Effect.Effect<Option.Option<SettingValue<K>>, DesktopBridgeError>
+    readonly setSetting: <K extends SettingKey>(
+      key: K,
+      value: SettingValue<K>,
+    ) => Effect.Effect<void, DesktopBridgeError>
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
-    const request = <A>(channel: IpcChannel, reply: Schema.Decoder<A>) =>
-      Effect.tryPromise(() => desktopApi.invoke(channel)).pipe(
+    const send = <A>(channel: IpcChannel, reply: Schema.Decoder<A>, request?: unknown) =>
+      Effect.tryPromise(() => desktopApi.invoke(channel, request)).pipe(
         Effect.flatMap(Schema.decodeUnknownEffect(reply)),
         Effect.mapError((cause) => new DesktopBridgeError({ channel, cause })),
       )
 
+    const setSetting = Effect.fn("DesktopBridge.setSetting")(function* <K extends SettingKey>(
+      key: K,
+      value: SettingValue<K>,
+    ) {
+      const encodedValue = yield* Schema.encodeEffect(settingSchemas[key])(value).pipe(
+        Effect.mapError(
+          (cause) => new DesktopBridgeError({ channel: ipcChannels.setSetting, cause }),
+        ),
+      )
+      yield* send(ipcChannels.setSetting, Schema.Undefined, { key, value: encodedValue })
+    })
+
     return DesktopBridge.of({
-      getAppInfo: request(ipcChannels.getAppInfo, AppInfo),
+      getAppInfo: send(ipcChannels.getAppInfo, AppInfo),
+      getSetting: (key) => send(ipcChannels.getSetting, SettingReply(key), { key }),
+      setSetting,
     })
   }
 

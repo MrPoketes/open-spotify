@@ -23,7 +23,9 @@ Owns everything that needs Node or must stay out of reach of web content:
 
 - the application window and the `app://` protocol that serves the built UI;
 - local storage (themes, folders, settings) in SQLite through `@effect/sql-sqlite-node`, which
-  uses Node's built-in `node:sqlite`, so there is no native module to compile;
+  uses Node's built-in `node:sqlite`, so there is no native module to compile. The database
+  file is `open-spotify.sqlite` in Electron's `userData` directory, and migrations
+  (`src/main/database.ts`) run when `mainRuntime` starts;
 - the OAuth login flow (a short-lived loopback server on `127.0.0.1:43821`) and token storage
   encrypted with Electron's `safeStorage`.
 
@@ -32,8 +34,9 @@ main-process service.
 
 ## Preload
 
-`src/preload/preload.ts` exposes one object, `window.desktop`, with an `invoke(channel)`
-method. Its type lives in `src/preload/desktop-api.ts`. The preload script contains no logic.
+`src/preload/preload.ts` exposes one object, `window.desktop`, with an
+`invoke(channel, request)` method. Its type lives in `src/preload/desktop-api.ts`. The preload
+script contains no logic.
 
 ## Renderer
 
@@ -50,8 +53,13 @@ window loads the Vite dev server instead.
 
 1. Add the channel name to `src/shared/ipc-channels.ts`.
 2. Define request and reply Schemas in `src/shared`.
-3. Handle the channel in the main process, decoding the request with its Schema.
-4. Add a method to `DesktopBridge` that decodes the reply.
+3. Handle the channel in the main process, decoding the request with its Schema through
+   `decodeIpcRequest` (`src/main/decode-ipc-request.ts`). A request that does not decode fails
+   with `MalformedIpcRequest`.
+4. Add a method to `DesktopBridge` that encodes the request and decodes the reply.
+
+IPC messages are structured-cloned, so they carry only plain data: send the Schema-encoded form
+(for example, a missing value as `null`, never an `Option`).
 
 Each side decodes what it receives, so a mismatch shows up as a typed error at the boundary.
 
