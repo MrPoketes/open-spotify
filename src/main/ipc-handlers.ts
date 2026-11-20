@@ -2,7 +2,12 @@ import { app, ipcMain } from "electron"
 import type { Effect } from "effect"
 import type { AppInfo } from "../shared/app-info"
 import { ipcChannels } from "../shared/ipc-channels"
-import { getAccessTokenFromIpc, logInFromIpc, logOutFromIpc } from "./auth/spotify-session-ipc"
+import {
+  cancelLogInFromIpc,
+  getAccessTokenFromIpc,
+  logInFromIpc,
+  logOutFromIpc,
+} from "./auth/spotify-session-ipc"
 import type { Folders } from "./folders"
 import { folderIpcOperations } from "./folders-ipc"
 import { mainRuntime } from "./main-runtime"
@@ -20,7 +25,14 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.setSetting, (_event, request: unknown) =>
     mainRuntime.runPromise(setSettingFromIpc(request)),
   )
+  // Lets developers skip pasting their Client ID on every fresh profile. The
+  // renderer cannot read the environment itself.
+  ipcMain.handle(
+    ipcChannels.getEnvironmentClientId,
+    () => process.env["OPEN_SPOTIFY_CLIENT_ID"] || null,
+  )
   ipcMain.handle(ipcChannels.logIn, () => mainRuntime.runPromise(logInFromIpc))
+  ipcMain.handle(ipcChannels.cancelLogIn, () => mainRuntime.runPromise(cancelLogInFromIpc))
   ipcMain.handle(ipcChannels.getAccessToken, () => mainRuntime.runPromise(getAccessTokenFromIpc))
   ipcMain.handle(ipcChannels.logOut, () => mainRuntime.runPromise(logOutFromIpc))
   // Each operation returns its own reply type. Widening them to one function

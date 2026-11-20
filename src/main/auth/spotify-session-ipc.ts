@@ -20,6 +20,11 @@ export const getAccessTokenFromIpc = Effect.gen(function* () {
   return yield* Schema.encodeEffect(AccessTokenReply)(reply)
 })
 
+export const cancelLogInFromIpc = Effect.gen(function* () {
+  const session = yield* SpotifySession
+  yield* session.cancelLogIn
+})
+
 export const logOutFromIpc = Effect.gen(function* () {
   const session = yield* SpotifySession
   yield* session.logOut

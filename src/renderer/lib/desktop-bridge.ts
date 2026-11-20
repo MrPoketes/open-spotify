@@ -44,7 +44,9 @@ export class DesktopBridge extends Context.Service<
       key: K,
       value: SettingValue<K>,
     ) => Effect.Effect<void, DesktopBridgeError>
+    readonly getEnvironmentClientId: Effect.Effect<Option.Option<string>, DesktopBridgeError>
     readonly logIn: Effect.Effect<void, LogInError | DesktopBridgeError>
+    readonly cancelLogIn: Effect.Effect<void, DesktopBridgeError>
     readonly getAccessToken: Effect.Effect<string, AccessTokenError | DesktopBridgeError>
     readonly logOut: Effect.Effect<void, DesktopBridgeError>
     readonly getFolderTree: Effect.Effect<FolderTree, DesktopBridgeError>
@@ -88,9 +90,14 @@ export class DesktopBridge extends Context.Service<
       getAppInfo: send(ipcChannels.getAppInfo, AppInfo),
       getSetting: (key) => send(ipcChannels.getSetting, SettingReply(key), { key }),
       setSetting,
+      getEnvironmentClientId: send(
+        ipcChannels.getEnvironmentClientId,
+        SettingReply("spotifyClientId"),
+      ),
       logIn: send(ipcChannels.logIn, LogInReply).pipe(
         Effect.flatMap((reply) => (reply._tag === "LoggedIn" ? Effect.void : Effect.fail(reply))),
       ),
+      cancelLogIn: send(ipcChannels.cancelLogIn, Schema.Undefined),
       getAccessToken: send(ipcChannels.getAccessToken, AccessTokenReply).pipe(
         Effect.flatMap((reply) =>
           reply._tag === "AccessToken" ? Effect.succeed(reply.accessToken) : Effect.fail(reply),

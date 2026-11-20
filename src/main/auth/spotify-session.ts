@@ -1,5 +1,9 @@
-import { Context, Effect, Layer, Semaphore } from "effect"
-import type { AccessTokenError, LogInError } from "../../shared/spotify-auth-replies"
+import { Context, Deferred, Effect, Layer, Ref, Semaphore } from "effect"
+import {
+  type AccessTokenError,
+  LoginCancelled,
+  type LogInError,
+} from "../../shared/spotify-auth-replies"
 import type { Settings } from "../settings"
 import { freshAccessToken } from "./fresh-access-token"
 import { logIn } from "./log-in"
@@ -13,6 +17,7 @@ export class SpotifySession extends Context.Service<
   SpotifySession,
   {
     readonly logIn: Effect.Effect<void, LogInError>
+    readonly cancelLogIn: Effect.Effect<void>
     readonly getAccessToken: Effect.Effect<string, AccessTokenError>
     readonly logOut: Effect.Effect<void, TokenStorageError>
   }
@@ -27,9 +32,34 @@ export class SpotifySession extends Context.Service<
       // Spotify may rotate the refresh token, so two refreshes running at once
       // could both spend the same one, and the second would end the session.
       const sessionLock = yield* Semaphore.make(1)
+      // Only one login can listen on the redirect port at a time.
+      const loginLock = yield* Semaphore.make(1)
+      // Completing the pending login's signal makes it fail with LoginCancelled.
+      const pendingLoginCancellation = yield* Ref.make(yield* Deferred.make<void>())
+
+      const cancelLogIn = Ref.get(pendingLoginCancellation).pipe(
+        Effect.flatMap((cancellation) => Deferred.succeed(cancellation, undefined)),
+        Effect.asVoid,
+      )
+
+      // A new login replaces the pending one, which waits in the browser for
+      // up to five minutes and would otherwise keep the port.
+      const replacePendingLogIn = Effect.gen(function* () {
+        const cancellation = yield* Deferred.make<void>()
+        const previousCancellation = yield* Ref.getAndSet(pendingLoginCancellation, cancellation)
+        yield* Deferred.succeed(previousCancellation, undefined)
+        yield* loginLock
+          .withPermit(logIn(sessionLock))
+          .pipe(
+            Effect.raceFirst(
+              Deferred.await(cancellation).pipe(Effect.andThen(Effect.fail(new LoginCancelled()))),
+            ),
+          )
+      })
 
       return SpotifySession.of({
-        logIn: logIn.pipe(Effect.provideContext(services)),
+        logIn: replacePendingLogIn.pipe(Effect.provideContext(services)),
+        cancelLogIn,
         getAccessToken: sessionLock
           .withPermit(freshAccessToken)
           .pipe(Effect.provideContext(services)),

@@ -1,4 +1,4 @@
-import { Duration, Effect, Option } from "effect"
+import { Duration, Effect, Option, type Semaphore } from "effect"
 import { ClientIdMissing, LoginFailed, LoginTimedOut } from "../../shared/spotify-auth-replies"
 import { Settings } from "../settings"
 import { makeAuthorizationRequest } from "./authorization-request"
@@ -22,34 +22,37 @@ const readClientId = Effect.gen(function* () {
   return clientId.value
 })
 
-export const logIn = Effect.gen(function* () {
-  const browser = yield* SystemBrowser
-  const tokenEndpoint = yield* SpotifyTokenEndpoint
-  const tokenStore = yield* TokenStore
+// The session is saved while holding `sessionLock`, so a refresh that
+// finishes at the same moment cannot overwrite the new session.
+export const logIn = Effect.fn("logIn")(
+  function* (sessionLock: Semaphore.Semaphore) {
+    const browser = yield* SystemBrowser
+    const tokenEndpoint = yield* SpotifyTokenEndpoint
+    const tokenStore = yield* TokenStore
 
-  const clientId = yield* readClientId
-  const authorization = yield* makeAuthorizationRequest(clientId)
-  const awaitAuthorizationCode = yield* listenForAuthorizationCode(authorization.state)
-  yield* browser.open(authorization.url)
-  const code = yield* awaitAuthorizationCode.pipe(
-    Effect.timeoutOrElse({
-      duration: loginTimeout,
-      orElse: () => Effect.fail(new LoginTimedOut()),
-    }),
-  )
-  const issuedTokens = yield* tokenEndpoint.exchangeCode({
-    clientId,
-    code,
-    codeVerifier: authorization.codeVerifier,
-  })
-  const session = yield* makeStoredSession({
-    clientId,
-    refreshToken: issuedTokens.refresh_token,
-    accessToken: issuedTokens.access_token,
-    expiresInSeconds: issuedTokens.expires_in,
-  })
-  yield* tokenStore.save(session)
-}).pipe(
+    const clientId = yield* readClientId
+    const authorization = yield* makeAuthorizationRequest(clientId)
+    const awaitAuthorizationCode = yield* listenForAuthorizationCode(authorization.state)
+    yield* browser.open(authorization.url)
+    const code = yield* awaitAuthorizationCode.pipe(
+      Effect.timeoutOrElse({
+        duration: loginTimeout,
+        orElse: () => Effect.fail(new LoginTimedOut()),
+      }),
+    )
+    const issuedTokens = yield* tokenEndpoint.exchangeCode({
+      clientId,
+      code,
+      codeVerifier: authorization.codeVerifier,
+    })
+    const session = yield* makeStoredSession({
+      clientId,
+      refreshToken: issuedTokens.refresh_token,
+      accessToken: issuedTokens.access_token,
+      expiresInSeconds: issuedTokens.expires_in,
+    })
+    yield* sessionLock.withPermit(tokenStore.save(session))
+  },
   Effect.scoped,
   Effect.catchTags({
     SqlError: loginFailed("Could not read the saved Client ID."),

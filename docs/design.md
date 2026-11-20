@@ -68,6 +68,16 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 - Track lists use fixed columns: index, title and artist, album, date added, duration. Columns
   that do not fit the pane width are hidden from the right, never squeezed.
 
+### Before login
+
+Onboarding and login come before the app exists, so they skip the pane layout: one `surface`
+panel with `radius-large` corners, centered on the `canvas`, 24 px from the window edge. The
+panel's one primary action is a round `accent` button with `on-accent` text; secondary actions
+are round `surface-raised` buttons or muted links. An action that waits, such as logging in in
+the browser, says what it waits for, disables the button that started it, and offers Cancel
+beside it. Focus moves to Cancel and back when the wait ends, and a double-click cannot cancel
+what its first click started.
+
 ### Spacing
 
 Spacing comes from Tailwind's numeric scale, where one step is the `spacing` token (4 px by
