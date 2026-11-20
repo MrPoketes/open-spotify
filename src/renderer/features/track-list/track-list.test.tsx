@@ -10,7 +10,7 @@ import type { TrackListEntry } from "./track-row"
 
 const trackWithArtwork = (index: number): TrackListEntry => ({
   title: `Track ${index + 1}`,
-  artists: "Mira Kaelin",
+  artists: [{ id: null, name: "Mira Kaelin" }],
   album: { id: "fake-album-0", name: "Glass Harbour" },
   artwork: [{ url: `https://i.scdn.co/image/track-${index}`, width: 64 }],
   addedAt: null,

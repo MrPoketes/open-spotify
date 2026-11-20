@@ -29,7 +29,7 @@ const launchApp = async (mainProcess: DesktopApi) => {
           trackCount={20}
           trackAt={(index) => ({
             title: `Track ${index + 1}`,
-            artists: "",
+            artists: [],
             album: null,
             artwork: [],
             addedAt: null,
