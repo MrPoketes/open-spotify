@@ -7,7 +7,7 @@ export function playlistTrackEntry({ addedAt, item }: PlaylistItem): TrackListEn
     return {
       title: "Unavailable track",
       artists: "",
-      album: "",
+      album: null,
       artwork: [],
       addedAt,
       durationMs: null,
@@ -17,7 +17,7 @@ export function playlistTrackEntry({ addedAt, item }: PlaylistItem): TrackListEn
     return {
       title: item.name,
       artists: "",
-      album: "",
+      album: null,
       artwork: [],
       addedAt,
       durationMs: item.durationMs,

@@ -33,6 +33,51 @@ const albums = [
   fakeAlbum("Second Spring", "Juniper Hollow", 5),
 ] as const
 
+type FakeSimplifiedAlbum = (typeof albums)[number]
+
+const fakeAlbumTrack = (album: FakeSimplifiedAlbum, discNumber: number, trackNumber: number) => ({
+  type: "track",
+  id: `${album.id}-track-${discNumber}-${trackNumber}`,
+  name: `${album.name}, part ${discNumber}.${trackNumber}`,
+  uri: `spotify:track:${album.id}-${discNumber}-${trackNumber}`,
+  duration_ms: 180_000 + trackNumber * 1_000,
+  explicit: false,
+  disc_number: discNumber,
+  track_number: trackNumber,
+  artists: album.artists,
+})
+
+const fakeFullAlbum = (
+  album: FakeSimplifiedAlbum,
+  releaseDate: string,
+  trackCountPerDisc: ReadonlyArray<number>,
+) => {
+  const albumTracks = trackCountPerDisc.flatMap((trackCount, discIndex) =>
+    Array.from({ length: trackCount }, (_, trackIndex) =>
+      fakeAlbumTrack(album, discIndex + 1, trackIndex + 1),
+    ),
+  )
+  return {
+    ...album,
+    album_type: "album",
+    release_date: releaseDate,
+    release_date_precision: releaseDate.length === 4 ? "year" : "day",
+    total_tracks: albumTracks.length,
+    type: "album",
+    tracks: albumTracks,
+  }
+}
+
+// Low Orbit has two discs and more tracks than Spotify embeds in an album.
+export const fakeAlbums = [
+  fakeFullAlbum(albums[0], "2019-05-17", [10]),
+  fakeFullAlbum(albums[1], "2021-10-01", [12]),
+  fakeFullAlbum(albums[2], "1998", [9]),
+  fakeFullAlbum(albums[3], "2024-02-09", [11]),
+  fakeFullAlbum(albums[4], "2016-08-26", [30, 30]),
+  fakeFullAlbum(albums[5], "2023-04-14", [7]),
+]
+
 const titleWords = ["Quiet", "Electric", "Paper", "Golden", "Restless", "Hollow", "Slow"] as const
 const titleNouns = ["Rivers", "Signals", "Rooms", "Satellites", "Gardens", "Echoes"] as const
 

@@ -1,5 +1,5 @@
 import { Schema } from "effect"
-import { Album } from "./spotify-album"
+import { SimplifiedAlbum } from "./spotify-album"
 import { SimplifiedArtist } from "./spotify-artist"
 import { Paging } from "./spotify-paging"
 
@@ -11,7 +11,7 @@ export const Track = Schema.Struct({
   uri: Schema.String,
   durationMs: Schema.Number,
   explicit: Schema.Boolean,
-  album: Album,
+  album: SimplifiedAlbum,
   artists: Schema.Array(SimplifiedArtist),
 }).pipe(Schema.encodeKeys({ durationMs: "duration_ms" }))
 

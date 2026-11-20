@@ -37,6 +37,7 @@ export function LikedSongsTracks({ firstPage }: { readonly firstPage: SavedTrack
       />
       <TrackList
         label="Liked Songs"
+        layout="playlist"
         trackCount={firstPage.total}
         trackAt={trackAt}
         onRowsRendered={songs.loadRange}

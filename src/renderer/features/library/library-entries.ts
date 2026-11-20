@@ -1,5 +1,6 @@
 import { Effect, Stream } from "effect"
 import { songCountText } from "../liked-songs/song-count-text"
+import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SavedAlbum } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { Artist } from "../spotify/spotify-artist"
@@ -19,6 +20,7 @@ export interface LibraryEntry {
   readonly page:
     | { readonly to: "/collection/tracks" }
     | { readonly to: "/playlist/$playlistId"; readonly params: { readonly playlistId: string } }
+    | { readonly to: "/album/$albumId"; readonly params: { readonly albumId: string } }
     | { readonly to: "/show/$showId"; readonly params: { readonly showId: string } }
     | null
 }
@@ -45,9 +47,9 @@ const albumEntry = ({ album }: SavedAlbum): LibraryEntry => ({
   uri: album.uri,
   kind: "album",
   name: album.name,
-  details: `Album · ${album.artists.map(({ name }) => name).join(", ")}`,
+  details: `Album · ${formatArtistNames(album.artists)}`,
   images: album.images,
-  page: null,
+  page: { to: "/album/$albumId", params: { albumId: album.id } },
 })
 
 const artistEntry = (artist: Artist): LibraryEntry => ({

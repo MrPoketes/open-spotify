@@ -89,6 +89,14 @@ describe("Library", () => {
     expect(playlistLink).toHaveAttribute("href", "/playlist/fake-playlist-road-trip")
   })
 
+  it("links a saved album to its album page", async () => {
+    renderLibrary()
+
+    const albumLink = await screen.findByRole("link", { name: /^Small Hours/ })
+
+    expect(albumLink).toHaveAttribute("href", "/album/fake-album-1")
+  })
+
   it("links a saved show to its show page", async () => {
     renderLibrary()
 

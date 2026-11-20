@@ -42,6 +42,7 @@ export function PlaylistTracks({ playlist, firstPage }: PlaylistTracksProps) {
       />
       <TrackList
         label="Tracks"
+        layout="playlist"
         trackCount={firstPage.total}
         trackAt={trackAt}
         onRowsRendered={tracks.loadRange}
