@@ -1,5 +1,5 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect } from "effect"
+import { Effect, Fiber } from "effect"
 import { TestClock } from "effect/testing"
 import {
   type FakeSpotifyAccounts,
@@ -109,6 +109,22 @@ describe("SpotifySession.getAccessToken", () => {
 
       assert.strictEqual(rateLimitedError._tag, "AccessTokenUnavailable")
       assert.strictEqual(tokenAfterRateLimit, "access-token-2")
+    }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
+  })
+
+  it.effect("gives up on a refresh after Spotify stalls for 15 seconds", () => {
+    const spotifyAccounts = makeFakeSpotifyAccounts()
+    return Effect.gen(function* () {
+      const session = yield* restoreFakeSession(spotifyAccounts)
+      yield* TestClock.adjust("1 hour")
+      spotifyAccounts.behaviour.isStalled = true
+
+      const refresh = yield* Effect.forkChild(Effect.flip(session.getAccessToken))
+      yield* spotifyAccounts.requestStalled
+      yield* TestClock.adjust("15 seconds")
+      const error = yield* Fiber.join(refresh)
+
+      assert.strictEqual(error._tag, "AccessTokenUnavailable")
     }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
   })
 })

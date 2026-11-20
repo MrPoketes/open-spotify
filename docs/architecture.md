@@ -76,6 +76,11 @@ IPC messages are structured-cloned, so they carry only plain data: send the Sche
 
 Each side decodes what it receives, so a mismatch shows up as a typed error at the boundary.
 
+A rejected `invoke` reaches the renderer as a plain `Error`, so a channel whose failures the
+renderer must act on replies with a tagged union of its success case and its
+`Schema.TaggedError` cases instead (see `src/shared/spotify-auth-replies.ts`). `DesktopBridge`
+decodes the reply and turns the error cases back into typed failures.
+
 ## Build
 
 | Part             | Tool                                      | Output        |

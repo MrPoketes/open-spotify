@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, Schema } from "effect"
+import { Context, Duration, Effect, Layer, Schema } from "effect"
 import { FetchHttpClient, HttpClient, HttpClientRequest, type UrlParams } from "effect/http"
 import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
 
@@ -15,6 +15,10 @@ export class TokenRequestFailed extends Schema.TaggedError<TokenRequestFailed>()
 type TokenRequestError = TokenRequestRejected | TokenRequestFailed
 
 const spotifyTokenUrl = "https://accounts.spotify.com/api/token"
+
+// A refresh holds the session lock, so a stalled request would block every
+// other access token request behind it.
+const tokenRequestTimeout = Duration.seconds(15)
 
 const IssuedTokens = Schema.Struct({
   access_token: Schema.String,
@@ -58,9 +62,13 @@ export class SpotifyTokenEndpoint extends Context.Service<
           HttpClientRequest.bodyUrlParams(form),
           HttpClientRequest.acceptJson,
         )
-        const response = yield* client
-          .execute(request)
-          .pipe(Effect.mapError((cause) => new TokenRequestFailed({ cause })))
+        const response = yield* client.execute(request).pipe(
+          Effect.mapError((cause) => new TokenRequestFailed({ cause })),
+          Effect.timeoutOrElse({
+            duration: tokenRequestTimeout,
+            orElse: () => Effect.fail(new TokenRequestFailed({ cause: "Spotify did not answer" })),
+          }),
+        )
         const decodeBody = <B>(schema: Schema.Decoder<B>) =>
           response.json.pipe(
             Effect.flatMap(Schema.decodeUnknownEffect(schema)),

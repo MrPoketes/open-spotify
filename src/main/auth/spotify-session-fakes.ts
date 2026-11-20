@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto"
 import path from "node:path"
 import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
-import { Effect, FileSystem, Layer } from "effect"
+import { Deferred, Effect, FileSystem, Layer } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
 import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
 import { databaseLayer } from "../database"
@@ -46,8 +46,9 @@ const codeChallengeFor = (codeVerifier: string) =>
 export const makeFakeSpotifyAccounts = () => {
   const challengeByCode = new Map<string, string>()
   const liveRefreshTokens = new Set<string>()
-  const behaviour = { rotatesRefreshTokens: true, isRateLimiting: false }
+  const behaviour = { rotatesRefreshTokens: true, isRateLimiting: false, isStalled: false }
   let tokensIssued = 0
+  const requestStalled = Deferred.makeUnsafe<void>()
 
   const issueTokens = () => {
     tokensIssued += 1
@@ -89,6 +90,9 @@ export const makeFakeSpotifyAccounts = () => {
   const httpClient = Layer.succeed(
     HttpClient.HttpClient,
     HttpClient.make((request) => {
+      if (behaviour.isStalled) {
+        return Deferred.succeed(requestStalled, undefined).pipe(Effect.andThen(Effect.never))
+      }
       if (behaviour.isRateLimiting) {
         return Effect.succeed(jsonResponse(request, 429, { error: "rate_limited" }))
       }
@@ -111,6 +115,7 @@ export const makeFakeSpotifyAccounts = () => {
     httpClient,
     approve,
     issueTokens,
+    requestStalled: Deferred.await(requestStalled),
     revokeRefreshTokens: () => liveRefreshTokens.clear(),
   }
 }
