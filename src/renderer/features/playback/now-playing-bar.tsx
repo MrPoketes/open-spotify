@@ -53,7 +53,9 @@ function NowPlayingSummary({ playerState, onChooseDevice }: NowPlayingSummaryPro
           <p className="text-sm font-semibold">No device is playing</p>
           <p className="text-xs text-muted">Audio plays in the Spotify app or on another device.</p>
         </div>
-        <AccentButton label="Choose a device" onClick={onChooseDevice} />
+        <div className="shrink-0">
+          <AccentButton label="Choose a device" onClick={onChooseDevice} />
+        </div>
       </div>
     )
   }

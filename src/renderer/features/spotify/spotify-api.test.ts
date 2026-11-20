@@ -7,8 +7,10 @@ import { spotifyFakeAccessToken } from "./spotify-fake-server"
 import {
   fakeCurrentUser,
   fakeDevices,
+  fakeEpisode,
   fakeFollowedArtists,
   fakeLikedSongs,
+  fakePlaybackState,
   fakePlayingTrack,
   fakePlaylists,
   fakeSavedAlbums,
@@ -199,6 +201,26 @@ describe("SpotifyApi player", () => {
       )
     }).pipe(Effect.provide(SpotifyApi.layerFake)),
   )
+
+  it.effect("decodes a playing podcast episode", () => {
+    const spotify = scriptedSpotify([
+      {
+        status: 200,
+        body: JSON.stringify({
+          ...fakePlaybackState(fakeDevices[0]),
+          item: fakeEpisode,
+          currently_playing_type: "episode",
+        }),
+      },
+    ])
+    return Effect.gen(function* () {
+      const api = yield* SpotifyApi
+
+      const playback = yield* api.getPlaybackState
+
+      assert.strictEqual(Option.getOrThrow(playback).item?.type, "episode")
+    }).pipe(Effect.provide(spotify.layer))
+  })
 
   // Spotify answers 204 when no device is active, which is the normal state
   // before the user opens a Spotify app anywhere.

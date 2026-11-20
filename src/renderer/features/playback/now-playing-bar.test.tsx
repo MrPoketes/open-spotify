@@ -169,6 +169,34 @@ describe("NowPlayingBar", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
+  // Spotify does not guarantee a device id, and playback cannot be moved to a
+  // device without one. It must not take the keyboard's way through the list.
+  it("lists a device without an id as unavailable and moves past it with the keyboard", async () => {
+    const noIdDevice = { id: null, name: "Old Receiver", type: "AVR", isActive: false }
+    renderNowPlayingBar(
+      SpotifyApi.layerFakeWith((spotify) => ({
+        getPlaybackState: Effect.succeedNone,
+        getAvailableDevices: spotify.getAvailableDevices.pipe(
+          Effect.map((devices) => [
+            noIdDevice,
+            ...devices.map((device) => ({ ...device, isActive: false })),
+          ]),
+        ),
+      })),
+    )
+    const picker = await openPicker("No active device")
+
+    const receiver = await deviceButton(picker, /Old Receiver/)
+    expect(receiver).toHaveAttribute("aria-disabled", "true")
+    await userEvent.tab()
+    expect(receiver).toHaveFocus()
+    await userEvent.keyboard("{Enter}")
+    expect(screen.getByRole("dialog")).toBeInTheDocument()
+    await userEvent.keyboard("{ArrowDown}")
+
+    expect(await deviceButton(picker, /Mira's Laptop/)).toHaveFocus()
+  })
+
   it("closes on Escape and returns focus to the picker button", async () => {
     renderNowPlayingBar()
     await openPicker()

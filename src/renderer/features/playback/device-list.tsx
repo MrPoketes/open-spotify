@@ -114,15 +114,17 @@ interface DeviceChoiceProps {
 function DeviceChoice({ device, rovingProps, onKeyDown, onChoose }: DeviceChoiceProps) {
   const { label, icon: Icon } = describeDeviceType(device.type)
   const { id } = device
+  // aria-disabled instead of disabled: a disabled button cannot take focus,
+  // and the roving focus would get stuck on it or lose its only tab stop.
   return (
     <button
       type="button"
       {...rovingProps}
-      disabled={id === null}
+      aria-disabled={id === null}
       aria-current={device.isActive}
       onClick={id === null ? undefined : () => onChoose(id)}
       onKeyDown={onKeyDown}
-      className="flex w-full items-center gap-3 rounded-small px-3 py-2 text-left transition-colors duration-120 ease-out hover:bg-surface-raised disabled:opacity-50"
+      className="flex w-full items-center gap-3 rounded-small px-3 py-2 text-left transition-colors duration-120 ease-out hover:bg-surface-raised aria-disabled:opacity-50"
     >
       <Icon aria-hidden size={20} className={device.isActive ? "text-accent" : "text-muted"} />
       <span className="flex min-w-0 flex-1 flex-col">

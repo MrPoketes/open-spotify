@@ -25,7 +25,7 @@ export function useLoad<A, E>(
   load: Effect.Effect<A, E, RendererServices>,
   failureMessage: string,
 ): { readonly state: LoadState<A, E>; readonly retry: () => void } {
-  const [loading, setLoading] = useState(() => loadOnce(load, failureMessage))
-  const state = useStreamValue(loading, { status: "loading" } as const)
-  return { state, retry: () => setLoading(loadOnce(load, failureMessage)) }
+  const [loadStream, setLoadStream] = useState(() => loadOnce(load, failureMessage))
+  const state = useStreamValue(loadStream, { status: "loading" } as const)
+  return { state, retry: () => setLoadStream(loadOnce(load, failureMessage)) }
 }
