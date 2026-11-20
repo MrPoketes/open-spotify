@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { loadSavedThemeId } from "../../features/themes/saved-theme"
-import { ThemePicker } from "../../features/themes/theme-picker"
+import { AppearanceSettings } from "../../features/themes/appearance-settings"
+import { loadSavedThemeLibrary } from "../../features/themes/saved-theme"
 import { rendererRuntime } from "../../lib/renderer-runtime"
 
 export const Route = createFileRoute("/_app/settings")({
-  loader: () => rendererRuntime.runPromise(loadSavedThemeId),
+  loader: () => rendererRuntime.runPromise(loadSavedThemeLibrary),
   // The picker reads the saved theme once, when it mounts. Cached data from an
   // earlier visit would show the theme saved back then.
   gcTime: 0,
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_app/settings")({
 })
 
 function SettingsPage() {
-  const savedThemeId = Route.useLoaderData()
+  const library = Route.useLoaderData()
 
   return (
     <div className="flex max-w-xl flex-col gap-8">
@@ -21,7 +21,7 @@ function SettingsPage() {
         <h2 id="appearance-heading" className="font-display text-xl font-bold">
           Appearance
         </h2>
-        <ThemePicker savedThemeId={savedThemeId} />
+        <AppearanceSettings library={library} />
       </section>
     </div>
   )

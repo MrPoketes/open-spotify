@@ -1,21 +1,22 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect } from "effect"
-import { decodeTheme, defaultThemeTokens } from "./theme"
+import { decodeThemeFile, defaultThemeTokens } from "./theme"
 
-const themeFile = (tokens: Record<string, string>) => ({
-  name: "Sunset",
-  author: "A theme author",
-  version: "1.0.0",
-  colorScheme: "dark",
-  tokens,
-})
+const themeFile = (tokens: Record<string, string>) =>
+  JSON.stringify({
+    name: "Sunset",
+    author: "A theme author",
+    version: "1.0.0",
+    colorScheme: "dark",
+    tokens,
+  })
 
-describe("decodeTheme", () => {
+describe("decodeThemeFile", () => {
   // A theme written before a token existed must keep working when the app
   // adds one, so absent tokens come from the default theme.
   it.effect("fills every token the file leaves out with the default theme's value", () =>
     Effect.gen(function* () {
-      const theme = yield* decodeTheme(themeFile({ "color-accent": "#ffaa00" }))
+      const theme = yield* decodeThemeFile(themeFile({ "color-accent": "#ffaa00" }))
 
       assert.deepStrictEqual(theme.tokens, { ...defaultThemeTokens, "color-accent": "#ffaa00" })
     }),
@@ -24,7 +25,7 @@ describe("decodeTheme", () => {
   // Theme authors edit JSON by hand, so the error has to point at the token.
   it.effect("rejects an invalid color with an error that names the token", () =>
     Effect.gen(function* () {
-      const error = yield* Effect.flip(decodeTheme(themeFile({ "color-accent": "orange" })))
+      const error = yield* Effect.flip(decodeThemeFile(themeFile({ "color-accent": "orange" })))
 
       assert.include(error.message, "a hex color")
       assert.include(error.message, '["tokens"]["color-accent"]')
@@ -34,7 +35,7 @@ describe("decodeTheme", () => {
   // A misspelled token would otherwise be dropped and silently change nothing.
   it.effect("rejects an unknown token with an error that names it", () =>
     Effect.gen(function* () {
-      const error = yield* Effect.flip(decodeTheme(themeFile({ "color-acent": "#ffaa00" })))
+      const error = yield* Effect.flip(decodeThemeFile(themeFile({ "color-acent": "#ffaa00" })))
 
       assert.include(error.message, '["tokens"]["color-acent"]')
     }),

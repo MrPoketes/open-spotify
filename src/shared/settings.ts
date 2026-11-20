@@ -1,7 +1,7 @@
 import { Schema } from "effect"
-import { ThemeId } from "./built-in-themes"
 import { FolderView } from "./folder-view"
 import { SidebarWidth } from "./sidebar-width"
+import { ThemeId } from "./theme-library"
 
 export const SettingKey = Schema.Literals([
   "spotifyClientId",

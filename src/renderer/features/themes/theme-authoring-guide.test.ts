@@ -1,7 +1,7 @@
 import { assert, describe, expect, it } from "@effect/vitest"
 import { Effect } from "effect"
 import themeAuthoringGuide from "../../../../docs/themes.md?raw"
-import { decodeTheme, defaultThemeTokens } from "../../../shared/theme"
+import { decodeThemeFile, defaultThemeTokens } from "../../../shared/theme"
 
 const tokenReference = themeAuthoringGuide
   .split(/^## /m)
@@ -25,7 +25,7 @@ describe("the theme authoring guide", () => {
   it.effect("contains an example theme that decodes without errors", () =>
     Effect.gen(function* () {
       assert.isDefined(exampleThemeJson)
-      yield* decodeTheme(JSON.parse(exampleThemeJson))
+      yield* decodeThemeFile(exampleThemeJson)
     }),
   )
 })

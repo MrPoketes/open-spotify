@@ -28,6 +28,20 @@ const migrations = SqliteMigrator.fromRecord({
       )
     `
   }),
+  // A theme is identified by its name and author, so importing a new version
+  // of a theme replaces the old one. The theme column holds the theme file.
+  "0003_create_imported_themes": Effect.gen(function* () {
+    const sql = yield* SqlClient.SqlClient
+    yield* sql`
+      CREATE TABLE imported_themes (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        author TEXT NOT NULL,
+        theme TEXT NOT NULL,
+        UNIQUE (name, author)
+      )
+    `
+  }),
 })
 
 // Migrations run while the layer is built, so every service that uses the

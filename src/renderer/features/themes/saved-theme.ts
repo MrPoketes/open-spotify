@@ -1,16 +1,33 @@
 import { Effect } from "effect"
-import { type ThemeId, builtInThemes, defaultThemeId } from "../../../shared/built-in-themes"
+import { defaultThemeId } from "../../../shared/built-in-themes"
+import { type LibraryTheme, findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
+import { DesktopBridge } from "../../lib/desktop-bridge"
 import { loadSavedSetting, saveSetting } from "../../lib/saved-setting"
 import { applyTheme } from "./apply-theme"
 
-export const loadSavedThemeId = loadSavedSetting("themeId", defaultThemeId)
+export interface SavedThemeLibrary {
+  readonly themes: ReadonlyArray<LibraryTheme>
+  readonly savedTheme: LibraryTheme
+}
 
-export const restoreSavedTheme = Effect.gen(function* () {
-  const themeId = yield* loadSavedThemeId
-  applyTheme(builtInThemes[themeId])
+export const loadSavedThemeLibrary = Effect.gen(function* () {
+  const bridge = yield* DesktopBridge
+  const importedThemes = yield* bridge.listImportedThemes.pipe(
+    Effect.catchTag("DesktopBridgeError", (error) =>
+      Effect.logWarning("Could not read the imported themes", error).pipe(Effect.as([])),
+    ),
+  )
+  const themes = themeLibrary(importedThemes)
+  const savedThemeId = yield* loadSavedSetting("themeId", defaultThemeId)
+  return { themes, savedTheme: findLibraryTheme(themes, savedThemeId) } satisfies SavedThemeLibrary
 })
 
-export const selectTheme = Effect.fn("selectTheme")(function* (themeId: ThemeId) {
-  applyTheme(builtInThemes[themeId])
-  yield* saveSetting("themeId", themeId)
+export const restoreSavedTheme = Effect.gen(function* () {
+  const { savedTheme } = yield* loadSavedThemeLibrary
+  applyTheme(savedTheme.theme)
+})
+
+export const selectTheme = Effect.fn("selectTheme")(function* (libraryTheme: LibraryTheme) {
+  applyTheme(libraryTheme.theme)
+  yield* saveSetting("themeId", libraryTheme.id)
 })

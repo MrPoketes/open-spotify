@@ -18,6 +18,9 @@ export const ipcChannels = {
   removeFolderItem: "folders:remove-item",
   moveFolder: "folders:move-folder",
   moveFolderItem: "folders:move-item",
+  listImportedThemes: "themes:list-imported",
+  importThemeFile: "themes:import-file",
+  exportCurrentTheme: "themes:export-current",
   exportFolders: "folders:export",
   importFolders: "folders:import",
 } as const

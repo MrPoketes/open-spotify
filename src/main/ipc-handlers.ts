@@ -13,6 +13,11 @@ import { exportFoldersFromIpc, importFoldersFromIpc } from "./folders-file-ipc"
 import { folderIpcOperations } from "./folders-ipc"
 import { mainRuntime } from "./main-runtime"
 import { getSettingFromIpc, setSettingFromIpc } from "./settings-ipc"
+import {
+  exportCurrentThemeFromIpc,
+  importThemeFileFromIpc,
+  listImportedThemesFromIpc,
+} from "./themes-ipc"
 
 export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.getAppInfo, (): AppInfo => ({
@@ -36,6 +41,15 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.cancelLogIn, () => mainRuntime.runPromise(cancelLogInFromIpc))
   ipcMain.handle(ipcChannels.getAccessToken, () => mainRuntime.runPromise(getAccessTokenFromIpc))
   ipcMain.handle(ipcChannels.logOut, () => mainRuntime.runPromise(logOutFromIpc))
+  ipcMain.handle(ipcChannels.listImportedThemes, () =>
+    mainRuntime.runPromise(listImportedThemesFromIpc),
+  )
+  ipcMain.handle(ipcChannels.importThemeFile, (event) =>
+    mainRuntime.runPromise(importThemeFileFromIpc(BrowserWindow.fromWebContents(event.sender))),
+  )
+  ipcMain.handle(ipcChannels.exportCurrentTheme, (event) =>
+    mainRuntime.runPromise(exportCurrentThemeFromIpc(BrowserWindow.fromWebContents(event.sender))),
+  )
   ipcMain.handle(ipcChannels.exportFolders, (event) =>
     mainRuntime.runPromise(exportFoldersFromIpc(BrowserWindow.fromWebContents(event.sender))),
   )

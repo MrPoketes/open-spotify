@@ -55,13 +55,13 @@ const folderTree: FolderTree = [
 
 const renderFolderPage = (
   folderId: string,
-  mainProcess: DesktopApi = fakeMainProcess(folderTree),
+  mainProcess: DesktopApi = fakeMainProcess({ folderTree }),
 ) => renderScreen(<FolderPage folderId={folderId} />, mainProcess)
 
 // Serves the folder tree while reachable and fails like a main process that
 // does not reply while unreachable.
 const mainProcessWithConnection = () => {
-  const workingMainProcess = fakeMainProcess(folderTree)
+  const workingMainProcess = fakeMainProcess({ folderTree })
   let reachable = true
   return {
     invoke: (channel, request) =>
@@ -106,7 +106,7 @@ describe("FolderPage", () => {
   })
 
   it("remembers the chosen view the next time a folder opens", async () => {
-    const mainProcess = fakeMainProcess(folderTree)
+    const mainProcess = fakeMainProcess({ folderTree })
     renderFolderPage(runningId, mainProcess)
     await userEvent.click(await screen.findByRole("button", { name: "List" }))
     cleanup()
