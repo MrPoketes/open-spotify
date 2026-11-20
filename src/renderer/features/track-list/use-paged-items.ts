@@ -10,7 +10,8 @@ interface PagedItemsOptions<A> {
 }
 
 // Assumes the first page ends on a page boundary or at the end of the list,
-// which holds for Spotify's embedded first page of 100 items.
+// which holds for a playlist's embedded first page of 100 items and for a
+// first page of exactly one page size, such as Liked Songs' first 50.
 const offsetsCoveredBy = (itemCount: number, pageSize: number) =>
   new Set(Array.from({ length: Math.ceil(itemCount / pageSize) }, (_, page) => page * pageSize))
 

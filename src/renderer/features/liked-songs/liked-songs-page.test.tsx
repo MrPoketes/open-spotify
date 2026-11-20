@@ -42,6 +42,7 @@ const songNames = fakeLikedSongs.map(
 
 const songName = (index: number) => songNames[index] ?? `No liked song at ${index}`
 
+// aria-rowindex counts from 1, and the column header is row 1.
 const rowAt = (index: number) =>
   within(screen.getByRole("table", { name: "Liked Songs" }))
     .getAllByRole("row")
