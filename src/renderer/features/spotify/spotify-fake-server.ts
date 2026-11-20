@@ -5,8 +5,12 @@ import {
   type FakePlaylist,
   fakeCurrentUser,
   fakeEpisode,
+  fakeFollowedArtists,
+  fakeLikedSongs,
   fakeListenerId,
   fakePlaylists,
+  fakeSavedAlbums,
+  fakeSavedShows,
 } from "./spotify-fixtures"
 
 const fakeAccessToken = "fake-access-token"
@@ -42,6 +46,30 @@ const pageOf = <A>(items: ReadonlyArray<A>, url: URL, defaultLimit: number) => {
     total: items.length,
     next: offset + limit < items.length ? nextUrl.href : null,
     previous: null,
+  }
+}
+
+const urlWithCursor = (url: URL, cursor: string) => {
+  const nextUrl = new URL(url)
+  nextUrl.searchParams.set("after", cursor)
+  return nextUrl.href
+}
+
+// Followed artists are paged by cursor: `after` is the id of the last artist
+// on the previous page.
+const cursorPageOf = (artists: typeof fakeFollowedArtists, url: URL) => {
+  const limit = Number(url.searchParams.get("limit") ?? defaultPageLimit)
+  const after = url.searchParams.get("after")
+  const start = artists.findIndex(({ id }) => id === after) + 1
+  const items = artists.slice(start, start + limit)
+  const nextCursor = start + limit < artists.length ? (items.at(-1)?.id ?? null) : null
+  return {
+    href: url.href,
+    items,
+    limit,
+    total: artists.length,
+    next: nextCursor === null ? null : urlWithCursor(url, nextCursor),
+    cursors: { after: nextCursor, before: null },
   }
 }
 
@@ -92,12 +120,21 @@ const fullPlaylist = (playlist: FakePlaylist, url: URL) => {
 
 const notFound = [404, errorBody(404, "Resource not found")] as const
 
+const currentUserResources: Record<string, (url: URL) => unknown> = {
+  "/v1/me": () => fakeCurrentUser,
+  "/v1/me/playlists": (url) => pageOf(fakePlaylists.map(simplifiedPlaylist), url, defaultPageLimit),
+  "/v1/me/tracks": (url) => pageOf(fakeLikedSongs, url, defaultPageLimit),
+  "/v1/me/albums": (url) => pageOf(fakeSavedAlbums, url, defaultPageLimit),
+  "/v1/me/shows": (url) => pageOf(fakeSavedShows, url, defaultPageLimit),
+}
+
 const respondTo = (url: URL): readonly [number, unknown] => {
-  if (url.pathname === "/v1/me") {
-    return [200, fakeCurrentUser]
+  const currentUserResource = currentUserResources[url.pathname]
+  if (currentUserResource) {
+    return [200, currentUserResource(url)]
   }
-  if (url.pathname === "/v1/me/playlists") {
-    return [200, pageOf(fakePlaylists.map(simplifiedPlaylist), url, defaultPageLimit)]
+  if (url.pathname === "/v1/me/following") {
+    return [200, { artists: cursorPageOf(fakeFollowedArtists, url) }]
   }
   const [, playlistId, itemsPath] = /^\/v1\/playlists\/([^/]+)(\/items)?$/.exec(url.pathname) ?? []
   const playlist = fakePlaylists.find(({ id }) => id === playlistId)

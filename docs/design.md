@@ -133,6 +133,25 @@ so only the icons in use are bundled. They draw with `currentColor`, so they fol
 Use 20 px icons in 32 px icon buttons and 16 px icons next to `text-sm` or smaller text. Icons
 are decorative (`aria-hidden`); the control that holds them carries the accessible name.
 
+### Library rows
+
+Sidebar entries are 48 px rows: 40 px artwork, the name in `text-sm`, and a `text-xs` `muted`
+line that says what the entry is ("Playlist · owner", "Album · artist", "Artist", "Show").
+Images are given to the browser as a `srcset`, so it downloads the smallest size that is sharp
+on the current screen.
+
+When artwork is missing or fails to load, a `surface-raised` tile with a `muted` Lucide icon for
+the kind stands in: `ListMusic` for playlists, `Disc3` for albums, `MicVocal` for artists,
+`Radio` for shows. Liked Songs has no artwork from Spotify and always shows `Heart` on
+`accent`.
+
+### Loading, empty, and error states
+
+- While a list loads, it says so in `muted` text inside an `output` element, so screen readers
+  announce it.
+- An empty list says what will appear there. It never leaves a blank pane.
+- A failed load says so in plain text inside an `alert`, with a Retry button next to it.
+
 ### Motion
 
 Motion confirms an action; it never decorates.

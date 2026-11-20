@@ -4,7 +4,14 @@ import { HttpClient, HttpClientError, HttpClientResponse } from "effect/http"
 import { TestClock } from "effect/testing"
 import { SpotifyApi } from "./spotify-api"
 import { spotifyFakeAccessToken } from "./spotify-fake-server"
-import { fakeCurrentUser, fakePlaylists } from "./spotify-fixtures"
+import {
+  fakeCurrentUser,
+  fakeFollowedArtists,
+  fakeLikedSongs,
+  fakePlaylists,
+  fakeSavedAlbums,
+  fakeSavedShows,
+} from "./spotify-fixtures"
 
 const spotifyApiUsing = (client: HttpClient.HttpClient) =>
   SpotifyApi.layerWithoutHttpClient.pipe(
@@ -56,6 +63,33 @@ layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
         playlists.map(({ items }) => items.total),
         fakePlaylists.map(({ entries }) => entries.length),
       )
+    }),
+  )
+
+  // There are more followed artists than fit on one page, and Spotify pages
+  // them by cursor instead of by offset.
+  test.effect("decodes every page of the user's saved and followed collections", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+
+      const albums = yield* Stream.runCollect(spotify.savedAlbums)
+      const artists = yield* Stream.runCollect(spotify.followedArtists)
+      const shows = yield* Stream.runCollect(spotify.savedShows)
+      const likedSongsCount = yield* spotify.likedSongsCount
+
+      assert.deepStrictEqual(
+        albums.map(({ album }) => album.name),
+        fakeSavedAlbums.map(({ album }) => album.name),
+      )
+      assert.deepStrictEqual(
+        artists.map(({ name }) => name),
+        fakeFollowedArtists.map(({ name }) => name),
+      )
+      assert.deepStrictEqual(
+        shows.map(({ show }) => show.name),
+        fakeSavedShows.map(({ show }) => show.name),
+      )
+      assert.strictEqual(likedSongsCount, fakeLikedSongs.length)
     }),
   )
 

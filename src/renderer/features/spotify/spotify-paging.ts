@@ -13,7 +13,9 @@ interface Page<A> {
 }
 
 // Spotify returns the absolute URL of the next page, so following `next`
-// keeps every query parameter of the first request.
+// keeps every query parameter of the first request. This holds for cursor
+// paging too (followed artists), where `next` already carries the `after`
+// cursor.
 export const streamPages = <A, E, R>(
   firstPageUrl: string,
   fetchPage: (url: string) => Effect.Effect<Page<A>, E, R>,

@@ -5,3 +5,5 @@ export const Image = Schema.Struct({
   width: Schema.NullOr(Schema.Number),
   height: Schema.NullOr(Schema.Number),
 })
+
+export type Image = typeof Image.Type
