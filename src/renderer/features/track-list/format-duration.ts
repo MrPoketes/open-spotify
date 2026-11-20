@@ -30,3 +30,17 @@ export function formatTotalDuration(durationMs: number): string {
   }
   return `${seconds} sec`
 }
+
+// Spotify does not report how long a playlist or Liked Songs is, and loading
+// every page of a long list up front would be slow, so until every track has
+// loaded the rest is estimated from the tracks loaded so far.
+export function formatListDuration(loadedDurationsMs: ReadonlyArray<number>, trackCount: number) {
+  let loadedMs = 0
+  for (const durationMs of loadedDurationsMs) {
+    loadedMs += durationMs
+  }
+  if (loadedDurationsMs.length === trackCount) {
+    return formatTotalDuration(loadedMs)
+  }
+  return `about ${formatTotalDuration((loadedMs / loadedDurationsMs.length) * trackCount)}`
+}
