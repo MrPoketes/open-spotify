@@ -1,15 +1,29 @@
-import { Link } from "@tanstack/react-router"
+import { Effect } from "effect"
 import { useState } from "react"
+import { defaultLibrarySections } from "../../../shared/library-layout"
+import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
-import { type RovingRowProps, useRovingFocus } from "../../ui/use-roving-focus"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
+import { arrangeLibrary } from "./arrange-library"
+import { HiddenLibrarySections } from "./hidden-library-sections"
 import { type LibraryEntry, loadLibraryEntries } from "./library-entries"
-import { LibraryEntryArtwork } from "./library-entry-artwork"
 import { LibraryFilterBar } from "./library-filter-bar"
-import { filterLibraryEntries, noLibraryFilters } from "./library-filters"
+import { filterLibraryEntries, hasLibraryFilters, noLibraryFilters } from "./library-filters"
+import { LibrarySectionGroup, PinnedLibrarySection } from "./library-section-group"
+import { nameFilterFocusKey } from "./use-focus-after-change"
+import { type SavedLibraryLayout, useLibraryLayout } from "./use-library-layout"
+
+const loadLibrary = Effect.all(
+  {
+    entries: loadLibraryEntries,
+    pinnedUris: loadSavedSetting("pinnedLibraryEntries", []),
+    sections: loadSavedSetting("librarySections", defaultLibrarySections),
+  },
+  { concurrency: "unbounded" },
+)
 
 export function Library() {
-  const { state, retry } = useLoad(loadLibraryEntries, "The library failed to load")
+  const { state, retry } = useLoad(loadLibrary, "The library failed to load")
 
   if (state.status === "loading") {
     return <output className="px-2 text-sm text-muted">Loading your library…</output>
@@ -27,7 +41,7 @@ export function Library() {
     )
   }
 
-  if (state.value.length === 0) {
+  if (state.value.entries.length === 0) {
     return (
       <p className="px-2 text-sm text-muted">
         Playlists, albums, artists, and shows you save will appear here.
@@ -35,58 +49,68 @@ export function Library() {
     )
   }
 
-  return <FilterableLibrary entries={state.value} />
+  const { entries, ...savedLayout } = state.value
+  return <ArrangedLibraryView entries={entries} savedLayout={savedLayout} />
 }
 
-function FilterableLibrary({ entries }: { readonly entries: ReadonlyArray<LibraryEntry> }) {
-  const [filters, setFilters] = useState(noLibraryFilters)
-  const matchingEntries = filterLibraryEntries(entries, filters)
-  const hasMatches = matchingEntries.length > 0
+// The library is not empty here, so when nothing shows, either the filters
+// match nothing or every match is in a hidden section.
+const emptyLibraryMessage = (hasMatches: boolean, isFiltered: boolean) => {
+  if (!hasMatches) return "Nothing in your library matches these filters."
+  if (isFiltered) return "Everything that matches these filters is in a hidden section."
+  return "Everything in your library is in a hidden section."
+}
 
-  // The output stays mounted while entries match: screen readers only announce
+interface ArrangedLibraryViewProps {
+  readonly entries: ReadonlyArray<LibraryEntry>
+  readonly savedLayout: SavedLibraryLayout
+}
+
+function ArrangedLibraryView({ entries, savedLayout }: ArrangedLibraryViewProps) {
+  const [filters, setFilters] = useState(noLibraryFilters)
+  const layout = useLibraryLayout(savedLayout)
+  const matchingEntries = filterLibraryEntries(entries, filters)
+  const { pinnedEntries, shownSections } = arrangeLibrary(
+    matchingEntries,
+    layout.pinnedUris,
+    layout.sections,
+  )
+  const isEmpty = pinnedEntries.length === 0 && shownSections.length === 0
+  const entryActions = { togglePin: layout.togglePin, focusAfterChange: layout.focusAfterChange }
+
+  // The output stays mounted while entries show: screen readers only announce
   // changes to a live region that was already on the page.
   return (
     <div className="flex flex-col">
-      <LibraryFilterBar filters={filters} onChange={setFilters} />
+      <LibraryFilterBar
+        filters={filters}
+        onChange={setFilters}
+        nameFilterRef={layout.focusAfterChange(nameFilterFocusKey)}
+      />
       <output className="px-2 text-sm text-muted">
-        {hasMatches ? "" : "Nothing in your library matches these filters."}
+        {isEmpty ? emptyLibraryMessage(matchingEntries.length > 0, hasLibraryFilters(filters)) : ""}
       </output>
-      {hasMatches && <LibraryEntryList entries={matchingEntries} />}
-    </div>
-  )
-}
-
-function LibraryEntryList({ entries }: { readonly entries: ReadonlyArray<LibraryEntry> }) {
-  const { onKeyDown, rowProps } = useRovingFocus(entries.length)
-  return (
-    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- key presses bubble up from the focused entry, and the list moves focus between its entries: the roving focus docs/design.md requires for lists
-    <ul onKeyDown={onKeyDown} className="flex flex-col">
-      {entries.map((entry, index) => (
-        <li key={entry.uri}>
-          <LibraryEntryRow entry={entry} rovingProps={rowProps(index)} />
-        </li>
+      {pinnedEntries.length > 0 && (
+        <PinnedLibrarySection entries={pinnedEntries} entryActions={entryActions} />
+      )}
+      {shownSections.map(({ section, entries: sectionEntries }, index) => (
+        <LibrarySectionGroup
+          key={section.kind}
+          section={section}
+          entries={sectionEntries}
+          menuActions={layout.sectionMenuActions(section, {
+            previous: shownSections[index - 1]?.section,
+            next: shownSections[index + 1]?.section,
+          })}
+          onToggleCollapsed={() => layout.toggleCollapsed(section)}
+          entryActions={entryActions}
+        />
       ))}
-    </ul>
-  )
-}
-
-interface LibraryEntryRowProps {
-  readonly entry: LibraryEntry
-  readonly rovingProps: RovingRowProps
-}
-
-function LibraryEntryRow({ entry, rovingProps }: LibraryEntryRowProps) {
-  return (
-    <Link
-      {...entry.page}
-      {...rovingProps}
-      className="flex items-center gap-3 rounded-small px-2 py-1 transition-colors duration-120 ease-out hover:bg-surface-raised"
-    >
-      <LibraryEntryArtwork kind={entry.kind} images={entry.images} />
-      <div className="flex min-w-0 flex-col">
-        <span className="truncate text-sm">{entry.name}</span>
-        <span className="truncate text-xs text-muted">{entry.details}</span>
-      </div>
-    </Link>
+      <HiddenLibrarySections
+        sections={layout.sections}
+        onShow={layout.showSection}
+        focusAfterChange={layout.focusAfterChange}
+      />
+    </div>
   )
 }

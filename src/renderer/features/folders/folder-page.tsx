@@ -1,11 +1,10 @@
 import { Effect } from "effect"
 import { Folder as FolderIcon } from "lucide-react"
-import { use, useState } from "react"
 import { type FolderView, defaultFolderView } from "../../../shared/folder-view"
 import { DesktopBridge } from "../../lib/desktop-bridge"
-import { RendererRuntimeContext } from "../../lib/renderer-runtime"
-import { loadSavedSetting, saveSetting } from "../../lib/saved-setting"
+import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
+import { useSavedSettingState } from "../../lib/use-saved-setting-state"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { PageHeader } from "../../ui/page-header"
 import { FolderBreadcrumb } from "./folder-breadcrumb"
@@ -45,14 +44,8 @@ interface LoadedFolderProps {
 }
 
 function LoadedFolder({ location, savedView }: LoadedFolderProps) {
-  const runtime = use(RendererRuntimeContext)
-  const [view, setView] = useState(savedView)
+  const [view, changeView] = useSavedSettingState("folderView", savedView)
   const { folder, ancestors } = location
-
-  const changeView = (nextView: FolderView) => {
-    setView(nextView)
-    runtime.runFork(saveSetting("folderView", nextView))
-  }
 
   return (
     <div className="flex flex-col gap-8">

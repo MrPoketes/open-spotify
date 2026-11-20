@@ -1,5 +1,6 @@
 import { Schema } from "effect"
 import { FolderView } from "./folder-view"
+import { LibrarySections, PinnedLibraryEntries } from "./library-layout"
 import { SidebarWidth } from "./sidebar-width"
 import { ThemeId } from "./theme-library"
 import { TrackListDensity } from "./track-list-density"
@@ -10,6 +11,8 @@ export const SettingKey = Schema.Literals([
   "sidebarWidth",
   "folderView",
   "trackListDensity",
+  "pinnedLibraryEntries",
+  "librarySections",
 ])
 
 export type SettingKey = typeof SettingKey.Type
@@ -22,6 +25,8 @@ export const settingSchemas = {
   sidebarWidth: SidebarWidth,
   folderView: FolderView,
   trackListDensity: TrackListDensity,
+  pinnedLibraryEntries: PinnedLibraryEntries,
+  librarySections: LibrarySections,
 } satisfies Record<SettingKey, Schema.Top>
 
 export type SettingValue<K extends SettingKey> = (typeof settingSchemas)[K]["Type"]

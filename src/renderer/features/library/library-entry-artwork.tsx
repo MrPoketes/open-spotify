@@ -1,7 +1,7 @@
 import { Disc3, Heart, ListMusic, type LucideIcon, MicVocal, Radio } from "lucide-react"
+import type { LibraryEntryKind } from "../../../shared/library-layout"
 import { Artwork } from "../../ui/artwork"
 import type { Image } from "../spotify/spotify-image"
-import type { LibraryEntryKind } from "./library-entries"
 
 const placeholderIcons: Record<LibraryEntryKind, LucideIcon> = {
   "liked-songs": Heart,
