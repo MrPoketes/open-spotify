@@ -109,6 +109,7 @@ export default defineConfig({
       // the DesktopBridge, never through Electron or Node APIs.
       files: ["src/renderer/**"],
       rules: {
+        "open-spotify/no-hard-coded-colors": "error",
         "no-restricted-imports": [
           "error",
           {
