@@ -87,6 +87,7 @@ export function PaneDivider({
       aria-label={label}
       aria-orientation="vertical"
       aria-valuenow={paneWidth}
+      aria-valuetext={`${paneWidth} pixels`}
       aria-valuemin={minimumWidth}
       aria-valuemax={maximumWidth}
       tabIndex={0}

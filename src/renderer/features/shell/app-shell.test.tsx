@@ -6,7 +6,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router"
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
@@ -165,7 +165,11 @@ describe("AppShell", () => {
   it("goes back when the mouse's back button is released", async () => {
     await renderAppShell()
 
-    fireEvent.mouseUp(window, { button: 3 })
+    // user-event's default pointer map has no side buttons.
+    const user = userEvent.setup({
+      pointerMap: [{ name: "MouseBack", pointerType: "mouse", button: "back" }],
+    })
+    await user.pointer({ keys: "[MouseBack]", target: document.body })
 
     expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument()
   })

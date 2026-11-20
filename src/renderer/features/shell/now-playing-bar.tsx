@@ -2,7 +2,7 @@ import { MonitorSpeaker } from "lucide-react"
 
 export function NowPlayingBar() {
   return (
-    <footer
+    <section
       aria-label="Now playing"
       className="flex h-18 shrink-0 items-center justify-between gap-4 rounded-medium bg-surface-raised px-4 shadow-raised"
     >
@@ -11,6 +11,6 @@ export function NowPlayingBar() {
         <MonitorSpeaker aria-hidden size={16} />
         No active device
       </p>
-    </footer>
+    </section>
   )
 }
