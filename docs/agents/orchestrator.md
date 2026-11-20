@@ -65,11 +65,15 @@ An issue that went back to `Todo` may still have a branch from an earlier worker
 open PR. T3 cannot create a worktree on a branch that already exists, so before every launch
 choose the `workspaceStrategy` and `message` here. In the project root:
 
-1. Run `git fetch origin` and `git worktree list`. If a line ends in `[<gitBranchName>]`, use
+1. Run `git fetch origin`, `git worktree prune` (git still counts a deleted worktree folder as
+   holding its branch), and `git worktree list`. If a line contains `[<gitBranchName>]`, use
    `{ "type": "existing_worktree", "worktreePath": "<its path>" }` and go to step 4 of this list.
 2. If `git branch --list <gitBranchName>` prints the branch, its worktree is gone but the branch
-   is left. Run `git push origin <gitBranchName>` so no commit of the earlier worker is lost (a
-   rejected push means `origin` holds the newer history), then `git branch -D <gitBranchName>`.
+   is left. Run `git push origin <gitBranchName>` so no commit of the earlier worker is lost.
+   Then delete the branch with `git branch -D <gitBranchName>`, but only if
+   `git branch -r --contains <gitBranchName>` lists `origin/<gitBranchName>`. Otherwise the
+   branch has commits that `origin` lacks: keep it, move the issue to `Backlog` with a comment
+   that quotes the push error, and pick the next issue.
 3. If `git ls-remote --heads origin <gitBranchName>` prints the branch, use
    `{ "type": "worktree", "baseRef": "origin/<gitBranchName>", "startFromOrigin": true, "branch": "<gitBranchName>" }`.
    If it prints nothing, the branch does not exist: use the usual `workspaceStrategy` and
