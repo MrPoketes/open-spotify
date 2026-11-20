@@ -20,7 +20,7 @@ export const fakeMainProcess = ({
 }: FakeMainProcessOptions = {}): DesktopApi => {
   const storedSettings = new Map<string, unknown>()
   const importedThemes: Array<unknown> = []
-  const replies: Partial<Record<IpcChannel, (request: unknown) => unknown>> = {
+  const answerByChannel: Partial<Record<IpcChannel, (request: unknown) => unknown>> = {
     [ipcChannels.getSetting]: (request) => {
       const { key } = Schema.decodeUnknownSync(GetSettingRequest)(request)
       return storedSettings.get(key) ?? null
@@ -40,11 +40,11 @@ export const fakeMainProcess = ({
   }
   return {
     invoke: (channel, request) => {
-      const reply = replies[channel]
-      if (reply === undefined) {
+      const answer = answerByChannel[channel]
+      if (answer === undefined) {
         return Promise.reject(new Error(`The fake main process does not handle ${channel}`))
       }
-      return Promise.resolve(reply(request))
+      return Promise.resolve(answer(request))
     },
   }
 }

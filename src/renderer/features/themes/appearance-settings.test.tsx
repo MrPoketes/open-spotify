@@ -97,4 +97,23 @@ describe("AppearanceSettings", () => {
       "false",
     )
   })
+
+  // docs/themes.md promises that a new version of the theme in use applies at
+  // once and takes the old one's place.
+  it("applies a re-imported version of the chosen theme in place of the old one", async () => {
+    const newSunset = {
+      ...sunset,
+      theme: { ...sunset.theme, tokens: { ...sunset.theme.tokens, "radius-medium": "13px" } },
+    }
+    renderScreen(
+      <AppearanceSettings library={{ themes: themeLibrary([sunset]), savedTheme: sunset }} />,
+      fakeMainProcess({ importThemeReply: { _tag: "ThemeImported", importedTheme: newSunset } }),
+    )
+
+    await userEvent.click(await screen.findByRole("button", { name: "Import theme…" }))
+
+    await screen.findByText("Imported Sunset.", { exact: false })
+    expect(document.documentElement.style.getPropertyValue("--theme-radius-medium")).toBe("13px")
+    expect(screen.getAllByRole("button", { name: "Sunset by A theme author" })).toHaveLength(1)
+  })
 })

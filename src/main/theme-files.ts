@@ -50,8 +50,8 @@ export const importThemeFile = Effect.gen(function* () {
       message: `“${theme.name}” by ${theme.author} is a built-in theme. Give your theme another name to import it.`,
     })
   }
-  const existingId = yield* importedThemes.findIdByNameAndAuthor(theme)
-  if (Option.isSome(existingId) && !(yield* dialogs.confirmReplace(theme))) {
+  const replacesTheme = yield* importedThemes.hasSameNameAndAuthor(theme)
+  if (replacesTheme && !(yield* dialogs.confirmReplace(theme))) {
     return Option.none()
   }
   return Option.some(yield* importedThemes.save(theme))

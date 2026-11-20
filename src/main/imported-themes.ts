@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Option, Schema } from "effect"
 import { SqlClient, type SqlError, SqlSchema } from "effect/sql"
 import { type Theme, ThemeFile } from "../shared/theme"
-import type { LibraryTheme, ThemeId } from "../shared/theme-library"
+import type { LibraryTheme } from "../shared/theme-library"
 
 type StorageError = SqlError.SqlError | Schema.SchemaError
 
@@ -11,9 +11,8 @@ export class ImportedThemes extends Context.Service<
   ImportedThemes,
   {
     readonly list: Effect.Effect<ReadonlyArray<LibraryTheme>, StorageError>
-    readonly findIdByNameAndAuthor: (
-      theme: Theme,
-    ) => Effect.Effect<Option.Option<ThemeId>, StorageError>
+    // Whether a theme with this theme's name and author was imported before.
+    readonly hasSameNameAndAuthor: (theme: Theme) => Effect.Effect<boolean, StorageError>
     // Replaces the imported theme with the same name and author, keeping its
     // id, so a theme the user picked stays picked when it is updated.
     readonly save: (theme: Theme) => Effect.Effect<LibraryTheme, StorageError>
@@ -39,10 +38,8 @@ export class ImportedThemes extends Context.Service<
         `,
       })
 
-      const findIdByNameAndAuthor = (theme: Theme) =>
-        findIdRow({ name: theme.name, author: theme.author }).pipe(
-          Effect.map(Option.map((row) => row.id)),
-        )
+      const hasSameNameAndAuthor = (theme: Theme) =>
+        findIdRow({ name: theme.name, author: theme.author }).pipe(Effect.map(Option.isSome))
 
       const upsertRow = SqlSchema.findOne({
         Request: Schema.Struct({ ...NameAndAuthor.fields, id: Schema.String, theme: ThemeFile }),
@@ -62,7 +59,7 @@ export class ImportedThemes extends Context.Service<
           Effect.map(({ id }) => ({ id, theme })),
         )
 
-      return ImportedThemes.of({ list, findIdByNameAndAuthor, save })
+      return ImportedThemes.of({ list, hasSameNameAndAuthor, save })
     }),
   )
 }

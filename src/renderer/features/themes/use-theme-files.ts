@@ -55,7 +55,9 @@ export function useThemeFiles(onImport: (importedTheme: LibraryTheme) => void) {
   const [isBusy, setIsBusy] = useState(false)
   const [message, setMessage] = useState<ThemeFileMessage | null>(null)
 
-  const runOnce = (action: Effect.Effect<ThemeFileMessage | null, never, RendererServices>) => {
+  const runUnlessBusy = (
+    action: Effect.Effect<ThemeFileMessage | null, never, RendererServices>,
+  ) => {
     if (isBusy) {
       return
     }
@@ -63,12 +65,8 @@ export function useThemeFiles(onImport: (importedTheme: LibraryTheme) => void) {
     setMessage(null)
     runtime.runFork(
       action.pipe(
-        Effect.tap((nextMessage) =>
-          Effect.sync(() => {
-            setMessage(nextMessage)
-            setIsBusy(false)
-          }),
-        ),
+        Effect.tap((nextMessage) => Effect.sync(() => setMessage(nextMessage))),
+        Effect.ensuring(Effect.sync(() => setIsBusy(false))),
       ),
     )
   }
@@ -76,7 +74,7 @@ export function useThemeFiles(onImport: (importedTheme: LibraryTheme) => void) {
   return {
     isBusy,
     message,
-    importThemeFile: () => runOnce(importThemeFile(onImport)),
-    exportCurrentTheme: () => runOnce(exportCurrentTheme),
+    importThemeFile: () => runUnlessBusy(importThemeFile(onImport)),
+    exportCurrentTheme: () => runUnlessBusy(exportCurrentTheme),
   }
 }
