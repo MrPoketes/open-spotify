@@ -223,6 +223,20 @@ well as its `accent` fill. The choice is the `folderView` setting and applies to
 Both views are one tab stop with roving focus. An entry whose kind has a page links to it; the
 others are plain rows until their page exists.
 
+### Menus
+
+A menu opens from a 32 px icon button (`MenuButton` in `src/renderer/ui`) and follows the
+WAI-ARIA menu button pattern: `Enter`, `Space`, or `↓` opens it on the first item, `↑` on the
+last, the arrow keys wrap, `Home` and `End` jump to the ends, and `Escape` closes it and returns
+focus to the button. It is an Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`)
+with 4 px of padding, aligned to the button's right edge. Items are `text-sm` rows with
+`rounded-small` corners that turn `surface-raised` on hover or focus. An item that opens a
+dialog ends its label with an ellipsis ("Import folders…").
+
+The sidebar's folder menu sits beside the "Your library" heading. What an action did is said
+under the heading: a success in `muted` text inside an `output`, a failure in `danger` text
+inside an `alert`.
+
 ### Loading, empty, and error states
 
 - While a list or page loads, it says so in `muted` text inside an `output` element, so screen
