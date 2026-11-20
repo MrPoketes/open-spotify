@@ -4,8 +4,8 @@ import type { Theme } from "../shared/theme"
 
 const themeFileFilters = [{ name: "Theme", extensions: ["json"] }]
 
-// Takes Electron's dialog module as a parameter so that importing and
-// exporting can be tested with fake answers in plain Node.
+// Takes Electron's dialog module as a parameter, so this module loads in
+// plain Node and tests can provide the service with fake answers instead.
 export class ThemeFileDialogs extends Context.Service<
   ThemeFileDialogs,
   {

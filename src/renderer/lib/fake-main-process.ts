@@ -2,11 +2,13 @@ import { Schema } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
 import { GetSettingRequest, SetSettingRequest } from "../../shared/settings"
-import type { ImportThemeReply } from "../../shared/theme-file-replies"
+import type { ExportThemeReply, ImportThemeReply } from "../../shared/theme-file-replies"
 
+// What the theme file channels reply, as if the user had answered their
+// dialogs. Both default to the user canceling.
 interface FakeMainProcessOptions {
-  // What importing a theme file replies, as if the user had chosen that file.
   readonly importThemeReply?: typeof ImportThemeReply.Encoded
+  readonly exportThemeReply?: typeof ExportThemeReply.Encoded
 }
 
 // Stands in for the main process in renderer tests. It decodes settings
@@ -14,6 +16,7 @@ interface FakeMainProcessOptions {
 // imported themes in memory.
 export const fakeMainProcess = ({
   importThemeReply = { _tag: "ThemeImportCanceled" },
+  exportThemeReply = null,
 }: FakeMainProcessOptions = {}): DesktopApi => {
   const storedSettings = new Map<string, unknown>()
   const importedThemes: Array<unknown> = []
@@ -33,6 +36,7 @@ export const fakeMainProcess = ({
       }
       return importThemeReply
     },
+    [ipcChannels.exportCurrentTheme]: () => exportThemeReply,
   }
   return {
     invoke: (channel, request) => {

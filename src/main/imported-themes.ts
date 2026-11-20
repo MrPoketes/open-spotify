@@ -44,17 +44,23 @@ export class ImportedThemes extends Context.Service<
           Effect.map(Option.map((row) => row.id)),
         )
 
-      const save = Effect.fn("ImportedThemes.save")(function* (theme: Theme) {
-        const existingId = yield* findIdByNameAndAuthor(theme)
-        const id = Option.getOrElse(existingId, () => crypto.randomUUID())
-        const themeFile = yield* Schema.encodeEffect(ThemeFile)(theme)
-        yield* sql`
+      const upsertRow = SqlSchema.findOne({
+        Request: Schema.Struct({ ...NameAndAuthor.fields, id: Schema.String, theme: ThemeFile }),
+        Result: Schema.Struct({ id: Schema.String }),
+        execute: ({ id, name, author, theme }) => sql`
           INSERT INTO imported_themes (id, name, author, theme)
-          VALUES (${id}, ${theme.name}, ${theme.author}, ${themeFile})
-          ON CONFLICT (id) DO UPDATE SET theme = excluded.theme
-        `
-        return { id, theme }
+          VALUES (${id}, ${name}, ${author}, ${theme})
+          ON CONFLICT (name, author) DO UPDATE SET theme = excluded.theme
+          RETURNING id
+        `,
       })
+
+      const save = (theme: Theme) =>
+        upsertRow({ id: crypto.randomUUID(), name: theme.name, author: theme.author, theme }).pipe(
+          // An upsert always returns the row it wrote.
+          Effect.catchTag("NoSuchElementError", Effect.die),
+          Effect.map(({ id }) => ({ id, theme })),
+        )
 
       return ImportedThemes.of({ list, findIdByNameAndAuthor, save })
     }),

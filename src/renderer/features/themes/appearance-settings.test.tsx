@@ -2,6 +2,8 @@ import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { beforeEach, describe, expect, it } from "vitest"
 import { builtInThemes } from "../../../shared/built-in-themes"
+import type { DesktopApi } from "../../../preload/desktop-api"
+import { ipcChannels } from "../../../shared/ipc-channels"
 import type { ImportThemeReply } from "../../../shared/theme-file-replies"
 import { findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
 import { fakeMainProcess } from "../../lib/fake-main-process"
@@ -24,6 +26,19 @@ const renderWithImportReply = async (importThemeReply: typeof ImportThemeReply.E
     fakeMainProcess({ importThemeReply }),
   )
   await userEvent.click(await screen.findByRole("button", { name: "Import theme…" }))
+}
+
+// Writing the file can fail, for example in a folder the user cannot write to.
+const exportFailing = (mainProcess: DesktopApi): DesktopApi => ({
+  invoke: (channel, request) =>
+    channel === ipcChannels.exportCurrentTheme
+      ? Promise.reject(new Error("EACCES: permission denied"))
+      : mainProcess.invoke(channel, request),
+})
+
+const renderAndExport = async (mainProcess: DesktopApi) => {
+  renderScreen(<AppearanceSettings library={builtInLibrary} />, mainProcess)
+  await userEvent.click(await screen.findByRole("button", { name: "Export current theme…" }))
 }
 
 const themeOptions = () =>
@@ -61,5 +76,25 @@ describe("AppearanceSettings", () => {
     expect(screen.getByRole("status")).toBeEmptyDOMElement()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     expect(themeOptions()).toHaveLength(2)
+  })
+
+  it("says where the theme was exported", async () => {
+    await renderAndExport(fakeMainProcess({ exportThemeReply: "/home/ada/ember.json" }))
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Exported the theme to /home/ada/ember.json.",
+    )
+  })
+
+  // The buttons ignore clicks while a dialog is open, so a failure that left
+  // them busy would lock the user out of importing and exporting.
+  it("reports a failed export and makes the buttons usable again", async () => {
+    await renderAndExport(exportFailing(fakeMainProcess()))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not export the theme.")
+    expect(screen.getByRole("button", { name: "Import theme…" })).toHaveAttribute(
+      "aria-disabled",
+      "false",
+    )
   })
 })

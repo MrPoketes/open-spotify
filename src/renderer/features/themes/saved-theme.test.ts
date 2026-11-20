@@ -18,7 +18,12 @@ const lightTheme = findLibraryTheme(themeLibrary([]), "light")
 
 const sunset = {
   id: "0b7f3c2e-sunset",
-  theme: { ...builtInThemes.dark, name: "Sunset", author: "A theme author" },
+  theme: {
+    ...builtInThemes.dark,
+    name: "Sunset",
+    author: "A theme author",
+    tokens: { ...builtInThemes.dark.tokens, "radius-medium": "13px" },
+  },
 }
 
 const appliedToken = (token: string) =>
@@ -50,7 +55,7 @@ describe("saved theme", () => {
 
       yield* restoreSavedTheme
 
-      assert.strictEqual(appliedToken("font-body"), sunset.theme.tokens["font-body"])
+      assert.strictEqual(appliedToken("radius-medium"), "13px")
       assert.deepStrictEqual((yield* loadSavedThemeLibrary).savedTheme, sunset)
     }).pipe(
       Effect.provide(
