@@ -111,4 +111,65 @@ describe("Library", () => {
     expect(await libraryEntries()).not.toHaveLength(0)
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
+
+  it("narrows the list to one kind when its chip is pressed, counting Liked Songs as a playlist", async () => {
+    renderLibrary()
+    await screen.findByRole("list")
+
+    await userEvent.click(screen.getByRole("button", { name: "Playlists" }))
+
+    expect(screen.getByRole("button", { name: "Playlists" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    )
+    const playlistTexts = await entryTexts()
+    expect(playlistTexts).toHaveLength(1 + fakePlaylists.length)
+    expect(playlistTexts).toContain("Liked SongsPlaylist · 57 songs")
+    expect(playlistTexts.every((text) => text.includes("Playlist · "))).toBe(true)
+  })
+
+  it("shows every entry again when the active chip is pressed a second time", async () => {
+    renderLibrary()
+    const allEntries = await libraryEntries()
+    const albumsChip = screen.getByRole("button", { name: "Albums" })
+
+    await userEvent.click(albumsChip)
+    expect(await libraryEntries()).toHaveLength(fakeSavedAlbums.length)
+    await userEvent.click(albumsChip)
+
+    expect(albumsChip).toHaveAttribute("aria-pressed", "false")
+    expect(await libraryEntries()).toHaveLength(allEntries.length)
+  })
+
+  it("filters entries by name, ignoring case", async () => {
+    renderLibrary()
+    await screen.findByRole("list")
+
+    await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "SLOW")
+
+    expect(await entryTexts()).toEqual(["Slow ScienceShow"])
+  })
+
+  it("applies the kind and name filters together", async () => {
+    renderLibrary()
+    await screen.findByRole("list")
+
+    await userEvent.click(screen.getByRole("button", { name: "Playlists" }))
+    await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "in")
+
+    expect(await entryTexts()).toEqual([
+      "Morning CoffeePlaylist · Mira Kaelin",
+      "Indie FindsPlaylist · Fern Radio",
+    ])
+  })
+
+  it("says nothing matches when the filters exclude every entry", async () => {
+    renderLibrary()
+    await screen.findByRole("list")
+
+    await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "zzz")
+
+    expect(screen.getByText("Nothing in your library matches these filters.")).toBeInTheDocument()
+    expect(screen.queryByRole("list")).not.toBeInTheDocument()
+  })
 })

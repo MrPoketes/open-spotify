@@ -1,5 +1,8 @@
 import { useState } from "react"
+import type { LibraryEntry } from "./library-entries"
 import { LibraryEntryArtwork } from "./library-entry-artwork"
+import { LibraryFilterBar } from "./library-filter-bar"
+import { filterLibraryEntries, noLibraryFilters } from "./library-filters"
 import { useLibraryEntries } from "./use-library-entries"
 
 // A new key mounts a fresh LibraryContent, which loads the library again.
@@ -43,9 +46,29 @@ function LibraryContent({ onRetry }: { readonly onRetry: () => void }) {
     )
   }
 
+  return <FilterableLibrary entries={state.entries} />
+}
+
+function FilterableLibrary({ entries }: { readonly entries: ReadonlyArray<LibraryEntry> }) {
+  const [filters, setFilters] = useState(noLibraryFilters)
+  const matchingEntries = filterLibraryEntries(entries, filters)
+
+  return (
+    <div className="flex flex-col">
+      <LibraryFilterBar filters={filters} onChange={setFilters} />
+      {matchingEntries.length === 0 ? (
+        <p className="px-2 text-sm text-muted">Nothing in your library matches these filters.</p>
+      ) : (
+        <LibraryEntryList entries={matchingEntries} />
+      )}
+    </div>
+  )
+}
+
+function LibraryEntryList({ entries }: { readonly entries: ReadonlyArray<LibraryEntry> }) {
   return (
     <ul className="flex flex-col">
-      {state.entries.map((entry) => (
+      {entries.map((entry) => (
         <li key={entry.uri} className="flex items-center gap-3 px-2 py-1">
           <LibraryEntryArtwork kind={entry.kind} images={entry.images} />
           <div className="flex min-w-0 flex-col">
