@@ -19,12 +19,7 @@ jobs:
       CSC_IDENTITY_AUTO_DISCOVERY: false
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm package --publish never
       - uses: actions/upload-artifact@v7
         with:

@@ -37,7 +37,7 @@ signed with a paid certificate, so your system warns you the first time you open
 - **Linux**: on Debian or Ubuntu, install the `.deb` with
   `sudo apt install ./open-spotify-<version>-amd64.deb`. On other distributions, make the
   `.AppImage` executable (`chmod +x open-spotify-*.AppImage`) and run it. AppImages need FUSE 2
-  (`libfuse2` on most distributions).
+  (`libfuse2`, or `libfuse2t64` on Ubuntu 24.04 and later).
 
 ## Development
 

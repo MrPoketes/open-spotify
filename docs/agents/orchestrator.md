@@ -78,31 +78,38 @@ If fewer than 5 unblocked issues are in `Todo`, create more from
 A milestone is finished when every roadmap item under its heading is ticketed and all of its
 Linear issues are `Done` or `Canceled`. Release PRs are titled
 `Release v<version>: <milestone name>`. List them with
-`gh pr list --state all --search "Release in:title" --json number,title,state,mergeCommit`.
-A milestone counts as released once it has an open or merged release PR; a closed, unmerged
-one does not count.
+`gh pr list --state all --search "Release v in:title" --json number,title,state,mergeCommit`
+and keep only titles that start with `Release v`. A milestone counts as released once it has an
+open or merged release PR; a closed, unmerged one does not count.
 
 Handle the first case that applies, then go on to step 6. Only one release PR is open at a
 time, so two releases never claim the same version.
 
 1. **A release PR is open.** Keep it moving as a worker would: if a check failed or it has
    conflicts, fix it as in steps 5.3 and 5.4 of [worker.md](worker.md). Release nothing else.
-2. **A release PR has merged but its tag does not exist.** Check with
-   `git ls-remote --tags origin v<version>`, which prints nothing for a missing tag. Tag the
-   merge commit and push the tag:
+2. **The newest merged release PR has no GitHub release** (`gh release view v<version>` fails)
+   and no `Release v<version> failed` issue exists in Linear.
+   - If the tag is missing (`git ls-remote --tags origin v<version>` prints nothing), tag the
+     merge commit and push it. The release workflow builds the installers and publishes the
+     release.
 
-   ```sh
-   git tag v<version> "$(gh pr view <number> --json mergeCommit --jq .mergeCommit.oid)"
-   git push origin v<version>
-   ```
+     ```sh
+     git tag v<version> "$(gh pr view <number> --json mergeCommit --jq .mergeCommit.oid)"
+     git push origin v<version>
+     ```
 
-   The release workflow builds the installers and publishes the GitHub release.
+   - Otherwise find the workflow run for the tag
+     (`gh run list --workflow release.yml --branch v<version>`). If it is still running, leave
+     it. If it failed on its first attempt, rerun it with `gh run rerun <id> --failed`. If it
+     failed again, create a High-priority `Bug` issue titled `Release v<version> failed` with
+     the failed log; the fix ships in the next milestone's release.
 
 3. **The earliest finished milestone is not released.** Take the version in `package.json` on
    `origin/main` and bump its minor part (`0.1.0` becomes `0.2.0`). On a branch
    `release/v<version>` from `origin/main`, run `npm pkg set version=<version>`, commit with the
-   PR title, push, and open the PR. Get it reviewed and enable auto-merge exactly as in steps 4
-   and 5.1 of [worker.md](worker.md).
+   PR title, push, and open the PR. Release PRs have no Linear issue, so the body names the
+   milestone and lists its issues for the reviewer. Get it reviewed and enable auto-merge
+   exactly as in steps 4 and 5.1 of [worker.md](worker.md).
 
 ## 6. Daily quality sweep
 
