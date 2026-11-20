@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest"
 import { SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
-import { SpotifyApi } from "../spotify/spotify-api"
 import { failingFirstTime } from "../spotify/failing-first-time"
+import { SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
 import { giveMainViewALayout } from "../track-list/fake-main-view-layout"
 import { AlbumPage } from "./album-page"
 
@@ -74,6 +74,19 @@ describe("AlbumPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Album not found" })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull()
+  })
+
+  // Spotify rejects an id that cannot be an album's with 400 rather than 404.
+  it("says the album was not found when Spotify rejects the id as malformed", async () => {
+    renderAlbumPage(
+      "not-an-album-id",
+      SpotifyApi.layerFakeWith(() => ({
+        getAlbum: () =>
+          Effect.fail(new SpotifyResponseError({ status: 400, message: "Invalid base62 id" })),
+      })),
+    )
+
+    expect(await screen.findByRole("heading", { name: "Album not found" })).toBeInTheDocument()
   })
 
   it("shows the album after Retry when loading it failed", async () => {

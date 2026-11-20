@@ -12,7 +12,8 @@ export type TrackListLayout = "playlist" | "album"
 export interface TrackListEntry {
   readonly title: string
   readonly artists: string
-  // Null for podcast episodes and removed tracks. Local files have no id.
+  // Null when the row has no album to show, such as a podcast episode or a
+  // track on an album page. Local files have no id.
   readonly album: { readonly id: string | null; readonly name: string } | null
   // Widest first, as Spotify lists image sizes.
   readonly artwork: ReadonlyArray<ArtworkSource>

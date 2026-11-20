@@ -136,6 +136,20 @@ describe("PlaylistPage", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/album/fake-album-0"))
   })
 
+  // Tab must leave a long list after one row, not walk every album link in it.
+  it("puts only the tab stop row's album link in the tab order", async () => {
+    await renderPlaylistPage("fake-playlist-late-night-drive")
+    const tracks = await screen.findByRole("table", { name: "Tracks" })
+    const user = userEvent.setup()
+
+    await user.tab()
+    await user.tab()
+    expect(within(trackRows()[1]).getByRole("link", { name: "Glass Harbour" })).toHaveFocus()
+
+    await user.tab()
+    expect(tracks.contains(document.activeElement)).toBe(false)
+  })
+
   // A local file's album has no Spotify id, so there is no page to open.
   it("shows a local file's album as text instead of a link", async () => {
     await renderPlaylistPage("fake-playlist-morning-coffee")

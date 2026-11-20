@@ -50,7 +50,7 @@ export function AlbumPage({ albumId }: { readonly albumId: string }) {
   return (
     <div className="flex flex-col gap-8">
       <AlbumHeader album={album} totalDurationMs={totalDurationMs} />
-      <AlbumTracks album={album} tracks={tracks} />
+      <AlbumTracks tracks={tracks} />
     </div>
   )
 }
