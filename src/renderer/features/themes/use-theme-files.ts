@@ -48,33 +48,20 @@ const exportCurrentTheme = Effect.gen(function* () {
   ),
 )
 
-// Both actions open a native dialog, so while one runs a second click does
-// nothing instead of opening another dialog.
 export function useThemeFiles(onImport: (importedTheme: LibraryTheme) => void) {
   const runtime = use(RendererRuntimeContext)
-  const [isBusy, setIsBusy] = useState(false)
   const [message, setMessage] = useState<ThemeFileMessage | null>(null)
 
-  const runUnlessBusy = (
-    action: Effect.Effect<ThemeFileMessage | null, never, RendererServices>,
-  ) => {
-    if (isBusy) {
-      return
-    }
-    setIsBusy(true)
+  const runAction = (action: Effect.Effect<ThemeFileMessage | null, never, RendererServices>) => {
     setMessage(null)
     runtime.runFork(
-      action.pipe(
-        Effect.tap((nextMessage) => Effect.sync(() => setMessage(nextMessage))),
-        Effect.ensuring(Effect.sync(() => setIsBusy(false))),
-      ),
+      action.pipe(Effect.tap((nextMessage) => Effect.sync(() => setMessage(nextMessage)))),
     )
   }
 
   return {
-    isBusy,
     message,
-    importThemeFile: () => runUnlessBusy(importThemeFile(onImport)),
-    exportCurrentTheme: () => runUnlessBusy(exportCurrentTheme),
+    importThemeFile: () => runAction(importThemeFile(onImport)),
+    exportCurrentTheme: () => runAction(exportCurrentTheme),
   }
 }

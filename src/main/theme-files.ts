@@ -1,4 +1,5 @@
 import path from "node:path"
+import type { BaseWindow } from "electron"
 import { Effect, FileSystem, Option, Schema } from "effect"
 import { builtInThemes } from "../shared/built-in-themes"
 import { type Theme, ThemeFile, decodeThemeFile } from "../shared/theme"
@@ -37,10 +38,12 @@ const readThemeFile = Effect.fn("readThemeFile")(function* (filePath: string) {
 })
 
 // Resolves to the imported theme, or to none when the user cancels.
-export const importThemeFile = Effect.gen(function* () {
+export const importThemeFile = Effect.fn("importThemeFile")(function* (
+  parentWindow: BaseWindow | null,
+) {
   const dialogs = yield* ThemeFileDialogs
   const importedThemes = yield* ImportedThemes
-  const chosenFile = yield* dialogs.chooseFileToImport
+  const chosenFile = yield* dialogs.chooseFileToImport(parentWindow)
   if (Option.isNone(chosenFile)) {
     return Option.none()
   }
@@ -51,18 +54,20 @@ export const importThemeFile = Effect.gen(function* () {
     })
   }
   const replacesTheme = yield* importedThemes.hasSameNameAndAuthor(theme)
-  if (replacesTheme && !(yield* dialogs.confirmReplace(theme))) {
+  if (replacesTheme && !(yield* dialogs.confirmReplace(parentWindow, theme))) {
     return Option.none()
   }
   return Option.some(yield* importedThemes.save(theme))
 })
 
 // Resolves to the file written, or to none when the user cancels.
-export const exportCurrentTheme = Effect.gen(function* () {
+export const exportCurrentTheme = Effect.fn("exportCurrentTheme")(function* (
+  parentWindow: BaseWindow | null,
+) {
   const dialogs = yield* ThemeFileDialogs
   const fileSystem = yield* FileSystem.FileSystem
   const theme = yield* loadSavedTheme
-  const chosenFile = yield* dialogs.chooseExportFile(suggestedFileName(theme))
+  const chosenFile = yield* dialogs.chooseExportFile(parentWindow, suggestedFileName(theme))
   if (Option.isNone(chosenFile)) {
     return Option.none()
   }

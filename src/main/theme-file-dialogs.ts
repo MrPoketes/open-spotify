@@ -1,6 +1,14 @@
-import type { Dialog } from "electron"
-import { Context, Effect, Layer, Option } from "effect"
+import type { BaseWindow, Dialog } from "electron"
+import { Context, Effect, Layer, Option, Schema } from "effect"
 import type { Theme } from "../shared/theme"
+import { showModalMessageBox, showModalOpenDialog, showModalSaveDialog } from "./modal-dialogs"
+
+export class ThemeFileDialogError extends Schema.TaggedError<ThemeFileDialogError>()(
+  "ThemeFileDialogError",
+  {
+    cause: Schema.Defect(),
+  },
+) {}
 
 const themeFileFilters = [{ name: "Theme", extensions: ["json"] }]
 
@@ -9,9 +17,17 @@ const themeFileFilters = [{ name: "Theme", extensions: ["json"] }]
 export class ThemeFileDialogs extends Context.Service<
   ThemeFileDialogs,
   {
-    readonly chooseFileToImport: Effect.Effect<Option.Option<string>>
-    readonly chooseExportFile: (suggestedFileName: string) => Effect.Effect<Option.Option<string>>
-    readonly confirmReplace: (theme: Theme) => Effect.Effect<boolean>
+    readonly chooseFileToImport: (
+      parentWindow: BaseWindow | null,
+    ) => Effect.Effect<Option.Option<string>, ThemeFileDialogError>
+    readonly chooseExportFile: (
+      parentWindow: BaseWindow | null,
+      suggestedFileName: string,
+    ) => Effect.Effect<Option.Option<string>, ThemeFileDialogError>
+    readonly confirmReplace: (
+      parentWindow: BaseWindow | null,
+      theme: Theme,
+    ) => Effect.Effect<boolean, ThemeFileDialogError>
   }
 >()("open-spotify/ThemeFileDialogs") {
   static readonly layer = (
@@ -20,36 +36,43 @@ export class ThemeFileDialogs extends Context.Service<
     Layer.succeed(
       ThemeFileDialogs,
       ThemeFileDialogs.of({
-        chooseFileToImport: Effect.promise(() =>
-          dialog.showOpenDialog({
-            title: "Import theme",
-            properties: ["openFile"],
-            filters: themeFileFilters,
-          }),
-        ).pipe(Effect.map(({ filePaths }) => Option.fromUndefinedOr(filePaths[0]))),
-        chooseExportFile: (suggestedFileName) =>
-          Effect.promise(() =>
-            dialog.showSaveDialog({
-              title: "Export current theme",
-              defaultPath: suggestedFileName,
-              filters: themeFileFilters,
-            }),
-          ).pipe(
+        chooseFileToImport: (parentWindow) =>
+          Effect.tryPromise({
+            try: () =>
+              showModalOpenDialog(dialog, parentWindow, {
+                title: "Import theme",
+                properties: ["openFile"],
+                filters: themeFileFilters,
+              }),
+            catch: (cause) => new ThemeFileDialogError({ cause }),
+          }).pipe(Effect.map(({ filePaths }) => Option.fromUndefinedOr(filePaths[0]))),
+        chooseExportFile: (parentWindow, suggestedFileName) =>
+          Effect.tryPromise({
+            try: () =>
+              showModalSaveDialog(dialog, parentWindow, {
+                title: "Export current theme",
+                defaultPath: suggestedFileName,
+                filters: themeFileFilters,
+              }),
+            catch: (cause) => new ThemeFileDialogError({ cause }),
+          }).pipe(
             Effect.map(({ canceled, filePath }) =>
               canceled ? Option.none() : Option.some(filePath),
             ),
           ),
-        confirmReplace: (theme) =>
-          Effect.promise(() =>
-            dialog.showMessageBox({
-              type: "question",
-              message: `Replace “${theme.name}” by ${theme.author}?`,
-              detail: "You already imported a theme with this name and author.",
-              buttons: ["Replace", "Cancel"],
-              defaultId: 1,
-              cancelId: 1,
-            }),
-          ).pipe(Effect.map(({ response }) => response === 0)),
+        confirmReplace: (parentWindow, theme) =>
+          Effect.tryPromise({
+            try: () =>
+              showModalMessageBox(dialog, parentWindow, {
+                type: "question",
+                message: `Replace “${theme.name}” by ${theme.author}?`,
+                detail: "You already imported a theme with this name and author.",
+                buttons: ["Replace", "Cancel"],
+                defaultId: 1,
+                cancelId: 1,
+              }),
+            catch: (cause) => new ThemeFileDialogError({ cause }),
+          }).pipe(Effect.map(({ response }) => response === 0)),
       }),
     )
 }

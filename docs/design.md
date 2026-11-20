@@ -208,8 +208,8 @@ that starts on the chosen row, and moves like any other list (see Keyboard).
 
 Below the list, "Import theme…" and "Export current theme…" are round `surface-raised` buttons
 that open the operating system's file dialogs. A result is reported in `muted` text inside an
-`output` element; a rejected file shows the reason in `danger` text inside an `alert`. While a
-dialog is open both buttons are `aria-disabled` and ignore clicks, but keep focus.
+`output` element; a rejected file shows the reason in `danger` text inside an `alert`. The dialogs are
+modal to the app window.
 
 ### Folder page
 

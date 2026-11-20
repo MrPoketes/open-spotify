@@ -22,8 +22,8 @@ const setUp = ({ replacesTheme = true } = {}) =>
     const chosenFile = yield* Ref.make(Option.none<string>())
     const suggestedFileNames = yield* Ref.make<ReadonlyArray<string>>([])
     const dialogs = ThemeFileDialogs.of({
-      chooseFileToImport: Ref.get(chosenFile),
-      chooseExportFile: (suggestedFileName) =>
+      chooseFileToImport: () => Ref.get(chosenFile),
+      chooseExportFile: (_parentWindow, suggestedFileName) =>
         Ref.update(suggestedFileNames, (names) => [...names, suggestedFileName]).pipe(
           Effect.andThen(Ref.get(chosenFile)),
         ),
@@ -37,12 +37,12 @@ const setUp = ({ replacesTheme = true } = {}) =>
         .writeFileString(path.join(folder, fileName), contents)
         .pipe(
           Effect.andThen(chooseFile(fileName)),
-          Effect.andThen(importThemeFile),
+          Effect.andThen(importThemeFile(null)),
           Effect.provideService(ThemeFileDialogs, dialogs),
         )
     const exportTo = (fileName: string) =>
       chooseFile(fileName).pipe(
-        Effect.andThen(exportCurrentTheme),
+        Effect.andThen(exportCurrentTheme(null)),
         Effect.andThen(fileSystem.readFileString(path.join(folder, fileName))),
         Effect.provideService(ThemeFileDialogs, dialogs),
       )

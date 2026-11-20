@@ -1,3 +1,4 @@
+import type { BaseWindow } from "electron"
 import { Effect, Option, Schema } from "effect"
 import { ExportThemeReply, ImportThemeReply } from "../shared/theme-file-replies"
 import { ImportedThemes } from "./imported-themes"
@@ -8,8 +9,10 @@ export const listImportedThemesFromIpc = Effect.gen(function* () {
   return yield* importedThemes.list
 })
 
-export const importThemeFileFromIpc = Effect.gen(function* () {
-  const reply = yield* importThemeFile.pipe(
+export const importThemeFileFromIpc = Effect.fn("importThemeFileFromIpc")(function* (
+  parentWindow: BaseWindow | null,
+) {
+  const reply = yield* importThemeFile(parentWindow).pipe(
     Effect.map(
       Option.match({
         onNone: () => ({ _tag: "ThemeImportCanceled" }) as const,
@@ -21,6 +24,9 @@ export const importThemeFileFromIpc = Effect.gen(function* () {
   return yield* Schema.encodeEffect(ImportThemeReply)(reply)
 })
 
-export const exportCurrentThemeFromIpc = exportCurrentTheme.pipe(
-  Effect.flatMap(Schema.encodeEffect(ExportThemeReply)),
-)
+export const exportCurrentThemeFromIpc = Effect.fn("exportCurrentThemeFromIpc")(function* (
+  parentWindow: BaseWindow | null,
+) {
+  const exportedFile = yield* exportCurrentTheme(parentWindow)
+  return yield* Schema.encodeEffect(ExportThemeReply)(exportedFile)
+})

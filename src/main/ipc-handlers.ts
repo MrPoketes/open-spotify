@@ -44,9 +44,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.listImportedThemes, () =>
     mainRuntime.runPromise(listImportedThemesFromIpc),
   )
-  ipcMain.handle(ipcChannels.importThemeFile, () => mainRuntime.runPromise(importThemeFileFromIpc))
-  ipcMain.handle(ipcChannels.exportCurrentTheme, () =>
-    mainRuntime.runPromise(exportCurrentThemeFromIpc),
+  ipcMain.handle(ipcChannels.importThemeFile, (event) =>
+    mainRuntime.runPromise(importThemeFileFromIpc(BrowserWindow.fromWebContents(event.sender))),
+  )
+  ipcMain.handle(ipcChannels.exportCurrentTheme, (event) =>
+    mainRuntime.runPromise(exportCurrentThemeFromIpc(BrowserWindow.fromWebContents(event.sender))),
   )
   ipcMain.handle(ipcChannels.exportFolders, (event) =>
     mainRuntime.runPromise(exportFoldersFromIpc(BrowserWindow.fromWebContents(event.sender))),
