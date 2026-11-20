@@ -76,9 +76,9 @@ A pull request is accepted when:
 
 Open Spotify is built by a team of AI agents ([docs/agents](docs/agents/README.md)), and a
 reviewer agent reviews every pull request against `AGENTS.md`. It posts its findings as a comment
-and sets the `agent-review` status. Reviews of pull requests from outside contributors are
-started by hand, so the first one may take a few days. Fix every finding marked blocking and
-push. A review covers only the commit it read, so every push needs a new one. Pull requests are
-squash-merged into `main`.
+and sets the `agent-review` status. Nothing starts that review automatically for a pull request
+from an outside contributor: the maintainer starts each one by hand, so the first may take a few
+days. Fix every finding marked blocking and push. A review covers only the commit it read, so
+every push needs a new one. Pull requests are squash-merged into `main`.
 
 By contributing, you agree that your work is released under the [MIT License](LICENSE).

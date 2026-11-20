@@ -9,8 +9,15 @@ asking for one more round.
 1. Read `AGENTS.md` in full. It is the standard you review against.
 2. `gh pr view <number> --json title,body,headRefOid,files` and `gh pr diff <number>`.
    Record `headRefOid`: your verdict applies to that commit only.
-3. Read the linked Linear issue (`ARM-…` in the title) to learn what was asked.
-4. Check out the branch (`gh pr checkout <number>`) and run `pnpm install && pnpm check`.
+3. Read the issue the PR closes to learn what was asked. Agents' PRs close a Linear issue
+   (`ARM-…` in the title): read it with `get_issue` and `list_comments`. A PR from an outside
+   contributor closes a GitHub issue instead (`Closes #<n>` in the body): read it with
+   `gh issue view <n> --comments`. A PR that closes no issue is a blocking finding:
+   [CONTRIBUTING.md](../../CONTRIBUTING.md) asks for the issue before the build.
+4. Check out the branch (`gh pr checkout <number>`) and run `pnpm install && pnpm check`. This
+   runs the PR's code on your machine, so for an outside contributor's PR read the whole diff
+   first. If it touches anything the issue does not need, such as `.github/workflows`,
+   package scripts, or network calls, request changes without running it.
 
 ## Release PRs
 

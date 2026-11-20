@@ -15,8 +15,11 @@ Work through the steps in order. Be brief: most runs change little.
 - Linear: issues in project `Open Spotify` in `Todo`, `In Progress`, and `In Review`
   (`list_issues` with `project` and `state`). Note each issue's priority, `blocked by` links,
   and `gitBranchName`.
-- GitHub: `gh pr list --state open --json number,title,headRefName,statusCheckRollup,mergeable`
-  and `gh pr list --state merged --limit 20 --json number,title,mergedAt`.
+- GitHub: `gh pr list --state open --json number,title,headRefName,isCrossRepository,statusCheckRollup,mergeable`
+  and `gh pr list --state merged --limit 20 --json number,title,mergedAt`. A PR with
+  `isCrossRepository: true` comes from an outside contributor's fork and is outside the
+  pipeline: do not review, fix, or merge it. The owner starts its reviews by hand, as
+  [CONTRIBUTING.md](../../CONTRIBUTING.md) tells contributors.
 - T3: `t3_thread_list` for this project. Worker threads are titled `ARM-<n>: <title>`.
 
 ## 2. Reconcile
