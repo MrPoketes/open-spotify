@@ -1,4 +1,5 @@
 import { Effect } from "effect"
+import { Folder as FolderIcon } from "lucide-react"
 import { use, useState } from "react"
 import { type FolderView, defaultFolderView } from "../../../shared/folder-view"
 import { DesktopBridge } from "../../lib/desktop-bridge"
@@ -6,6 +7,7 @@ import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { loadSavedSetting, saveSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
+import { PageHeader } from "../../ui/page-header"
 import { FolderBreadcrumb } from "./folder-breadcrumb"
 import { FolderEntryGrid } from "./folder-entry-grid"
 import { FolderEntryList } from "./folder-entry-list"
@@ -56,13 +58,15 @@ function LoadedFolder({ location, savedView }: LoadedFolderProps) {
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-4">
         {ancestors.length > 0 && <FolderBreadcrumb folder={folder} ancestors={ancestors} />}
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold text-muted">Folder</p>
-          <h1 className="font-display text-5xl font-bold">{folder.name}</h1>
+        <PageHeader
+          kind="Folder"
+          title={folder.name}
+          cover={{ sources: [], placeholderIcon: FolderIcon }}
+        >
           <p className="text-xs text-muted tabular-nums">
             {formatItemCount(folder.entries.length)}
           </p>
-        </div>
+        </PageHeader>
       </header>
       {folder.entries.length === 0 && (
         <p className="text-muted">
