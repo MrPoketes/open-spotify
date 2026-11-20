@@ -23,8 +23,8 @@ token, is in [design.md](design.md).
 }
 ```
 
-This example is complete: it imports as it is. Every field is required except the entries
-inside `tokens`.
+This example is a complete, valid theme. Every field is required except the entries inside
+`tokens`.
 
 | Field         | Value                                                                        |
 | ------------- | ---------------------------------------------------------------------------- |
@@ -116,8 +116,8 @@ A theme has to stay readable. These are the WCAG 2.2 AA targets from the
 
 To check a pair, enter both hex values in a WCAG contrast checker, such as
 [WebAIM's](https://webaim.org/resources/contrastchecker/), and read the ratio. Check every pair
-in the table: a theme usually fails on `color-muted` or `color-accent` against the lightest
-surface of a dark theme, or the darkest surface of a light one.
+above: a theme usually fails on `color-muted` or `color-accent` against the lightest surface of
+a dark theme, or the darkest surface of a light one.
 
 ## Importing a theme
 
@@ -132,5 +132,5 @@ can find and fix the line.
 
 A theme is just its `.json` file. Name the file after the theme (`ember.json`), save it as
 UTF-8, and share it any way you like: attach it to a message, put it in a gist, or publish it in
-a repository. Whoever receives it imports the file. When you change a published theme, raise
-its `version` so people can tell the copies apart.
+a repository. When you change a published theme, raise its `version` so people can tell the
+copies apart.
