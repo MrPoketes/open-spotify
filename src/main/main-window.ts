@@ -5,7 +5,6 @@ import { rendererDevServerUrl } from "../shared/dev-server"
 import { rendererEntryUrl } from "./renderer-protocol"
 
 class RendererLoadError extends Schema.TaggedError<RendererLoadError>()("RendererLoadError", {
-  url: Schema.String,
   cause: Schema.Defect(),
 }) {}
 
@@ -48,7 +47,7 @@ function loadRenderer(window: BrowserWindow): Effect.Effect<void, RendererLoadEr
 function loadUrl(window: BrowserWindow, url: string): Effect.Effect<void, RendererLoadError> {
   return Effect.tryPromise({
     try: () => window.loadURL(url),
-    catch: (cause) => new RendererLoadError({ url, cause }),
+    catch: (cause) => new RendererLoadError({ cause }),
   })
 }
 
