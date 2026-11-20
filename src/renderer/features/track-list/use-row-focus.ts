@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type RefObject, useEffect, useRef, useState } from "react"
+import { type KeyboardEvent, type RefObject, useLayoutEffect, useRef, useState } from "react"
 import { targetRowForKey } from "../../ui/use-roving-focus"
 
 interface RowFocusOptions {
@@ -14,7 +14,10 @@ export function useRowFocus({ rowsRef, rowCount, scrollToIndex }: RowFocusOption
   const [focusedIndex, setFocusedIndex] = useState(0)
   const focusPending = useRef(false)
 
-  useEffect(() => {
+  // Focus moves in the commit that mounts the row. The row that had focus may
+  // have just scrolled out of the DOM, and a passive effect would leave focus
+  // on <body> until it ran.
+  useLayoutEffect(() => {
     if (!focusPending.current) {
       return
     }
