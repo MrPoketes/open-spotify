@@ -1,3 +1,4 @@
+import { Navigate } from "@tanstack/react-router"
 import { useState } from "react"
 import type { LibraryEntry } from "./library-entries"
 import { LibraryEntryArtwork } from "./library-entry-artwork"
@@ -21,6 +22,15 @@ function LibraryContent({ onRetry }: { readonly onRetry: () => void }) {
 
   if (state.status === "loading") {
     return <output className="px-2 text-sm text-muted">Loading your library…</output>
+  }
+
+  // Retry cannot bring back a session, so these go straight to login.
+  if (state.status === "logged-out") {
+    return <Navigate to="/login" />
+  }
+
+  if (state.status === "session-expired") {
+    return <Navigate to="/login" search={{ sessionExpired: true }} />
   }
 
   if (state.status === "failed") {

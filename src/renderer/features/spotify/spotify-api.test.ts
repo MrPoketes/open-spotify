@@ -166,7 +166,7 @@ describe("SpotifyApi responses", () => {
     }).pipe(Effect.provide(spotify.layer))
   })
 
-  it.effect("fails with SpotifyAuthError carrying Spotify's message on 401", () => {
+  it.effect("fails with SessionExpired on 401", () => {
     const spotify = scriptedSpotify([
       { status: 401, body: spotifyErrorBody(401, "The access token expired") },
     ])
@@ -175,8 +175,7 @@ describe("SpotifyApi responses", () => {
 
       const error = yield* Effect.flip(api.getCurrentUser)
 
-      assert.strictEqual(error._tag, "SpotifyAuthError")
-      assert.strictEqual(error.message, "The access token expired")
+      assert.strictEqual(error._tag, "SessionExpired")
     }).pipe(Effect.provide(spotify.layer))
   })
 
