@@ -1,0 +1,25 @@
+appId: dev.openspotify.app
+productName: Open Spotify
+directories:
+  output: release
+# Only the compiled app is shipped. The renderer's server bundle (dist/server)
+# exists solely to prerender the SPA shell at build time.
+files:
+  - out/**
+  - dist/client/**
+  - package.json
+asar: true
+win:
+  target: nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target: dmg
+  category: public.app-category.music
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Audio
+  maintainer: Armintas

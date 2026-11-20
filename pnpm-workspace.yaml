@@ -1,0 +1,15 @@
+# Install scripts are blocked unless listed here. Electron downloads its binary
+# on first launch, and electron-winstaller is only needed for Squirrel
+# installers, which we do not build.
+allowBuilds:
+  electron: false
+  electron-winstaller: false
+
+# pnpm holds back versions published very recently. These were adopted on
+# release day; the entries can be removed once they age past the threshold.
+minimumReleaseAgeExclude:
+  - "@effect/platform-node-shared@4.1.5"
+  - "@effect/platform-node@4.1.5"
+  - "@effect/sql-sqlite-node@4.1.5"
+  - effect@4.1.5
+  - "@effect/vitest@4.1.5"
