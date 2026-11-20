@@ -24,7 +24,7 @@ const scopes = [
   "user-read-email",
 ]
 
-export interface AuthorizationRequest {
+interface AuthorizationRequest {
   readonly url: string
   readonly state: string
   readonly codeVerifier: string

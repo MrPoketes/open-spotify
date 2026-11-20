@@ -49,6 +49,6 @@ export const freshAccessToken = Effect.gen(function* () {
 }).pipe(
   Effect.catchTags({
     TokenStorageError: accessTokenUnavailable("Could not read or save the Spotify session."),
-    TokenRequestFailed: accessTokenUnavailable("Could not reach Spotify to refresh the session."),
+    TokenRequestFailed: accessTokenUnavailable("Spotify could not refresh the session right now."),
   }),
 )

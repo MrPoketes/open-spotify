@@ -42,8 +42,8 @@ export class NotLoggedIn extends Schema.TaggedError<NotLoggedIn>()("NotLoggedIn"
 // Spotify refused the refresh token, so the user has to log in again.
 export class SessionExpired extends Schema.TaggedError<SessionExpired>()("SessionExpired", {}) {}
 
-// The session is kept, because the cause may pass: Spotify was unreachable,
-// or the stored session could not be read.
+// The session is kept, because Spotify may only be unreachable for a moment.
+// A stored session that cannot be read is replaced by logging in again.
 export class AccessTokenUnavailable extends Schema.TaggedError<AccessTokenUnavailable>()(
   "AccessTokenUnavailable",
   { message: Schema.String },

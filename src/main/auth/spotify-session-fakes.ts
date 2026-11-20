@@ -11,7 +11,7 @@ import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
 import { SystemBrowser } from "./system-browser"
 import { type TokenEncryption, TokenStore, makeStoredSession } from "./token-store"
 
-export const fakeClientId = "fake-client-id"
+const fakeClientId = "fake-client-id"
 
 const fakeTokenLifetimeSeconds = 3600
 
@@ -46,7 +46,7 @@ const codeChallengeFor = (codeVerifier: string) =>
 export const makeFakeSpotifyAccounts = () => {
   const challengeByCode = new Map<string, string>()
   const liveRefreshTokens = new Set<string>()
-  const accounts = { rotatesRefreshTokens: true, isReachable: true }
+  const behaviour = { rotatesRefreshTokens: true, isRateLimiting: false }
   let tokensIssued = 0
 
   const issueTokens = () => {
@@ -78,7 +78,7 @@ export const makeFakeSpotifyAccounts = () => {
       return [400, { error: "invalid_grant" }] as const
     }
     const { refresh_token: rotatedRefreshToken, ...tokens } = issueTokens()
-    if (!accounts.rotatesRefreshTokens) {
+    if (!behaviour.rotatesRefreshTokens) {
       liveRefreshTokens.delete(rotatedRefreshToken)
       return [200, tokens] as const
     }
@@ -89,8 +89,8 @@ export const makeFakeSpotifyAccounts = () => {
   const httpClient = Layer.succeed(
     HttpClient.HttpClient,
     HttpClient.make((request) => {
-      if (!accounts.isReachable) {
-        return Effect.succeed(jsonResponse(request, 503, {}))
+      if (behaviour.isRateLimiting) {
+        return Effect.succeed(jsonResponse(request, 429, { error: "rate_limited" }))
       }
       const form = formOf(request)
       const [status, body] =
@@ -107,7 +107,7 @@ export const makeFakeSpotifyAccounts = () => {
   }
 
   return {
-    accounts,
+    behaviour,
     httpClient,
     approve,
     issueTokens,
@@ -164,19 +164,20 @@ export const fakeSpotifySession = (
   )
 
 // A session saved by an earlier launch of the app.
-export const restoreFakeSession = (spotifyAccounts: FakeSpotifyAccounts) =>
-  Effect.gen(function* () {
-    const tokenStore = yield* TokenStore
-    const issuedTokens = spotifyAccounts.issueTokens()
-    const session = yield* makeStoredSession({
-      clientId: fakeClientId,
-      refreshToken: issuedTokens.refresh_token,
-      accessToken: issuedTokens.access_token,
-      expiresInSeconds: issuedTokens.expires_in,
-    })
-    yield* tokenStore.save(session)
-    return yield* SpotifySession
+export const restoreFakeSession = Effect.fn("restoreFakeSession")(function* (
+  spotifyAccounts: FakeSpotifyAccounts,
+) {
+  const tokenStore = yield* TokenStore
+  const issuedTokens = spotifyAccounts.issueTokens()
+  const session = yield* makeStoredSession({
+    clientId: fakeClientId,
+    refreshToken: issuedTokens.refresh_token,
+    accessToken: issuedTokens.access_token,
+    expiresInSeconds: issuedTokens.expires_in,
   })
+  yield* tokenStore.save(session)
+  return yield* SpotifySession
+})
 
 export const saveFakeClientId = Effect.gen(function* () {
   const settings = yield* Settings

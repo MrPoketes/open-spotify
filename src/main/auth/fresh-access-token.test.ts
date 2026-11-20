@@ -66,7 +66,7 @@ describe("SpotifySession.getAccessToken", () => {
 
   it.effect("keeps the stored refresh token when Spotify does not send a new one", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
-    spotifyAccounts.accounts.rotatesRefreshTokens = false
+    spotifyAccounts.behaviour.rotatesRefreshTokens = false
     return Effect.gen(function* () {
       const session = yield* restoreFakeSession(spotifyAccounts)
 
@@ -94,20 +94,21 @@ describe("SpotifySession.getAccessToken", () => {
     }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
   })
 
-  // Being offline for a moment must not log the user out.
-  it.effect("keeps the session when Spotify is unreachable during a refresh", () => {
+  // A refresh that fails for a reason unrelated to the token, such as a rate
+  // limit, must not log the user out.
+  it.effect("keeps the session when Spotify rate-limits a refresh", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
     return Effect.gen(function* () {
       const session = yield* restoreFakeSession(spotifyAccounts)
       yield* TestClock.adjust("1 hour")
 
-      spotifyAccounts.accounts.isReachable = false
-      const offlineError = yield* Effect.flip(session.getAccessToken)
-      spotifyAccounts.accounts.isReachable = true
-      const tokenWhenBackOnline = yield* session.getAccessToken
+      spotifyAccounts.behaviour.isRateLimiting = true
+      const rateLimitedError = yield* Effect.flip(session.getAccessToken)
+      spotifyAccounts.behaviour.isRateLimiting = false
+      const tokenAfterRateLimit = yield* session.getAccessToken
 
-      assert.strictEqual(offlineError._tag, "AccessTokenUnavailable")
-      assert.strictEqual(tokenWhenBackOnline, "access-token-2")
+      assert.strictEqual(rateLimitedError._tag, "AccessTokenUnavailable")
+      assert.strictEqual(tokenAfterRateLimit, "access-token-2")
     }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
   })
 })

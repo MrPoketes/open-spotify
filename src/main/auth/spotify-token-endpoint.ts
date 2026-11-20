@@ -66,7 +66,9 @@ export class SpotifyTokenEndpoint extends Context.Service<
             Effect.flatMap(Schema.decodeUnknownEffect(schema)),
             Effect.mapError((cause) => new TokenRequestFailed({ cause })),
           )
-        if (response.status >= 400 && response.status < 500) {
+        // Spotify answers a code or refresh token it will not accept with
+        // 400 or 401. Other statuses, such as 429, say nothing about the token.
+        if (response.status === 400 || response.status === 401) {
           const { error } = yield* decodeBody(TokenErrorBody)
           return yield* new TokenRequestRejected({ error })
         }
