@@ -18,6 +18,8 @@ export const ipcChannels = {
   removeFolderItem: "folders:remove-item",
   moveFolder: "folders:move-folder",
   moveFolderItem: "folders:move-item",
+  exportFolders: "folders:export",
+  importFolders: "folders:import",
 } as const
 
 export type IpcChannel = (typeof ipcChannels)[keyof typeof ipcChannels]

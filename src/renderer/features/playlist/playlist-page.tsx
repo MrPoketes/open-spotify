@@ -1,8 +1,7 @@
-import { Navigate } from "@tanstack/react-router"
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { Playlist } from "../spotify/spotify-playlist"
 import { PlaylistHeader } from "./playlist-header"
 import { PlaylistTracks } from "./playlist-tracks"
@@ -58,15 +57,14 @@ export function PlaylistPage({ playlistId }: { readonly playlistId: string }) {
   if (state.status === "loading") {
     return <output className="text-sm text-muted">Loading playlist…</output>
   }
-  // Retry cannot bring back a session, so these go straight to login.
-  if (state.status === "failed" && state.error._tag === "NotLoggedIn") {
-    return <Navigate to="/login" />
-  }
-  if (state.status === "failed" && state.error._tag === "SessionExpired") {
-    return <Navigate to="/login" search={{ sessionExpired: true }} />
-  }
   if (state.status === "failed") {
-    return <ErrorWithRetry message="This playlist didn't load." onRetry={retry} />
+    return (
+      <SpotifyLoadFailure
+        error={state.error}
+        message="This playlist didn't load."
+        onRetry={retry}
+      />
+    )
   }
   return <PlaylistContent playlist={state.value} />
 }

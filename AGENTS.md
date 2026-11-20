@@ -18,6 +18,7 @@ autonomous pipeline, your playbook is in [docs/agents](docs/agents).
 | `pnpm check`       | Lint, format check, typecheck, and test. Must pass before a PR |
 | `pnpm build`       | Build renderer, main, and preload                              |
 | `pnpm package:dir` | Build an unpacked app for the current OS in `release/`         |
+| `pnpm test:e2e`    | Launch the unpacked app against fake Spotify                   |
 | `pnpm lint:fix`    | Apply automatic lint fixes                                     |
 | `pnpm format`      | Format all files with oxfmt                                    |
 | `pnpm icons`       | Regenerate the app icon files from `build/icon.svg`            |
@@ -33,6 +34,7 @@ src/renderer/   The React UI, built by TanStack Start in SPA mode.
   features/     One folder per feature (library, playback, themes, folders, ...).
   ui/           Generic, reusable components with no Spotify knowledge.
   lib/          Renderer-wide infrastructure (runtime, bridge).
+e2e/            Playwright tests that launch the packaged Electron app.
 lint/           Project-specific oxlint rules.
 scripts/        Developer scripts run by hand, such as icon generation.
 build/          Packaging resources: the app icon source and its generated files.
@@ -139,6 +141,9 @@ cannot fail for a meaningful reason should not exist.
   `user-event`.
 - Effect code is tested with `@effect/vitest` (`it.effect`, `layer(...)`). See
   `src/main/renderer-files.test.ts`.
+- `e2e/app.test.ts` is a smoke test of the packaged app (run `pnpm package:dir` first): it
+  starts, logs in, and navigates. Keep it to that; behaviour belongs in unit and component
+  tests. Its Spotify fakes are in `e2e/fake-spotify.ts`.
 
 ## Spotify constraints
 

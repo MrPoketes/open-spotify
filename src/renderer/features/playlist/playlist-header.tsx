@@ -1,8 +1,6 @@
 import { ListMusic } from "lucide-react"
-import { Artwork } from "../../ui/artwork"
+import { PageHeader } from "../../ui/page-header"
 import type { Playlist } from "../spotify/spotify-playlist"
-
-const coverSize = 192
 
 const trackCountFormat = new Intl.NumberFormat()
 
@@ -29,19 +27,13 @@ export function PlaylistHeader({ playlist, totalDuration }: PlaylistHeaderProps)
   ].filter((detail) => detail !== null)
 
   return (
-    <header className="flex items-end gap-6">
-      <Artwork
-        sources={playlist.images ?? []}
-        size={coverSize}
-        className="rounded-medium shadow-raised"
-        placeholderIcon={ListMusic}
-      />
-      <div className="flex min-w-0 flex-col gap-2">
-        <p className="text-xs font-semibold text-muted">Playlist</p>
-        <h1 className="font-display text-5xl font-bold break-words">{playlist.name}</h1>
-        {description === "" ? null : <p className="text-sm text-muted">{description}</p>}
-        <p className="text-sm text-muted">{details.join(" · ")}</p>
-      </div>
-    </header>
+    <PageHeader
+      kind="Playlist"
+      title={playlist.name}
+      cover={{ sources: playlist.images ?? [], placeholderIcon: ListMusic }}
+    >
+      {description === "" ? null : <p className="text-sm text-muted">{description}</p>}
+      <p className="text-sm text-muted">{details.join(" · ")}</p>
+    </PageHeader>
   )
 }

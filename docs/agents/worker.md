@@ -25,7 +25,7 @@ with the reason, add `blocked by` links where they apply, move it back to `Todo`
 2. Write the failing test first for each behaviour you add or each bug you fix. Follow the test
    rules in `AGENTS.md`: every test must protect a behaviour and must be named after it.
 3. Implement until the tests pass. Keep the change focused on the issue.
-4. Run `pnpm check` and `pnpm build`. Both must pass.
+4. Run `pnpm check`, `pnpm package:dir`, and `pnpm test:e2e`. All three must pass.
 5. Read your own diff (`git diff origin/main`) against the no-slop rules as if someone else
    wrote it. Remove anything speculative, any comment that restates code, any unused export.
 

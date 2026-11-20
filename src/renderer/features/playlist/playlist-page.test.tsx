@@ -1,53 +1,14 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
 import { NotLoggedIn, SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
-import { SpotifyApi, SpotifyRequestError } from "../spotify/spotify-api"
+import { SpotifyApi } from "../spotify/spotify-api"
+import { failingFirstTime } from "../spotify/failing-first-time"
+import { giveMainViewALayout, scrollMainView } from "../track-list/fake-main-view-layout"
 import { PlaylistPage } from "./playlist-page"
-
-// jsdom does no layout, so the main view is given the size of a short window
-// and scrolls by setting scrollTop, as a browser would. The virtualiser calls
-// scrollTo while React commits, where fireEvent's act() would drop updates.
-const mainViewHeight = 480
-
-const giveMainViewALayout = (mainView: HTMLElement | null) => {
-  if (mainView === null) {
-    return
-  }
-  Object.defineProperty(mainView, "clientHeight", { value: mainViewHeight, configurable: true })
-  Object.defineProperty(mainView, "scrollHeight", { value: 100_000, configurable: true })
-  Object.defineProperty(mainView, "scrollTo", {
-    configurable: true,
-    value: ({ top }: ScrollToOptions) => {
-      mainView.scrollTop = top ?? 0
-      mainView.dispatchEvent(new Event("scroll"))
-    },
-  })
-}
-
-const scrollMainView = (mainView: HTMLElement, top: number) => {
-  mainView.scrollTop = top
-  fireEvent.scroll(mainView)
-}
-
-const offline = new SpotifyRequestError({ cause: "offline" })
-
-// Fails as if Spotify were unreachable the first time any request runs, then
-// lets requests through.
-const failingFirstTime = () => {
-  let hasFailed = false
-  return <A, E>(request: Effect.Effect<A, E>) =>
-    Effect.suspend((): Effect.Effect<A, E | SpotifyRequestError> => {
-      if (hasFailed) {
-        return request
-      }
-      hasFailed = true
-      return Effect.fail(offline)
-    })
-}
 
 const spotifyFailingFirstPlaylistRequest = SpotifyApi.layerFakeWith((spotify) => {
   const failFirst = failingFirstTime()

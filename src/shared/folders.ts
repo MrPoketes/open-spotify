@@ -4,7 +4,7 @@ import { Schema } from "effect"
 export const FolderId = Schema.String.check(Schema.isUUID(4))
 
 // A trimmed, non-empty name rules out folders that look blank in the sidebar.
-const FolderName = Schema.String.check(Schema.isNonEmpty(), Schema.isTrimmed())
+export const FolderName = Schema.String.check(Schema.isNonEmpty(), Schema.isTrimmed())
 
 const SpotifyUri = Schema.String.check(
   Schema.isPattern(/^spotify:(playlist|artist|album|show|track):[0-9A-Za-z]{22}$/, {

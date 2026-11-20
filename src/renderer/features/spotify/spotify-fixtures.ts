@@ -159,7 +159,8 @@ export const fakePlaylists: ReadonlyArray<FakePlaylist> = [
 
 const savedAt = (index: number) => new Date(Date.UTC(2025, 5, 1 + index)).toISOString()
 
-export const fakeLikedSongs = tracks(57, 600).map((track, index) => ({
+// Thousands of songs, so the Liked Songs page has to load pages out of order.
+export const fakeLikedSongs = tracks(5000, 600).map((track, index) => ({
   added_at: savedAt(index),
   track,
 }))
