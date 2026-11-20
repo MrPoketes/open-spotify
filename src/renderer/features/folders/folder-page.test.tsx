@@ -58,6 +58,22 @@ const renderFolderPage = (
   mainProcess: DesktopApi = fakeMainProcess(folderTree),
 ) => renderScreen(<FolderPage folderId={folderId} />, mainProcess)
 
+// Serves the folder tree while reachable and fails like a main process that
+// does not reply while unreachable.
+const mainProcessWithConnection = () => {
+  const workingMainProcess = fakeMainProcess(folderTree)
+  let reachable = true
+  return {
+    invoke: (channel, request) =>
+      reachable
+        ? workingMainProcess.invoke(channel, request)
+        : Promise.reject(new Error("The main process did not reply")),
+    setReachable: (isReachable: boolean) => {
+      reachable = isReachable
+    },
+  } satisfies DesktopApi & { readonly setReachable: (isReachable: boolean) => void }
+}
+
 const folderContents = async () => screen.findByRole("list", { name: "Folder contents" })
 
 const entryTexts = (list: HTMLElement) =>
@@ -131,6 +147,18 @@ describe("FolderPage", () => {
     await userEvent.click(within(breadcrumb).getByRole("link", { name: "Warm-up" }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe(`/folder/${warmUpId}`))
+  })
+
+  it("shows an error when the folder cannot load, and loads it on retry", async () => {
+    const mainProcess = mainProcessWithConnection()
+    mainProcess.setReachable(false)
+    renderFolderPage(runningId, mainProcess)
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("This folder didn't load.")
+    mainProcess.setReachable(true)
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }))
+
+    expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Running")
   })
 
   // The user can come back to a folder through history after deleting it.

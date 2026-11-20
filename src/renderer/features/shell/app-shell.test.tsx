@@ -9,17 +9,20 @@ import {
 import { render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
+import { defaultSidebarWidth } from "../../../shared/sidebar-width"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext, rendererRuntime } from "../../lib/renderer-runtime"
+import { loadSavedSetting } from "../../lib/saved-setting"
 import { AppShell } from "./app-shell"
-import { loadSavedSidebarWidth } from "./saved-sidebar-width"
 
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 
 // The sidebar and the now-playing bar must load from the fake Spotify API,
 // and the sidebar width must be saved where rendererRuntime reads it back.
 const runtimeWithFakeSpotify = fakeRendererRuntime({ mainProcess: window.desktop })
+
+const loadSavedSidebarWidth = loadSavedSetting("sidebarWidth", defaultSidebarWidth)
 
 interface ShellOptions {
   readonly savedSidebarWidth?: number

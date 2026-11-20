@@ -8,6 +8,7 @@ import {
   Radio,
 } from "lucide-react"
 import type { FolderEntry } from "../../../shared/folders"
+import { formatItemCount } from "./format-item-count"
 
 type SpotifyItemKind = "playlist" | "artist" | "album" | "show" | "track"
 
@@ -27,8 +28,6 @@ const parseSpotifyUri = (uri: string) => {
   const [, kind, id] = uri.split(":") as [string, SpotifyItemKind, string]
   return { kind, id }
 }
-
-export const formatItemCount = (count: number) => `${count} ${count === 1 ? "item" : "items"}`
 
 type FolderEntryPage =
   | { readonly to: "/folder/$folderId"; readonly params: { readonly folderId: string } }

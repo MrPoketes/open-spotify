@@ -1,21 +1,24 @@
 import { Effect } from "effect"
 import { use, useState } from "react"
-import type { FolderView } from "../../../shared/folder-view"
+import { type FolderView, defaultFolderView } from "../../../shared/folder-view"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { loadSavedSetting, saveSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { FolderBreadcrumb } from "./folder-breadcrumb"
-import { formatItemCount } from "./folder-entry-description"
 import { FolderEntryGrid } from "./folder-entry-grid"
 import { FolderEntryList } from "./folder-entry-list"
 import { type FolderLocation, locateFolder } from "./folder-location"
 import { FolderViewToggle } from "./folder-view-toggle"
-import { loadSavedFolderView, saveFolderView } from "./saved-folder-view"
+import { formatItemCount } from "./format-item-count"
 
 const loadFolderPage = Effect.gen(function* () {
   const bridge = yield* DesktopBridge
-  return yield* Effect.all({ tree: bridge.getFolderTree, savedView: loadSavedFolderView })
+  return yield* Effect.all({
+    tree: bridge.getFolderTree,
+    savedView: loadSavedSetting("folderView", defaultFolderView),
+  })
 })
 
 export function FolderPage({ folderId }: { readonly folderId: string }) {
@@ -46,7 +49,7 @@ function LoadedFolder({ location, savedView }: LoadedFolderProps) {
 
   const changeView = (nextView: FolderView) => {
     setView(nextView)
-    runtime.runFork(saveFolderView(nextView))
+    runtime.runFork(saveSetting("folderView", nextView))
   }
 
   return (
