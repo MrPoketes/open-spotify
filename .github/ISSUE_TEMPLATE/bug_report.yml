@@ -6,7 +6,8 @@ body:
     attributes:
       value: >
         Thanks for reporting. Search the existing issues first; if this bug is already there, add
-        what you know to it. Report security problems privately through a security advisory,
+        what you know to it. Report security problems privately through a
+        [security advisory](https://github.com/MrPoketes/open-spotify/security/advisories/new),
         never here.
   - type: dropdown
     id: operating-system
@@ -29,7 +30,9 @@ body:
     id: app-version
     attributes:
       label: App version
-      description: The version in the name of the installer you downloaded, or `main` if you built it yourself.
+      description: >
+        The version on the app's home page. If you built the app yourself, add the commit from
+        `git rev-parse --short HEAD`.
       placeholder: 0.1.0
     validations:
       required: true

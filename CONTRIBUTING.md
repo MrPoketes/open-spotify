@@ -58,8 +58,8 @@ looks and behaves.
 
 A pull request is accepted when:
 
-- it does one thing, and the issue it closes says what that thing is. For anything bigger than a
-  small fix, open an issue first so the change can be agreed on before you build it;
+- it does one thing, and closes the issue that asked for it. Open the issue before you build, so
+  the change can be agreed on first;
 - its description fills in every section of the
   [pull request template](.github/pull_request_template.md), including the decisions you made and
   the behaviour each new test protects;
@@ -70,8 +70,9 @@ A pull request is accepted when:
 
 Open Spotify is built by a team of AI agents ([docs/agents](docs/agents/README.md)), and a
 reviewer agent reviews every pull request against `AGENTS.md`. It posts its findings as a comment
-and sets the `agent-review` status. Fix every finding marked blocking and push. A review covers
-only the commit it read, so every push needs a new one. Pull requests are squash-merged into
-`main`.
+and sets the `agent-review` status. Reviews of pull requests from outside contributors are
+started by hand, so the first one may take a few days. Fix every finding marked blocking and
+push. A review covers only the commit it read, so every push needs a new one. Pull requests are
+squash-merged into `main`.
 
 By contributing, you agree that your work is released under the [MIT License](LICENSE).
