@@ -14,6 +14,9 @@ const fakeAccessToken = "fake-access-token"
 // Spotify embeds at most this many items in a full playlist object.
 const embeddedItemLimit = 100
 
+// The page size Spotify uses when a request has no limit parameter.
+const defaultPageLimit = 20
+
 const jsonResponse = (
   request: HttpClientRequest.HttpClientRequest,
   status: number,
@@ -94,7 +97,7 @@ const respondTo = (url: URL): readonly [number, unknown] => {
     return [200, fakeCurrentUser]
   }
   if (url.pathname === "/v1/me/playlists") {
-    return [200, pageOf(fakePlaylists.map(simplifiedPlaylist), url, 20)]
+    return [200, pageOf(fakePlaylists.map(simplifiedPlaylist), url, defaultPageLimit)]
   }
   const [, playlistId, itemsPath] = /^\/v1\/playlists\/([^/]+)(\/items)?$/.exec(url.pathname) ?? []
   const playlist = fakePlaylists.find(({ id }) => id === playlistId)
@@ -107,7 +110,7 @@ const respondTo = (url: URL): readonly [number, unknown] => {
   if (!listenerCanReadItems(playlist)) {
     return [403, errorBody(403, "Forbidden")]
   }
-  return [200, pageOf(entriesServed(playlist, url), url, 20)]
+  return [200, pageOf(entriesServed(playlist, url), url, defaultPageLimit)]
 }
 
 // A stand-in for api.spotify.com that serves the fixtures, so features can be

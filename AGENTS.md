@@ -127,7 +127,9 @@ cannot fail for a meaningful reason should not exist.
   example a fake Spotify API returning fixed data). Never call the real network.
 - **Do not write:** tests for constants or trivial getters, tests that repeat what the type
   checker already proves, snapshot tests, tests that only check a function was called, or
-  several tests for the same code path.
+  a test whose every failure another test would also catch (such as "returns a value after it
+  is set" next to "replaces the value when set again"). Before adding a test, name a bug that
+  only it would catch.
 - **Do write:** a failing test before fixing a bug, tests for error paths a user can hit
   (bad data, empty states, an expired session), and tests at decoding boundaries.
 - Components are tested with Testing Library: query by role or label, interact with
