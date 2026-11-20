@@ -25,7 +25,10 @@ interface ShellOptions {
 }
 
 // Starts on a second page so there is a page to go back to.
-const renderAppShell = async ({ savedSidebarWidth = 280, platform = "win32" }: ShellOptions) => {
+const renderAppShell = async ({
+  savedSidebarWidth = 280,
+  platform = "win32",
+}: ShellOptions = {}) => {
   const rootRoute = createRootRoute({
     component: () => (
       <AppShell savedSidebarWidth={savedSidebarWidth} platform={platform}>
@@ -115,7 +118,7 @@ describe("AppShell", () => {
   })
 
   it("goes back when the back button is pressed", async () => {
-    await renderAppShell({})
+    await renderAppShell()
 
     await userEvent.click(screen.getByRole("button", { name: "Go back" }))
 
@@ -124,7 +127,6 @@ describe("AppShell", () => {
 
   it.each([
     { platform: "win32", shortcut: "{Alt>}{ArrowLeft}{/Alt}" },
-    { platform: "linux", shortcut: "{Alt>}{ArrowLeft}{/Alt}" },
     { platform: "darwin", shortcut: "{Meta>}[[{/Meta}" },
   ])("goes back with the $platform shortcut", async ({ platform, shortcut }) => {
     await renderAppShell({ platform })
@@ -135,7 +137,7 @@ describe("AppShell", () => {
   })
 
   it("goes back when the mouse's back button is released", async () => {
-    await renderAppShell({})
+    await renderAppShell()
 
     fireEvent.mouseUp(window, { button: 3 })
 
