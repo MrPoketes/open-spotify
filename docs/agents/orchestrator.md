@@ -89,8 +89,10 @@ time, so two releases never claim the same version.
    action that applies:
    - a check failed or it has conflicts: fix it as in steps 5.3 and 5.4 of
      [worker.md](worker.md);
-   - it has three `## Agent review: CHANGES REQUESTED` comments: close it and create a
-     High-priority `Bug` issue titled `Release v<version> blocked` with the unresolved findings;
+   - it has three `## Agent review: CHANGES REQUESTED` comments: close it with
+     `gh pr close <number> --delete-branch` and create a High-priority `Bug` issue titled
+     `Release v<version> blocked`, with the unresolved findings, in the milestone being
+     released. The milestone is then unfinished until that issue is `Done`;
    - its head commit has no passing `agent-review` status: get it reviewed as in step 4 of
      worker.md;
    - auto-merge is off: enable it as in step 5.1 of worker.md.
