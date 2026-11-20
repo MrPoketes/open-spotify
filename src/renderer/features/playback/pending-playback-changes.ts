@@ -26,7 +26,7 @@ const settleTimeMs = 1000
 
 // A poll that started once the change had time to settle shows Spotify's
 // state, which then wins, including changes made in another app.
-const withoutChangesShownBy =
+const withoutChangesSettledBefore =
   (pollStartedAt: number) =>
   (changes: ReadonlyArray<PendingChange>): ReadonlyArray<PendingChange> =>
     changes.filter(
@@ -43,8 +43,9 @@ const withChangeAccepted =
   (changes: ReadonlyArray<PendingChange>): ReadonlyArray<PendingChange> =>
     changes.map((pending) => (pending === change ? { ...pending, acceptedAt } : pending))
 
-// Keeps the changes the user made until a poll shows them, so a control
-// updates at once instead of waiting for Spotify.
+// Keeps the changes the user made on top of the polled state while they are
+// sent and until they have had time to settle, so a control updates at once
+// instead of waiting for Spotify.
 export const makePendingPlaybackChanges = Effect.gen(function* () {
   const pendingChanges = yield* Ref.make<ReadonlyArray<PendingChange>>([])
   const updates = yield* PubSub.unbounded<void>()
@@ -73,8 +74,8 @@ export const makePendingPlaybackChanges = Effect.gen(function* () {
     updates: Stream.fromPubSub(updates),
     applyTo: (playback: PlaybackState) =>
       Ref.get(pendingChanges).pipe(Effect.map((changes) => applyChanges(playback, changes))),
-    forgetShownBy: (pollStartedAt: number) =>
-      Ref.update(pendingChanges, withoutChangesShownBy(pollStartedAt)),
+    forgetSettledBefore: (pollStartedAt: number) =>
+      Ref.update(pendingChanges, withoutChangesSettledBefore(pollStartedAt)),
     showWhileSending,
   }
 })

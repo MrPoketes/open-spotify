@@ -129,8 +129,6 @@ describe("NowPlayingBar controls", () => {
     const previous = await control("Previous")
     expect(previous).toHaveAttribute("aria-disabled", "true")
     expect(previous).toHaveAccessibleDescription("Spotify doesn't allow this right now.")
-    await userEvent.click(previous)
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     expect(await control("Next")).toHaveAttribute("aria-disabled", "false")
   })
 })

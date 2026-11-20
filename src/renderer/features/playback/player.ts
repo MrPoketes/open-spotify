@@ -65,7 +65,7 @@ export class Player extends Context.Service<
       const poll = Effect.gen(function* () {
         const startedAt = yield* Clock.currentTimeMillis
         yield* Ref.set(polledState, Option.some(yield* readState(spotify)))
-        yield* pendingChanges.forgetShownBy(startedAt)
+        yield* pendingChanges.forgetSettledBefore(startedAt)
       })
 
       const latestState = Effect.gen(function* () {
@@ -106,7 +106,8 @@ export class Player extends Context.Service<
         command.pipe(Effect.tapErrorTag("NoActiveDevice", () => refresh))
 
       // The new track or device cannot be shown before Spotify reports it,
-      // so the state is read again at once instead of at the next poll.
+      // so the state is read again at once. If Spotify still reports the old
+      // one, the next poll catches up.
       const sendThenRefresh = (command: PlayerCommand) =>
         send(command).pipe(Effect.andThen(refresh))
 
