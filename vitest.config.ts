@@ -20,6 +20,9 @@ export default defineConfig({
           environment: "jsdom",
           include: ["src/renderer/**/*.test.{ts,tsx}"],
           setupFiles: ["src/renderer/test-setup.ts"],
+          // Vitest replaces CSS with empty strings by default. The design
+          // token test reads the stylesheets themselves.
+          css: { include: [/src\/renderer\/styles\/.+\.css/] },
         },
       },
     ],

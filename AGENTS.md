@@ -106,8 +106,10 @@ writing Effect code, and grep `node_modules/effect/dist/*.d.ts` when unsure.
 
 - Function components with named exports. Props are `readonly`. Keep components small and
   move logic into Effect services or custom hooks.
+- Follow [docs/design.md](docs/design.md) for layout, spacing, type, motion, and accessibility.
 - Style with Tailwind classes that use **theme tokens** (CSS custom properties). Never hard-code
-  a color, font, or radius: a theme must be able to change every pixel.
+  a color, font, or radius: a theme must be able to change every pixel. The tokens and their
+  classes are listed in docs/design.md.
 - Use semantic elements (`button`, `a`, `nav`, `ul`). Everything is reachable and usable from
   the keyboard and has an accessible name.
 
