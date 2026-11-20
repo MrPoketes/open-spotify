@@ -85,8 +85,15 @@ open or merged release PR; a closed, unmerged one does not count.
 Handle the first case that applies, then go on to step 6. Only one release PR is open at a
 time, so two releases never claim the same version.
 
-1. **A release PR is open.** Keep it moving as a worker would: if a check failed or it has
-   conflicts, fix it as in steps 5.3 and 5.4 of [worker.md](worker.md). Release nothing else.
+1. **A release PR is open.** Release nothing else. Move it toward merge with the first
+   action that applies:
+   - a check failed or it has conflicts: fix it as in steps 5.3 and 5.4 of
+     [worker.md](worker.md);
+   - it has three `## Agent review: CHANGES REQUESTED` comments: close it and create a
+     High-priority `Bug` issue titled `Release v<version> blocked` with the unresolved findings;
+   - its head commit has no passing `agent-review` status: get it reviewed as in step 4 of
+     worker.md;
+   - auto-merge is off: enable it as in step 5.1 of worker.md.
 2. **The newest merged release PR has no GitHub release** (`gh release view v<version>` fails)
    and no `Release v<version> failed` issue exists in Linear.
    - If the tag is missing (`git ls-remote --tags origin v<version>` prints nothing), tag the
@@ -100,8 +107,8 @@ time, so two releases never claim the same version.
 
    - Otherwise find the workflow run for the tag
      (`gh run list --workflow release.yml --branch v<version>`). If it is still running, leave
-     it. If it failed on its first attempt, rerun it with `gh run rerun <id> --failed`. If it
-     failed again, create a High-priority `Bug` issue titled `Release v<version> failed` with
+     it. If it failed on its first attempt (`gh run view <id> --json attempt,conclusion`), rerun
+     it with `gh run rerun <id> --failed`. If it failed again, create a High-priority `Bug` issue titled `Release v<version> failed` with
      the failed log; the fix ships in the next milestone's release.
 
 3. **The earliest finished milestone is not released.** Take the version in `package.json` on

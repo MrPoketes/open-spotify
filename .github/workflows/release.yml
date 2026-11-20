@@ -32,7 +32,8 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: github.ref_type == 'tag'
+    # A manual run can also start from a tag, and it must never publish.
+    if: github.event_name == 'push'
     needs: installers
     runs-on: ubuntu-latest
     permissions:
