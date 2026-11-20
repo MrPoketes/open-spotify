@@ -121,6 +121,12 @@ export default defineConfig({
       },
     },
     {
+      // A theme restyles only what reads a theme token, so renderer code takes
+      // every color from the tokens defined in src/renderer/styles/tokens.css.
+      files: ["src/renderer/**"],
+      rules: { "open-spotify/no-hard-coded-colors": "error" },
+    },
+    {
       files: ["src/main/**", "src/preload/**", "src/shared/**"],
       rules: {
         "no-restricted-imports": [
