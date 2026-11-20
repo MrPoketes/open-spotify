@@ -1,6 +1,7 @@
 import { Schema } from "effect"
+import { ThemeId } from "./built-in-themes"
 
-export const SettingKey = Schema.Literals(["spotifyClientId"])
+export const SettingKey = Schema.Literals(["spotifyClientId", "themeId"])
 
 export type SettingKey = typeof SettingKey.Type
 
@@ -8,6 +9,7 @@ export type SettingKey = typeof SettingKey.Type
 // renderer sends it and when it is read back from the database.
 export const settingSchemas = {
   spotifyClientId: Schema.NonEmptyString,
+  themeId: ThemeId,
 } satisfies Record<SettingKey, Schema.Top>
 
 export type SettingValue<K extends SettingKey> = (typeof settingSchemas)[K]["Type"]

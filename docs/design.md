@@ -145,9 +145,10 @@ warm coral accent.
 
 ## Design tokens
 
-A theme sets these tokens, plus whether it is dark or light (see the end of this section).
-Their default dark values live in [`src/renderer/styles/tokens.css`](../src/renderer/styles/tokens.css) as CSS custom properties
-named `--theme-<token>`. [`app.css`](../src/renderer/styles/app.css) maps each one into
+A theme sets these tokens, plus whether it is dark or light (see Themes below). The token
+list and the default dark values live in [`src/shared/theme.ts`](../src/shared/theme.ts). The
+theme engine sets each one on the document root as a CSS custom property named
+`--theme-<token>`, and [`app.css`](../src/renderer/styles/app.css) maps each one into
 Tailwind under the same name without the `theme-` prefix, so `--theme-color-muted` becomes the
 `text-muted`, `bg-muted`, and `border-muted` classes.
 
@@ -201,10 +202,34 @@ colors, fonts, radii, or shadows.
 | `shadow-overlay` | `shadow-overlay` | Overlays (see Elevation)        |
 
 Every token is a promise to theme authors, so add one only when a design need cannot be met by
-an existing token. A test checks that `tokens.css` and `app.css` list the same tokens.
+an existing token. A test checks that the `Theme` Schema and `app.css` list the same tokens.
 
-Whether a theme is dark or light is not a token. It sets CSS `color-scheme`, so native
-scrollbars and form controls match the theme.
+## Themes
+
+A theme is a JSON document:
+
+```json
+{
+  "name": "Sunset",
+  "author": "Ada",
+  "version": "1.0.0",
+  "colorScheme": "dark",
+  "tokens": { "color-accent": "#ffaa00", "radius-medium": "12px" }
+}
+```
+
+- `colorScheme` is `dark` or `light`. It sets CSS `color-scheme`, so native scrollbars and form
+  controls match the theme. It is not a token.
+- Colors are hex (`#rgb` or `#rrggbb`), so the contrast of any theme can be checked. Radii and
+  `spacing` are lengths in `px`, `rem`, or `em`. Fonts and shadows are CSS values.
+- A token the theme leaves out takes the default dark theme's value. An unknown token is an
+  error, so a misspelled token is reported instead of changing nothing.
+
+Two themes ship with the app, defined in
+[`src/shared/built-in-themes.ts`](../src/shared/built-in-themes.ts): the default dark theme and
+a light theme. Both meet the contrast targets below, and a test checks them. The selected
+theme is saved as the `themeId` setting and applied before the first render, and the window
+opens with the theme's `canvas` color, so the wrong theme never flashes.
 
 ## Accessibility
 
@@ -216,7 +241,8 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
   error message. `on-accent` reaches 4.5:1 against `accent`. Icons and `focus` reach 3:1
   against those surfaces. `border` is decorative and has no target, so a control's edge is
   shown by its surface color or an icon, not by a border alone. The default dark theme's
-  lowest ratio is `muted` on `surface-overlay`, at 5.6:1.
+  lowest ratio is `muted` on `surface-overlay`, at 5.6:1; the light theme's is `accent` on
+  `canvas`, at 4.7:1.
 - **Focus.** Every interactive element shows a 2 px `focus` outline with a 2 px offset when
   focused from the keyboard (`:focus-visible`). `app.css` sets this globally. Never remove it;
   if a component needs a different shape, change the outline, not its visibility.
