@@ -4,7 +4,7 @@ import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
 import {
   type SettingKey,
   type SettingValue,
-  settingReply,
+  SettingReply,
   settingSchemas,
 } from "../../shared/settings"
 import type { DesktopApi } from "../../preload/desktop-api"
@@ -36,19 +36,21 @@ export class DesktopBridge extends Context.Service<
         Effect.mapError((cause) => new DesktopBridgeError({ channel, cause })),
       )
 
-    const setSetting = <K extends SettingKey>(key: K, value: SettingValue<K>) =>
-      Schema.encodeEffect(settingSchemas[key])(value).pipe(
+    const setSetting = Effect.fn("DesktopBridge.setSetting")(function* <K extends SettingKey>(
+      key: K,
+      value: SettingValue<K>,
+    ) {
+      const encodedValue = yield* Schema.encodeEffect(settingSchemas[key])(value).pipe(
         Effect.mapError(
           (cause) => new DesktopBridgeError({ channel: ipcChannels.setSetting, cause }),
         ),
-        Effect.flatMap((encodedValue) =>
-          send(ipcChannels.setSetting, Schema.Undefined, { key, value: encodedValue }),
-        ),
       )
+      yield* send(ipcChannels.setSetting, Schema.Undefined, { key, value: encodedValue })
+    })
 
     return DesktopBridge.of({
       getAppInfo: send(ipcChannels.getAppInfo, AppInfo),
-      getSetting: (key) => send(ipcChannels.getSetting, settingReply(key), { key }),
+      getSetting: (key) => send(ipcChannels.getSetting, SettingReply(key), { key }),
       setSetting,
     })
   }

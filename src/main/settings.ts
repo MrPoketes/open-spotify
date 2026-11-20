@@ -2,7 +2,8 @@ import { Context, Effect, Layer, Option, Schema } from "effect"
 import { SqlClient, type SqlError, SqlSchema } from "effect/sql"
 import { SettingKey, type SettingValue, settingSchemas } from "../shared/settings"
 
-const storedValue = <K extends SettingKey>(key: K) => Schema.fromJsonString(settingSchemas[key])
+const storedValueSchema = <K extends SettingKey>(key: K) =>
+  Schema.fromJsonString(settingSchemas[key])
 
 export class Settings extends Context.Service<
   Settings,
@@ -21,30 +22,32 @@ export class Settings extends Context.Service<
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient
 
-      const findStoredValue = SqlSchema.findOneOption({
+      const findStoredRow = SqlSchema.findOneOption({
         Request: SettingKey,
         Result: Schema.Struct({ value: Schema.String }),
         execute: (key) => sql`SELECT value FROM settings WHERE key = ${key}`,
       })
 
-      const get = <K extends SettingKey>(key: K) =>
-        findStoredValue(key).pipe(
-          Effect.map(Option.map((row) => Schema.decodeEffect(storedValue(key))(row.value))),
-          Effect.flatMap(Effect.transposeOption),
-          Effect.withSpan("Settings.get"),
+      const get = Effect.fn("Settings.get")(function* <K extends SettingKey>(key: K) {
+        const storedRow = yield* findStoredRow(key)
+        if (Option.isNone(storedRow)) {
+          return Option.none()
+        }
+        return Option.some(
+          yield* Schema.decodeEffect(storedValueSchema(key))(storedRow.value.value),
         )
+      })
 
-      const set = <K extends SettingKey>(key: K, value: SettingValue<K>) =>
-        Schema.encodeEffect(storedValue(key))(value).pipe(
-          Effect.flatMap(
-            (encodedValue) => sql`
-              INSERT INTO settings (key, value) VALUES (${key}, ${encodedValue})
-              ON CONFLICT (key) DO UPDATE SET value = excluded.value
-            `,
-          ),
-          Effect.asVoid,
-          Effect.withSpan("Settings.set"),
-        )
+      const set = Effect.fn("Settings.set")(function* <K extends SettingKey>(
+        key: K,
+        value: SettingValue<K>,
+      ) {
+        const encodedValue = yield* Schema.encodeEffect(storedValueSchema(key))(value)
+        yield* sql`
+          INSERT INTO settings (key, value) VALUES (${key}, ${encodedValue})
+          ON CONFLICT (key) DO UPDATE SET value = excluded.value
+        `
+      })
 
       return Settings.of({ get, set })
     }),

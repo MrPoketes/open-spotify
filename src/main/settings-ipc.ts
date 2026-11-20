@@ -3,7 +3,7 @@ import { ipcChannels } from "../shared/ipc-channels"
 import {
   GetSettingRequest,
   SetSettingRequest,
-  settingReply,
+  SettingReply,
   settingSchemas,
 } from "../shared/settings"
 import { decodeIpcRequest } from "./decode-ipc-request"
@@ -13,7 +13,7 @@ export const getSettingFromIpc = Effect.fn("getSettingFromIpc")(function* (reque
   const { key } = yield* decodeIpcRequest(ipcChannels.getSetting, GetSettingRequest, request)
   const settings = yield* Settings
   const value = yield* settings.get(key)
-  return yield* Schema.encodeEffect(settingReply(key))(value)
+  return yield* Schema.encodeEffect(SettingReply(key))(value)
 })
 
 export const setSettingFromIpc = Effect.fn("setSettingFromIpc")(function* (request: unknown) {

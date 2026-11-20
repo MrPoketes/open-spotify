@@ -1,5 +1,5 @@
 import { BrowserWindow, app } from "electron"
-import { Effect } from "effect"
+import { type Cause, Effect, Exit } from "effect"
 import { registerIpcHandlers } from "./ipc-handlers"
 import { mainRuntime } from "./main-runtime"
 import { createMainWindow } from "./main-window"
@@ -12,13 +12,12 @@ const start = Effect.gen(function* () {
   serveRendererFiles()
   registerIpcHandlers()
   yield* createMainWindow
-}).pipe(
-  Effect.catchCause((cause) =>
-    Effect.logError("Open Spotify failed to start", cause).pipe(
-      Effect.andThen(Effect.sync(() => app.exit(1))),
-    ),
-  ),
-)
+})
+
+const exitAfterStartupFailure = (cause: Cause.Cause<unknown>) =>
+  Effect.logError("Open Spotify failed to start", cause).pipe(
+    Effect.andThen(Effect.sync(() => app.exit(1))),
+  )
 
 // macOS apps stay running with no windows open until the user quits.
 app.on("window-all-closed", () => {
@@ -37,4 +36,13 @@ app.on("will-quit", () => {
   void mainRuntime.dispose()
 })
 
-mainRuntime.runFork(start)
+// The runtime builds its layers, including opening and migrating the
+// database, before it runs `start`. Those failures appear only in the exit,
+// never inside `start`, so they are handled here.
+mainRuntime.runCallback(start, {
+  onExit: (exit) => {
+    if (Exit.isFailure(exit)) {
+      Effect.runFork(exitAfterStartupFailure(exit.cause))
+    }
+  },
+})

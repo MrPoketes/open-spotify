@@ -19,5 +19,5 @@ export const SetSettingRequest = Schema.Struct({ key: SettingKey, value: Schema.
 
 // IPC messages are structured-cloned, which cannot carry an Option, so a
 // missing setting travels as null.
-export const settingReply = <K extends SettingKey>(key: K) =>
+export const SettingReply = <K extends SettingKey>(key: K) =>
   Schema.OptionFromNullOr(settingSchemas[key])

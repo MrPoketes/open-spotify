@@ -1,11 +1,30 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect, Option } from "effect"
+import { Effect, Option, Schema } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
+import { ipcChannels } from "../../shared/ipc-channels"
+import { GetSettingRequest, SetSettingRequest } from "../../shared/settings"
 import { DesktopBridge } from "./desktop-bridge"
 
 const desktopApiReplying = (reply: unknown): DesktopApi => ({
   invoke: () => Promise.resolve(reply),
 })
+
+// Decodes settings requests with the same Schemas as the real main process and
+// keeps the values in memory.
+const fakeMainProcess = (): DesktopApi => {
+  const storedSettings = new Map<string, unknown>()
+  return {
+    invoke: (channel, request) => {
+      if (channel === ipcChannels.setSetting) {
+        const { key, value } = Schema.decodeUnknownSync(SetSettingRequest)(request)
+        storedSettings.set(key, value)
+        return Promise.resolve(undefined)
+      }
+      const { key } = Schema.decodeUnknownSync(GetSettingRequest)(request)
+      return Promise.resolve(storedSettings.get(key) ?? null)
+    },
+  }
+}
 
 describe("DesktopBridge", () => {
   it.effect("returns app info when the main process replies with the expected shape", () =>
@@ -32,15 +51,18 @@ describe("DesktopBridge", () => {
     }),
   )
 
-  // The main process sends a missing setting as null, because IPC messages
-  // cannot carry an Option.
-  it.effect("returns none when the main process has no value for a setting", () =>
+  // Saving the Client ID only works if the bridge sends requests in the shape
+  // the main process decodes and reads its replies back correctly.
+  it.effect("returns none until a setting is saved, then the saved value", () =>
     Effect.gen(function* () {
-      const bridge = DesktopBridge.make(desktopApiReplying(null))
+      const bridge = DesktopBridge.make(fakeMainProcess())
 
-      const clientId = yield* bridge.getSetting("spotifyClientId")
+      const clientIdBeforeSave = yield* bridge.getSetting("spotifyClientId")
+      yield* bridge.setSetting("spotifyClientId", "my-client-id")
+      const clientIdAfterSave = yield* bridge.getSetting("spotifyClientId")
 
-      assert.deepStrictEqual(clientId, Option.none())
+      assert.deepStrictEqual(clientIdBeforeSave, Option.none())
+      assert.deepStrictEqual(clientIdAfterSave, Option.some("my-client-id"))
     }),
   )
 })
