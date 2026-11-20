@@ -17,10 +17,11 @@ const exitAfterStartupFailure = (cause: Cause.Cause<unknown>) =>
     Effect.andThen(Effect.sync(() => app.exit(1))),
   )
 
-function showMainWindow(): void {
+// Only focuses: during startup the window does not exist yet and `start`
+// is about to create it, so creating one here would open a second window.
+function focusMainWindow(): void {
   const [mainWindow] = BrowserWindow.getAllWindows()
   if (mainWindow === undefined) {
-    mainRuntime.runFork(createMainWindow)
     return
   }
   if (mainWindow.isMinimized()) {
@@ -38,8 +39,12 @@ function startPrimaryInstance(): void {
       app.quit()
     }
   })
-  app.on("activate", showMainWindow)
-  app.on("second-instance", showMainWindow)
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      mainRuntime.runFork(createMainWindow)
+    }
+  })
+  app.on("second-instance", focusMainWindow)
   app.on("will-quit", () => {
     void mainRuntime.dispose()
   })

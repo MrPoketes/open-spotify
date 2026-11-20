@@ -47,7 +47,9 @@ const respondWithRendererFile = Effect.fn("respondWithRendererFile")(function* (
     try: () => net.fetch(pathToFileURL(filePath).href),
     catch: (cause) => new RendererFileError({ filePath, cause }),
   })
-  // Assets carry the policy too, in case one is ever opened as a document.
+  // Assets carry the policy too, in case one is ever opened as a document. The
+  // nonce is fresh because the placeholder is public: a policy naming it would
+  // let injected scripts that copy it run.
   const headers = new Headers(fileResponse.headers)
   headers.set("Content-Security-Policy", contentSecurityPolicy(createScriptNonce()))
   return new Response(fileResponse.body, { status: fileResponse.status, headers })
