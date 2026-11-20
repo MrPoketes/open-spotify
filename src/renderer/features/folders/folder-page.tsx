@@ -56,7 +56,7 @@ function LoadedFolder({ location, savedView }: LoadedFolderProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         {ancestors.length > 0 && <FolderBreadcrumb folder={folder} ancestors={ancestors} />}
         <PageHeader
           kind="Folder"
@@ -67,7 +67,7 @@ function LoadedFolder({ location, savedView }: LoadedFolderProps) {
             {formatItemCount(folder.entries.length)}
           </p>
         </PageHeader>
-      </header>
+      </div>
       {folder.entries.length === 0 && (
         <p className="text-muted">
           This folder is empty. Choose “Add to folder” on a playlist, album, artist, show, or track

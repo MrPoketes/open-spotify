@@ -210,10 +210,9 @@ that starts on the chosen row, and moves like any other list (see Keyboard).
 
 The header shows a breadcrumb of the parent folders (only for a nested folder) above the page
 header every page shares: a `Folder` placeholder tile as the cover, a `text-xs` "Folder" label,
-the name in `text-5xl`, and the item count. Below it, at the right end, a
-Grid / List toggle: two filter chips in a `fieldset`, so the chosen view has the chip's check
-mark and 600 weight as well as its `accent` fill. The choice is the `folderView` setting and
-applies to every folder.
+the name in `text-5xl`, and the item count. Below it, at the right end, a Grid / List toggle:
+two filter chips in a `fieldset`, so the chosen view has the chip's check mark and 600 weight as
+well as its `accent` fill. The choice is the `folderView` setting and applies to every folder.
 
 - **Grid:** cards in the standard card grid, each with square artwork (round for artists), the
   name in `text-sm` at 600, and the kind in `text-xs` `muted`. A nested folder says how many
