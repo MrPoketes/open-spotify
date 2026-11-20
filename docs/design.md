@@ -184,6 +184,23 @@ one tab stop, starting on the first device, and moves like any other list (see K
 `Escape` or choosing a device closes the picker and returns focus to its button; clicking or
 tabbing outside closes it.
 
+### Folder page
+
+The header shows a breadcrumb of the parent folders (only for a nested folder), a `text-xs`
+"Folder" label, the name in `text-5xl`, and the item count. Below it, at the right end, a
+Grid / List toggle: two 32 px icon buttons in a `fieldset` that set `aria-pressed`, the
+pressed one drawn in `accent`. The choice is the `folderView` setting and applies to every
+folder.
+
+- **Grid:** cards in the standard card grid, each with square artwork (round for artists), the
+  name in `text-sm` at 600, and the kind in `text-xs` `muted`. A nested folder says how many
+  items it holds.
+- **List:** 32 px rows with a 16 px kind icon instead of artwork, the name, and the kind at the
+  right end.
+
+Both views are one tab stop with roving focus. An entry whose kind has a page links to it; the
+others are plain rows until their page exists.
+
 ### Loading, empty, and error states
 
 - While a list or page loads, it says so in `muted` text inside an `output` element, so screen

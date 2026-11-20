@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppFolderFolderIdRouteImport } from './routes/_app/folder.$folderId'
 import { Route as AppShowShowIdRouteImport } from './routes/_app/show.$showId'
 
 const AppRoute = AppRouteImport.update({
@@ -34,6 +35,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFolderFolderIdRoute = AppFolderFolderIdRouteImport.update({
+  id: '/folder/$folderId',
+  path: '/folder/$folderId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppShowShowIdRoute = AppShowShowIdRouteImport.update({
   id: '/show/$showId',
   path: '/show/$showId',
@@ -44,12 +50,14 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/folder/$folderId': typeof AppFolderFolderIdRoute
   '/show/$showId': typeof AppShowShowIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/': typeof AppIndexRoute
+  '/folder/$folderId': typeof AppFolderFolderIdRoute
   '/show/$showId': typeof AppShowShowIdRoute
 }
 export interface FileRoutesById {
@@ -58,19 +66,22 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/folder/$folderId': typeof AppFolderFolderIdRoute
   '/_app/show/$showId': typeof AppShowShowIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/onboarding' | '/show/$showId'
+  fullPaths:
+    '/' | '/login' | '/onboarding' | '/folder/$folderId' | '/show/$showId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/onboarding' | '/' | '/show/$showId'
+  to: '/login' | '/onboarding' | '/' | '/folder/$folderId' | '/show/$showId'
   id:
     | '__root__'
     | '/_app'
     | '/login'
     | '/onboarding'
     | '/_app/'
+    | '/_app/folder/$folderId'
     | '/_app/show/$showId'
   fileRoutesById: FileRoutesById
 }
@@ -110,6 +121,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/folder/$folderId': {
+      id: '/_app/folder/$folderId'
+      path: '/folder/$folderId'
+      fullPath: '/folder/$folderId'
+      preLoaderRoute: typeof AppFolderFolderIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/show/$showId': {
       id: '/_app/show/$showId'
       path: '/show/$showId'
@@ -122,11 +140,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
+  AppFolderFolderIdRoute: typeof AppFolderFolderIdRoute
   AppShowShowIdRoute: typeof AppShowShowIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
+  AppFolderFolderIdRoute: AppFolderFolderIdRoute,
   AppShowShowIdRoute: AppShowShowIdRoute,
 }
 

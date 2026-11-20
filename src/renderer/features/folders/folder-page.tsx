@@ -1,0 +1,81 @@
+import { Effect } from "effect"
+import { use, useState } from "react"
+import type { FolderView } from "../../../shared/folder-view"
+import { DesktopBridge } from "../../lib/desktop-bridge"
+import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { useLoad } from "../../lib/use-load"
+import { ErrorWithRetry } from "../../ui/error-with-retry"
+import { FolderBreadcrumb } from "./folder-breadcrumb"
+import { formatItemCount } from "./folder-entry-description"
+import { FolderEntryGrid } from "./folder-entry-grid"
+import { FolderEntryList } from "./folder-entry-list"
+import { type FolderLocation, locateFolder } from "./folder-location"
+import { FolderViewToggle } from "./folder-view-toggle"
+import { loadSavedFolderView, saveFolderView } from "./saved-folder-view"
+
+const loadFolderPage = Effect.gen(function* () {
+  const bridge = yield* DesktopBridge
+  return yield* Effect.all({ tree: bridge.getFolderTree, savedView: loadSavedFolderView })
+})
+
+export function FolderPage({ folderId }: { readonly folderId: string }) {
+  const { state, retry } = useLoad(loadFolderPage, "The folder failed to load")
+
+  if (state.status === "loading") {
+    return <output className="text-muted">Loading folder…</output>
+  }
+  if (state.status === "failed") {
+    return <ErrorWithRetry message="This folder didn't load." onRetry={retry} />
+  }
+  const location = locateFolder(state.value.tree, folderId)
+  if (location === undefined) {
+    return <p className="text-muted">This folder doesn't exist. It may have been deleted.</p>
+  }
+  return <LoadedFolder location={location} savedView={state.value.savedView} />
+}
+
+interface LoadedFolderProps {
+  readonly location: FolderLocation
+  readonly savedView: FolderView
+}
+
+function LoadedFolder({ location, savedView }: LoadedFolderProps) {
+  const runtime = use(RendererRuntimeContext)
+  const [view, setView] = useState(savedView)
+  const { folder, ancestors } = location
+
+  const changeView = (nextView: FolderView) => {
+    setView(nextView)
+    runtime.runFork(saveFolderView(nextView))
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      <header className="flex flex-col gap-4">
+        {ancestors.length > 0 && <FolderBreadcrumb folder={folder} ancestors={ancestors} />}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-muted">Folder</p>
+          <h1 className="font-display text-5xl font-bold">{folder.name}</h1>
+          <p className="text-xs text-muted tabular-nums">
+            {formatItemCount(folder.entries.length)}
+          </p>
+        </div>
+      </header>
+      {folder.entries.length === 0 && (
+        <p className="text-muted">
+          This folder is empty. Choose “Add to folder” on a playlist, album, artist, show, or track
+          to put it here.
+        </p>
+      )}
+      {folder.entries.length > 0 && (
+        <>
+          <div className="flex justify-end">
+            <FolderViewToggle view={view} onChange={changeView} />
+          </div>
+          {view === "grid" && <FolderEntryGrid entries={folder.entries} />}
+          {view === "list" && <FolderEntryList entries={folder.entries} />}
+        </>
+      )}
+    </div>
+  )
+}
