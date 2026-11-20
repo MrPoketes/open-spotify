@@ -169,13 +169,17 @@ pane while the list scrolls. When they match nothing, the list says so instead o
 
 ### Loading, empty, and error states
 
-- While a list loads, it says so in `muted` text inside an `output` element, so screen readers
-  announce it.
+- While a list or page loads, it says so in `muted` text inside an `output` element, so screen
+  readers announce it.
 - An empty list says what will appear there. It never leaves a blank pane.
-- A failed load says so in plain text inside an `alert`, with a Retry button next to it.
+- A failed load says so in plain text inside an `alert`, with a Retry button next to it
+  (`src/renderer/ui/error-with-retry.tsx`). When a later page of a long list fails, the rows
+  already loaded stay and the error sits below them.
 - When filters match nothing, the list says so inside an `output` element. The element stays on
   the page while entries match, because screen readers only announce changes to a live region
   that already exists.
+- Long lists load their next page when the end of the list scrolls into view, with no "Load
+  more" button.
 
 ### Motion
 
@@ -187,6 +191,12 @@ Motion confirms an action; it never decorates.
 - Nothing animates on page load, and nothing loops except loading indicators.
 - With the operating system's reduce-motion setting on, all transitions and animations are cut
   to near zero (enforced globally in `app.css`).
+
+### Long text
+
+- Descriptions in list rows are clamped to two lines. A "Show more" button expands them in
+  place.
+- Text from Spotify or podcast publishers is always rendered as text, never as HTML.
 
 ### Color roles
 
@@ -254,9 +264,10 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
   focused from the keyboard (`:focus-visible`). `app.css` sets this globally. Never remove it;
   if a component needs a different shape, change the outline, not its visibility.
 - **Keyboard.** Every action works from the keyboard. Lists use one tab stop and arrow keys
-  inside (roving focus). Dialogs and the command palette trap focus and return it on close.
-  Pane dividers are focusable: the arrow keys resize by 16 px, `Home` and `End` jump to the
-  narrowest and widest size, and a double-click restores the default size.
+  inside (roving focus, `src/renderer/ui/use-roving-focus.ts`). Dialogs and the command
+  palette trap focus and return it on close. Pane dividers are focusable: the arrow keys resize
+  by 16 px, `Home` and `End` jump to the narrowest and widest size, and a double-click restores
+  the default size.
 - **Targets.** Interactive elements are at least 24 × 24 px. Dense rows are 32 px tall.
 - **Not color alone.** State is never shown by color only. The playing track also shows an
   icon, and errors carry text.

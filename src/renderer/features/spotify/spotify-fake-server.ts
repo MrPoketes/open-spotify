@@ -11,6 +11,7 @@ import {
   fakePlaylists,
   fakeSavedAlbums,
   fakeSavedShows,
+  fakeShows,
 } from "./spotify-fixtures"
 
 const fakeAccessToken = "fake-access-token"
@@ -120,6 +121,19 @@ const fullPlaylist = (playlist: FakePlaylist, url: URL) => {
 
 const notFound = [404, errorBody(404, "Resource not found")] as const
 
+const respondToShow = (url: URL): readonly [number, unknown] => {
+  const [, showId, episodesPath] = /^\/v1\/shows\/([^/]+)(\/episodes)?$/.exec(url.pathname) ?? []
+  const show = fakeShows.find(({ id }) => id === showId)
+  if (!show) {
+    return notFound
+  }
+  if (episodesPath === undefined) {
+    const { episodes, ...showMetadata } = show
+    return [200, { ...showMetadata, total_episodes: episodes.length }]
+  }
+  return [200, pageOf(show.episodes, url, defaultPageLimit)]
+}
+
 const currentUserResources: Record<string, (url: URL) => unknown> = {
   "/v1/me": () => fakeCurrentUser,
   "/v1/me/playlists": (url) => pageOf(fakePlaylists.map(simplifiedPlaylist), url, defaultPageLimit),
@@ -129,6 +143,9 @@ const currentUserResources: Record<string, (url: URL) => unknown> = {
 }
 
 const respondTo = (url: URL): readonly [number, unknown] => {
+  if (url.pathname.startsWith("/v1/shows/")) {
+    return respondToShow(url)
+  }
   const currentUserResource = currentUserResources[url.pathname]
   if (currentUserResource) {
     return [200, currentUserResource(url)]

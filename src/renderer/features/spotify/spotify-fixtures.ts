@@ -69,6 +69,9 @@ export const fakeEpisode = {
   name: "How Playlists Are Made",
   uri: "spotify:episode:fake-0",
   duration_ms: 2_412_000,
+  description: "A look at how a playlist goes from idea to finished sequence.",
+  release_date: "2026-03-14",
+  release_date_precision: "day",
 }
 
 const playlistEntry = (item: unknown, index: number) => ({
@@ -171,15 +174,76 @@ export const fakeFollowedArtists = followedArtistNames.map((name, index) => ({
   type: "artist",
 }))
 
-const fakeShow = (name: string, index: number) => ({
-  added_at: savedAt(index),
-  show: {
-    id: `fake-show-${index}`,
-    name,
-    images: [{ url: coverUrl(`show-${index}`), width: 640, height: 640 }],
-    uri: `spotify:show:fake-${index}`,
-    type: "show",
-  },
+const episodeTopics = [
+  "Tide Pools",
+  "Lichen",
+  "Deep Time",
+  "Glaciers",
+  "Bird Migration",
+  "Soil",
+] as const
+
+const weekInMs = 7 * 24 * 60 * 60 * 1000
+
+// Spotify lists a show's episodes newest first, so episode 0 is the latest.
+const fakeShowEpisode = (showId: string, index: number) => {
+  const topic = pickInTurn(episodeTopics, index)
+  return {
+    type: "episode",
+    id: `${showId}-episode-${index}`,
+    name: `${topic}, part ${Math.floor(index / episodeTopics.length) + 1}`,
+    uri: `spotify:episode:${showId}-${index}`,
+    duration_ms: 1_200_000 + ((index * 104_729) % 3_000_000),
+    description: `This week is all about ${topic.toLowerCase()}. We follow the researchers who spend years watching it change, and ask why they keep coming back.`,
+    release_date: new Date(Date.UTC(2026, 10, 16) - index * weekInMs).toISOString().slice(0, 10),
+    release_date_precision: "day",
+  }
+}
+
+const slowScienceEpisodes = Array.from({ length: 60 }, (_, index) =>
+  fakeShowEpisode("fake-show-slow-science", index),
+).map((episode, index) => {
+  if (index === 1) {
+    return {
+      ...episode,
+      description: "Show notes: <b>bold claims</b> and <script>alert('hi')</script> inside.",
+    }
+  }
+  // Spotify sends null for an episode it no longer serves.
+  return index === 55 ? null : episode
 })
 
-export const fakeSavedShows = [fakeShow("Slow Science", 0), fakeShow("The Long Edit", 1)]
+const fakeShow = (
+  id: string,
+  { name, description }: { readonly name: string; readonly description: string },
+  episodes: ReadonlyArray<ReturnType<typeof fakeShowEpisode> | null>,
+) => ({
+  id,
+  name,
+  description,
+  images: [{ url: coverUrl(id), width: 640, height: 640 }],
+  uri: `spotify:show:${id}`,
+  type: "show",
+  episodes,
+})
+
+export const fakeShows = [
+  fakeShow(
+    "fake-show-slow-science",
+    {
+      name: "Slow Science",
+      description: "Patient stories about how scientists actually find things out.",
+    },
+    slowScienceEpisodes,
+  ),
+  fakeShow(
+    "fake-show-long-edit",
+    { name: "The Long Edit", description: "A new show, starting soon." },
+    [],
+  ),
+]
+
+export const fakeSavedShows = fakeShows.map(({ id, name, images, uri, type }, index) => ({
+  added_at: savedAt(index),
+  show: { id, name, images, uri, type },
+}))
