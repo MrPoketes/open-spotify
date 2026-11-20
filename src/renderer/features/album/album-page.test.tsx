@@ -57,7 +57,7 @@ describe("AlbumPage", () => {
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull()
   })
 
-  it("numbers tracks by their place on the disc and leaves out album and date added", async () => {
+  it("numbers each disc's tracks from 1 and leaves out the album and date-added columns", async () => {
     renderAlbumPage("fake-album-4")
 
     const secondDisc = await screen.findByRole("table", { name: "Disc 2" })

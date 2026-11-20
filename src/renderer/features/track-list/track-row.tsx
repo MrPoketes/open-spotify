@@ -10,8 +10,6 @@ import { trackRowHeight } from "./track-row-height"
 export type TrackListLayout = "playlist" | "album"
 
 export interface TrackListEntry {
-  // The position in a playlist, the track number on an album.
-  readonly number: number
   readonly title: string
   readonly artists: string
   // Null for podcast episodes and removed tracks. Local files have no id.
@@ -179,12 +177,12 @@ interface TrackRowProps {
 }
 
 // A placeholder and the track that replaces it are the same element, so a
-// row keeps keyboard focus when its page arrives. Only playlists load tracks
-// page by page, so a placeholder shows its position.
+// row keeps keyboard focus when its page arrives. Each disc of an album is
+// its own list, so a row's position is also its track number.
 export function TrackRow({ entry, layout, slot }: TrackRowProps) {
   return (
     <tr {...rowAttributes(slot, layout)} aria-label={accessibleName(slot.index, entry)}>
-      <td className="text-right text-muted tabular-nums">{entry?.number ?? slot.index + 1}</td>
+      <td className="text-right text-muted tabular-nums">{slot.index + 1}</td>
       {entry === undefined ? (
         <PlaceholderCells />
       ) : (

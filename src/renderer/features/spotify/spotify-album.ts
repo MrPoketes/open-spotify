@@ -27,13 +27,11 @@ export const AlbumTrack = Schema.Struct({
   name: Schema.String,
   durationMs: Schema.Number,
   discNumber: Schema.Number,
-  trackNumber: Schema.Number,
   artists: Schema.Array(SimplifiedArtist),
 }).pipe(
   Schema.encodeKeys({
     durationMs: "duration_ms",
     discNumber: "disc_number",
-    trackNumber: "track_number",
   }),
 )
 

@@ -1,6 +1,6 @@
-import { formatArtistNames } from "../spotify/format-artist-names"
 import { Disc3 } from "lucide-react"
 import { PageHeader } from "../../ui/page-header"
+import { formatArtistNames } from "../spotify/format-artist-names"
 import type { Album } from "../spotify/spotify-album"
 import { formatTotalDuration } from "../track-list/format-duration"
 import { formatTrackCount } from "../track-list/format-track-count"

@@ -1,6 +1,6 @@
-import { formatArtistNames } from "../spotify/format-artist-names"
 import { Effect, Stream } from "effect"
 import { songCountText } from "../liked-songs/song-count-text"
+import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SavedAlbum } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { Artist } from "../spotify/spotify-artist"

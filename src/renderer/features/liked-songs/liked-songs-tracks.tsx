@@ -26,7 +26,7 @@ export function LikedSongsTracks({ firstPage }: { readonly firstPage: SavedTrack
 
   const trackAt = (index: number) => {
     const song = songs.items[index]
-    return song === undefined ? undefined : trackEntry(song.track, song.addedAt, index + 1)
+    return song === undefined ? undefined : trackEntry(song.track, song.addedAt)
   }
 
   return (
