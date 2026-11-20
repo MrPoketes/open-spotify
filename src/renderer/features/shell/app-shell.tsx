@@ -32,13 +32,7 @@ export function AppShell({
 }: AppShellProps) {
   const runtime = use(RendererRuntimeContext)
   const [sidebarWidth, setSidebarWidth] = useState(savedSidebarWidth)
-  const {
-    isOpen: isQueueOpen,
-    toggle: toggleQueue,
-    close: closeQueue,
-    buttonRef: queueButtonRef,
-    paneRef: queuePaneRef,
-  } = useQueuePane()
+  const { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef } = useQueuePane()
   useHistoryShortcuts(platform)
 
   return (

@@ -1,4 +1,4 @@
-import { Clock, Context, Effect, Layer, Option, PubSub, Ref, Stream } from "effect"
+import { Clock, Context, Effect, Layer, Option, PubSub, Ref, Schema, Stream } from "effect"
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { Device } from "../spotify/spotify-device"
 import type { PlaybackState, RepeatMode } from "../spotify/spotify-playback-state"
@@ -10,6 +10,28 @@ export type PlayerState =
   | { readonly status: "unreachable" }
 
 type PlayerCommand = Effect.Effect<void, SpotifyApiError>
+
+export class QueuedItemGone extends Schema.TaggedError<QueuedItemGone>()("QueuedItemGone", {}) {}
+
+// The queue can hold the same item more than once, so an item is identified
+// by its URI and how many times that URI comes before it.
+const positionInQueue = (
+  upNext: ReadonlyArray<{ readonly uri: string }>,
+  uri: string,
+  occurrence: number,
+) => {
+  let timesSeen = 0
+  for (const [position, item] of upNext.entries()) {
+    if (item.uri !== uri) {
+      continue
+    }
+    if (timesSeen === occurrence) {
+      return Option.some(position)
+    }
+    timesSeen += 1
+  }
+  return Option.none()
+}
 
 // Spotify rate-limits each Client ID over a rolling 30-second window, and all
 // users of a development-mode Client ID share it.
@@ -50,7 +72,10 @@ export class Player extends Context.Service<
     readonly pause: PlayerCommand
     readonly skipToNext: PlayerCommand
     readonly skipToPrevious: PlayerCommand
-    readonly skipAhead: (itemCount: number) => PlayerCommand
+    readonly playQueuedItem: (
+      uri: string,
+      occurrence: number,
+    ) => Effect.Effect<void, SpotifyApiError | QueuedItemGone>
     readonly setShuffle: (isOn: boolean) => PlayerCommand
     readonly setRepeat: (mode: RepeatMode) => PlayerCommand
   }
@@ -120,12 +145,28 @@ export class Player extends Context.Service<
         pause: pendingChanges.showWhileSending({ isPlaying: false }, send(spotify.pause)),
         skipToNext: sendThenRefresh(spotify.skipToNext),
         skipToPrevious: sendThenRefresh(spotify.skipToPrevious),
-        // Spotify has no endpoint that plays an item from the queue, so the
-        // player skips past every item before it, one request each.
-        skipAhead: (itemCount) =>
-          sendThenRefresh(
-            spotify.skipToNext.pipe(Effect.replicateEffect(itemCount, { discard: true })),
-          ),
+        playQueuedItem: (uri, occurrence) =>
+          Effect.gen(function* () {
+            // The queue on screen can be out of date, so the item is looked
+            // up in a fresh copy.
+            const { currentlyPlaying, upNext } = yield* spotify.getQueue
+            const position = positionInQueue(upNext, uri, occurrence)
+            if (Option.isSome(position)) {
+              // Spotify has no endpoint that plays an item from the queue, so
+              // the player skips past every item before it, one request each.
+              return yield* send(
+                spotify.skipToNext.pipe(
+                  Effect.replicateEffect(position.value + 1, { discard: true }),
+                ),
+              )
+            }
+            // An earlier press, such as the first click of a double-click,
+            // may already have played it.
+            if (currentlyPlaying?.uri === uri) {
+              return yield* Effect.void
+            }
+            return yield* new QueuedItemGone()
+          }).pipe(Effect.ensuring(refresh)),
         setShuffle: (isOn) =>
           pendingChanges.showWhileSending({ shuffle: isOn }, send(spotify.setShuffle(isOn))),
         setRepeat: (mode) =>

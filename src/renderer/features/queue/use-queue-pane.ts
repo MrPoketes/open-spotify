@@ -5,45 +5,44 @@ import { useCallback, useEffect, useRef, useState } from "react"
 const isQueueShortcut = (event: KeyboardEvent) =>
   event.altKey && event.shiftKey && !event.ctrlKey && !event.metaKey && event.code === "KeyQ"
 
-// Opens and closes the queue pane from its button in the now-playing bar or
-// from Alt+Shift+Q. Opening moves focus into the pane, and closing it while
-// focus is inside returns focus to the button, so focus is never lost.
 export function useQueuePane() {
-  const [isOpen, setOpen] = useState(false)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const paneRef = useRef<HTMLElement>(null)
+  const [isQueueOpen, setQueueOpen] = useState(false)
+  const queueButtonRef = useRef<HTMLButtonElement>(null)
+  const queuePaneRef = useRef<HTMLElement>(null)
 
-  const close = useCallback(() => {
-    if (paneRef.current?.contains(document.activeElement) === true) {
-      buttonRef.current?.focus()
+  // Closing the pane removes whatever had focus inside it, which would drop
+  // keyboard users back at the start of the page.
+  const closeQueue = useCallback(() => {
+    if (queuePaneRef.current?.contains(document.activeElement) === true) {
+      queueButtonRef.current?.focus()
     }
-    setOpen(false)
+    setQueueOpen(false)
   }, [])
 
-  const toggle = useCallback(() => {
-    if (isOpen) {
-      close()
+  const toggleQueue = useCallback(() => {
+    if (isQueueOpen) {
+      closeQueue()
       return
     }
-    setOpen(true)
-  }, [isOpen, close])
+    setQueueOpen(true)
+  }, [isQueueOpen, closeQueue])
 
   useEffect(() => {
-    if (isOpen) {
-      paneRef.current?.focus()
+    if (isQueueOpen) {
+      queuePaneRef.current?.focus()
     }
-  }, [isOpen])
+  }, [isQueueOpen])
 
   useEffect(() => {
     const toggleOnShortcut = (event: KeyboardEvent) => {
       if (isQueueShortcut(event)) {
         event.preventDefault()
-        toggle()
+        toggleQueue()
       }
     }
     window.addEventListener("keydown", toggleOnShortcut)
     return () => window.removeEventListener("keydown", toggleOnShortcut)
-  }, [toggle])
+  }, [toggleQueue])
 
-  return { isOpen, toggle, close, buttonRef, paneRef }
+  return { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef }
 }
