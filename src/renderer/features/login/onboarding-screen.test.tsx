@@ -34,4 +34,15 @@ describe("OnboardingScreen", () => {
     )
     expect(savedClientId).toStrictEqual(Option.none())
   })
+
+  // A new user must not mistake Open Spotify for the official app, before they set anything up.
+  it("says Open Spotify is an unofficial client", async () => {
+    renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
+
+    expect(
+      await screen.findByText(
+        "Open Spotify is an unofficial client. It is not affiliated with, endorsed by, or sponsored by Spotify.",
+      ),
+    ).toBeInTheDocument()
+  })
 })

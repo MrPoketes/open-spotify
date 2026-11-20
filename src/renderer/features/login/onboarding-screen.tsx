@@ -74,6 +74,10 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
             Save and continue
           </button>
         </form>
+        <p className="text-xs text-muted">
+          Open Spotify is an unofficial client. It is not affiliated with, endorsed by, or sponsored
+          by Spotify.
+        </p>
       </section>
     </main>
   )

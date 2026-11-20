@@ -1,6 +1,6 @@
 import path from "node:path"
 import { _electron, test } from "@playwright/test"
-import { builtInThemes, themeIds } from "../src/shared/built-in-themes"
+import { builtInThemes } from "../src/shared/built-in-themes"
 import { fakeSpotifyAccounts, logInThroughOnboarding, serveFakeWebApi } from "./fake-spotify"
 import { packagedAppExecutable } from "./packaged-app"
 
@@ -19,8 +19,7 @@ test("takes a screenshot of the main view in every built-in theme", async () => 
   await logInThroughOnboarding(appWindow)
 
   const library = appWindow.getByRole("navigation", { name: "Library" })
-  for (const themeId of themeIds) {
-    const theme = builtInThemes[themeId]
+  for (const [themeId, theme] of Object.entries(builtInThemes)) {
     await appWindow.getByRole("link", { name: "Settings" }).click()
     await appWindow.getByRole("button", { name: `${theme.name} by ${theme.author}` }).click()
     await library.getByRole("link", { name: /Late Night Drive/ }).click()
