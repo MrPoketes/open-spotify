@@ -1,10 +1,11 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router"
 import { Effect } from "effect"
+import { defaultSidebarWidth } from "../../shared/sidebar-width"
 import { redirectUnlessLoggedIn } from "../features/login/require-login"
 import { AppShell } from "../features/shell/app-shell"
-import { loadSavedSidebarWidth } from "../features/shell/saved-sidebar-width"
 import { DesktopBridge } from "../lib/desktop-bridge"
 import { rendererRuntime } from "../lib/renderer-runtime"
+import { loadSavedSetting } from "../lib/saved-setting"
 
 // A pathless layout route rather than the root route: the root route is
 // prerendered into the SPA shell at build time, where there is no main
@@ -17,7 +18,10 @@ export const Route = createFileRoute("/_app")({
 
 const loadAppShell = Effect.gen(function* () {
   const bridge = yield* DesktopBridge
-  return yield* Effect.all({ appInfo: bridge.getAppInfo, savedSidebarWidth: loadSavedSidebarWidth })
+  return yield* Effect.all({
+    appInfo: bridge.getAppInfo,
+    savedSidebarWidth: loadSavedSetting("sidebarWidth", defaultSidebarWidth),
+  })
 })
 
 function AppLayout() {

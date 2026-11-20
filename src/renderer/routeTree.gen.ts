@@ -15,6 +15,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppCollectionTracksRouteImport } from './routes/_app/collection.tracks'
+import { Route as AppFolderFolderIdRouteImport } from './routes/_app/folder.$folderId'
 import { Route as AppPlaylistPlaylistIdRouteImport } from './routes/_app/playlist.$playlistId'
 import { Route as AppShowShowIdRouteImport } from './routes/_app/show.$showId'
 
@@ -47,6 +48,11 @@ const AppCollectionTracksRoute = AppCollectionTracksRouteImport.update({
   path: '/collection/tracks',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFolderFolderIdRoute = AppFolderFolderIdRouteImport.update({
+  id: '/folder/$folderId',
+  path: '/folder/$folderId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPlaylistPlaylistIdRoute = AppPlaylistPlaylistIdRouteImport.update({
   id: '/playlist/$playlistId',
   path: '/playlist/$playlistId',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/settings': typeof AppSettingsRoute
   '/collection/tracks': typeof AppCollectionTracksRoute
+  '/folder/$folderId': typeof AppFolderFolderIdRoute
   '/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
   '/show/$showId': typeof AppShowShowIdRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
   '/collection/tracks': typeof AppCollectionTracksRoute
+  '/folder/$folderId': typeof AppFolderFolderIdRoute
   '/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
   '/show/$showId': typeof AppShowShowIdRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
   '/_app/collection/tracks': typeof AppCollectionTracksRoute
+  '/_app/folder/$folderId': typeof AppFolderFolderIdRoute
   '/_app/playlist/$playlistId': typeof AppPlaylistPlaylistIdRoute
   '/_app/show/$showId': typeof AppShowShowIdRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/collection/tracks'
+    | '/folder/$folderId'
     | '/playlist/$playlistId'
     | '/show/$showId'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/'
     | '/collection/tracks'
+    | '/folder/$folderId'
     | '/playlist/$playlistId'
     | '/show/$showId'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/'
     | '/_app/collection/tracks'
+    | '/_app/folder/$folderId'
     | '/_app/playlist/$playlistId'
     | '/_app/show/$showId'
   fileRoutesById: FileRoutesById
@@ -168,6 +180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCollectionTracksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/folder/$folderId': {
+      id: '/_app/folder/$folderId'
+      path: '/folder/$folderId'
+      fullPath: '/folder/$folderId'
+      preLoaderRoute: typeof AppFolderFolderIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/playlist/$playlistId': {
       id: '/_app/playlist/$playlistId'
       path: '/playlist/$playlistId'
@@ -189,6 +208,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCollectionTracksRoute: typeof AppCollectionTracksRoute
+  AppFolderFolderIdRoute: typeof AppFolderFolderIdRoute
   AppPlaylistPlaylistIdRoute: typeof AppPlaylistPlaylistIdRoute
   AppShowShowIdRoute: typeof AppShowShowIdRoute
 }
@@ -197,6 +217,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppCollectionTracksRoute: AppCollectionTracksRoute,
+  AppFolderFolderIdRoute: AppFolderFolderIdRoute,
   AppPlaylistPlaylistIdRoute: AppPlaylistPlaylistIdRoute,
   AppShowShowIdRoute: AppShowShowIdRoute,
 }

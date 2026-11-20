@@ -157,8 +157,8 @@ on the current screen.
 
 When artwork is missing or fails to load, a `surface-raised` tile with a `muted` Lucide icon for
 the kind stands in: `ListMusic` for playlists, `Disc3` for albums, `MicVocal` for artists,
-`Radio` for shows. Liked Songs has no artwork from Spotify and always shows `Heart` on
-`accent`. Its page header shows the same tile at cover size.
+`Radio` for shows, `Music` for tracks, `Folder` for folders. Liked Songs has no artwork from
+Spotify and always shows `Heart` on `accent`. Its page header shows the same tile at cover size.
 
 ### Filter chips
 
@@ -205,6 +205,23 @@ over focus, so a mouse user can compare themes while keyboard focus stays on one
 theme returns when the pointer and focus both leave the picker, or the page closes. Clicking a
 row or pressing `Enter` or `Space` on it chooses and saves its theme. The list is one tab stop
 that starts on the chosen row, and moves like any other list (see Keyboard).
+
+### Folder page
+
+The header shows a breadcrumb of the parent folders (only for a nested folder) above the page
+header every page shares: a `Folder` placeholder tile as the cover, a `text-xs` "Folder" label,
+the name in `text-5xl`, and the item count. Below it, at the right end, a Grid / List toggle:
+two filter chips in a `fieldset`, so the chosen view has the chip's check mark and 600 weight as
+well as its `accent` fill. The choice is the `folderView` setting and applies to every folder.
+
+- **Grid:** cards in the standard card grid, each with square artwork (round for artists), the
+  name in `text-sm` at 600, and the kind in `text-xs` `muted`. A nested folder says how many
+  items it holds.
+- **List:** 32 px rows with a 16 px kind icon instead of artwork, the name, and the kind at the
+  right end.
+
+Both views are one tab stop with roving focus. An entry whose kind has a page links to it; the
+others are plain rows until their page exists.
 
 ### Loading, empty, and error states
 
