@@ -229,10 +229,35 @@ theme returns when the pointer and focus both leave the picker, or the page clos
 row or pressing `Enter` or `Space` on it chooses and saves its theme. The list is one tab stop
 that starts on the chosen row, and moves like any other list (see Keyboard).
 
-Below the list, "Import theme…" and "Export current theme…" are round `surface-raised` buttons
+Below the list, "Edit a copy" opens the theme editor on a copy of the chosen theme, and
+"Import theme…" and "Export current theme…" are round `surface-raised` buttons
 that open the operating system's file dialogs. A result is reported in `muted` text inside an
 `output` element; a rejected file shows the reason in `danger` text inside an `alert`. The dialogs are
 modal to the app window.
+
+### Theme editor
+
+The editor takes the place of the theme picker and its buttons in the Appearance section, so a
+hovered row cannot preview over the theme being edited. Focus moves to its Name field when it
+opens and back to "Edit a copy" when it closes. A built-in or imported theme is never edited in
+place: the editor starts from a copy named "<theme> (copy)".
+
+From the top: Name and Author fields side by side, a "Color scheme" radio group (Dark, Light),
+then one `fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows) with a field
+for every token. The fields come from the `Theme` Schema, so a new token appears without changes
+to the editor. Each field is labelled with its token name, and its control fits the value:
+
+- **Colors:** the native color picker beside a hex text field. Both edit the same value.
+- **Radii and spacing:** a number field and a unit list (`px`, `rem`, `em`).
+- **Fonts and shadows:** a text field for the CSS value.
+
+Every valid change applies to the whole app at once. An invalid value gets a `danger` ring and a
+`text-xs` `danger` message under its field that describes it (`aria-describedby`), and the app
+keeps the last valid value. Save theme (round `accent`) stores the copy as an imported theme and
+chooses it; with a field still invalid or the name or author empty, it says so in an `alert`
+instead. A theme the main process refuses, such as one named like a built-in theme, shows its
+reason in the same `alert`. Cancel (round `surface-raised`), or leaving the page, discards the
+changes and restores the saved theme.
 
 ### Folder page
 

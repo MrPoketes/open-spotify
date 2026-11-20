@@ -17,6 +17,7 @@ import {
   exportCurrentThemeFromIpc,
   importThemeFileFromIpc,
   listImportedThemesFromIpc,
+  saveEditedThemeFromIpc,
 } from "./themes-ipc"
 
 export function registerIpcHandlers(): void {
@@ -49,6 +50,11 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle(ipcChannels.exportCurrentTheme, (event) =>
     mainRuntime.runPromise(exportCurrentThemeFromIpc(BrowserWindow.fromWebContents(event.sender))),
+  )
+  ipcMain.handle(ipcChannels.saveEditedTheme, (event, request: unknown) =>
+    mainRuntime.runPromise(
+      saveEditedThemeFromIpc(BrowserWindow.fromWebContents(event.sender), request),
+    ),
   )
   ipcMain.handle(ipcChannels.exportFolders, (event) =>
     mainRuntime.runPromise(exportFoldersFromIpc(BrowserWindow.fromWebContents(event.sender))),

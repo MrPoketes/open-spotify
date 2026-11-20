@@ -2,19 +2,19 @@ import { Effect, Record, Schema } from "effect"
 
 // Hex only, so the contrast of any theme can be computed without a CSS color
 // parser.
-const HexColor = Schema.String.check(
+export const HexColor = Schema.String.check(
   Schema.isPattern(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i, { expected: "a hex color like #1a2b3c" }),
 )
 
-const CssLength = Schema.String.check(
+export const CssLength = Schema.String.check(
   Schema.isPattern(/^(0|\d+(\.\d+)?(px|rem|em))$/, { expected: "a length like 8px or 0.5rem" }),
 )
 
-const CssValue = Schema.String.check(Schema.isNonEmpty())
+const CssValue = Schema.String.check(Schema.isNonEmpty({ expected: "a value" }))
 
 // docs/themes.md describes each token. Each one becomes the CSS custom
 // property `--theme-<token>`.
-const themeTokenSchemas = {
+export const themeTokenSchemas = {
   "color-canvas": HexColor,
   "color-surface": HexColor,
   "color-surface-raised": HexColor,
@@ -36,7 +36,7 @@ const themeTokenSchemas = {
   "shadow-overlay": CssValue,
 }
 
-type ThemeToken = keyof typeof themeTokenSchemas
+export type ThemeToken = keyof typeof themeTokenSchemas
 
 const systemFontStack =
   'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'

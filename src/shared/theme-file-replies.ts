@@ -15,5 +15,7 @@ export const ImportThemeReply = Schema.Union([
   ThemeImportFailed,
 ])
 
+export type ImportThemeReply = typeof ImportThemeReply.Type
+
 // The file the theme was written to, or null when the user canceled.
 export const ExportThemeReply = Schema.OptionFromNullOr(Schema.String)
