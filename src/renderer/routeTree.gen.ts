@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppShowShowIdRouteImport } from './routes/_app/show.$showId'
 
 const AppRoute = AppRouteImport.update({
@@ -34,6 +35,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppShowShowIdRoute = AppShowShowIdRouteImport.update({
   id: '/show/$showId',
   path: '/show/$showId',
@@ -44,11 +50,13 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/settings': typeof AppSettingsRoute
   '/show/$showId': typeof AppShowShowIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
   '/show/$showId': typeof AppShowShowIdRoute
 }
@@ -57,19 +65,21 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
   '/_app/show/$showId': typeof AppShowShowIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/onboarding' | '/show/$showId'
+  fullPaths: '/' | '/login' | '/onboarding' | '/settings' | '/show/$showId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/onboarding' | '/' | '/show/$showId'
+  to: '/login' | '/onboarding' | '/settings' | '/' | '/show/$showId'
   id:
     | '__root__'
     | '/_app'
     | '/login'
     | '/onboarding'
+    | '/_app/settings'
     | '/_app/'
     | '/_app/show/$showId'
   fileRoutesById: FileRoutesById
@@ -110,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/show/$showId': {
       id: '/_app/show/$showId'
       path: '/show/$showId'
@@ -121,11 +138,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppShowShowIdRoute: typeof AppShowShowIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppShowShowIdRoute: AppShowShowIdRoute,
 }

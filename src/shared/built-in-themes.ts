@@ -5,6 +5,8 @@ export const ThemeId = Schema.Literals(["dark", "light"])
 
 export type ThemeId = typeof ThemeId.Type
 
+export const themeIds = ThemeId.literals
+
 export const defaultThemeId: ThemeId = "dark"
 
 export const builtInThemes: Record<ThemeId, Theme> = {
