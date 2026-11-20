@@ -77,24 +77,32 @@ If fewer than 5 unblocked issues are in `Todo`, create more from
 
 A milestone is finished when every roadmap item under its heading is ticketed and all of its
 Linear issues are `Done` or `Canceled`. Release PRs are titled
-`Release v<version>: <milestone name>`, which is how you tell which milestones already have one
-(`gh pr list --state all --search "<milestone name> in:title"`).
+`Release v<version>: <milestone name>`. List them with
+`gh pr list --state all --search "Release in:title" --json number,title,state,mergeCommit`.
+A milestone counts as released once it has an open or merged release PR; a closed, unmerged
+one does not count.
 
-- **A finished milestone has no release PR.** Bump the minor part of the version in
-  `package.json` on `main` (`0.1.0` becomes `0.2.0`). On a branch `release/v<version>` from
-  `origin/main`, run `npm pkg set version=<version>`, commit with the PR title, push, and open
-  the PR. Get it reviewed and enable auto-merge exactly as in steps 4 and 5.1 of
-  [worker.md](worker.md).
-- **A release PR has merged but its tag does not exist.** Check with
-  `git ls-remote --tags origin v<version>`, which prints nothing for a missing tag. Tag the
-  merge commit and push the tag:
+Handle the first case that applies, then go on to step 6. Only one release PR is open at a
+time, so two releases never claim the same version.
 
-  ```sh
-  git tag v<version> "$(gh pr view <number> --json mergeCommit --jq .mergeCommit.oid)"
-  git push origin v<version>
-  ```
+1. **A release PR is open.** Keep it moving as a worker would: if a check failed or it has
+   conflicts, fix it as in steps 5.3 and 5.4 of [worker.md](worker.md). Release nothing else.
+2. **A release PR has merged but its tag does not exist.** Check with
+   `git ls-remote --tags origin v<version>`, which prints nothing for a missing tag. Tag the
+   merge commit and push the tag:
 
-  The release workflow builds the installers and publishes the GitHub release.
+   ```sh
+   git tag v<version> "$(gh pr view <number> --json mergeCommit --jq .mergeCommit.oid)"
+   git push origin v<version>
+   ```
+
+   The release workflow builds the installers and publishes the GitHub release.
+
+3. **The earliest finished milestone is not released.** Take the version in `package.json` on
+   `origin/main` and bump its minor part (`0.1.0` becomes `0.2.0`). On a branch
+   `release/v<version>` from `origin/main`, run `npm pkg set version=<version>`, commit with the
+   PR title, push, and open the PR. Get it reviewed and enable auto-merge exactly as in steps 4
+   and 5.1 of [worker.md](worker.md).
 
 ## 6. Daily quality sweep
 

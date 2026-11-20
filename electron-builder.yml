@@ -20,8 +20,8 @@ mac:
   category: public.app-category.music
   # Apple Silicon reports an unsigned app as "damaged" and offers no way to open
   # it. An ad-hoc signature needs no certificate and lets Gatekeeper's "Open
-  # Anyway" work. Hardened runtime would reject Electron's frameworks, which are
-  # signed by a different team.
+  # Anyway" work. Hardened runtime would make library validation reject
+  # Electron's frameworks, whose signatures carry a different Team ID.
   identity: "-"
   hardenedRuntime: false
 linux:
