@@ -1,6 +1,8 @@
 # The autonomous pipeline
 
-The owner is not in the loop. Agents plan, build, review, and merge.
+The owner is not in the loop. Agents plan, build, review, and merge. The one exception is a
+pull request from an outside contributor's fork: the owner starts its review and merges it
+([CONTRIBUTING.md](../../CONTRIBUTING.md)).
 
 ```
  Linear (team ARM, project "Open Spotify")

@@ -15,8 +15,11 @@ Work through the steps in order. Be brief: most runs change little.
 - Linear: issues in project `Open Spotify` in `Todo`, `In Progress`, and `In Review`
   (`list_issues` with `project` and `state`). Note each issue's priority, `blocked by` links,
   and `gitBranchName`.
-- GitHub: `gh pr list --state open --json number,title,headRefName,statusCheckRollup,mergeable`
-  and `gh pr list --state merged --limit 20 --json number,title,mergedAt`.
+- GitHub: `gh pr list --state open --json number,title,headRefName,isCrossRepository,statusCheckRollup,mergeable`
+  and `gh pr list --state merged --limit 20 --json number,title,mergedAt`. A PR with
+  `isCrossRepository: true` comes from an outside contributor's fork and is outside the
+  pipeline: do not review, fix, or merge it. The owner starts its reviews by hand, as
+  [CONTRIBUTING.md](../../CONTRIBUTING.md) tells contributors.
 - T3: `t3_thread_list` for this project. Worker threads are titled `ARM-<n>: <title>`.
 
 ## 2. Reconcile
@@ -81,12 +84,13 @@ the `projectMilestone` and `status` fields (`get_milestone` does not list them).
 **released** when a merged release PR names it and GitHub has a release for that PR's version.
 Milestones go in Linear's order (`list_milestones`).
 
-A release PR is titled `Release v<version>: <milestone name>` and changes only `version` in
-`package.json`. List release PRs with:
+A release PR is titled `Release v<version>: <milestone name>`, changes only `version` in
+`package.json`, and comes from a branch in this repository, never a fork. List release PRs with:
 
 ```sh
-gh pr list --state all --search "Release in:title" --limit 100 --json number,title,state,mergedAt \
-  --jq '[.[] | select(.title | startswith("Release v"))]'
+gh pr list --state all --search "Release in:title" --limit 100 \
+  --json number,title,state,mergedAt,isCrossRepository \
+  --jq '[.[] | select((.title | startswith("Release v")) and (.isCrossRepository | not))]'
 ```
 
 Do not search for `"Release v in:title"`: GitHub treats `v` as a separate word and finds nothing.
