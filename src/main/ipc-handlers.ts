@@ -9,6 +9,7 @@ import {
   logOutFromIpc,
 } from "./auth/spotify-session-ipc"
 import type { Folders } from "./folders"
+import { exportFoldersFromIpc, importFoldersFromIpc } from "./folders-file-ipc"
 import { folderIpcOperations } from "./folders-ipc"
 import { mainRuntime } from "./main-runtime"
 import { getSettingFromIpc, setSettingFromIpc } from "./settings-ipc"
@@ -35,6 +36,8 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.cancelLogIn, () => mainRuntime.runPromise(cancelLogInFromIpc))
   ipcMain.handle(ipcChannels.getAccessToken, () => mainRuntime.runPromise(getAccessTokenFromIpc))
   ipcMain.handle(ipcChannels.logOut, () => mainRuntime.runPromise(logOutFromIpc))
+  ipcMain.handle(ipcChannels.exportFolders, () => mainRuntime.runPromise(exportFoldersFromIpc))
+  ipcMain.handle(ipcChannels.importFolders, () => mainRuntime.runPromise(importFoldersFromIpc))
   // Each operation returns its own reply type. Widening them to one function
   // type lets TypeScript call any of them in this loop.
   const folderOperations =

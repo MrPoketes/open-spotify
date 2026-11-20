@@ -11,6 +11,12 @@ import {
   type RemoveFolderItemRequest,
   type RenameFolderRequest,
 } from "../../shared/folders"
+import {
+  ExportFoldersReply,
+  type FoldersImportOutcome,
+  type ImportFoldersError,
+  ImportFoldersReply,
+} from "../../shared/folders-file-replies"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
 import {
   type SettingKey,
@@ -65,6 +71,11 @@ export class DesktopBridge extends Context.Service<
     readonly moveFolderItem: (
       request: MoveFolderItemRequest,
     ) => Effect.Effect<void, DesktopBridgeError>
+    readonly exportFolders: Effect.Effect<ExportFoldersReply, DesktopBridgeError>
+    readonly importFolders: Effect.Effect<
+      FoldersImportOutcome,
+      ImportFoldersError | DesktopBridgeError
+    >
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
@@ -112,6 +123,14 @@ export class DesktopBridge extends Context.Service<
       removeFolderItem: (request) => send(ipcChannels.removeFolderItem, Schema.Undefined, request),
       moveFolder: (request) => send(ipcChannels.moveFolder, Schema.Undefined, request),
       moveFolderItem: (request) => send(ipcChannels.moveFolderItem, Schema.Undefined, request),
+      exportFolders: send(ipcChannels.exportFolders, ExportFoldersReply),
+      importFolders: send(ipcChannels.importFolders, ImportFoldersReply).pipe(
+        Effect.flatMap((reply) =>
+          reply._tag === "FoldersImported" || reply._tag === "FileDialogCanceled"
+            ? Effect.succeed(reply)
+            : Effect.fail(reply),
+        ),
+      ),
     })
   }
 

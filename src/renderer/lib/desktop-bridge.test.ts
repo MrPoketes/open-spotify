@@ -3,6 +3,7 @@ import { Effect, Option } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
 import { LoginFailed, SessionExpired } from "../../shared/spotify-auth-replies"
 import type { Folder, FolderTree } from "../../shared/folders"
+import { FoldersFileUnsupportedVersion } from "../../shared/folders-file-replies"
 import { DesktopBridge } from "./desktop-bridge"
 import { fakeMainProcess } from "./fake-main-process"
 
@@ -114,6 +115,20 @@ describe("DesktopBridge", () => {
       const folderTree = yield* bridge.getFolderTree
 
       assert.deepStrictEqual(folderTree, reply)
+    }),
+  )
+
+  // The sidebar tells the user which version a refused file came from, so the
+  // error must keep its tag and fields across IPC.
+  it.effect("fails with the reason the main process gives for refusing a folders file", () =>
+    Effect.gen(function* () {
+      const bridge = DesktopBridge.make(
+        desktopApiReplying({ _tag: "FoldersFileUnsupportedVersion", version: 2 }),
+      )
+
+      const error = yield* Effect.flip(bridge.importFolders)
+
+      assert.deepStrictEqual(error, new FoldersFileUnsupportedVersion({ version: 2 }))
     }),
   )
 })
