@@ -48,6 +48,9 @@ window loads the Vite dev server instead.
 - Effect programs run through `rendererRuntime` (`src/renderer/lib/renderer-runtime.ts`).
 - The renderer calls the Spotify Web API directly with an access token it requests from the
   main process.
+- `src/renderer/client.tsx` replaces TanStack Start's default client entry. It applies the
+  saved theme (`src/renderer/features/themes`) before React hydrates, and the main process
+  creates the window with that theme's background color, so the wrong theme never flashes.
 
 ## IPC contract
 

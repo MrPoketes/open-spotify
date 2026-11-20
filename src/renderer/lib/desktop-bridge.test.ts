@@ -1,30 +1,12 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect, Option, Schema } from "effect"
+import { Effect, Option } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
-import { ipcChannels } from "../../shared/ipc-channels"
-import { GetSettingRequest, SetSettingRequest } from "../../shared/settings"
 import { DesktopBridge } from "./desktop-bridge"
+import { fakeMainProcess } from "./fake-main-process"
 
 const desktopApiReplying = (reply: unknown): DesktopApi => ({
   invoke: () => Promise.resolve(reply),
 })
-
-// Decodes settings requests with the same Schemas as the real main process and
-// keeps the values in memory.
-const fakeMainProcess = (): DesktopApi => {
-  const storedSettings = new Map<string, unknown>()
-  return {
-    invoke: (channel, request) => {
-      if (channel === ipcChannels.setSetting) {
-        const { key, value } = Schema.decodeUnknownSync(SetSettingRequest)(request)
-        storedSettings.set(key, value)
-        return Promise.resolve(undefined)
-      }
-      const { key } = Schema.decodeUnknownSync(GetSettingRequest)(request)
-      return Promise.resolve(storedSettings.get(key) ?? null)
-    },
-  }
-}
 
 describe("DesktopBridge", () => {
   it.effect("returns app info when the main process replies with the expected shape", () =>

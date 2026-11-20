@@ -3,13 +3,18 @@ import { BrowserWindow, shell } from "electron"
 import { Effect, Schedule, Schema } from "effect"
 import { rendererDevServerUrl } from "../shared/dev-server"
 import { rendererEntryUrl } from "./renderer-protocol"
+import { loadSavedTheme } from "./saved-theme"
 
 class RendererLoadError extends Schema.TaggedError<RendererLoadError>()("RendererLoadError", {
   cause: Schema.Defect(),
 }) {}
 
 export const createMainWindow = Effect.gen(function* () {
+  const savedTheme = yield* loadSavedTheme
   const window = new BrowserWindow({
+    // The page sets its colors only once its script has applied the theme, so
+    // until then the window shows this color instead of a white flash.
+    backgroundColor: savedTheme.tokens["color-canvas"],
     width: 1280,
     height: 800,
     minWidth: 940,

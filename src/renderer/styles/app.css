@@ -1,7 +1,9 @@
 @import "tailwindcss";
-@import "./tokens.css";
 
 /*
+ * The `--theme-*` properties are set on the document root by the theme engine
+ * (src/renderer/features/themes/apply-theme.ts) before the first render.
+ *
  * `inline` makes each class read the theme variable on the element it is used
  * on, instead of a copy resolved once on :root. That lets a theme apply to part
  * of the page, such as a preview in the theme picker.
