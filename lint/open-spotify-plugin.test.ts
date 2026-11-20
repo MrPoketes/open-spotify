@@ -52,6 +52,7 @@ ruleTester.run("no-hard-coded-colors", noHardCodedColors, {
     'const classes = "bg-transparent text-current fill-current"',
     'const anchor = "#add-to-folder"',
     'const copyright = "&#169; 2026"',
+    'const caption = "The red-500 swatch was removed"',
   ],
   invalid: [
     { code: 'const style = { color: "#fff" }', errors: [{ messageId: "colorLiteral" }] },
@@ -59,6 +60,7 @@ ruleTester.run("no-hard-coded-colors", noHardCodedColors, {
     { code: "const fill = `rgb(0 0 0 / ${alpha})`", errors: [{ messageId: "colorLiteral" }] },
     { code: 'const color = "hsl(10 20% 30%)"', errors: [{ messageId: "colorLiteral" }] },
     { code: 'const color = "oklch(0.7 0.1 30)"', errors: [{ messageId: "colorLiteral" }] },
+    { code: 'const color = "color(display-p3 1 0 0)"', errors: [{ messageId: "colorLiteral" }] },
     { code: 'const classes = "p-4 bg-[#123456]"', errors: [{ messageId: "colorLiteral" }] },
     { code: 'const classes = "text-[rgb(1_2_3)]"', errors: [{ messageId: "colorLiteral" }] },
     {

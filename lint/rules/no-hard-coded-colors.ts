@@ -3,9 +3,10 @@ import type { ESTree } from "@oxlint/plugins"
 
 // Hex colors and CSS color functions, including inside Tailwind arbitrary
 // values such as `bg-[#123456]`. The `&` lookbehind keeps HTML character
-// references like `&#123;` from reading as colors.
+// references like `&#123;` from reading as colors, and the lookahead keeps
+// anchors that start with hex letters, like `#add-to-folder`, from matching.
 const colorLiteral =
-  /(?<![&\w])#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})(?![\w-])|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(/gi
+  /(?<![&\w])#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})(?![\w-])|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/gi
 
 const paletteColors = [
   "slate",
@@ -40,7 +41,14 @@ const colorUtilities = [
   "bg",
   "text",
   "border",
-  "border-[xytrblse]",
+  "border-x",
+  "border-y",
+  "border-t",
+  "border-r",
+  "border-b",
+  "border-l",
+  "border-s",
+  "border-e",
   "outline",
   "ring",
   "ring-offset",
@@ -103,7 +111,8 @@ export const noHardCodedColors = defineRule({
   },
 })
 
-// Strips variants and the important flag: `hover:!bg-red-500` -> `bg-red-500`.
+// Tailwind 3 writes the important flag before the utility (`!bg-red-500`)
+// and Tailwind 4 after it (`bg-red-500!`); both still apply the class.
 function utilityName(className: string): string {
   const withoutVariants = className.slice(className.lastIndexOf(":") + 1)
   return withoutVariants.replaceAll("!", "")
