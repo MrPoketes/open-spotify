@@ -143,6 +143,17 @@ Color is used by role, never by hue. A component asks for "muted text on a raise
 the theme decides what that looks like. The default theme is a cool, near-black neutral with a
 warm coral accent.
 
+### App icon
+
+The icon is a coral ring, open at the top right, around a light play triangle, on a dark tile
+that fades from `surface-overlay` to `canvas`. It reads as "open" and "play" without borrowing
+anything from Spotify's logo: no green, no circle of sound waves.
+
+The operating system shows the icon outside the app, where themes do not reach, so its colors
+are fixed to the default dark theme's values. The source is [`build/icon.svg`](../build/icon.svg),
+drawn on a 1024 px canvas with the tile inset 100 px, the margin macOS expects. After editing
+it, run `pnpm icons` and commit the regenerated `.ico`, `.icns`, and PNG files.
+
 ## Design tokens
 
 A theme sets the design tokens, plus whether it is dark or light (see Themes below). The token

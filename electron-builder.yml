@@ -1,5 +1,4 @@
 appId: dev.openspotify.app
-productName: Open Spotify
 directories:
   output: release
 # Only the compiled app is shipped. The renderer's server bundle (dist/server)
@@ -12,11 +11,13 @@ asar: true
 artifactName: ${name}-${version}-${arch}.${ext}
 win:
   target: nsis
+  icon: build/icon.ico
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 mac:
   target: dmg
+  icon: build/icon.icns
   category: public.app-category.music
   # Apple Silicon reports an unsigned app as "damaged" and offers no way to open
   # it. An ad-hoc signature needs no certificate and lets Gatekeeper's "Open
@@ -28,5 +29,6 @@ linux:
   target:
     - AppImage
     - deb
+  icon: build/icons
   category: Audio
   maintainer: Armintas
