@@ -18,6 +18,9 @@ export class LoginStateMismatch extends Schema.TaggedError<LoginStateMismatch>()
 // that mistake reaches the app.
 export class LoginTimedOut extends Schema.TaggedError<LoginTimedOut>()("LoginTimedOut", {}) {}
 
+// The user cancelled the login, or started a new one that replaced it.
+export class LoginCancelled extends Schema.TaggedError<LoginCancelled>()("LoginCancelled", {}) {}
+
 export class LoginFailed extends Schema.TaggedError<LoginFailed>()("LoginFailed", {
   message: Schema.String,
 }) {}
@@ -28,6 +31,7 @@ export const LogInError = Schema.Union([
   LoginDenied,
   LoginStateMismatch,
   LoginTimedOut,
+  LoginCancelled,
   LoginFailed,
 ])
 

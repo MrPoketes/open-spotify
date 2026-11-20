@@ -1,4 +1,5 @@
 import { createFileRoute, getRouteApi } from "@tanstack/react-router"
+import { LogOutButton } from "../../features/login/log-out-button"
 import { loadSavedThemeId } from "../../features/themes/saved-theme"
 import { ThemeToggle } from "../../features/themes/theme-toggle"
 import { rendererRuntime } from "../../lib/renderer-runtime"
@@ -20,7 +21,10 @@ function HomePage() {
       <p className="text-muted">
         Version {appInfo.version} on {appInfo.platform}
       </p>
-      <ThemeToggle savedThemeId={savedThemeId} />
+      <div className="flex gap-2">
+        <ThemeToggle savedThemeId={savedThemeId} />
+        <LogOutButton />
+      </div>
     </section>
   )
 }

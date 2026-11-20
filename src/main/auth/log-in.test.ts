@@ -150,4 +150,51 @@ describe("SpotifySession.logIn", () => {
       assert.strictEqual(error._tag, "LoginFailed")
     }).pipe(Effect.provide(fakeSpotifySession(spotifyAccounts, browserWithUnknownCode)))
   })
+
+  it.effect("ends a login that waits for the browser with LoginCancelled when cancelled", () => {
+    const spotifyAccounts = makeFakeSpotifyAccounts()
+    const browserOpened = Deferred.makeUnsafe<void>()
+    const silentBrowser = fakeBrowser(() => Deferred.succeed(browserOpened, undefined))
+    return Effect.gen(function* () {
+      const session = yield* SpotifySession
+      yield* saveFakeClientId
+
+      const login = yield* Effect.forkChild(Effect.flip(session.logIn))
+      yield* Deferred.await(browserOpened)
+      yield* session.cancelLogIn
+      const error = yield* Fiber.join(login)
+
+      assert.strictEqual(error._tag, "LoginCancelled")
+    }).pipe(Effect.provide(fakeSpotifySession(spotifyAccounts, silentBrowser)))
+  })
+
+  // The first login holds the redirect port for up to five minutes. Without
+  // replacing it, clicking "Log in" again would fail with LoginPortInUse.
+  it.effect("replaces a login that waits for the browser when the user logs in again", () => {
+    const spotifyAccounts = makeFakeSpotifyAccounts()
+    const firstBrowserOpened = Deferred.makeUnsafe<void>()
+    let browserOpenings = 0
+    const browserIgnoringFirstLogin = fakeBrowser((authorizeUrl) => {
+      browserOpenings += 1
+      if (browserOpenings === 1) {
+        return Deferred.succeed(firstBrowserOpened, undefined)
+      }
+      return callBack({
+        code: spotifyAccounts.approve(authorizeUrl),
+        state: authorizeUrl.searchParams.get("state") ?? "",
+      })
+    })
+    return Effect.gen(function* () {
+      const session = yield* SpotifySession
+      yield* saveFakeClientId
+
+      const firstLogin = yield* Effect.forkChild(Effect.flip(session.logIn))
+      yield* Deferred.await(firstBrowserOpened)
+      yield* session.logIn
+      const firstLoginError = yield* Fiber.join(firstLogin)
+
+      assert.strictEqual(firstLoginError._tag, "LoginCancelled")
+      assert.strictEqual(yield* session.getAccessToken, "access-token-1")
+    }).pipe(Effect.provide(fakeSpotifySession(spotifyAccounts, browserIgnoringFirstLogin)))
+  })
 })

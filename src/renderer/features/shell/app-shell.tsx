@@ -1,10 +1,10 @@
-import { type ReactNode, useState } from "react"
+import { type ReactNode, use, useState } from "react"
 import {
   defaultSidebarWidth,
   maximumSidebarWidth,
   minimumSidebarWidth,
 } from "../../../shared/sidebar-width"
-import { rendererRuntime } from "../../lib/renderer-runtime"
+import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { PaneDivider } from "../../ui/pane-divider"
 import { NowPlayingBar } from "./now-playing-bar"
 import { saveSidebarWidth } from "./saved-sidebar-width"
@@ -19,6 +19,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ savedSidebarWidth, platform, children }: AppShellProps) {
+  const runtime = use(RendererRuntimeContext)
   const [sidebarWidth, setSidebarWidth] = useState(savedSidebarWidth)
   useHistoryShortcuts(platform)
 
@@ -33,7 +34,7 @@ export function AppShell({ savedSidebarWidth, platform, children }: AppShellProp
           maximumWidth={maximumSidebarWidth}
           defaultWidth={defaultSidebarWidth}
           onResize={setSidebarWidth}
-          onResizeEnd={(width) => rendererRuntime.runFork(saveSidebarWidth(width))}
+          onResizeEnd={(width) => runtime.runFork(saveSidebarWidth(width))}
         />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
           <TopBar />
