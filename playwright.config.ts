@@ -4,6 +4,4 @@ import { defineConfig } from "@playwright/test"
 // first. Electron needs no browser download.
 export default defineConfig({
   testDir: "e2e",
-  // CI uploads test-results/ when a run fails, traces included.
-  use: { trace: "retain-on-failure" },
 })

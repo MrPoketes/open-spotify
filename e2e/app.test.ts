@@ -50,34 +50,33 @@ async function windowErrors(appWindow: Page): Promise<Array<string>> {
 
 const test = base.extend<{ electronApp: ElectronApplication; appWindow: Page }>({
   // oxlint-disable-next-line no-empty-pattern -- Playwright reads a fixture's dependencies from this pattern, and this fixture has none
-  electronApp: async ({}, use, testInfo) => {
+  electronApp: async ({}, provide, testInfo) => {
     // A fresh output folder per test, so every launch starts from an empty profile.
     const userDataDirectory = testInfo.outputPath("user-data")
     const electronApp = await _electron.launch({
       executablePath: packagedAppExecutable(),
       args: [`--user-data-dir=${userDataDirectory}`],
     })
-    await use(electronApp)
+    // Playwright's trace option does not cover Electron windows, so tracing
+    // starts here. CI uploads test-results/ when a run fails.
+    await electronApp.context().tracing.start({ screenshots: true, snapshots: true })
+    await provide(electronApp)
+    await electronApp.context().tracing.stop({ path: testInfo.outputPath("trace.zip") })
     await electronApp.close()
   },
-  appWindow: async ({ electronApp }, use) => {
-    await use(await electronApp.firstWindow())
+  appWindow: async ({ electronApp }, provide) => {
+    await provide(await electronApp.firstWindow())
   },
 })
 
-test("opens on the onboarding screen without errors on an empty profile", async ({ appWindow }) => {
-  await expect(appWindow.getByRole("heading", { name: "Connect Open Spotify" })).toBeVisible()
-  await expect(appWindow.getByRole("textbox", { name: "Client ID" })).toBeVisible()
-  expect(await windowErrors(appWindow)).toEqual([])
-})
-
-test("logs in against fake Spotify and moves between pages with the keyboard", async ({
+test("starts on onboarding, logs in against fake Spotify, and moves between pages with the keyboard", async ({
   electronApp,
   appWindow,
 }) => {
   await serveFakeWebApi(electronApp.context())
   await fakeSpotifyAccounts(electronApp)
 
+  await expect(appWindow.getByRole("heading", { name: "Connect Open Spotify" })).toBeVisible()
   await appWindow.getByRole("textbox", { name: "Client ID" }).fill("fake-client-id")
   await appWindow.keyboard.press("Enter")
   await appWindow.getByRole("button", { name: "Log in with Spotify" }).click()
