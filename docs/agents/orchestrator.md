@@ -73,7 +73,30 @@ If fewer than 5 unblocked issues are in `Todo`, create more from
   item is never ticketed twice. Linear is the record of what has been ticketed; do not edit
   the roadmap for that.
 
-## 5. Daily quality sweep
+## 5. Release finished milestones
+
+A milestone is finished when every roadmap item under its heading is ticketed and all of its
+Linear issues are `Done` or `Canceled`. Release PRs are titled
+`Release v<version>: <milestone name>`, which is how you tell which milestones already have one
+(`gh pr list --state all --search "<milestone name> in:title"`).
+
+- **A finished milestone has no release PR.** Bump the minor part of the version in
+  `package.json` on `main` (`0.1.0` becomes `0.2.0`). On a branch `release/v<version>` from
+  `origin/main`, run `npm pkg set version=<version>`, commit with the PR title, push, and open
+  the PR. Get it reviewed and enable auto-merge exactly as in steps 4 and 5.1 of
+  [worker.md](worker.md).
+- **A release PR has merged but its tag does not exist.** Check with
+  `git ls-remote --tags origin v<version>`, which prints nothing for a missing tag. Tag the
+  merge commit and push the tag:
+
+  ```sh
+  git tag v<version> "$(gh pr view <number> --json mergeCommit --jq .mergeCommit.oid)"
+  git push origin v<version>
+  ```
+
+  The release workflow builds the installers and publishes the GitHub release.
+
+## 6. Daily quality sweep
 
 Once per day (look for a `Quality sweep YYYY-MM-DD` issue created today), create an issue titled
 `Quality sweep <date>` with priority High:
@@ -83,7 +106,7 @@ Once per day (look for a `Quality sweep YYYY-MM-DD` issue created today), create
 > code, purposeless tests, duplicated logic. Fix it. For every pattern found more than once,
 > add a lint rule or tighten AGENTS.md, and log it in docs/agents/slop-log.md.
 
-## 6. Report
+## 7. Report
 
 Post a status update on the Linear project (`save_status_update`) only when something changed
 since the last one: issues finished, workers started, problems found. Keep it to a few lines.

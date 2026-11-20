@@ -9,6 +9,7 @@ files:
   - dist/client/**
   - package.json
 asar: true
+artifactName: ${name}-${version}-${arch}.${ext}
 win:
   target: nsis
 nsis:
@@ -17,6 +18,12 @@ nsis:
 mac:
   target: dmg
   category: public.app-category.music
+  # Apple Silicon reports an unsigned app as "damaged" and offers no way to open
+  # it. An ad-hoc signature needs no certificate and lets Gatekeeper's "Open
+  # Anyway" work. Hardened runtime would reject Electron's frameworks, which are
+  # signed by a different team.
+  identity: "-"
+  hardenedRuntime: false
 linux:
   target:
     - AppImage

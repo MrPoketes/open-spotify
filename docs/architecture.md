@@ -85,3 +85,6 @@ Each side decodes what it receives, so a mismatch shows up as a typed error at t
 | Installers       | electron-builder (`electron-builder.yml`) | `release/`    |
 
 `dist/server` is a by-product of prerendering the SPA shell and is not shipped.
+
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which builds the installers on each OS
+and attaches them to a GitHub release.
