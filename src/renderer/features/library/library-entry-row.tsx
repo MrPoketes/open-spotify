@@ -18,8 +18,6 @@ interface LibraryEntryRowProps {
   readonly actions: LibraryEntryActions
 }
 
-const entryRowClassName = "flex min-w-0 flex-1 items-center gap-3 rounded-small px-2 py-1"
-
 // The pin button stays out of the tab order, so a list remains one tab stop
 // (docs/design.md); keyboard users pin the focused row with P instead.
 export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: LibraryEntryRowProps) {
@@ -33,19 +31,19 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
     actions.togglePin(entry)
   }
 
-  const rowProps = {
-    ...rovingProps,
-    ref: (row: HTMLElement | null) => {
-      rovingProps.ref(row)
-      focusAfterPin(row)
-    },
-    onKeyDown: togglePinWithKey,
-    "aria-keyshortcuts": "P",
-  }
-
   return (
     <div className="group flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised">
-      <Link {...entry.page} {...rowProps} className={entryRowClassName}>
+      <Link
+        {...entry.page}
+        {...rovingProps}
+        ref={(row: HTMLElement | null) => {
+          rovingProps.ref(row)
+          focusAfterPin(row)
+        }}
+        onKeyDown={togglePinWithKey}
+        aria-keyshortcuts="P"
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-small px-2 py-1"
+      >
         <LibraryEntryArtwork kind={entry.kind} images={entry.images} />
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-sm">{entry.name}</span>
