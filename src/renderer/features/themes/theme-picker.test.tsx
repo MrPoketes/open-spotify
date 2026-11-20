@@ -51,6 +51,7 @@ describe("ThemePicker", () => {
 
     await userEvent.click(lightOption())
     await userEvent.unhover(lightOption())
+    await userEvent.tab()
 
     expect(lightOption()).toHaveAttribute("aria-pressed", "true")
     expect(appliedAccent()).toBe(lightAccent)

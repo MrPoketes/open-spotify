@@ -62,4 +62,13 @@ describe("saved theme", () => {
       assert.strictEqual(yield* loadSavedThemeId, "light")
     }).pipe(Effect.provide(bridgeOver(fakeMainProcess()))),
   )
+
+  // A failed save must not undo the switch the user just saw happen.
+  it.effect("keeps the selected theme applied when it cannot be saved", () =>
+    Effect.gen(function* () {
+      yield* selectTheme("light")
+
+      assert.strictEqual(appliedToken("color-accent"), builtInThemes.light.tokens["color-accent"])
+    }).pipe(Effect.provide(bridgeOver(unreachableMainProcess))),
+  )
 })

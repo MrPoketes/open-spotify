@@ -18,8 +18,13 @@ export const restoreSavedTheme = Effect.gen(function* () {
   applyTheme(builtInThemes[themeId])
 })
 
-export const selectTheme = Effect.fn("selectTheme")(function* (themeId: ThemeId) {
-  applyTheme(builtInThemes[themeId])
-  const bridge = yield* DesktopBridge
-  yield* bridge.setSetting("themeId", themeId)
-})
+export const selectTheme = Effect.fn("selectTheme")(
+  function* (themeId: ThemeId) {
+    applyTheme(builtInThemes[themeId])
+    const bridge = yield* DesktopBridge
+    yield* bridge.setSetting("themeId", themeId)
+  },
+  Effect.catchTag("DesktopBridgeError", (error) =>
+    Effect.logWarning("Could not save the selected theme", error),
+  ),
+)

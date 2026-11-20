@@ -49,7 +49,7 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 
 ```
 ┌──────────────┬─────────────────────────────────────┬──────────────┐
-│              │ top bar: back, forward, search      │              │
+│              │ top bar: back, forward, search, ⚙   │              │
 │   sidebar    ├─────────────────────────────────────┤  right pane  │
 │              │                                     │  (optional)  │
 │  200–420 px  │  main view, fluid                   │  280–400 px  │
@@ -62,7 +62,8 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 
 - Panes sit on the `canvas` color, separated by an 8 px gap. Each pane is a `surface` with
   `radius-medium` corners. The gap doubles as the resize handle.
-- The top bar is 56 px tall and belongs to the main view, not the window.
+- The top bar is 56 px tall and belongs to the main view, not the window. A gear link to
+  Settings sits at its right end.
 - Card grids (albums, artists, folders) use `repeat(auto-fill, minmax(160px, 1fr))` with a
   24 px gap, so the column count follows the pane width.
 - Track lists use fixed columns: index, title and artist, album, date added, duration. Columns

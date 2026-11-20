@@ -3,12 +3,20 @@ import { themeCustomProperties } from "./apply-theme"
 
 // The swatch sets the theme's properties on itself, and app.css resolves
 // token classes on the element that uses them, so the classes inside draw
-// this theme instead of the one applied to the app.
+// this theme instead of the one applied to the app. Spacing is left out so
+// every swatch in the list is the same size.
+const swatchProperties = (theme: Theme) =>
+  Object.fromEntries(
+    Object.entries(themeCustomProperties(theme)).filter(
+      ([property]) => property !== "--theme-spacing",
+    ),
+  )
+
 export function ThemeSwatch({ theme }: { readonly theme: Theme }) {
   return (
     <div
       aria-hidden
-      style={themeCustomProperties(theme)}
+      style={swatchProperties(theme)}
       className="flex h-10 w-16 shrink-0 flex-col justify-between rounded-small bg-surface p-2 text-foreground ring-1 ring-border"
     >
       <span className="font-display text-xs leading-none font-bold">Aa</span>
