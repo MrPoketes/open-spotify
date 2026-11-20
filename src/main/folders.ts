@@ -60,26 +60,21 @@ export class Folders extends Context.Service<
     Folders,
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient
-      const entries = yield* makeFolderEntriesTable
+      const table = yield* makeFolderEntriesTable
 
       const requireFolder = (folderId: string) =>
-        entries
+        table
           .findFolder(folderId)
           .pipe(Effect.filterOrFail(Option.isSome, () => new FolderNotFound({ folderId })))
 
-      const requireItemEntryId = Effect.fn("Folders.requireItemEntryId")(function* (
-        folderId: string,
-        uri: string,
-      ) {
-        const itemEntry = yield* entries.findItem({ folderId, uri })
-        if (Option.isNone(itemEntry)) {
-          return yield* new FolderItemNotFound({ folderId, uri })
-        }
-        return itemEntry.value.id
-      })
+      const requireItemEntryId = (folderId: string, uri: string) =>
+        table.findItem({ folderId, uri }).pipe(
+          Effect.filterOrFail(Option.isSome, () => new FolderItemNotFound({ folderId, uri })),
+          Effect.map((itemEntry) => itemEntry.value.id),
+        )
 
       const requireOutsideSubtree = (folderId: string, parentFolderId: string) =>
-        entries.listFolderAndAncestors(parentFolderId).pipe(
+        table.listFolderAndAncestors(parentFolderId).pipe(
           Effect.filterOrFail(
             (lineage) => !lineage.some((ancestor) => ancestor.id === folderId),
             () => new FolderMovedIntoOwnSubtree({ folderId, parentFolderId }),
@@ -87,29 +82,29 @@ export class Folders extends Context.Service<
         )
 
       return Folders.of({
-        readTree: entries.listAllInPositionOrder().pipe(Effect.map(assembleFolderTree)),
+        readTree: table.listAllInPositionOrder().pipe(Effect.map(assembleFolderTree)),
         createFolder: Effect.fn("Folders.createFolder")(function* ({ name, parentFolderId }) {
           if (parentFolderId !== null) {
             yield* requireFolder(parentFolderId)
           }
-          return yield* entries.insertFolder({ name, parentId: parentFolderId })
+          return yield* table.insertFolder({ name, parentId: parentFolderId })
         }, sql.withTransaction),
         renameFolder: Effect.fn("Folders.renameFolder")(function* ({ folderId, name }) {
           yield* requireFolder(folderId)
-          yield* entries.renameFolder(folderId, name)
+          yield* table.renameFolder(folderId, name)
         }, sql.withTransaction),
         deleteFolder: Effect.fn("Folders.deleteFolder")(function* ({ folderId }) {
           yield* requireFolder(folderId)
-          yield* entries.deleteEntry(folderId)
+          yield* table.deleteEntry(folderId)
         }, sql.withTransaction),
         addItem: Effect.fn("Folders.addItem")(function* ({ folderId, item }) {
           yield* requireFolder(folderId)
-          if (Option.isNone(yield* entries.findItem({ folderId, uri: item.uri }))) {
-            yield* entries.insertItem(folderId, item)
+          if (Option.isNone(yield* table.findItem({ folderId, uri: item.uri }))) {
+            yield* table.insertItem(folderId, item)
           }
         }, sql.withTransaction),
         removeItem: Effect.fn("Folders.removeItem")(function* ({ folderId, uri }) {
-          yield* entries.deleteEntry(yield* requireItemEntryId(folderId, uri))
+          yield* table.deleteEntry(yield* requireItemEntryId(folderId, uri))
         }, sql.withTransaction),
         moveFolder: Effect.fn("Folders.moveFolder")(function* ({
           folderId,
@@ -121,7 +116,7 @@ export class Folders extends Context.Service<
             yield* requireFolder(parentFolderId)
             yield* requireOutsideSubtree(folderId, parentFolderId)
           }
-          yield* entries.placeEntry({ entryId: folderId, parentId: parentFolderId, position })
+          yield* table.placeEntry({ entryId: folderId, parentId: parentFolderId, position })
         }, sql.withTransaction),
         moveItem: Effect.fn("Folders.moveItem")(function* ({
           folderId,
@@ -132,11 +127,11 @@ export class Folders extends Context.Service<
           const entryId = yield* requireItemEntryId(folderId, uri)
           yield* requireFolder(targetFolderId)
           // The target keeps a single copy of the item, at the requested position.
-          const copyInTarget = yield* entries.findItem({ folderId: targetFolderId, uri })
+          const copyInTarget = yield* table.findItem({ folderId: targetFolderId, uri })
           if (Option.isSome(copyInTarget) && copyInTarget.value.id !== entryId) {
-            yield* entries.deleteEntry(copyInTarget.value.id)
+            yield* table.deleteEntry(copyInTarget.value.id)
           }
-          yield* entries.placeEntry({ entryId, parentId: targetFolderId, position })
+          yield* table.placeEntry({ entryId, parentId: targetFolderId, position })
         }, sql.withTransaction),
       })
     }),

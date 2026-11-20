@@ -99,6 +99,25 @@ describe("Folders", () => {
     }).pipe(Effect.provide(freshFolders())),
   )
 
+  it.effect("reorders an item within its own folder without losing it", () =>
+    Effect.gen(function* () {
+      const folders = yield* Folders
+      const folderId = yield* folders.createFolder({ name: "Rock", parentFolderId: null })
+      yield* folders.addItem({ folderId, item: album })
+      yield* folders.addItem({ folderId, item: playlist })
+
+      yield* folders.moveItem({
+        folderId,
+        uri: playlist.uri,
+        targetFolderId: folderId,
+        position: 0,
+      })
+
+      const tree = yield* folders.readTree
+      assert.deepStrictEqual(entriesOf(tree), [[playlist, album]])
+    }).pipe(Effect.provide(freshFolders())),
+  )
+
   it.effect("deletes a folder with everything inside it and keeps new folders last", () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient

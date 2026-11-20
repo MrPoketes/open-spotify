@@ -25,7 +25,6 @@ const decodedFolderOperation =
       return yield* operation(folders, decodedRequest)
     })
 
-// Every folder channel, keyed by name, with the operation that answers it.
 export const folderIpcOperations = {
   [ipcChannels.getFolderTree]: () =>
     Effect.gen(function* () {
