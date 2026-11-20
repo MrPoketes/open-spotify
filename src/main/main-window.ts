@@ -8,7 +8,6 @@ import { rendererEntryUrl } from "./renderer-protocol"
 const rendererUrl = import.meta.env.DEV ? rendererDevServerUrl : rendererEntryUrl
 
 class RendererLoadError extends Schema.TaggedError<RendererLoadError>()("RendererLoadError", {
-  url: Schema.String,
   cause: Schema.Defect(),
 }) {}
 
@@ -54,7 +53,7 @@ export const createMainWindow = Effect.gen(function* () {
 function loadRenderer(window: BrowserWindow): Effect.Effect<void, RendererLoadError> {
   const load = Effect.tryPromise({
     try: () => window.loadURL(rendererUrl),
-    catch: (cause) => new RendererLoadError({ url: rendererUrl, cause }),
+    catch: (cause) => new RendererLoadError({ cause }),
   })
   if (!import.meta.env.DEV) {
     return load
