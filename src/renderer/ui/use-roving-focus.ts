@@ -14,6 +14,16 @@ const movesByKey: Partial<Record<string, Move>> = {
   End: (_, rowCount) => rowCount - 1,
 }
 
+// The row a key moves focus to, or undefined for keys a list ignores.
+export const targetRowForKey = (event: KeyboardEvent, activeIndex: number, rowCount: number) => {
+  const move = movesByKey[event.key]
+  // Modified keys belong to app-wide shortcuts such as Ctrl+K.
+  if (move === undefined || event.ctrlKey || event.metaKey || event.altKey) {
+    return undefined
+  }
+  return move(activeIndex, rowCount)
+}
+
 // A list is one tab stop (docs/design.md): only the active row is in the tab
 // order, and the arrow keys or j and k move focus between rows. The tab stop
 // starts on the first row, or on the given one, such as a list's chosen row.
@@ -25,13 +35,12 @@ export const useRovingFocus = (rowCount: number, initialIndex = 0) => {
   const activeIndex = Math.min(lastFocusedIndex, rowCount - 1)
 
   const onKeyDown = (event: KeyboardEvent) => {
-    const move = movesByKey[event.key]
-    // Modified keys belong to app-wide shortcuts such as Ctrl+K.
-    if (move === undefined || event.ctrlKey || event.metaKey || event.altKey) {
+    const targetRow = targetRowForKey(event, activeIndex, rowCount)
+    if (targetRow === undefined) {
       return
     }
     event.preventDefault()
-    rows.current[move(activeIndex, rowCount)]?.focus()
+    rows.current[targetRow]?.focus()
   }
 
   const rowProps = (index: number) => ({

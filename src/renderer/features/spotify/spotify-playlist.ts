@@ -11,13 +11,17 @@ const PlaylistOwner = Schema.Struct({
 
 export const PlaylistItem = Schema.Struct({
   // Null on some very old playlists.
-  addedAt: Schema.NullOr(Schema.String),
+  addedAt: Schema.NullOr(Schema.DateFromString),
   isLocal: Schema.Boolean,
   // Null when the track was removed from Spotify.
   item: Schema.NullOr(Schema.Union([Track, Episode])),
 }).pipe(Schema.encodeKeys({ addedAt: "added_at", isLocal: "is_local" }))
 
 export type PlaylistItem = typeof PlaylistItem.Type
+
+export const PlaylistItemsPage = Paging(PlaylistItem)
+
+export type PlaylistItemsPage = typeof PlaylistItemsPage.Type
 
 const playlistFields = {
   id: Schema.String,
@@ -41,7 +45,7 @@ export const Playlist = Schema.Struct({
   ...playlistFields,
   // Spotify includes the first page of items only for playlists the user owns
   // or collaborates on.
-  items: Schema.optionalKey(Paging(PlaylistItem)),
+  items: Schema.optionalKey(PlaylistItemsPage),
 })
 
 export type Playlist = typeof Playlist.Type

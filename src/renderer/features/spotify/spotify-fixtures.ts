@@ -100,7 +100,8 @@ export const fakePlaylists: ReadonlyArray<FakePlaylist> = [
   {
     id: "fake-playlist-late-night-drive",
     name: "Late Night Drive",
-    description: "Long roads, low lights.",
+    // Spotify sends descriptions HTML-escaped.
+    description: "Long roads &amp; low lights.",
     images: [{ url: coverUrl("late-night-drive"), width: 640, height: 640 }],
     owner: listener,
     collaborative: false,
@@ -124,6 +125,15 @@ export const fakePlaylists: ReadonlyArray<FakePlaylist> = [
     owner: listener,
     collaborative: false,
     entries: [],
+  },
+  {
+    id: "fake-playlist-big-archive",
+    name: "The Big Archive",
+    description: "",
+    images: [{ url: coverUrl("big-archive"), width: 640, height: 640 }],
+    owner: listener,
+    collaborative: false,
+    entries: tracks(1000, 1000).map(playlistEntry),
   },
   {
     id: "fake-playlist-road-trip",

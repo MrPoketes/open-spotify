@@ -1,0 +1,41 @@
+import { type KeyboardEvent, type RefObject, useEffect, useRef, useState } from "react"
+import { targetRowForKey } from "../../ui/use-roving-focus"
+
+interface RowFocusOptions {
+  readonly rowsRef: RefObject<HTMLElement | null>
+  readonly rowCount: number
+  readonly scrollToIndex: (index: number) => void
+}
+
+// Roving focus for a virtualised list. useRovingFocus cannot serve it: a row
+// far away is not in the DOM until the list scrolls to it, so focus moves on
+// the first render that contains it.
+export function useRowFocus({ rowsRef, rowCount, scrollToIndex }: RowFocusOptions) {
+  const [focusedIndex, setFocusedIndex] = useState(0)
+  const focusPending = useRef(false)
+
+  useEffect(() => {
+    if (!focusPending.current) {
+      return
+    }
+    const row = rowsRef.current?.querySelector<HTMLElement>(`[data-index="${focusedIndex}"]`)
+    if (!row) {
+      return
+    }
+    focusPending.current = false
+    row.focus()
+  })
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    const targetRow = targetRowForKey(event, focusedIndex, rowCount)
+    if (targetRow === undefined) {
+      return
+    }
+    event.preventDefault()
+    focusPending.current = true
+    setFocusedIndex(targetRow)
+    scrollToIndex(targetRow)
+  }
+
+  return { focusedIndex, setFocusedIndex, onKeyDown }
+}
