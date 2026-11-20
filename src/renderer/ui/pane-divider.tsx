@@ -30,6 +30,9 @@ export function PaneDivider({
 
   const resizeTo = (width: number) => {
     const clampedWidth = clampWidth(width)
+    if (clampedWidth === paneWidth) {
+      return
+    }
     onResize(clampedWidth)
     onResizeEnd(clampedWidth)
   }
@@ -50,12 +53,14 @@ export function PaneDivider({
     const stopDrag = () => {
       window.removeEventListener("pointermove", followPointer)
       window.removeEventListener("pointerup", stopDrag)
+      window.removeEventListener("pointercancel", stopDrag)
       if (draggedWidth !== paneWidth) {
         onResizeEnd(draggedWidth)
       }
     }
     window.addEventListener("pointermove", followPointer)
     window.addEventListener("pointerup", stopDrag)
+    window.addEventListener("pointercancel", stopDrag)
   }
 
   const widthForKey: Partial<Record<string, number>> = {
@@ -65,9 +70,10 @@ export function PaneDivider({
     End: maximumWidth,
   }
 
+  // Modified arrows belong to other shortcuts, such as Alt+Left for back.
   const resizeWithKeyboard = (event: KeyboardEvent) => {
     const width = widthForKey[event.key]
-    if (width === undefined) {
+    if (width === undefined || event.altKey || event.metaKey || event.ctrlKey) {
       return
     }
     event.preventDefault()

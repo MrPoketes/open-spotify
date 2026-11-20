@@ -1,22 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { Effect } from "effect"
+import { createFileRoute, getRouteApi } from "@tanstack/react-router"
 import { loadSavedThemeId } from "../../features/themes/saved-theme"
 import { ThemeToggle } from "../../features/themes/theme-toggle"
-import { DesktopBridge } from "../../lib/desktop-bridge"
 import { rendererRuntime } from "../../lib/renderer-runtime"
 
 export const Route = createFileRoute("/_app/")({
-  loader: () => rendererRuntime.runPromise(loadHomePage),
+  loader: () => rendererRuntime.runPromise(loadSavedThemeId),
   component: HomePage,
 })
 
-const loadHomePage = Effect.gen(function* () {
-  const bridge = yield* DesktopBridge
-  return yield* Effect.all({ appInfo: bridge.getAppInfo, savedThemeId: loadSavedThemeId })
-})
+const appShellRoute = getRouteApi("/_app")
 
 function HomePage() {
-  const { appInfo, savedThemeId } = Route.useLoaderData()
+  const savedThemeId = Route.useLoaderData()
+  const { appInfo } = appShellRoute.useLoaderData()
 
   return (
     <section className="flex flex-col items-start gap-2">

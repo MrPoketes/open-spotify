@@ -85,13 +85,30 @@ describe("AppShell", () => {
     expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "200")
   })
 
-  it("resizes the sidebar with the arrow keys", async () => {
+  it("resizes the sidebar with the keyboard", async () => {
     await renderAppShell({ savedSidebarWidth: 280 })
 
     sidebarDivider().focus()
     await userEvent.keyboard("{ArrowLeft}")
-
     expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "264")
+
+    await userEvent.keyboard("{End}")
+    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "420")
+
+    await userEvent.keyboard("{Home}")
+    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "200")
+  })
+
+  // Alt+Left is the back shortcut on Windows and Linux, so with the divider
+  // focused it must navigate without also shrinking the sidebar.
+  it("leaves the sidebar width alone when a history shortcut is pressed on the divider", async () => {
+    await renderAppShell({ savedSidebarWidth: 280 })
+
+    sidebarDivider().focus()
+    await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}")
+
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument()
+    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "280")
   })
 
   it("resets the sidebar width when the divider is double-clicked", async () => {
@@ -104,17 +121,16 @@ describe("AppShell", () => {
 
   it("restores the sidebar width the user chose after a restart", async () => {
     const firstLaunch = await renderAppShell({ savedSidebarWidth: 280 })
-    sidebarDivider().focus()
-    await userEvent.keyboard("{ArrowRight}")
+    await dragDivider(280, 350)
     await waitFor(async () => {
-      expect(await rendererRuntime.runPromise(loadSavedSidebarWidth)).toBe(296)
+      expect(await rendererRuntime.runPromise(loadSavedSidebarWidth)).toBe(350)
     })
     firstLaunch.unmount()
 
     const savedSidebarWidth = await rendererRuntime.runPromise(loadSavedSidebarWidth)
     await renderAppShell({ savedSidebarWidth })
 
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "296")
+    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "350")
   })
 
   it("goes back when the back button is pressed", async () => {
@@ -123,6 +139,16 @@ describe("AppShell", () => {
     await userEvent.click(screen.getByRole("button", { name: "Go back" }))
 
     expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument()
+  })
+
+  it("goes forward again after going back", async () => {
+    await renderAppShell()
+
+    await userEvent.click(screen.getByRole("button", { name: "Go back" }))
+    await screen.findByRole("heading", { name: "Home" })
+    await userEvent.click(screen.getByRole("button", { name: "Go forward" }))
+
+    expect(await screen.findByRole("heading", { name: "Album" })).toBeInTheDocument()
   })
 
   it.each([

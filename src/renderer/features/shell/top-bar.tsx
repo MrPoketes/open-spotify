@@ -19,7 +19,7 @@ export function TopBar() {
           type="search"
           aria-label="Search"
           placeholder="Search"
-          className="h-8 w-full rounded-full bg-surface-raised pr-3 pl-8 text-sm placeholder:text-muted"
+          className="h-8 w-full rounded-small bg-surface-raised pr-3 pl-8 text-sm shadow-raised placeholder:text-muted"
         />
       </div>
     </header>
