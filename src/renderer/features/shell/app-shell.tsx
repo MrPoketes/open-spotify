@@ -6,7 +6,7 @@ import {
 } from "../../../shared/sidebar-width"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { PaneDivider } from "../../ui/pane-divider"
-import { NowPlayingBar } from "./now-playing-bar"
+import { NowPlayingBar } from "../playback/now-playing-bar"
 import { saveSidebarWidth } from "./saved-sidebar-width"
 import { Sidebar } from "./sidebar"
 import { TopBar } from "./top-bar"

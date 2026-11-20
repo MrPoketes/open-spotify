@@ -1,6 +1,7 @@
 import { Effect, Layer } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
 import { SpotifyAccessToken } from "./spotify-access-token"
+import { fakePlayer } from "./spotify-fake-player"
 import {
   type FakePlaylist,
   fakeCurrentUser,
@@ -22,6 +23,7 @@ const embeddedItemLimit = 100
 // The page size Spotify uses when a request has no limit parameter.
 const defaultPageLimit = 20
 
+// A 204 response must not carry a body, not even "null".
 const jsonResponse = (
   request: HttpClientRequest.HttpClientRequest,
   status: number,
@@ -29,7 +31,10 @@ const jsonResponse = (
 ) =>
   HttpClientResponse.fromWeb(
     request,
-    new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } }),
+    new Response(body === undefined ? null : JSON.stringify(body), {
+      status,
+      headers: { "content-type": "application/json" },
+    }),
   )
 
 const errorBody = (status: number, message: string) => ({ error: { status, message } })
@@ -169,16 +174,16 @@ const respondTo = (url: URL): readonly [number, unknown] => {
 
 // A stand-in for api.spotify.com that serves the fixtures, so features can be
 // built and tested without logging in.
-export const spotifyFakeServer = Layer.succeed(
-  HttpClient.HttpClient,
-  HttpClient.make((request, url) => {
+export const spotifyFakeServer = Layer.sync(HttpClient.HttpClient, () => {
+  const respondToPlayer = fakePlayer()
+  return HttpClient.make((request, url) => {
     if (request.headers["authorization"] !== `Bearer ${fakeAccessToken}`) {
       return Effect.succeed(jsonResponse(request, 401, errorBody(401, "No token provided")))
     }
-    const [status, body] = respondTo(url)
+    const [status, body] = respondToPlayer(request, url) ?? respondTo(url)
     return Effect.succeed(jsonResponse(request, status, body))
-  }),
-)
+  })
+})
 
 export const spotifyFakeAccessToken = Layer.succeed(SpotifyAccessToken, {
   get: Effect.succeed(fakeAccessToken),

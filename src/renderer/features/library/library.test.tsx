@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Layer, Stream } from "effect"
+import type { Layer } from "effect"
+import { Effect, Stream } from "effect"
 import { describe, expect, it } from "vitest"
 import {
   AccessTokenUnavailable,
@@ -18,18 +19,6 @@ import {
 } from "../spotify/spotify-fixtures"
 import { Library } from "./library"
 
-// Replaces some of the fake Spotify API's operations, keeping the rest.
-const spotifyApiWith = (
-  overrides: (spotify: SpotifyApi["Service"]) => Partial<SpotifyApi["Service"]>,
-) =>
-  Layer.effect(
-    SpotifyApi,
-    Effect.gen(function* () {
-      const spotify = yield* SpotifyApi
-      return SpotifyApi.of({ ...spotify, ...overrides(spotify) })
-    }),
-  ).pipe(Layer.provide(SpotifyApi.layerFake))
-
 // Fails the first time it runs, like a request that hit a brief outage.
 const failingOnce = <A,>(stream: Stream.Stream<A, SpotifyApiError>) => {
   let hasFailed = false
@@ -46,7 +35,7 @@ const renderLibrary = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
   renderScreen(<Library />, fakeMainProcess(), spotifyApi)
 
 const failingWith = (error: SpotifyApiError) =>
-  spotifyApiWith(() => ({ savedShows: Stream.fail(error) }))
+  SpotifyApi.layerFakeWith(() => ({ savedShows: Stream.fail(error) }))
 
 const libraryEntries = async () => within(await screen.findByRole("list")).getAllByRole("listitem")
 
@@ -125,7 +114,7 @@ describe("Library", () => {
 
   it("explains where entries come from when the library is empty", async () => {
     renderLibrary(
-      spotifyApiWith(() => ({
+      SpotifyApi.layerFakeWith(() => ({
         likedSongsCount: Effect.succeed(0),
         currentUserPlaylists: Stream.empty,
         savedAlbums: Stream.empty,
@@ -141,7 +130,9 @@ describe("Library", () => {
   })
 
   it("loads the library again when Retry is pressed after a failed request", async () => {
-    renderLibrary(spotifyApiWith((spotify) => ({ savedShows: failingOnce(spotify.savedShows) })))
+    renderLibrary(
+      SpotifyApi.layerFakeWith((spotify) => ({ savedShows: failingOnce(spotify.savedShows) })),
+    )
 
     const failure = await screen.findByRole("alert")
     expect(failure).toHaveTextContent("Your library didn't load.")

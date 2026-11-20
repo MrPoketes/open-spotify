@@ -167,6 +167,23 @@ The sidebar library has a chip per kind (Playlists, Albums, Artists, Shows) and 
 under them. Pressing the active chip shows every kind again. The filters stay at the top of the
 pane while the list scrolls. When they match nothing, the list says so instead of going blank.
 
+### Now-playing bar and device picker
+
+The bar's right end always holds the device picker button, labelled with the playing device
+("Playing on Kitchen Speaker") or "No active device". With no active device, the bar's left
+side says that audio plays in the Spotify app or on another device, next to a "Choose a device"
+button that opens the picker.
+
+The picker is a non-modal popover above its button: `surface-overlay`, `shadow-overlay`,
+`rounded-large`, 320 px wide. Each device is a row with a 20 px Lucide icon for its type, the
+name in `text-sm`, and the type in `text-xs` `muted`. The active device is drawn in `accent`,
+adds "Playing here" to its type line and a `Volume2` icon, and carries `aria-current`.
+
+Opening the picker moves focus into it. The active device is listed first. The device list is
+one tab stop, starting on the first device, and moves like any other list (see Keyboard).
+`Escape` or choosing a device closes the picker and returns focus to its button; clicking or
+tabbing outside closes it.
+
 ### Loading, empty, and error states
 
 - While a list or page loads, it says so in `muted` text inside an `output` element, so screen
