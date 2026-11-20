@@ -10,8 +10,9 @@ import type {
   RemoveFolderItemRequest,
   RenameFolderRequest,
 } from "../shared/folders"
-import { makeFolderEntriesTable } from "./folder-entries-table"
+import { type FolderEntriesTable, makeFolderEntriesTable } from "./folder-entries-table"
 import { assembleFolderTree } from "./folder-tree-rows"
+import type { PortableFolder } from "./folders-file"
 
 export class FolderNotFound extends Schema.TaggedError<FolderNotFound>()("FolderNotFound", {
   folderId: Schema.String,
@@ -28,6 +29,22 @@ export class FolderMovedIntoOwnSubtree extends Schema.TaggedError<FolderMovedInt
 ) {}
 
 type StorageError = SqlError.SqlError | Schema.SchemaError
+
+const insertPortableFolder = Effect.fn("Folders.insertPortableFolder")(function* (
+  table: FolderEntriesTable,
+  folder: PortableFolder,
+  parentId: string | null,
+): Effect.fn.Return<void, StorageError> {
+  const folderId = yield* table.insertFolder({ name: folder.name, parentId })
+  yield* Effect.forEach(
+    folder.entries,
+    (entry) =>
+      entry._tag === "Folder"
+        ? insertPortableFolder(table, entry, folderId)
+        : table.insertItem(folderId, entry),
+    { discard: true },
+  )
+})
 
 export class Folders extends Context.Service<
   Folders,
@@ -54,6 +71,9 @@ export class Folders extends Context.Service<
     readonly moveItem: (
       request: MoveFolderItemRequest,
     ) => Effect.Effect<void, FolderNotFound | FolderItemNotFound | StorageError>
+    readonly importFolders: (
+      folders: ReadonlyArray<PortableFolder>,
+    ) => Effect.Effect<void, StorageError>
   }
 >()("open-spotify/Folders") {
   static readonly layer = Layer.effect(
@@ -99,9 +119,7 @@ export class Folders extends Context.Service<
         }, sql.withTransaction),
         addItem: Effect.fn("Folders.addItem")(function* ({ folderId, item }) {
           yield* requireFolder(folderId)
-          if (Option.isNone(yield* table.findItem({ folderId, uri: item.uri }))) {
-            yield* table.insertItem(folderId, item)
-          }
+          yield* table.insertItem(folderId, item)
         }, sql.withTransaction),
         removeItem: Effect.fn("Folders.removeItem")(function* ({ folderId, uri }) {
           yield* table.deleteEntry(yield* requireItemEntryId(folderId, uri))
@@ -132,6 +150,13 @@ export class Folders extends Context.Service<
             yield* table.deleteEntry(copyInTarget.value.id)
           }
           yield* table.placeEntry({ entryId, parentId: targetFolderId, position })
+        }, sql.withTransaction),
+        // New folders go after the existing top-level folders, and the whole
+        // import is one transaction, so a failure leaves the tree unchanged.
+        importFolders: Effect.fn("Folders.importFolders")(function* (folders) {
+          yield* Effect.forEach(folders, (folder) => insertPortableFolder(table, folder, null), {
+            discard: true,
+          })
         }, sql.withTransaction),
       })
     }),
