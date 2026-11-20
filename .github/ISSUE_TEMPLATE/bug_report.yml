@@ -1,0 +1,62 @@
+name: Bug report
+description: Something in Open Spotify does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thanks for reporting. Search the existing issues first; if this bug is already there, add
+        what you know to it. Report security problems privately through a
+        [security advisory](https://github.com/MrPoketes/open-spotify/security/advisories/new),
+        never here.
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: operating-system-version
+    attributes:
+      label: Operating system version
+      placeholder: Windows 11 24H2, macOS 15.4, Ubuntu 24.04
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: >
+        The version on the app's home page, or in the name of the installer you downloaded if
+        you cannot log in. If you built the app yourself, add the commit from
+        `git rev-parse --short HEAD`.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a playlist from the sidebar.
+        2. Press Play.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-result
+    attributes:
+      label: Expected result
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual-result
+    attributes:
+      label: Actual result
+      description: What happened instead. Screenshots and error messages help.
+    validations:
+      required: true

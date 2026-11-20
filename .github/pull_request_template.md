@@ -4,7 +4,9 @@
 
 ## Why
 
-Closes ARM-
+<!-- Why the change is needed. End with the issue it closes: `Closes ARM-123` for a Linear issue, `Closes #123` for a GitHub issue. -->
+
+Closes
 
 ## Decisions
 
