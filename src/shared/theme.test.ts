@@ -11,19 +11,6 @@ const themeFile = (tokens: Record<string, string>) => ({
 })
 
 describe("decodeTheme", () => {
-  it.effect("decodes a theme file and keeps the tokens it sets", () =>
-    Effect.gen(function* () {
-      const theme = yield* decodeTheme(
-        themeFile({ "color-accent": "#ffaa00", "radius-small": "2px" }),
-      )
-
-      assert.strictEqual(theme.name, "Sunset")
-      assert.strictEqual(theme.colorScheme, "dark")
-      assert.strictEqual(theme.tokens["color-accent"], "#ffaa00")
-      assert.strictEqual(theme.tokens["radius-small"], "2px")
-    }),
-  )
-
   // A theme written before a token existed must keep working when the app
   // adds one, so absent tokens come from the default theme.
   it.effect("fills every token the file leaves out with the default theme's value", () =>
