@@ -1,8 +1,13 @@
 import { afterEach, assert, describe, it } from "@effect/vitest"
-import { Effect, Layer, Queue, Stream } from "effect"
+import { Deferred, Effect, Exit, Fiber, Layer, Queue, Stream } from "effect"
 import { TestClock } from "effect/testing"
-import { SpotifyApi, SpotifyRequestError } from "../spotify/spotify-api"
-import { fakeDevices } from "../spotify/spotify-fixtures"
+import {
+  NoActiveDevice,
+  SpotifyApi,
+  SpotifyRequestError,
+  SpotifyResponseError,
+} from "../spotify/spotify-api"
+import { fakeDevices, fakeTrack } from "../spotify/spotify-fixtures"
 import { Player, type PlayerState } from "./player"
 
 // Counts playback state requests and fails the ones listed in failingRequests
@@ -41,6 +46,15 @@ const subscribe = Effect.gen(function* () {
 
 const activeDeviceId = (state: PlayerState) =>
   state.status === "active" ? state.playback.device.id : undefined
+
+const isPlaying = (state: PlayerState) => state.status === "active" && state.playback.isPlaying
+
+const playingName = (state: PlayerState) =>
+  state.status === "active" ? state.playback.item?.name : undefined
+
+const playerOver = (spotify: Layer.Layer<SpotifyApi>) => Player.layer.pipe(Layer.provide(spotify))
+
+const rejected = Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" }))
 
 afterEach(() => {
   Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" })
@@ -122,5 +136,125 @@ describe("Player", () => {
       assert.deepStrictEqual(stateAfterFailure, { status: "unreachable" })
       assert.strictEqual(activeDeviceId(stateAfterRecovery), fakeDevices[0].id)
     }).pipe(Effect.scoped, Effect.provide(spotify.layer))
+  })
+
+  it.effect("shows a pause at once, before Spotify confirms it", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+
+      yield* Effect.forkScoped(player.pause)
+      const stateAfterPause = yield* Queue.take(states)
+
+      assert.isFalse(isPlaying(stateAfterPause))
+    }).pipe(
+      Effect.scoped,
+      Effect.provide(playerOver(SpotifyApi.layerFakeWith(() => ({ pause: Effect.never })))),
+    ),
+  )
+
+  it.effect("puts a change back when Spotify rejects it", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+
+      const pause = yield* Effect.exit(player.pause)
+      const shownWhileSending = yield* Queue.take(states)
+      const shownAfterRejection = yield* Queue.take(states)
+
+      assert.isTrue(Exit.isFailure(pause))
+      assert.isFalse(isPlaying(shownWhileSending))
+      assert.isTrue(isPlaying(shownAfterRejection))
+    }).pipe(
+      Effect.scoped,
+      Effect.provide(playerOver(SpotifyApi.layerFakeWith(() => ({ pause: rejected })))),
+    ),
+  )
+
+  // A poll can answer while a command is still on its way to Spotify. The
+  // control must not flip back to the old state when it does.
+  it.effect("keeps a change that Spotify has not accepted yet through a poll", () => {
+    const pauseAccepted = Deferred.makeUnsafe<void>()
+    const spotify = SpotifyApi.layerFakeWith((fake) => ({
+      pause: Deferred.await(pauseAccepted).pipe(Effect.andThen(fake.pause)),
+    }))
+    return Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+
+      const pause = yield* Effect.forkScoped(player.pause)
+      yield* Queue.take(states)
+      yield* TestClock.adjust("2 seconds")
+      const shownAfterPoll = yield* Queue.take(states)
+      yield* Deferred.succeed(pauseAccepted, undefined)
+      yield* Fiber.join(pause)
+
+      assert.isFalse(isPlaying(shownAfterPoll))
+    }).pipe(Effect.scoped, Effect.provide(playerOver(spotify)))
+  })
+
+  // The user can also press play in the Spotify app. Once a poll shows the
+  // pause, the bar must follow Spotify again instead of the old change.
+  it.effect("follows playback changed elsewhere after a poll shows the user's change", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const spotify = yield* SpotifyApi
+      const states = yield* subscribe
+      yield* Queue.take(states)
+      yield* player.pause
+      yield* Queue.take(states)
+      yield* Queue.take(states)
+      yield* TestClock.adjust("2 seconds")
+      const shownAfterPause = yield* Queue.take(states)
+
+      yield* spotify.play
+      yield* TestClock.adjust("2 seconds")
+      const shownAfterPlayElsewhere = yield* Queue.take(states)
+
+      assert.isFalse(isPlaying(shownAfterPause))
+      assert.isTrue(isPlaying(shownAfterPlayElsewhere))
+    }).pipe(
+      Effect.scoped,
+      Effect.provide(Player.layer.pipe(Layer.provideMerge(SpotifyApi.layerFake))),
+    ),
+  )
+
+  it.effect("reads the playback state again as soon as it skips to the next track", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+
+      yield* player.skipToNext
+      const stateAfterSkip = yield* Queue.take(states)
+
+      assert.strictEqual(playingName(stateAfterSkip), fakeTrack(1).name)
+    }).pipe(Effect.scoped, Effect.provide(playerOver(SpotifyApi.layerFake))),
+  )
+
+  it.effect("reads the playback state again when a command finds no active device", () => {
+    let hasLostDevice = false
+    const spotify = SpotifyApi.layerFakeWith((fake) => ({
+      getPlaybackState: Effect.suspend(() =>
+        hasLostDevice ? Effect.succeedNone : fake.getPlaybackState,
+      ),
+      skipToNext: Effect.suspend(() => {
+        hasLostDevice = true
+        return Effect.fail(new NoActiveDevice())
+      }),
+    }))
+    return Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+
+      yield* Effect.exit(player.skipToNext)
+      const stateAfterFailure = yield* Queue.take(states)
+
+      assert.deepStrictEqual(stateAfterFailure, { status: "noActiveDevice" })
+    }).pipe(Effect.scoped, Effect.provide(playerOver(spotify)))
   })
 })

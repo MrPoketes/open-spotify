@@ -13,6 +13,7 @@ import {
   fakePlaybackState,
   fakePlayingTrack,
   fakePlaylists,
+  fakeTrack,
   fakeSavedAlbums,
   fakeSavedShows,
 } from "./spotify-fixtures"
@@ -197,6 +198,49 @@ describe("SpotifyApi player", () => {
       )
     }).pipe(Effect.provide(SpotifyApi.layerFake)),
   )
+
+  it.effect("applies each playback command to the playback state", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+      const playback = spotify.getPlaybackState.pipe(Effect.map(Option.getOrThrow))
+
+      yield* spotify.pause
+      const paused = yield* playback
+      yield* spotify.play
+      yield* spotify.setShuffle(true)
+      yield* spotify.setRepeat("track")
+      yield* spotify.skipToNext
+      yield* spotify.skipToNext
+      yield* spotify.skipToPrevious
+      const changed = yield* playback
+
+      assert.isFalse(paused.isPlaying)
+      assert.deepStrictEqual(
+        [changed.isPlaying, changed.shuffle, changed.repeat, changed.item?.name],
+        [true, true, "track", fakeTrack(1).name],
+      )
+    }).pipe(Effect.provide(SpotifyApi.layerFake)),
+  )
+
+  // Spotify answers a player command with 404 and this reason when no device
+  // is active, which the bar explains instead of showing a generic failure.
+  it.effect("fails with NoActiveDevice when a command finds no active device", () => {
+    const spotify = scriptedSpotify([
+      {
+        status: 404,
+        body: JSON.stringify({
+          error: { status: 404, message: "Player command failed", reason: "NO_ACTIVE_DEVICE" },
+        }),
+      },
+    ])
+    return Effect.gen(function* () {
+      const api = yield* SpotifyApi
+
+      const error = yield* Effect.flip(api.pause)
+
+      assert.strictEqual(error._tag, "NoActiveDevice")
+    }).pipe(Effect.provide(spotify.layer))
+  })
 
   it.effect("decodes a playing podcast episode", () => {
     const spotify = scriptedSpotify([

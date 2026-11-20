@@ -174,6 +174,24 @@ pane while the list scrolls. When they match nothing, the list says so instead o
 
 ### Now-playing bar and device picker
 
+The bar has three columns: what is playing on the left, the playback controls in the middle,
+and the device picker on the right. The left column shows 40 px artwork, as in library rows,
+then the title in `text-sm` and the artists in `text-xs` `muted`.
+
+The controls are, in order: shuffle, previous, play or pause, next, repeat. They are 32 px
+round icon buttons; play or pause is `accent` with `on-accent` icons, and the others are
+`muted`. Shuffle and repeat show that they are on with `accent` and a 4 px dot under the
+icon, so the state does not rely on color, and set `aria-pressed`. Repeat cycles off, the
+context, and the track; for the track it uses the `Repeat1` icon and is named "Repeat one
+track".
+
+A control updates as soon as it is pressed and keeps that state until a poll shows Spotify
+caught up. If Spotify rejects the command, the control goes back and a `text-xs` `danger`
+alert under the controls says what failed. A control that cannot be used (no active device,
+a device that other apps cannot control, or an action Spotify disallows right now) is
+`aria-disabled` at 50 % opacity and keeps its focus, and its `title` says why, which also
+makes it the accessible description.
+
 The bar's right end always holds the device picker button, labelled with the playing device
 ("Playing on Kitchen Speaker") or "No active device". With no active device, the bar's left
 side says that audio plays in the Spotify app or on another device, next to a "Choose a device"
