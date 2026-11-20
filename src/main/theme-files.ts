@@ -37,20 +37,17 @@ const readThemeFile = Effect.fn("readThemeFile")(function* (filePath: string) {
   )
 })
 
-// Resolves to the imported theme, or to none when the user cancels.
-export const importThemeFile = Effect.fn("importThemeFile")(function* (
+// Import and the theme editor both store a theme this way. Resolves to the
+// stored theme, or to none when the user declines to replace one.
+export const saveTheme = Effect.fn("saveTheme")(function* (
   parentWindow: BaseWindow | null,
+  theme: Theme,
 ) {
   const dialogs = yield* ThemeFileDialogs
   const importedThemes = yield* ImportedThemes
-  const chosenFile = yield* dialogs.chooseFileToImport(parentWindow)
-  if (Option.isNone(chosenFile)) {
-    return Option.none()
-  }
-  const theme = yield* readThemeFile(chosenFile.value)
   if (isBuiltInTheme(theme)) {
     return yield* new ThemeImportFailed({
-      message: `“${theme.name}” by ${theme.author} is a built-in theme. Give your theme another name to import it.`,
+      message: `“${theme.name}” by ${theme.author} is a built-in theme. Give your theme another name.`,
     })
   }
   const replacesTheme = yield* importedThemes.hasSameNameAndAuthor(theme)
@@ -58,6 +55,18 @@ export const importThemeFile = Effect.fn("importThemeFile")(function* (
     return Option.none()
   }
   return Option.some(yield* importedThemes.save(theme))
+})
+
+// Resolves to the imported theme, or to none when the user cancels.
+export const importThemeFile = Effect.fn("importThemeFile")(function* (
+  parentWindow: BaseWindow | null,
+) {
+  const dialogs = yield* ThemeFileDialogs
+  const chosenFile = yield* dialogs.chooseFileToImport(parentWindow)
+  if (Option.isNone(chosenFile)) {
+    return Option.none()
+  }
+  return yield* saveTheme(parentWindow, yield* readThemeFile(chosenFile.value))
 })
 
 // Resolves to the file written, or to none when the user cancels.

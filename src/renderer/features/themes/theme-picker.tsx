@@ -1,5 +1,5 @@
 import { Check } from "lucide-react"
-import { type KeyboardEvent, use, useState } from "react"
+import { type KeyboardEvent, use } from "react"
 import type { Theme } from "../../../shared/theme"
 import { type LibraryTheme, type ThemeId, findLibraryTheme } from "../../../shared/theme-library"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
@@ -10,23 +10,24 @@ import { useThemePreview } from "./use-theme-preview"
 
 interface ThemePickerProps {
   readonly themes: ReadonlyArray<LibraryTheme>
-  readonly savedThemeId: ThemeId
+  readonly chosenThemeId: ThemeId
+  // The picker applies and saves a chosen theme itself.
+  readonly onChoose: (themeId: ThemeId) => void
 }
 
-export function ThemePicker({ themes, savedThemeId }: ThemePickerProps) {
+export function ThemePicker({ themes, chosenThemeId, onChoose }: ThemePickerProps) {
   const runtime = use(RendererRuntimeContext)
-  const [chosenThemeId, setChosenThemeId] = useState(savedThemeId)
   const { setHoveredTheme, setFocusedTheme } = useThemePreview(
     findLibraryTheme(themes, chosenThemeId).theme,
   )
-  // Tab enters the list on the saved theme.
+  // Tab enters the list on the chosen theme.
   const { onKeyDown, rowProps } = useRovingFocus(
     themes.length,
-    themes.findIndex((libraryTheme) => libraryTheme.id === savedThemeId),
+    themes.findIndex((libraryTheme) => libraryTheme.id === chosenThemeId),
   )
 
   const chooseTheme = (libraryTheme: LibraryTheme) => {
-    setChosenThemeId(libraryTheme.id)
+    onChoose(libraryTheme.id)
     runtime.runFork(selectTheme(libraryTheme))
   }
 

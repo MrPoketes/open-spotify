@@ -35,6 +35,7 @@ import {
   ImportThemeReply,
   type ThemeImportFailed,
 } from "../../shared/theme-file-replies"
+import { Theme } from "../../shared/theme"
 import { LibraryTheme } from "../../shared/theme-library"
 import type { DesktopApi } from "../../preload/desktop-api"
 
@@ -42,6 +43,16 @@ export class DesktopBridgeError extends Schema.TaggedError<DesktopBridgeError>()
   "DesktopBridgeError",
   { channel: Schema.String, cause: Schema.Defect() },
 ) {}
+
+const importedThemeFromReply = (reply: ImportThemeReply) => {
+  if (reply._tag === "ThemeImportFailed") {
+    return Effect.fail(reply)
+  }
+  if (reply._tag === "ThemeImportCanceled") {
+    return Effect.succeed(Option.none())
+  }
+  return Effect.succeed(Option.some(reply.importedTheme))
+}
 
 // Typed access to the main process. Replies are decoded with a Schema, so the
 // rest of the renderer only ever sees values of the declared type.
@@ -83,6 +94,10 @@ export class DesktopBridge extends Context.Service<
       Option.Option<LibraryTheme>,
       ThemeImportFailed | DesktopBridgeError
     >
+    // None when the user declines to replace a theme with the same name and author.
+    readonly saveEditedTheme: (
+      theme: Theme,
+    ) => Effect.Effect<Option.Option<LibraryTheme>, ThemeImportFailed | DesktopBridgeError>
     // The file written, or none when the user cancels.
     readonly exportCurrentTheme: Effect.Effect<Option.Option<string>, DesktopBridgeError>
     readonly exportFolders: Effect.Effect<ExportFoldersReply, DesktopBridgeError>
@@ -139,16 +154,17 @@ export class DesktopBridge extends Context.Service<
       moveFolderItem: (request) => send(ipcChannels.moveFolderItem, Schema.Undefined, request),
       listImportedThemes: send(ipcChannels.listImportedThemes, Schema.Array(LibraryTheme)),
       importThemeFile: send(ipcChannels.importThemeFile, ImportThemeReply).pipe(
-        Effect.flatMap((reply) => {
-          if (reply._tag === "ThemeImportFailed") {
-            return Effect.fail(reply)
-          }
-          if (reply._tag === "ThemeImportCanceled") {
-            return Effect.succeed(Option.none())
-          }
-          return Effect.succeed(Option.some(reply.importedTheme))
-        }),
+        Effect.flatMap(importedThemeFromReply),
       ),
+      saveEditedTheme: Effect.fn("DesktopBridge.saveEditedTheme")(function* (theme: Theme) {
+        const encodedTheme = yield* Schema.encodeEffect(Theme)(theme).pipe(
+          Effect.mapError(
+            (cause) => new DesktopBridgeError({ channel: ipcChannels.saveEditedTheme, cause }),
+          ),
+        )
+        const reply = yield* send(ipcChannels.saveEditedTheme, ImportThemeReply, encodedTheme)
+        return yield* importedThemeFromReply(reply)
+      }),
       exportCurrentTheme: send(ipcChannels.exportCurrentTheme, ExportThemeReply),
       exportFolders: send(ipcChannels.exportFolders, ExportFoldersReply),
       importFolders: send(ipcChannels.importFolders, ImportFoldersReply).pipe(

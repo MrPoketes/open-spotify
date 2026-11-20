@@ -119,6 +119,20 @@ To check a pair, enter both hex values in a WCAG contrast checker, such as
 above: a theme usually fails on `color-muted` or `color-accent` against the lightest surface of
 a dark theme, or the darkest surface of a light one.
 
+## Editing a theme in the app
+
+You can also build a theme without a text editor:
+
+1. Open **Settings** and choose the theme to start from in the theme list.
+2. Choose **Edit a copy**. The editor lists every token with a control that only accepts valid
+   values, and the whole app previews each change as you make it.
+3. Give the theme a name and author, and choose **Save theme**. It is stored like an imported
+   theme, appears at the end of the theme list, and is put in use. **Cancel** discards the
+   changes.
+
+The editor does not check contrast yet, so check the pairs under [Contrast](#contrast) yourself.
+To share the theme, choose **Export current theme…** after saving it.
+
 ## Importing a theme
 
 1. Open **Settings** from the gear icon at the right end of the top bar.
