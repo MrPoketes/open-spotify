@@ -4,15 +4,19 @@
 /*
  * `inline` makes each class read the theme variable on the element it is used
  * on, instead of a copy resolved once on :root. That lets a theme apply to part
- * of the page, such as a preview in the theme picker. Tailwind's default
- * colors, fonts, radii, and shadows are removed so that every class resolves
- * to a theme token and no class can bypass the theme.
+ * of the page, such as a preview in the theme picker.
+ *
+ * Tailwind's default colors, fonts, radii, and shadows of every kind are
+ * removed, so its named classes resolve only to theme tokens.
  */
 @theme inline {
   --color-*: initial;
   --font-*: initial;
   --radius-*: initial;
   --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
 
   --color-canvas: var(--theme-color-canvas);
   --color-surface: var(--theme-color-surface);

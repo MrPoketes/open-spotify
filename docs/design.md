@@ -99,8 +99,7 @@ be bundled. Use only these sizes:
 | `text-5xl`  | 48 px | Header of a playlist, album, artist, or folder |
 
 Weights: 400 for body, 600 for emphasis and active items, 700 for headings. Durations and counts
-use `tabular-nums` so columns line up. Sizes are in `rem`, so the app scales with the zoom
-level (`Ctrl+=` / `Ctrl+-`).
+use `tabular-nums` so columns line up.
 
 ### Radii
 
@@ -146,14 +145,16 @@ warm coral accent.
 
 ## Design tokens
 
-A theme sets these tokens, plus whether it is dark or light (see the end of this section). Their default dark values live in
-[`src/renderer/styles/tokens.css`](../src/renderer/styles/tokens.css) as CSS custom properties
+A theme sets these tokens, plus whether it is dark or light (see the end of this section).
+Their default dark values live in [`src/renderer/styles/tokens.css`](../src/renderer/styles/tokens.css) as CSS custom properties
 named `--theme-<token>`. [`app.css`](../src/renderer/styles/app.css) maps each one into
 Tailwind under the same name without the `theme-` prefix, so `--theme-color-muted` becomes the
 `text-muted`, `bg-muted`, and `border-muted` classes.
 
-Tailwind's built-in colors, fonts, radii, and shadows are removed. A class such as `bg-red-500`
-does not exist, so components cannot bypass the theme.
+Tailwind's built-in colors, fonts, radii, and shadows (including inset, drop, and text shadows)
+are removed. Named classes such as `bg-red-500` or `drop-shadow-md` do not exist, so they
+cannot bypass the theme. Arbitrary values such as `bg-[#fff]` still would: never use them for
+colors, fonts, radii, or shadows.
 
 ### Colors
 
@@ -209,12 +210,13 @@ scrollbars and form controls match the theme.
 
 These rules apply to the default themes and to every component. Target: WCAG 2.2 AA.
 
-- **Contrast.** `foreground` and `muted` text reach 4.5:1 against every surface they sit on
-  (`canvas`, `surface`, `surface-raised`, `surface-overlay`). `on-accent` reaches 4.5:1 against
-  `accent`. Icons, `accent`, `danger`, and `focus` reach 3:1 against those surfaces. `border`
-  is decorative and has no target, so a control's edge is shown by its surface color or an
-  icon, not by a border alone. The
-  default dark theme's lowest ratio is `muted` on `surface-overlay`, at 5.6:1.
+- **Contrast.** Any color used for text reaches 4.5:1 against every surface it sits on
+  (`canvas`, `surface`, `surface-raised`, `surface-overlay`). That covers `foreground`,
+  `muted`, and `accent` and `danger` when they color text, such as the playing track or an
+  error message. `on-accent` reaches 4.5:1 against `accent`. Icons and `focus` reach 3:1
+  against those surfaces. `border` is decorative and has no target, so a control's edge is
+  shown by its surface color or an icon, not by a border alone. The default dark theme's
+  lowest ratio is `muted` on `surface-overlay`, at 5.6:1.
 - **Focus.** Every interactive element shows a 2 px `focus` outline with a 2 px offset when
   focused from the keyboard (`:focus-visible`). `app.css` sets this globally. Never remove it;
   if a component needs a different shape, change the outline, not its visibility.
