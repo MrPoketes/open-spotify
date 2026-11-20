@@ -1,10 +1,12 @@
 import { Schema } from "effect"
+import { Image } from "./spotify-image"
 
 export const Episode = Schema.Struct({
   type: Schema.Literal("episode"),
   id: Schema.String,
   name: Schema.String,
   uri: Schema.String,
+  images: Schema.Array(Image),
   durationMs: Schema.Number,
   // Plain text: Spotify strips the HTML that `html_description` keeps.
   description: Schema.String,

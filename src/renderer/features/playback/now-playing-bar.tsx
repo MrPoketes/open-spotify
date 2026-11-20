@@ -1,6 +1,10 @@
+import { Disc3, Radio } from "lucide-react"
 import { useState } from "react"
 import { AccentButton } from "../../ui/accent-button"
+import { Artwork } from "../../ui/artwork"
+import type { PlaybackState } from "../spotify/spotify-playback-state"
 import { DevicePicker } from "./device-picker"
+import { PlaybackControls } from "./playback-controls"
 import { type PlayerStateOrLoading, usePlayerState } from "./use-player-state"
 
 const deviceLabel = (playerState: PlayerStateOrLoading) => {
@@ -20,9 +24,12 @@ export function NowPlayingBar() {
   return (
     <section
       aria-label="Now playing"
-      className="flex h-18 shrink-0 items-center gap-4 rounded-medium bg-surface-raised px-4 shadow-raised"
+      className="grid h-18 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-medium bg-surface-raised px-4 shadow-raised"
     >
-      <NowPlayingSummary playerState={playerState} onChooseDevice={() => setPickerOpen(true)} />
+      <div className="min-w-0">
+        <NowPlayingSummary playerState={playerState} onChooseDevice={() => setPickerOpen(true)} />
+      </div>
+      <PlaybackControls playerState={playerState} />
       <DevicePicker
         deviceLabel={deviceLabel(playerState)}
         isOpen={isPickerOpen}
@@ -65,14 +72,27 @@ function NowPlayingSummary({ playerState, onChooseDevice }: NowPlayingSummaryPro
     return <p className="text-sm text-muted">Nothing is playing</p>
   }
 
+  return <PlayingItem item={item} />
+}
+
+function PlayingItem({ item }: { readonly item: NonNullable<PlaybackState["item"]> }) {
+  const isTrack = item.type === "track"
   return (
-    <div className="flex min-w-0 flex-col">
-      <p className="truncate text-sm">{item.name}</p>
-      {item.type === "track" && (
-        <p className="truncate text-xs text-muted">
-          {item.artists.map(({ name }) => name).join(", ")}
-        </p>
-      )}
+    <div className="flex min-w-0 items-center gap-3">
+      <Artwork
+        sources={isTrack ? item.album.images : item.images}
+        size={40}
+        className="rounded-small"
+        placeholderIcon={isTrack ? Disc3 : Radio}
+      />
+      <div className="flex min-w-0 flex-col">
+        <p className="truncate text-sm">{item.name}</p>
+        {isTrack && (
+          <p className="truncate text-xs text-muted">
+            {item.artists.map(({ name }) => name).join(", ")}
+          </p>
+        )}
+      </div>
     </div>
   )
 }

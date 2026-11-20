@@ -1,51 +1,17 @@
 import { assert, describe, it, layer } from "@effect/vitest"
-import { Effect, Fiber, Layer, Option, Stream } from "effect"
-import { HttpClient, HttpClientError, HttpClientResponse } from "effect/http"
+import { Effect, Fiber, Stream } from "effect"
+import { HttpClient, HttpClientError } from "effect/http"
 import { TestClock } from "effect/testing"
 import { SpotifyApi } from "./spotify-api"
-import { spotifyFakeAccessToken } from "./spotify-fake-server"
+import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
 import {
   fakeCurrentUser,
-  fakeDevices,
-  fakeEpisode,
   fakeFollowedArtists,
   fakeLikedSongs,
-  fakePlaybackState,
-  fakePlayingTrack,
   fakePlaylists,
   fakeSavedAlbums,
   fakeSavedShows,
 } from "./spotify-fixtures"
-
-const spotifyApiUsing = (client: HttpClient.HttpClient) =>
-  SpotifyApi.layerWithoutHttpClient.pipe(
-    Layer.provide([Layer.succeed(HttpClient.HttpClient, client), spotifyFakeAccessToken]),
-  )
-
-interface ScriptedResponse {
-  readonly status: number
-  // Null for statuses such as 204 that must not carry a body.
-  readonly body: string | null
-  readonly headers?: Record<string, string>
-}
-
-// Answers the n-th request with the n-th scripted response. An unscripted
-// request is a bug in the test, so it dies.
-const scriptedSpotify = (responses: ReadonlyArray<ScriptedResponse>) => {
-  let requestCount = 0
-  const client = HttpClient.make((request) => {
-    const scripted = responses[requestCount]
-    requestCount += 1
-    if (scripted === undefined) {
-      return Effect.die(`Unscripted request to ${request.url}`)
-    }
-    const { status, body, headers } = scripted
-    return Effect.succeed(
-      HttpClientResponse.fromWeb(request, new Response(body, { status, headers: headers ?? {} })),
-    )
-  })
-  return { requestCount: () => requestCount, layer: spotifyApiUsing(client) }
-}
 
 const spotifyErrorBody = (status: number, message: string) =>
   JSON.stringify({ error: { status, message } })
@@ -172,79 +138,6 @@ layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
       assert.include(error, { status: 403, message: "Forbidden" })
     }),
   )
-})
-
-describe("SpotifyApi player", () => {
-  it.effect("decodes the playback state and the available devices", () =>
-    Effect.gen(function* () {
-      const spotify = yield* SpotifyApi
-
-      const playback = yield* spotify.getPlaybackState
-      const devices = yield* spotify.getAvailableDevices
-
-      assert.isTrue(Option.isSome(playback))
-      assert.strictEqual(Option.getOrThrow(playback).device.name, "Mira's Laptop")
-      assert.strictEqual(Option.getOrThrow(playback).item?.name, fakePlayingTrack.name)
-      assert.deepStrictEqual(
-        devices.map(({ name, isActive }) => [name, isActive]),
-        [
-          ["Mira's Laptop", true],
-          ["Mira's Phone", false],
-          ["Kitchen Speaker", false],
-        ],
-      )
-    }).pipe(Effect.provide(SpotifyApi.layerFake)),
-  )
-
-  it.effect("moves playback to the device it transfers to", () =>
-    Effect.gen(function* () {
-      const spotify = yield* SpotifyApi
-      const kitchenSpeaker = fakeDevices[2]
-
-      yield* spotify.transferPlayback(kitchenSpeaker.id)
-      const playback = yield* spotify.getPlaybackState
-      const devices = yield* spotify.getAvailableDevices
-
-      assert.strictEqual(Option.getOrThrow(playback).device.id, kitchenSpeaker.id)
-      assert.deepStrictEqual(
-        devices.filter(({ isActive }) => isActive).map(({ id }) => id),
-        [kitchenSpeaker.id],
-      )
-    }).pipe(Effect.provide(SpotifyApi.layerFake)),
-  )
-
-  it.effect("decodes a playing podcast episode", () => {
-    const spotify = scriptedSpotify([
-      {
-        status: 200,
-        body: JSON.stringify({
-          ...fakePlaybackState(fakeDevices[0]),
-          item: fakeEpisode,
-          currently_playing_type: "episode",
-        }),
-      },
-    ])
-    return Effect.gen(function* () {
-      const api = yield* SpotifyApi
-
-      const playback = yield* api.getPlaybackState
-
-      assert.strictEqual(Option.getOrThrow(playback).item?.type, "episode")
-    }).pipe(Effect.provide(spotify.layer))
-  })
-
-  // Spotify answers 204 when no device is active, which is the normal state
-  // before the user opens a Spotify app anywhere.
-  it.effect("reads a 204 playback response as nothing playing, not as an error", () => {
-    const spotify = scriptedSpotify([{ status: 204, body: null }])
-    return Effect.gen(function* () {
-      const api = yield* SpotifyApi
-
-      const playback = yield* api.getPlaybackState
-
-      assert.isTrue(Option.isNone(playback))
-    }).pipe(Effect.provide(spotify.layer))
-  })
 })
 
 describe("SpotifyApi responses", () => {

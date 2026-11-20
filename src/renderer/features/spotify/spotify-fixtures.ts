@@ -36,7 +36,7 @@ const albums = [
 const titleWords = ["Quiet", "Electric", "Paper", "Golden", "Restless", "Hollow", "Slow"] as const
 const titleNouns = ["Rivers", "Signals", "Rooms", "Satellites", "Gardens", "Echoes"] as const
 
-const fakeTrack = (index: number) => {
+export const fakeTrack = (index: number) => {
   const album = pickInTurn(albums, index)
   const word = pickInTurn(titleWords, index)
   const noun = pickInTurn(titleNouns, Math.floor(index / titleWords.length))
@@ -68,6 +68,7 @@ export const fakeEpisode = {
   id: "fake-episode-0",
   name: "How Playlists Are Made",
   uri: "spotify:episode:fake-0",
+  images: [{ url: coverUrl("episode-0"), width: 640, height: 640 }],
   duration_ms: 2_412_000,
   description: "A look at how a playlist goes from idea to finished sequence.",
   release_date: "2026-03-14",
@@ -204,6 +205,7 @@ const fakeShowEpisode = (showId: string, index: number) => {
     id: `${showId}-episode-${index}`,
     name: `${topic}, part ${Math.floor(index / episodeTopics.length) + 1}`,
     uri: `spotify:episode:${showId}-${index}`,
+    images: [{ url: coverUrl(`${showId}-episode-${index}`), width: 640, height: 640 }],
     duration_ms: 1_200_000 + ((index * 104_729) % 3_000_000),
     description: `This week is all about ${topic.toLowerCase()}. We follow the researchers who spend years watching it change, and ask why they keep coming back.`,
     release_date: new Date(Date.UTC(2026, 10, 16) - index * weekInMs).toISOString().slice(0, 10),

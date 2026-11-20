@@ -172,7 +172,13 @@ describe("NowPlayingBar", () => {
   // Spotify does not guarantee a device id, and playback cannot be moved to a
   // device without one. It must not take the keyboard's way through the list.
   it("lists a device without an id as unavailable and moves past it with the keyboard", async () => {
-    const noIdDevice = { id: null, name: "Old Receiver", type: "AVR", isActive: false }
+    const noIdDevice = {
+      id: null,
+      name: "Old Receiver",
+      type: "AVR",
+      isActive: false,
+      isRestricted: false,
+    }
     renderNowPlayingBar(
       SpotifyApi.layerFakeWith((spotify) => ({
         getPlaybackState: Effect.succeedNone,
