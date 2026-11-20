@@ -2,9 +2,7 @@ import path from "node:path"
 
 const releaseDirectory = path.join(import.meta.dirname, "..", "release")
 
-// Where `pnpm package:dir` puts the unpacked app on each OS. Testing the
-// packaged app catches what only packaging can break, such as a dependency
-// left out of the bundle or a file missing from electron-builder.yml.
+// Where `pnpm package:dir` puts the unpacked app on each OS.
 export function packagedAppExecutable(): string {
   if (process.platform === "win32") {
     return path.join(releaseDirectory, "win-unpacked", "Open Spotify.exe")

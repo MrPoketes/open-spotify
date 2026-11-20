@@ -49,6 +49,8 @@ lint and format errors for you.
 
 If your change alters how the main view looks, run `pnpm screenshots` after `pnpm package:dir` to
 retake the README screenshots in `docs/images/`. They show fake data, so you need no account.
+The images come out slightly different on every run and every OS, so commit them only when the
+UI really changed.
 
 ## Write the code
 

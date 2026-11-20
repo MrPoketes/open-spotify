@@ -31,6 +31,9 @@ const test = base.extend<{ electronApp: ElectronApplication; appWindow: Page }>(
     // A fresh output folder per test, so every launch starts from an empty profile.
     const userDataDirectory = testInfo.outputPath("user-data")
     const electronApp = await _electron.launch({
+      // The packaged app, because that catches what only packaging can break,
+      // such as a dependency left out of the bundle or a file missing from
+      // electron-builder.yml.
       executablePath: packagedAppExecutable(),
       args: [`--user-data-dir=${userDataDirectory}`],
     })
