@@ -2,31 +2,48 @@
 
 # Open Spotify
 
-A themeable, open-source desktop client for Spotify, for Windows, macOS, and Linux.
+Open Spotify is a desktop client for Spotify on Windows, macOS, and Linux, built for people who
+want the app to fit the way they listen. Pick a theme or write your own, down to every color,
+font, and corner. Put anything in folders: playlists, artists, albums, and shows, side by side.
+It is free and open source, and it controls the Spotify account you already have.
+
+![Open Spotify in its dark theme: the library on the left, a playlist in the main view, and the now-playing bar below](docs/images/main-view-dark.png)
 
 Open Spotify is an unofficial client. It is not affiliated with, endorsed by, or sponsored by
 Spotify. Spotify is a trademark of Spotify AB.
+
+> Status: early development. Built in the open by an autonomous team of AI agents; see
+> [docs/agents](docs/agents).
+
+## Features
 
 - **Themes:** pick a theme or import your own. Every color, font, and radius is a token; see
   [writing a theme](docs/themes.md).
 - **Folders for anything:** group playlists, artists, albums, and shows however you like.
 - **A better layout:** resizable panes, keyboard-first navigation, and a denser list view.
 
-> Status: early development. Built in the open by an autonomous team of AI agents; see
-> [docs/agents](docs/agents).
+The same view in the built-in light theme:
+
+![Open Spotify in its light theme, showing the same playlist](docs/images/main-view-light.png)
 
 ## Requirements
 
-- Spotify Premium
-- An official Spotify app running somewhere (desktop, phone, or speaker). Open Spotify
-  controls playback through Spotify Connect; see
+Spotify limits what a third-party client can do, so check these before you install:
+
+- **Spotify Premium.** Spotify lets only Premium accounts control playback from another app.
+- **An official Spotify app running somewhere** (desktop, phone, or speaker). Open Spotify plays
+  no audio itself: it is a remote control for that app through Spotify Connect; see
   [decision 0002](docs/decisions/0002-playback-through-spotify-connect.md).
-- Your own Spotify Client ID (free, about five minutes):
+- **Your own Spotify Client ID** (free, about five minutes). Spotify allows only five users per
+  Client ID, so Open Spotify cannot ship a shared one; see
+  [decision 0003](docs/decisions/0003-bring-your-own-client-id.md).
   1. Open the [Spotify developer dashboard](https://developer.spotify.com/dashboard) and create
      an app.
   2. Add the redirect URI `http://127.0.0.1:43821/callback` and select **Web API**.
   3. Under **User Management**, add the email of your Spotify account.
   4. Paste the Client ID into Open Spotify on first launch.
+
+When you are ready, [install Open Spotify](#install).
 
 ## Install
 

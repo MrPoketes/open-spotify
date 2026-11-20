@@ -1,4 +1,3 @@
-import path from "node:path"
 import {
   type ElectronApplication,
   type Page,
@@ -6,30 +5,8 @@ import {
   test as base,
   expect,
 } from "@playwright/test"
-import { fakeSpotifyAccounts, serveFakeWebApi } from "./fake-spotify"
-
-const releaseDirectory = path.join(import.meta.dirname, "..", "release")
-
-// Where `pnpm package:dir` puts the unpacked app on each OS. Testing the
-// packaged app catches what only packaging can break, such as a dependency
-// left out of the bundle or a file missing from electron-builder.yml.
-function packagedAppExecutable(): string {
-  if (process.platform === "win32") {
-    return path.join(releaseDirectory, "win-unpacked", "Open Spotify.exe")
-  }
-  if (process.platform === "darwin") {
-    const macFolder = process.arch === "arm64" ? "mac-arm64" : "mac"
-    return path.join(
-      releaseDirectory,
-      macFolder,
-      "Open Spotify.app",
-      "Contents",
-      "MacOS",
-      "Open Spotify",
-    )
-  }
-  return path.join(releaseDirectory, "linux-unpacked", "open-spotify")
-}
+import { fakeSpotifyAccounts, logInThroughOnboarding, serveFakeWebApi } from "./fake-spotify"
+import { packagedAppExecutable } from "./packaged-app"
 
 // The history shortcuts each platform's browsers use (use-history-shortcuts.ts).
 const goBackShortcut = process.platform === "darwin" ? "Meta+BracketLeft" : "Alt+ArrowLeft"
@@ -54,6 +31,9 @@ const test = base.extend<{ electronApp: ElectronApplication; appWindow: Page }>(
     // A fresh output folder per test, so every launch starts from an empty profile.
     const userDataDirectory = testInfo.outputPath("user-data")
     const electronApp = await _electron.launch({
+      // The packaged app, because that catches what only packaging can break,
+      // such as a dependency left out of the bundle or a file missing from
+      // electron-builder.yml.
       executablePath: packagedAppExecutable(),
       args: [`--user-data-dir=${userDataDirectory}`],
     })
@@ -77,11 +57,8 @@ test("starts on onboarding, logs in against fake Spotify, and moves between page
   await fakeSpotifyAccounts(electronApp)
 
   await expect(appWindow.getByRole("heading", { name: "Connect Open Spotify" })).toBeVisible()
-  await appWindow.getByRole("textbox", { name: "Client ID" }).fill("fake-client-id")
-  await appWindow.keyboard.press("Enter")
-  await appWindow.getByRole("button", { name: "Log in with Spotify" }).click()
+  await logInThroughOnboarding(appWindow)
 
-  await expect(appWindow.getByRole("heading", { name: "Open Spotify", exact: true })).toBeVisible()
   await appWindow
     .getByRole("navigation", { name: "Library" })
     .getByRole("link", { name: /Slow Science/ })

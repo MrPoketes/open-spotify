@@ -1,4 +1,10 @@
-import type { BrowserContext, ElectronApplication, Route } from "@playwright/test"
+import {
+  type BrowserContext,
+  type ElectronApplication,
+  type Page,
+  type Route,
+  expect,
+} from "@playwright/test"
 import { Effect } from "effect"
 import { HttpBody, HttpClient, HttpClientRequest, HttpMethod } from "effect/http"
 import {
@@ -71,4 +77,11 @@ export async function fakeSpotifyAccounts(electronApp: ElectronApplication): Pro
       return Promise.resolve(Response.json(tokens))
     }
   }, fakeAccessToken)
+}
+
+export async function logInThroughOnboarding(appWindow: Page): Promise<void> {
+  await appWindow.getByRole("textbox", { name: "Client ID" }).fill("fake-client-id")
+  await appWindow.keyboard.press("Enter")
+  await appWindow.getByRole("button", { name: "Log in with Spotify" }).click()
+  await expect(appWindow.getByRole("heading", { name: "Open Spotify", exact: true })).toBeVisible()
 }
