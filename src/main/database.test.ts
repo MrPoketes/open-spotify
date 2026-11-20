@@ -6,19 +6,6 @@ import { SqlClient } from "effect/sql"
 import { databaseLayer } from "./database"
 
 layer(NodeFileSystem.layer)("databaseLayer", (it) => {
-  it.effect("creates the settings table in a fresh database", () =>
-    Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient
-
-      const columns = yield* sql`SELECT name, type, pk FROM pragma_table_info('settings')`
-
-      assert.deepStrictEqual(columns, [
-        { name: "key", type: "TEXT", pk: 1 },
-        { name: "value", type: "TEXT", pk: 0 },
-      ])
-    }).pipe(Effect.provide(databaseLayer(":memory:"))),
-  )
-
   // Migrations run on every launch, so a second run against an existing
   // database must neither fail nor touch the user's data.
   it.effect("keeps stored data when migrations run again on the next launch", () =>

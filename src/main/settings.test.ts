@@ -7,16 +7,6 @@ import { Settings } from "./settings"
 const freshSettings = () => Settings.layer.pipe(Layer.provideMerge(databaseLayer(":memory:")))
 
 describe("Settings", () => {
-  it.effect("returns a setting after it is set", () =>
-    Effect.gen(function* () {
-      const settings = yield* Settings
-
-      yield* settings.set("spotifyClientId", "my-client-id")
-
-      assert.deepStrictEqual(yield* settings.get("spotifyClientId"), Option.some("my-client-id"))
-    }).pipe(Effect.provide(freshSettings())),
-  )
-
   it.effect("returns none for a setting that was never stored", () =>
     Effect.gen(function* () {
       const settings = yield* Settings

@@ -128,6 +128,11 @@ cannot fail for a meaningful reason should not exist.
 - **Do not write:** tests for constants or trivial getters, tests that repeat what the type
   checker already proves, snapshot tests, tests that only check a function was called, or
   several tests for the same code path.
+- **Each test catches something no other test does.** Before adding a test, name a bug that
+  only it would catch. If another test in the suite would fail for every bug it catches (for
+  example, "returns a value after it is set" next to "replaces the value when set again"), do
+  not add it. Assert on what a module returns, not on how it stores things: query a table
+  through its service, never its columns through `pragma_table_info`.
 - **Do write:** a failing test before fixing a bug, tests for error paths a user can hit
   (bad data, empty states, an expired session), and tests at decoding boundaries.
 - Components are tested with Testing Library: query by role or label, interact with

@@ -1,8 +1,13 @@
 import path from "node:path"
 import { BrowserWindow, shell } from "electron"
-import { Effect, Schedule } from "effect"
+import { Effect, Schedule, Schema } from "effect"
 import { rendererDevServerUrl } from "../shared/dev-server"
 import { rendererEntryUrl } from "./renderer-protocol"
+
+class RendererLoadError extends Schema.TaggedError<RendererLoadError>()("RendererLoadError", {
+  url: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 export const createMainWindow = Effect.gen(function* () {
   const window = new BrowserWindow({
@@ -31,13 +36,20 @@ export const createMainWindow = Effect.gen(function* () {
 
 // In development Electron can start before Vite is listening, so retry for a
 // while instead of leaving a blank window.
-function loadRenderer(window: BrowserWindow): Effect.Effect<void, unknown> {
+function loadRenderer(window: BrowserWindow): Effect.Effect<void, RendererLoadError> {
   if (!import.meta.env.DEV) {
-    return Effect.tryPromise(() => window.loadURL(rendererEntryUrl))
+    return loadUrl(window, rendererEntryUrl)
   }
-  return Effect.tryPromise(() => window.loadURL(rendererDevServerUrl)).pipe(
+  return loadUrl(window, rendererDevServerUrl).pipe(
     Effect.retry({ schedule: Schedule.spaced("500 millis"), times: 60 }),
   )
+}
+
+function loadUrl(window: BrowserWindow, url: string): Effect.Effect<void, RendererLoadError> {
+  return Effect.tryPromise({
+    try: () => window.loadURL(url),
+    catch: (cause) => new RendererLoadError({ url, cause }),
+  })
 }
 
 // Links that try to open a new window go to the user's browser instead.
