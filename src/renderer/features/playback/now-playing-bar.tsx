@@ -1,6 +1,7 @@
+import { Disc3, Radio } from "lucide-react"
 import { useState } from "react"
 import { AccentButton } from "../../ui/accent-button"
-import { LibraryEntryArtwork } from "../library/library-entry-artwork"
+import { Artwork } from "../../ui/artwork"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
 import { DevicePicker } from "./device-picker"
 import { PlaybackControls } from "./playback-controls"
@@ -78,9 +79,11 @@ function PlayingItem({ item }: { readonly item: NonNullable<PlaybackState["item"
   const isTrack = item.type === "track"
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <LibraryEntryArtwork
-        kind={isTrack ? "album" : "show"}
-        images={isTrack ? item.album.images : item.images}
+      <Artwork
+        sources={isTrack ? item.album.images : item.images}
+        size={40}
+        className="rounded-small"
+        placeholderIcon={isTrack ? Disc3 : Radio}
       />
       <div className="flex min-w-0 flex-col">
         <p className="truncate text-sm">{item.name}</p>
