@@ -100,6 +100,15 @@ describe("ThemePicker", () => {
     expect(appliedAccent()).toBe(darkAccent)
   })
 
+  it("enters the list on the saved theme when tabbed into", async () => {
+    renderScreen(<ThemePicker savedThemeId="light" />, fakeMainProcess())
+    await screen.findByRole("list", { name: "Theme" })
+
+    await userEvent.tab()
+
+    expect(lightOption()).toHaveFocus()
+  })
+
   it("saves the focused theme when Enter is pressed", async () => {
     const mainProcess = await renderPickerWithDarkSaved()
 

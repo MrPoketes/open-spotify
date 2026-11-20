@@ -1,32 +1,23 @@
 import { Check } from "lucide-react"
-import { type KeyboardEvent, use, useRef, useState } from "react"
+import { type KeyboardEvent, use, useState } from "react"
 import { type ThemeId, builtInThemes, themeIds } from "../../../shared/built-in-themes"
 import type { Theme } from "../../../shared/theme"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { type RovingRowProps, useRovingFocus } from "../../ui/use-roving-focus"
 import { selectTheme } from "./saved-theme"
 import { ThemeSwatch } from "./theme-swatch"
 import { useThemePreview } from "./use-theme-preview"
-
-const focusStepForKey: Partial<Record<string, number>> = { ArrowDown: 1, ArrowUp: -1 }
 
 export function ThemePicker({ savedThemeId }: { readonly savedThemeId: ThemeId }) {
   const runtime = use(RendererRuntimeContext)
   const [chosenThemeId, setChosenThemeId] = useState(savedThemeId)
   const { setHoveredThemeId, setFocusedThemeId } = useThemePreview(chosenThemeId)
-  const optionButtons = useRef<Array<HTMLButtonElement | null>>([])
+  // Tab enters the list on the saved theme.
+  const { onKeyDown, rowProps } = useRovingFocus(themeIds.length, themeIds.indexOf(savedThemeId))
 
   const chooseTheme = (themeId: ThemeId) => {
     setChosenThemeId(themeId)
     runtime.runFork(selectTheme(themeId))
-  }
-
-  const moveFocus = (event: KeyboardEvent, fromIndex: number) => {
-    const step = focusStepForKey[event.key]
-    if (step === undefined) {
-      return
-    }
-    event.preventDefault()
-    optionButtons.current[fromIndex + step]?.focus()
   }
 
   return (
@@ -36,16 +27,14 @@ export function ThemePicker({ savedThemeId }: { readonly savedThemeId: ThemeId }
       {themeIds.map((themeId, index) => (
         <li key={themeId}>
           <ThemeOption
-            ref={(button) => {
-              optionButtons.current[index] = button
-            }}
             theme={builtInThemes[themeId]}
             isChosen={themeId === chosenThemeId}
+            rovingProps={rowProps(index)}
+            onKeyDown={onKeyDown}
             onHover={() => setHoveredThemeId(themeId)}
             onUnhover={() => setHoveredThemeId(null)}
             onFocus={() => setFocusedThemeId(themeId)}
             onBlur={() => setFocusedThemeId(null)}
-            onKeyDown={(event) => moveFocus(event, index)}
             onChoose={() => chooseTheme(themeId)}
           />
         </li>
@@ -55,35 +44,36 @@ export function ThemePicker({ savedThemeId }: { readonly savedThemeId: ThemeId }
 }
 
 interface ThemeOptionProps {
-  readonly ref: (button: HTMLButtonElement | null) => void
   readonly theme: Theme
   readonly isChosen: boolean
+  readonly rovingProps: RovingRowProps
+  readonly onKeyDown: (event: KeyboardEvent) => void
   readonly onHover: () => void
   readonly onUnhover: () => void
   readonly onFocus: () => void
   readonly onBlur: () => void
-  readonly onKeyDown: (event: KeyboardEvent) => void
   readonly onChoose: () => void
 }
 
-// Only the chosen option is a tab stop, so Tab enters the list on the saved
-// theme and the arrow keys move from there.
 function ThemeOption(props: ThemeOptionProps) {
-  const { ref, theme, isChosen, onHover, onUnhover, onFocus, onBlur, onKeyDown, onChoose } = props
+  const { theme, isChosen, rovingProps, onKeyDown, onHover, onUnhover, onFocus, onBlur, onChoose } =
+    props
   const chosenStyle = isChosen ? "bg-accent/15 font-semibold" : "hover:bg-surface-raised"
 
   return (
     <button
-      ref={ref}
       type="button"
+      {...rovingProps}
       aria-pressed={isChosen}
       aria-label={`${theme.name} by ${theme.author}`}
-      tabIndex={isChosen ? 0 : -1}
+      onKeyDown={onKeyDown}
       onMouseEnter={onHover}
       onMouseLeave={onUnhover}
-      onFocus={onFocus}
+      onFocus={() => {
+        rovingProps.onFocus()
+        onFocus()
+      }}
       onBlur={onBlur}
-      onKeyDown={onKeyDown}
       onClick={onChoose}
       className={`flex w-full items-center gap-3 rounded-small p-3 text-left text-sm transition-colors duration-120 ease-out ${chosenStyle}`}
     >

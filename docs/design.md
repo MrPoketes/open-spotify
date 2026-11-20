@@ -199,8 +199,8 @@ icon.
 Hovering or focusing a row previews its theme across the whole app at once. The pointer wins
 over focus, so a mouse user can compare themes while keyboard focus stays on one row. The saved
 theme returns when the pointer and focus both leave the picker, or the page closes. Clicking a
-row or pressing `Enter` or `Space` on it chooses and saves its theme. Only the chosen row is a
-tab stop, and the up and down arrow keys move between rows.
+row or pressing `Enter` or `Space` on it chooses and saves its theme. The list is one tab stop
+that starts on the chosen row, and moves like any other list (see Keyboard).
 
 ### Loading, empty, and error states
 
