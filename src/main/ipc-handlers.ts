@@ -12,6 +12,11 @@ import type { Folders } from "./folders"
 import { folderIpcOperations } from "./folders-ipc"
 import { mainRuntime } from "./main-runtime"
 import { getSettingFromIpc, setSettingFromIpc } from "./settings-ipc"
+import {
+  exportCurrentThemeFromIpc,
+  importThemeFileFromIpc,
+  listImportedThemesFromIpc,
+} from "./themes-ipc"
 
 export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.getAppInfo, (): AppInfo => ({
@@ -35,6 +40,13 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.cancelLogIn, () => mainRuntime.runPromise(cancelLogInFromIpc))
   ipcMain.handle(ipcChannels.getAccessToken, () => mainRuntime.runPromise(getAccessTokenFromIpc))
   ipcMain.handle(ipcChannels.logOut, () => mainRuntime.runPromise(logOutFromIpc))
+  ipcMain.handle(ipcChannels.listImportedThemes, () =>
+    mainRuntime.runPromise(listImportedThemesFromIpc),
+  )
+  ipcMain.handle(ipcChannels.importThemeFile, () => mainRuntime.runPromise(importThemeFileFromIpc))
+  ipcMain.handle(ipcChannels.exportCurrentTheme, () =>
+    mainRuntime.runPromise(exportCurrentThemeFromIpc),
+  )
   // Each operation returns its own reply type. Widening them to one function
   // type lets TypeScript call any of them in this loop.
   const folderOperations =

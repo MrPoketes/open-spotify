@@ -121,12 +121,27 @@ a dark theme, or the darkest surface of a light one.
 
 ## Importing a theme
 
-Importing a theme file from inside the app, and exporting the current theme, are planned for
-milestone 6 of the [roadmap](roadmap.md) and are not built yet.
+1. Open **Settings** from the gear icon at the right end of the top bar.
+2. Under **Appearance**, choose **Import theme…** and pick the theme's `.json` file.
+3. The theme appears at the end of the theme list. Click it to use it.
+
+The app keeps its own copy of an imported theme, so you can move or delete the file afterwards.
+To try a change you made to the file, import it again.
 
 When a file is imported, the app checks it against the rules above. A file that breaks a rule
 is rejected with a message that names the field, such as `["tokens"]["color-accent"]`, so you
-can find and fix the line.
+can find and fix the line. Nothing is stored until the file passes.
+
+A theme is identified by its `name` and `author`. Importing a theme with the same name and
+author as one you imported before asks whether to replace it. If that theme is in use, the
+new version applies at once. A theme cannot take the name and author of a built-in theme.
+
+## Exporting a theme
+
+Choose **Export current theme…** under **Appearance** and pick where to save the file. The app
+writes the theme in use with every token filled in, so the file is a good starting point for a
+theme of your own: change its `name` before you import it again, because a built-in theme's
+name and author cannot be imported.
 
 ## Sharing a theme
 

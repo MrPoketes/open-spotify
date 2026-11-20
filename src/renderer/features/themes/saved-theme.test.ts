@@ -2,9 +2,10 @@ import { assert, beforeEach, describe, it } from "@effect/vitest"
 import { Effect, Layer } from "effect"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { builtInThemes } from "../../../shared/built-in-themes"
+import { findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { fakeMainProcess } from "../../lib/fake-main-process"
-import { loadSavedThemeId, restoreSavedTheme, selectTheme } from "./saved-theme"
+import { loadSavedThemeLibrary, restoreSavedTheme, selectTheme } from "./saved-theme"
 
 const unreachableMainProcess: DesktopApi = {
   invoke: () => Promise.reject(new Error("The main process did not reply")),
@@ -12,6 +13,13 @@ const unreachableMainProcess: DesktopApi = {
 
 const bridgeOver = (desktopApi: DesktopApi) =>
   Layer.succeed(DesktopBridge)(DesktopBridge.make(desktopApi))
+
+const lightTheme = findLibraryTheme(themeLibrary([]), "light")
+
+const sunset = {
+  id: "0b7f3c2e-sunset",
+  theme: { ...builtInThemes.dark, name: "Sunset", author: "A theme author" },
+}
 
 const appliedToken = (token: string) =>
   document.documentElement.style.getPropertyValue(`--theme-${token}`)
@@ -31,6 +39,26 @@ describe("saved theme", () => {
       assert.strictEqual(appliedToken("color-canvas"), builtInThemes.light.tokens["color-canvas"])
       assert.strictEqual(document.documentElement.style.colorScheme, "light")
     }).pipe(Effect.provide(bridgeOver(fakeMainProcess()))),
+  )
+
+  // Without this the app would forget an imported theme on every restart.
+  it.effect("applies a saved imported theme", () =>
+    Effect.gen(function* () {
+      const bridge = yield* DesktopBridge
+      yield* bridge.importThemeFile
+      yield* bridge.setSetting("themeId", sunset.id)
+
+      yield* restoreSavedTheme
+
+      assert.strictEqual(appliedToken("font-body"), sunset.theme.tokens["font-body"])
+      assert.deepStrictEqual((yield* loadSavedThemeLibrary).savedTheme, sunset)
+    }).pipe(
+      Effect.provide(
+        bridgeOver(
+          fakeMainProcess({ importThemeReply: { _tag: "ThemeImported", importedTheme: sunset } }),
+        ),
+      ),
+    ),
   )
 
   it.effect("applies the default dark theme when no theme was saved", () =>
@@ -56,17 +84,17 @@ describe("saved theme", () => {
     Effect.gen(function* () {
       yield* restoreSavedTheme
 
-      yield* selectTheme("light")
+      yield* selectTheme(lightTheme)
 
       assert.strictEqual(appliedToken("color-accent"), builtInThemes.light.tokens["color-accent"])
-      assert.strictEqual(yield* loadSavedThemeId, "light")
+      assert.deepStrictEqual((yield* loadSavedThemeLibrary).savedTheme, lightTheme)
     }).pipe(Effect.provide(bridgeOver(fakeMainProcess()))),
   )
 
   // A failed save must not undo the switch the user just saw happen.
   it.effect("keeps the selected theme applied when it cannot be saved", () =>
     Effect.gen(function* () {
-      yield* selectTheme("light")
+      yield* selectTheme(lightTheme)
 
       assert.strictEqual(appliedToken("color-accent"), builtInThemes.light.tokens["color-accent"])
     }).pipe(Effect.provide(bridgeOver(unreachableMainProcess))),

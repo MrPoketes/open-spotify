@@ -4,6 +4,7 @@ import { Effect, Option } from "effect"
 import { beforeEach, describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { builtInThemes } from "../../../shared/built-in-themes"
+import { themeLibrary } from "../../../shared/theme-library"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
@@ -21,7 +22,7 @@ const renderPickerWithDarkSaved = async () => {
   const mainProcess = fakeMainProcess()
   renderScreen(
     <>
-      <ThemePicker savedThemeId="dark" />
+      <ThemePicker themes={themeLibrary([])} savedThemeId="dark" />
       <button type="button">Elsewhere</button>
     </>,
     mainProcess,
@@ -88,7 +89,10 @@ describe("ThemePicker", () => {
   // so neither the pointer nor focus ever leaves the picker.
   it("restores the saved theme when the page closes during a preview", async () => {
     const mainProcess = fakeMainProcess()
-    const router = renderScreen(<ThemePicker savedThemeId="dark" />, mainProcess)
+    const router = renderScreen(
+      <ThemePicker themes={themeLibrary([])} savedThemeId="dark" />,
+      mainProcess,
+    )
 
     await userEvent.hover(await screen.findByRole("button", { name: /Open Spotify Light/ }))
     expect(appliedAccent()).toBe(lightAccent)
@@ -101,7 +105,7 @@ describe("ThemePicker", () => {
   })
 
   it("enters the list on the saved theme when tabbed into", async () => {
-    renderScreen(<ThemePicker savedThemeId="light" />, fakeMainProcess())
+    renderScreen(<ThemePicker themes={themeLibrary([])} savedThemeId="light" />, fakeMainProcess())
     await screen.findByRole("list", { name: "Theme" })
 
     await userEvent.tab()

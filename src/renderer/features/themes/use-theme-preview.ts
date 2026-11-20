@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react"
-import { type ThemeId, builtInThemes } from "../../../shared/built-in-themes"
+import type { Theme } from "../../../shared/theme"
 import { applyTheme } from "./apply-theme"
 
 // A hovered theme wins over a focused one, so the pointer can preview themes
 // while keyboard focus stays put. When neither is set, or the picker unmounts
 // (a history shortcut can leave the page mid-preview), the saved theme returns.
-export function useThemePreview(savedThemeId: ThemeId) {
-  const [hoveredThemeId, setHoveredThemeId] = useState<ThemeId | null>(null)
-  const [focusedThemeId, setFocusedThemeId] = useState<ThemeId | null>(null)
-  const previewedThemeId = hoveredThemeId ?? focusedThemeId
+export function useThemePreview(savedTheme: Theme) {
+  const [hoveredTheme, setHoveredTheme] = useState<Theme | null>(null)
+  const [focusedTheme, setFocusedTheme] = useState<Theme | null>(null)
+  const previewedTheme = hoveredTheme ?? focusedTheme
 
   useEffect(() => {
-    applyTheme(builtInThemes[previewedThemeId ?? savedThemeId])
-    return () => applyTheme(builtInThemes[savedThemeId])
-  }, [previewedThemeId, savedThemeId])
+    applyTheme(previewedTheme ?? savedTheme)
+    return () => applyTheme(savedTheme)
+  }, [previewedTheme, savedTheme])
 
-  return { setHoveredThemeId, setFocusedThemeId }
+  return { setHoveredTheme, setFocusedTheme }
 }

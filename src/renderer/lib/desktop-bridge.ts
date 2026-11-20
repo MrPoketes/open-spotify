@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, type Option, Schema } from "effect"
+import { Context, Effect, Layer, Option, Schema } from "effect"
 import { AppInfo } from "../../shared/app-info"
 import {
   type AddFolderItemRequest,
@@ -24,6 +24,12 @@ import {
   type LogInError,
   LogInReply,
 } from "../../shared/spotify-auth-replies"
+import {
+  ExportThemeReply,
+  ImportThemeReply,
+  type ThemeImportFailed,
+} from "../../shared/theme-file-replies"
+import { LibraryTheme } from "../../shared/theme-library"
 import type { DesktopApi } from "../../preload/desktop-api"
 
 export class DesktopBridgeError extends Schema.TaggedError<DesktopBridgeError>()(
@@ -65,6 +71,14 @@ export class DesktopBridge extends Context.Service<
     readonly moveFolderItem: (
       request: MoveFolderItemRequest,
     ) => Effect.Effect<void, DesktopBridgeError>
+    readonly listImportedThemes: Effect.Effect<ReadonlyArray<LibraryTheme>, DesktopBridgeError>
+    // None when the user cancels.
+    readonly importThemeFile: Effect.Effect<
+      Option.Option<LibraryTheme>,
+      ThemeImportFailed | DesktopBridgeError
+    >
+    // The file written, or none when the user cancels.
+    readonly exportCurrentTheme: Effect.Effect<Option.Option<string>, DesktopBridgeError>
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
@@ -112,6 +126,19 @@ export class DesktopBridge extends Context.Service<
       removeFolderItem: (request) => send(ipcChannels.removeFolderItem, Schema.Undefined, request),
       moveFolder: (request) => send(ipcChannels.moveFolder, Schema.Undefined, request),
       moveFolderItem: (request) => send(ipcChannels.moveFolderItem, Schema.Undefined, request),
+      listImportedThemes: send(ipcChannels.listImportedThemes, Schema.Array(LibraryTheme)),
+      importThemeFile: send(ipcChannels.importThemeFile, ImportThemeReply).pipe(
+        Effect.flatMap((reply) => {
+          if (reply._tag === "ThemeImportFailed") {
+            return Effect.fail(reply)
+          }
+          if (reply._tag === "ThemeImportCanceled") {
+            return Effect.succeed(Option.none())
+          }
+          return Effect.succeed(Option.some(reply.importedTheme))
+        }),
+      ),
+      exportCurrentTheme: send(ipcChannels.exportCurrentTheme, ExportThemeReply),
     })
   }
 

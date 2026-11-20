@@ -74,7 +74,7 @@ const ThemeTokens = Schema.Struct(
 
 // Whether a theme is dark or light sets CSS `color-scheme`, so native
 // scrollbars and form controls match it.
-const Theme = Schema.Struct({
+export const Theme = Schema.Struct({
   name: Schema.NonEmptyString,
   author: Schema.NonEmptyString,
   version: Schema.NonEmptyString,
@@ -84,6 +84,9 @@ const Theme = Schema.Struct({
 
 export type Theme = typeof Theme.Type
 
+// Indented, because people read and edit theme files by hand.
+export const ThemeFile = Schema.fromJsonString(Theme, { space: 2 })
+
 // Unknown keys are rejected rather than dropped, so a misspelled token is
 // reported instead of silently changing nothing.
-export const decodeTheme = Schema.decodeUnknownEffect(Theme, { onExcessProperty: "error" })
+export const decodeThemeFile = Schema.decodeUnknownEffect(ThemeFile, { onExcessProperty: "error" })

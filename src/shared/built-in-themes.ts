@@ -1,15 +1,8 @@
-import { Schema } from "effect"
 import { type Theme, defaultThemeTokens } from "./theme"
 
-export const ThemeId = Schema.Literals(["dark", "light"])
+export const defaultThemeId = "dark"
 
-export type ThemeId = typeof ThemeId.Type
-
-export const themeIds = ThemeId.literals
-
-export const defaultThemeId: ThemeId = "dark"
-
-export const builtInThemes: Record<ThemeId, Theme> = {
+export const builtInThemes = {
   dark: {
     name: "Open Spotify Dark",
     author: "Open Spotify",
@@ -39,4 +32,4 @@ export const builtInThemes: Record<ThemeId, Theme> = {
       "shadow-overlay": "0 12px 32px rgb(22 25 34 / 0.2)",
     },
   },
-}
+} satisfies Record<string, Theme>

@@ -1,41 +1,51 @@
 import { Check } from "lucide-react"
 import { type KeyboardEvent, use, useState } from "react"
-import { type ThemeId, builtInThemes, themeIds } from "../../../shared/built-in-themes"
 import type { Theme } from "../../../shared/theme"
+import { type LibraryTheme, type ThemeId, findLibraryTheme } from "../../../shared/theme-library"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { type RovingRowProps, useRovingFocus } from "../../ui/use-roving-focus"
 import { selectTheme } from "./saved-theme"
 import { ThemeSwatch } from "./theme-swatch"
 import { useThemePreview } from "./use-theme-preview"
 
-export function ThemePicker({ savedThemeId }: { readonly savedThemeId: ThemeId }) {
+interface ThemePickerProps {
+  readonly themes: ReadonlyArray<LibraryTheme>
+  readonly savedThemeId: ThemeId
+}
+
+export function ThemePicker({ themes, savedThemeId }: ThemePickerProps) {
   const runtime = use(RendererRuntimeContext)
   const [chosenThemeId, setChosenThemeId] = useState(savedThemeId)
-  const { setHoveredThemeId, setFocusedThemeId } = useThemePreview(chosenThemeId)
+  const { setHoveredTheme, setFocusedTheme } = useThemePreview(
+    findLibraryTheme(themes, chosenThemeId).theme,
+  )
   // Tab enters the list on the saved theme.
-  const { onKeyDown, rowProps } = useRovingFocus(themeIds.length, themeIds.indexOf(savedThemeId))
+  const { onKeyDown, rowProps } = useRovingFocus(
+    themes.length,
+    themes.findIndex((libraryTheme) => libraryTheme.id === savedThemeId),
+  )
 
-  const chooseTheme = (themeId: ThemeId) => {
-    setChosenThemeId(themeId)
-    runtime.runFork(selectTheme(themeId))
+  const chooseTheme = (libraryTheme: LibraryTheme) => {
+    setChosenThemeId(libraryTheme.id)
+    runtime.runFork(selectTheme(libraryTheme))
   }
 
   return (
     // The rows touch, so the pointer never crosses a gap that would flash the
     // saved theme between two previews.
     <ul aria-label="Theme" className="flex flex-col">
-      {themeIds.map((themeId, index) => (
-        <li key={themeId}>
+      {themes.map((libraryTheme, index) => (
+        <li key={libraryTheme.id}>
           <ThemeOption
-            theme={builtInThemes[themeId]}
-            isChosen={themeId === chosenThemeId}
+            theme={libraryTheme.theme}
+            isChosen={libraryTheme.id === chosenThemeId}
             rovingProps={rowProps(index)}
             onKeyDown={onKeyDown}
-            onHover={() => setHoveredThemeId(themeId)}
-            onUnhover={() => setHoveredThemeId(null)}
-            onFocus={() => setFocusedThemeId(themeId)}
-            onBlur={() => setFocusedThemeId(null)}
-            onChoose={() => chooseTheme(themeId)}
+            onHover={() => setHoveredTheme(libraryTheme.theme)}
+            onUnhover={() => setHoveredTheme(null)}
+            onFocus={() => setFocusedTheme(libraryTheme.theme)}
+            onBlur={() => setFocusedTheme(null)}
+            onChoose={() => chooseTheme(libraryTheme)}
           />
         </li>
       ))}

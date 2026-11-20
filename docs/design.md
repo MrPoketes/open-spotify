@@ -206,6 +206,11 @@ theme returns when the pointer and focus both leave the picker, or the page clos
 row or pressing `Enter` or `Space` on it chooses and saves its theme. The list is one tab stop
 that starts on the chosen row, and moves like any other list (see Keyboard).
 
+Below the list, "Import theme…" and "Export current theme…" are round `surface-raised` buttons
+that open the operating system's file dialogs. A result is reported in `muted` text inside an
+`output` element; a rejected file shows the reason in `danger` text inside an `alert`. While a
+dialog is open both buttons are `aria-disabled` and ignore clicks, but keep focus.
+
 ### Loading, empty, and error states
 
 - While a list or page loads, it says so in `muted` text inside an `output` element, so screen
