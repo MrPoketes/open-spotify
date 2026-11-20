@@ -1,20 +1,23 @@
 import { Schema } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
+import type { FolderTree } from "../../shared/folders"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
 import { GetSettingRequest, SetSettingRequest } from "../../shared/settings"
 import type { ExportThemeReply, ImportThemeReply } from "../../shared/theme-file-replies"
 
-// What the theme file channels reply, as if the user had answered their
-// dialogs. Both default to the user canceling.
+// The theme file channels reply as if the user had answered their dialogs.
+// Both default to the user canceling.
 interface FakeMainProcessOptions {
+  readonly folderTree?: FolderTree
   readonly importThemeReply?: typeof ImportThemeReply.Encoded
   readonly exportThemeReply?: typeof ExportThemeReply.Encoded
 }
 
 // Stands in for the main process in renderer tests. It decodes settings
-// requests with the same Schemas as the real one and keeps settings and
-// imported themes in memory.
+// requests with the same Schemas as the real one, keeps settings and
+// imported themes in memory, and serves the given folder tree.
 export const fakeMainProcess = ({
+  folderTree = [],
   importThemeReply = { _tag: "ThemeImportCanceled" },
   exportThemeReply = null,
 }: FakeMainProcessOptions = {}): DesktopApi => {
@@ -29,6 +32,7 @@ export const fakeMainProcess = ({
       const { key, value } = Schema.decodeUnknownSync(SetSettingRequest)(request)
       storedSettings.set(key, value)
     },
+    [ipcChannels.getFolderTree]: () => folderTree,
     [ipcChannels.listImportedThemes]: () => [...importedThemes.values()],
     [ipcChannels.importThemeFile]: () => {
       // Like the real main process, a theme imported again replaces its row.

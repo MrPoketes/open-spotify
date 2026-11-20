@@ -17,6 +17,7 @@ import { Paging, streamPages } from "./spotify-paging"
 import { PlaybackState } from "./spotify-playback-state"
 import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
+import { SavedTracksPage } from "./spotify-track"
 import { CurrentUser } from "./spotify-user"
 
 export class SpotifyResponseError extends Schema.TaggedError<SpotifyResponseError>()(
@@ -111,6 +112,26 @@ const decodeJson = <A>(
     Effect.mapError((cause) => new SpotifyDecodeError({ url: response.request.url, cause })),
   )
 
+const authorizedClient = Effect.gen(function* () {
+  const accessToken = yield* SpotifyAccessToken
+  return (yield* HttpClient.HttpClient).pipe(
+    HttpClient.mapRequestEffect((request) =>
+      accessToken.get.pipe(
+        Effect.map((token) =>
+          request.pipe(HttpClientRequest.bearerToken(token), HttpClientRequest.acceptJson),
+        ),
+      ),
+    ),
+    // Spotify sends Retry-After with 429 responses, and retryTransient
+    // waits at least that long before the next attempt.
+    HttpClient.retryTransient({
+      retryOn: "response-only",
+      schedule: Schedule.exponential("1 second"),
+      times: 3,
+    }),
+  )
+})
+
 export class SpotifyApi extends Context.Service<
   SpotifyApi,
   {
@@ -122,6 +143,7 @@ export class SpotifyApi extends Context.Service<
       offset: number,
     ) => Effect.Effect<PlaylistItemsPage, SpotifyApiError>
     readonly likedSongsCount: Effect.Effect<number, SpotifyApiError>
+    readonly getLikedSongsPage: (offset: number) => Effect.Effect<SavedTracksPage, SpotifyApiError>
     readonly savedAlbums: Stream.Stream<SavedAlbum, SpotifyApiError>
     readonly followedArtists: Stream.Stream<Artist, SpotifyApiError>
     readonly savedShows: Stream.Stream<SavedShow, SpotifyApiError>
@@ -138,25 +160,7 @@ export class SpotifyApi extends Context.Service<
   static readonly layerWithoutHttpClient = Layer.effect(
     SpotifyApi,
     Effect.gen(function* () {
-      const accessToken = yield* SpotifyAccessToken
-      const client = (yield* HttpClient.HttpClient).pipe(
-        HttpClient.mapRequestEffect((request) =>
-          accessToken.get.pipe(
-            Effect.map((token) =>
-              request.pipe(HttpClientRequest.bearerToken(token), HttpClientRequest.acceptJson),
-            ),
-          ),
-        ),
-        // Spotify sends Retry-After with 429 responses, and retryTransient
-        // waits at least that long before the next attempt.
-        HttpClient.retryTransient({
-          retryOn: "response-only",
-          schedule: Schedule.exponential("1 second"),
-          times: 3,
-        }),
-      )
-
-      const send = sendWith(client)
+      const send = sendWith(yield* authorizedClient)
 
       const getJson = <A>(url: string, responseSchema: Schema.Decoder<A>) =>
         send(HttpClientRequest.get(url)).pipe(
@@ -194,6 +198,11 @@ export class SpotifyApi extends Context.Service<
           `${spotifyApiBaseUrl}/me/tracks?limit=1`,
           Schema.Struct({ total: Schema.Number }),
         ).pipe(Effect.map(({ total }) => total)),
+        getLikedSongsPage: (offset) =>
+          getJson(
+            `${spotifyApiBaseUrl}/me/tracks?limit=${maximumPageSize}&offset=${offset}`,
+            SavedTracksPage,
+          ),
         savedAlbums: streamPages(`${spotifyApiBaseUrl}/me/albums?limit=${maximumPageSize}`, (url) =>
           getJson(url, Paging(SavedAlbum)),
         ),

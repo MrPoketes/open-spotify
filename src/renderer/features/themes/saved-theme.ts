@@ -1,7 +1,8 @@
-import { Effect, Option } from "effect"
+import { Effect } from "effect"
 import { defaultThemeId } from "../../../shared/built-in-themes"
 import { type LibraryTheme, findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
 import { DesktopBridge } from "../../lib/desktop-bridge"
+import { loadSavedSetting, saveSetting } from "../../lib/saved-setting"
 import { applyTheme } from "./apply-theme"
 
 export interface SavedThemeLibrary {
@@ -9,38 +10,24 @@ export interface SavedThemeLibrary {
   readonly savedTheme: LibraryTheme
 }
 
-const builtInThemesOnly: SavedThemeLibrary = {
-  themes: themeLibrary([]),
-  savedTheme: findLibraryTheme(themeLibrary([]), defaultThemeId),
-}
-
 export const loadSavedThemeLibrary = Effect.gen(function* () {
   const bridge = yield* DesktopBridge
-  const themes = themeLibrary(yield* bridge.listImportedThemes)
-  const savedThemeId = yield* bridge.getSetting("themeId")
-  const savedTheme = findLibraryTheme(
-    themes,
-    Option.getOrElse(savedThemeId, () => defaultThemeId),
+  const importedThemes = yield* bridge.listImportedThemes.pipe(
+    Effect.catchTag("DesktopBridgeError", (error) =>
+      Effect.logWarning("Could not read the imported themes", error).pipe(Effect.as([])),
+    ),
   )
-  return { themes, savedTheme } satisfies SavedThemeLibrary
-}).pipe(
-  Effect.catchTag("DesktopBridgeError", (error) =>
-    Effect.logWarning("Could not read the saved theme", error).pipe(Effect.as(builtInThemesOnly)),
-  ),
-)
+  const themes = themeLibrary(importedThemes)
+  const savedThemeId = yield* loadSavedSetting("themeId", defaultThemeId)
+  return { themes, savedTheme: findLibraryTheme(themes, savedThemeId) } satisfies SavedThemeLibrary
+})
 
 export const restoreSavedTheme = Effect.gen(function* () {
   const { savedTheme } = yield* loadSavedThemeLibrary
   applyTheme(savedTheme.theme)
 })
 
-export const selectTheme = Effect.fn("selectTheme")(
-  function* (libraryTheme: LibraryTheme) {
-    applyTheme(libraryTheme.theme)
-    const bridge = yield* DesktopBridge
-    yield* bridge.setSetting("themeId", libraryTheme.id)
-  },
-  Effect.catchTag("DesktopBridgeError", (error) =>
-    Effect.logWarning("Could not save the selected theme", error),
-  ),
-)
+export const selectTheme = Effect.fn("selectTheme")(function* (libraryTheme: LibraryTheme) {
+  applyTheme(libraryTheme.theme)
+  yield* saveSetting("themeId", libraryTheme.id)
+})

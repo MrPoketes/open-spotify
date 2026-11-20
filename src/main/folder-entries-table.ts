@@ -101,6 +101,7 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
     return folderId
   })
 
+  // A folder holds each item once, so inserting a held item changes nothing.
   const insertItem = Effect.fn("FolderEntriesTable.insertItem")(function* (
     folderId: string,
     item: SpotifyItem,
@@ -110,6 +111,7 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
       INSERT INTO folder_entries (id, parent_id, position, name, spotify_uri, image_url)
       VALUES (${crypto.randomUUID()}, ${folderId}, ${position}, ${item.name}, ${item.uri},
         ${item.imageUrl})
+      ON CONFLICT (parent_id, spotify_uri) DO NOTHING
     `
   })
 
@@ -152,3 +154,5 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
     placeEntry,
   }
 })
+
+export type FolderEntriesTable = Effect.Success<typeof makeFolderEntriesTable>

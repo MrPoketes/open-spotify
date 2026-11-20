@@ -21,6 +21,8 @@ export const ipcChannels = {
   listImportedThemes: "themes:list-imported",
   importThemeFile: "themes:import-file",
   exportCurrentTheme: "themes:export-current",
+  exportFolders: "folders:export",
+  importFolders: "folders:import",
 } as const
 
 export type IpcChannel = (typeof ipcChannels)[keyof typeof ipcChannels]

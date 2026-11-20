@@ -5,9 +5,9 @@ import {
   minimumSidebarWidth,
 } from "../../../shared/sidebar-width"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { saveSetting } from "../../lib/saved-setting"
 import { PaneDivider } from "../../ui/pane-divider"
 import { NowPlayingBar } from "../playback/now-playing-bar"
-import { saveSidebarWidth } from "./saved-sidebar-width"
 import { Sidebar } from "./sidebar"
 import { TopBar } from "./top-bar"
 import { useHistoryShortcuts } from "./use-history-shortcuts"
@@ -34,7 +34,7 @@ export function AppShell({ savedSidebarWidth, platform, children }: AppShellProp
           maximumWidth={maximumSidebarWidth}
           defaultWidth={defaultSidebarWidth}
           onResize={setSidebarWidth}
-          onResizeEnd={(width) => runtime.runFork(saveSidebarWidth(width))}
+          onResizeEnd={(width) => runtime.runFork(saveSetting("sidebarWidth", width))}
         />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
           <TopBar />

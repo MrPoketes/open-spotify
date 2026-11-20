@@ -11,6 +11,12 @@ import {
   type RemoveFolderItemRequest,
   type RenameFolderRequest,
 } from "../../shared/folders"
+import {
+  ExportFoldersReply,
+  type FoldersImportOutcome,
+  type ImportFoldersError,
+  ImportFoldersReply,
+} from "../../shared/folders-file-replies"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
 import {
   type SettingKey,
@@ -79,6 +85,11 @@ export class DesktopBridge extends Context.Service<
     >
     // The file written, or none when the user cancels.
     readonly exportCurrentTheme: Effect.Effect<Option.Option<string>, DesktopBridgeError>
+    readonly exportFolders: Effect.Effect<ExportFoldersReply, DesktopBridgeError>
+    readonly importFolders: Effect.Effect<
+      FoldersImportOutcome,
+      ImportFoldersError | DesktopBridgeError
+    >
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
@@ -139,6 +150,14 @@ export class DesktopBridge extends Context.Service<
         }),
       ),
       exportCurrentTheme: send(ipcChannels.exportCurrentTheme, ExportThemeReply),
+      exportFolders: send(ipcChannels.exportFolders, ExportFoldersReply),
+      importFolders: send(ipcChannels.importFolders, ImportFoldersReply).pipe(
+        Effect.flatMap((reply) =>
+          reply._tag === "FoldersImported" || reply._tag === "FileDialogCanceled"
+            ? Effect.succeed(reply)
+            : Effect.fail(reply),
+        ),
+      ),
     })
   }
 
