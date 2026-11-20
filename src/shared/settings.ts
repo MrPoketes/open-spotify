@@ -1,7 +1,8 @@
 import { Schema } from "effect"
 import { ThemeId } from "./built-in-themes"
+import { SidebarWidth } from "./sidebar-width"
 
-export const SettingKey = Schema.Literals(["spotifyClientId", "themeId"])
+export const SettingKey = Schema.Literals(["spotifyClientId", "themeId", "sidebarWidth"])
 
 export type SettingKey = typeof SettingKey.Type
 
@@ -10,6 +11,7 @@ export type SettingKey = typeof SettingKey.Type
 export const settingSchemas = {
   spotifyClientId: Schema.NonEmptyString,
   themeId: ThemeId,
+  sidebarWidth: SidebarWidth,
 } satisfies Record<SettingKey, Schema.Top>
 
 export type SettingValue<K extends SettingKey> = (typeof settingSchemas)[K]["Type"]
