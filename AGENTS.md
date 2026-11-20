@@ -19,6 +19,7 @@ autonomous pipeline, your playbook is in [docs/agents](docs/agents).
 | `pnpm build`       | Build renderer, main, and preload                              |
 | `pnpm package:dir` | Build an unpacked app for the current OS in `release/`         |
 | `pnpm test:e2e`    | Launch the unpacked app against fake Spotify                   |
+| `pnpm screenshots` | Retake the README screenshots from the unpacked app            |
 | `pnpm lint:fix`    | Apply automatic lint fixes                                     |
 | `pnpm format`      | Format all files with oxfmt                                    |
 | `pnpm icons`       | Regenerate the app icon files from `build/icon.svg`            |
@@ -34,7 +35,8 @@ src/renderer/   The React UI, built by TanStack Start in SPA mode.
   features/     One folder per feature (library, playback, themes, folders, ...).
   ui/           Generic, reusable components with no Spotify knowledge.
   lib/          Renderer-wide infrastructure (runtime, bridge).
-e2e/            Playwright tests that launch the packaged Electron app.
+e2e/            Playwright tests that launch the packaged Electron app, and the README
+                screenshot script.
 lint/           Project-specific oxlint rules.
 scripts/        Developer scripts run by hand, such as icon generation.
 build/          Packaging resources: the app icon source and its generated files.

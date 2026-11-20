@@ -47,6 +47,9 @@ pnpm test:e2e      # launch that app against fake Spotify
 All three must pass before you open a pull request. `pnpm lint:fix` and `pnpm format` fix most
 lint and format errors for you.
 
+If your change alters how the main view looks, run `pnpm screenshots` after `pnpm package:dir` to
+retake the README screenshots in `docs/images/`. They show fake data, so you need no account.
+
 ## Write the code
 
 Read [AGENTS.md](AGENTS.md) before you change anything. Its rules apply to everyone, people and
