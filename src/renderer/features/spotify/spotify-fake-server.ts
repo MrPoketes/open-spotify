@@ -128,20 +128,13 @@ const currentUserResources: Record<string, (url: URL) => unknown> = {
   "/v1/me/shows": (url) => pageOf(fakeSavedShows, url, defaultPageLimit),
 }
 
-const respondToFollowing = (url: URL): readonly [number, unknown] => {
-  if (url.searchParams.get("type") !== "artist") {
-    return [400, errorBody(400, "Invalid type parameter")]
-  }
-  return [200, { artists: cursorPageOf(fakeFollowedArtists, url) }]
-}
-
 const respondTo = (url: URL): readonly [number, unknown] => {
   const currentUserResource = currentUserResources[url.pathname]
   if (currentUserResource) {
     return [200, currentUserResource(url)]
   }
   if (url.pathname === "/v1/me/following") {
-    return respondToFollowing(url)
+    return [200, { artists: cursorPageOf(fakeFollowedArtists, url) }]
   }
   const [, playlistId, itemsPath] = /^\/v1\/playlists\/([^/]+)(\/items)?$/.exec(url.pathname) ?? []
   const playlist = fakePlaylists.find(({ id }) => id === playlistId)

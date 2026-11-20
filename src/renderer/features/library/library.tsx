@@ -27,7 +27,7 @@ function LibraryContent({ onRetry }: { readonly onRetry: () => void }) {
         <button
           type="button"
           onClick={onRetry}
-          className="rounded-small bg-surface-raised px-3 py-2 text-sm"
+          className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity duration-120 ease-out hover:opacity-90 active:opacity-75"
         >
           Retry
         </button>
@@ -46,7 +46,7 @@ function LibraryContent({ onRetry }: { readonly onRetry: () => void }) {
   return (
     <ul className="flex flex-col">
       {state.entries.map((entry) => (
-        <li key={entry.uri} className="flex items-center gap-3 rounded-small px-2 py-1">
+        <li key={entry.uri} className="flex items-center gap-3 px-2 py-1">
           <LibraryEntryArtwork kind={entry.kind} images={entry.images} />
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm">{entry.name}</span>

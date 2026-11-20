@@ -16,8 +16,8 @@ export interface LibraryEntry {
   readonly images: ReadonlyArray<Image>
 }
 
-const likedSongsEntry = (userId: string, songCount: number): LibraryEntry => ({
-  uri: `spotify:user:${userId}:collection`,
+const likedSongsEntry = (songCount: number): LibraryEntry => ({
+  uri: "spotify:collection:tracks",
   kind: "liked-songs",
   name: "Liked Songs",
   details: `Playlist · ${songCount} ${songCount === 1 ? "song" : "songs"}`,
@@ -60,7 +60,6 @@ export const loadLibraryEntries = Effect.gen(function* () {
   const spotify = yield* SpotifyApi
   const library = yield* Effect.all(
     {
-      user: spotify.getCurrentUser,
       likedSongsCount: spotify.likedSongsCount,
       playlists: Stream.runCollect(spotify.currentUserPlaylists),
       albums: Stream.runCollect(spotify.savedAlbums),
@@ -70,8 +69,7 @@ export const loadLibraryEntries = Effect.gen(function* () {
     { concurrency: "unbounded" },
   )
   // An entry for zero liked songs would hide the empty-library message.
-  const likedSongs =
-    library.likedSongsCount > 0 ? [likedSongsEntry(library.user.id, library.likedSongsCount)] : []
+  const likedSongs = library.likedSongsCount > 0 ? [likedSongsEntry(library.likedSongsCount)] : []
   return [
     ...likedSongs,
     ...library.playlists.map(playlistEntry),
