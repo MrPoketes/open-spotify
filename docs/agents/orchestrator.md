@@ -60,7 +60,8 @@ fewer than 5:
 If fewer than 5 unblocked issues are in `Todo`, create more from
 [docs/roadmap.md](../roadmap.md):
 
-- Take the earliest milestone with unticketed items. Write each item as one or more issues
+- Take the earliest milestone whose items are not all in Linear yet (Linear milestones match the
+  roadmap headings). Write each item as one or more issues
   that fit in a single PR. Every issue gets:
   - team `Armintas`, project `Open Spotify`, label `Open-Spotify` (plus `Feature`, `Bug`, or
     `Improvement`), and the milestone name;
@@ -68,10 +69,9 @@ If fewer than 5 unblocked issues are in `Todo`, create more from
   - an **Acceptance criteria** list that a reviewer can check;
   - `blocked by` links to the issues it depends on;
   - a priority: earlier milestones get higher priority.
-- Before creating an issue, search Linear to avoid duplicates.
-- Mark the roadmap items you ticketed by adding the issue ids next to them, in a PR titled
-  `Orchestrator: ticket roadmap items`. Open and merge it like a worker would (step 4 and 5 of
-  `worker.md`), since nobody pushes to `main`.
+- Before creating an issue, search Linear (by milestone and by keyword) so the same roadmap
+  item is never ticketed twice. Linear is the record of what has been ticketed; do not edit
+  the roadmap for that.
 
 ## 5. Daily quality sweep
 

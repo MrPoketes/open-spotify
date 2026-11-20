@@ -1,7 +1,7 @@
 # Roadmap
 
-The orchestrator turns these items into Linear issues, milestone by milestone. When an item is
-ticketed, its issue ids are added after it in brackets.
+The orchestrator turns these items into Linear issues, milestone by milestone. Linear milestones
+match the headings below; Linear, not this file, records what has been ticketed.
 
 ## M1: Foundation (done)
 

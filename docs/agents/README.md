@@ -32,6 +32,8 @@ The owner is not in the loop. Agents plan, build, review, and merge.
 
 - Repository: `MrPoketes/open-spotify`, default branch `main`, squash merges only.
 - T3 project id: `276c2197-0a35-4b86-8cd4-7af8cc7023e2`.
+- Orchestrator scheduled task id:
+  `scheduled-task:command:mcp:d4e2c9ef-131f-44c3-8d2d-f462f297ae71:schedule-task:open-spotify-orchestrator-v1`.
 - Linear: team `Armintas` (key `ARM`), project `Open Spotify`, label `Open-Spotify`.
   Statuses: Backlog → Todo → In Progress → In Review → Done (or Canceled).
 - Required checks on `main`: `check`, `package (ubuntu-latest)`, `package (windows-latest)`,
