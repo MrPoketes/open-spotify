@@ -5,6 +5,12 @@ import type { AlbumGroup } from "./spotify-api"
 import { fakeDiscography } from "./spotify-discography-fixtures"
 import { fakePlayer } from "./spotify-fake-player"
 import { searchPageSize } from "./spotify-search"
+import type { TimeRange } from "./spotify-listening-history"
+import {
+  fakeRecentlyPlayed,
+  fakeTopArtists,
+  fakeTopTracks,
+} from "./spotify-listening-history-fixtures"
 import {
   type FakePlaylist,
   fakeAlbums,
@@ -215,8 +221,22 @@ const respondToSearch = (url: URL): readonly [number, unknown] => {
   return [200, Object.fromEntries(results)]
 }
 
+const timeRanges: ReadonlyArray<TimeRange> = ["short_term", "medium_term", "long_term"]
+
+// Spotify uses medium_term when a request has no time_range.
+const requestedTimeRange = (url: URL) =>
+  timeRanges.find((timeRange) => timeRange === url.searchParams.get("time_range")) ?? "medium_term"
+
 const currentUserResources: Record<string, (url: URL) => unknown> = {
   "/v1/me": () => fakeCurrentUser,
+  "/v1/me/player/recently-played": (url) => ({
+    items: fakeRecentlyPlayed.slice(0, Number(url.searchParams.get("limit") ?? defaultPageLimit)),
+    next: null,
+  }),
+  "/v1/me/top/artists": (url) =>
+    pageOf(fakeTopArtists[requestedTimeRange(url)], url, defaultPageLimit),
+  "/v1/me/top/tracks": (url) =>
+    pageOf(fakeTopTracks[requestedTimeRange(url)], url, defaultPageLimit),
   "/v1/me/playlists": (url) => pageOf(fakePlaylists.map(simplifiedPlaylist), url, defaultPageLimit),
   "/v1/me/tracks": (url) => pageOf(fakeLikedSongs, url, defaultPageLimit),
   "/v1/me/albums": (url) => pageOf(fakeSavedAlbums, url, defaultPageLimit),

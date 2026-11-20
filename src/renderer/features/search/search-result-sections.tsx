@@ -1,24 +1,12 @@
-import { Disc3, ListMusic, MicVocal } from "lucide-react"
+import { Disc3, ListMusic } from "lucide-react"
 import { CardGrid, type GridCard } from "../../ui/card-grid"
+import { artistCard } from "../artist/artist-card"
 import { formatArtistNames } from "../spotify/format-artist-names"
-import type { Artist } from "../spotify/spotify-artist"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import type { SearchAlbum } from "../spotify/spotify-album"
 import type { SearchResults } from "../spotify/spotify-search"
-import type { Track } from "../spotify/spotify-track"
-import { trackEntry } from "../track-list/track-entry"
-import { TrackList } from "../track-list/track-list"
+import { UndatedTrackList } from "../track-list/undated-track-list"
 import { ResultSection } from "./result-section"
-
-const artistCard = (artist: Artist): GridCard => ({
-  key: artist.id,
-  link: { to: "/artist/$artistId", params: { artistId: artist.id } },
-  title: artist.name,
-  details: "Artist",
-  artwork: artist.images,
-  placeholderIcon: MicVocal,
-  roundArtwork: true,
-})
 
 const albumCard = (album: SearchAlbum): GridCard => ({
   key: album.id,
@@ -38,14 +26,6 @@ const playlistCard = (playlist: SimplifiedPlaylist): GridCard => ({
   placeholderIcon: ListMusic,
 })
 
-function TrackResults({ tracks }: { readonly tracks: ReadonlyArray<Track> }) {
-  const trackAt = (index: number) => {
-    const track = tracks[index]
-    return track === undefined ? undefined : trackEntry(track, null)
-  }
-  return <TrackList label="Tracks" layout="search" trackCount={tracks.length} trackAt={trackAt} />
-}
-
 interface SearchResultSectionsProps {
   readonly query: string
   readonly firstPages: SearchResults
@@ -61,7 +41,7 @@ export function SearchResultSections({ query, firstPages }: SearchResultSections
         firstPage={firstPages.tracks}
         pageOf={({ tracks }) => tracks}
       >
-        {(tracks) => <TrackResults tracks={tracks} />}
+        {(tracks) => <UndatedTrackList label="Tracks" tracks={tracks} />}
       </ResultSection>
       <ResultSection
         query={query}

@@ -11,19 +11,32 @@ const scrollingMainView = (rowsRef: RefObject<HTMLElement | null>) =>
   rowsRef.current?.closest("main") ?? null
 
 // How far the rows start below the top of the main view's scrolled content,
-// which the virtualiser needs to work out which rows are on screen. Only a
-// change of width can reflow what sits above the list, so that is when it is
-// measured again.
-function useRowsOffset(rowsRef: RefObject<HTMLElement | null>, mainViewWidth: number | undefined) {
+// which the virtualiser needs to work out which rows are on screen. What sits
+// above the list can change height, such as a header that reflows at a new
+// width or a home page section that finishes loading, so the offset is
+// measured again whenever the page resizes.
+function useRowsOffset(rowsRef: RefObject<HTMLElement | null>) {
   const [rowsOffset, setRowsOffset] = useState(0)
   useLayoutEffect(() => {
+    const rows = rowsRef.current
     const mainView = scrollingMainView(rowsRef)
-    if (!rowsRef.current || !mainView || mainViewWidth === undefined) {
-      return
+    // Every route renders a single root element inside <main>, so its first
+    // child is the whole page.
+    const page = mainView?.firstElementChild
+    if (!rows || !mainView || !page) {
+      return undefined
     }
-    const rowsTop = rowsRef.current.getBoundingClientRect().top
-    setRowsOffset(rowsTop - mainView.getBoundingClientRect().top + mainView.scrollTop)
-  }, [rowsRef, mainViewWidth])
+    const measure = () =>
+      setRowsOffset(
+        rows.getBoundingClientRect().top -
+          mainView.getBoundingClientRect().top +
+          mainView.scrollTop,
+      )
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(page)
+    return () => observer.disconnect()
+  }, [rowsRef])
   return rowsOffset
 }
 
@@ -39,8 +52,7 @@ interface TrackListProps {
 export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }: TrackListProps) {
   const { density } = use(TrackListDensityContext)
   const rowsRef = useRef<HTMLTableSectionElement>(null)
-  const [mainViewWidth, setMainViewWidth] = useState<number>()
-  const rowsOffset = useRowsOffset(rowsRef, mainViewWidth)
+  const rowsOffset = useRowsOffset(rowsRef)
   // oxlint-disable-next-line react/incompatible-library -- The warning is about the React Compiler, which this project does not use.
   const virtualizer = useVirtualizer({
     count: trackCount,
@@ -48,7 +60,6 @@ export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }
     estimateSize: () => trackRowHeight[density],
     overscan: 10,
     scrollMargin: rowsOffset,
-    onChange: (instance) => setMainViewWidth(instance.scrollRect?.width),
   })
   // The virtualiser keeps the row sizes it worked out and does not notice a
   // new estimate, so a change of density must make it start over.

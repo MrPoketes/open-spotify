@@ -14,9 +14,10 @@ import { formatTrackDuration } from "./format-duration"
 import { trackRowHeight } from "./track-row-height"
 
 // Every track on an album shares its artwork and album, and an album has no
-// date added, so its list leaves those out. Search results have no date added
-// either.
-export type TrackListLayout = "playlist" | "album" | "search"
+// date added, so its list leaves those out. Tracks that are not in a list,
+// such as search results or the home page's recently played and top tracks,
+// have no date added either.
+export type TrackListLayout = "playlist" | "album" | "undated"
 
 const showsAlbum = (layout: TrackListLayout) => layout !== "album"
 
@@ -47,7 +48,7 @@ const columnsByLayout: Record<TrackListLayout, string> = {
   playlist:
     "grid-cols-[2rem_minmax(0,1fr)_4rem] @xl:grid-cols-[2rem_minmax(0,3fr)_minmax(0,2fr)_4rem] @3xl:grid-cols-[2rem_minmax(0,3fr)_minmax(0,2fr)_8rem_4rem]",
   album: "grid-cols-[2rem_minmax(0,1fr)_4rem]",
-  search:
+  undated:
     "grid-cols-[2rem_minmax(0,1fr)_4rem] @xl:grid-cols-[2rem_minmax(0,3fr)_minmax(0,2fr)_4rem]",
 }
 
