@@ -39,12 +39,13 @@ You do not need a Spotify account to run the tests: they use fake data.
 ## Check your change
 
 ```sh
-pnpm check   # lint, format check, typecheck, and tests
-pnpm build   # renderer, main, and preload
+pnpm check      # lint, format check, typecheck, and tests
+pnpm build      # renderer, main, and preload
+pnpm test:e2e   # launches the built app against fake Spotify
 ```
 
-Both must pass before you open a pull request. `pnpm lint:fix` and `pnpm format` fix most lint
-and format errors for you.
+All three must pass before you open a pull request. `pnpm lint:fix` and `pnpm format` fix most
+lint and format errors for you.
 
 ## Write the code
 

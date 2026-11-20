@@ -105,6 +105,12 @@ export default defineConfig({
       rules: { "max-lines-per-function": "off", "max-nested-callbacks": "off" },
     },
     {
+      // Playwright hands each fixture a `use` callback, which the hooks rule
+      // mistakes for React's `use`. There is no React in end-to-end tests.
+      files: ["e2e/**"],
+      rules: { "react/rules-of-hooks": "off" },
+    },
+    {
       // The renderer is sandboxed: it reaches the main process only through
       // the DesktopBridge, never through Electron or Node APIs.
       files: ["src/renderer/**"],
