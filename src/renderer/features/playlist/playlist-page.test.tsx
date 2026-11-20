@@ -142,9 +142,11 @@ describe("PlaylistPage", () => {
     const tracks = await screen.findByRole("table", { name: "Tracks" })
     const user = userEvent.setup()
 
+    const firstRow = screen.getByRole("row", { name: "Quiet Rivers by Northbound Static" })
+
     await user.tab()
     await user.tab()
-    expect(within(trackRows()[1]).getByRole("link", { name: "Glass Harbour" })).toHaveFocus()
+    expect(within(firstRow).getByRole("link", { name: "Glass Harbour" })).toHaveFocus()
 
     await user.tab()
     expect(tracks.contains(document.activeElement)).toBe(false)
