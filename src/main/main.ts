@@ -3,8 +3,14 @@ import { type Cause, Effect, Exit } from "effect"
 import { registerIpcHandlers } from "./ipc-handlers"
 import { mainRuntime } from "./main-runtime"
 import { createMainWindow } from "./main-window"
+import { openWindowIfNone } from "./open-window-if-none"
 import { registerRendererScheme, serveRendererFiles } from "./renderer-protocol"
 import { isWebPermissionGranted } from "./web-permission-decision"
+
+const openMainWindow = openWindowIfNone(
+  createMainWindow,
+  () => BrowserWindow.getAllWindows().length,
+)
 
 function restrictWebPermissions(): void {
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, grant) =>
@@ -21,6 +27,11 @@ const start = Effect.gen(function* () {
   serveRendererFiles()
   registerIpcHandlers()
   yield* createMainWindow
+  // Electron emits `activate` at launch too, possibly before the window above
+  // exists, so the Dock icon reopens a window only once startup has opened one.
+  app.on("activate", () => {
+    mainRuntime.runFork(openMainWindow)
+  })
 })
 
 const exitAfterStartupFailure = (cause: Cause.Cause<unknown>) =>
@@ -48,11 +59,6 @@ function startPrimaryInstance(): void {
   app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
       app.quit()
-    }
-  })
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      mainRuntime.runFork(createMainWindow)
     }
   })
   app.on("second-instance", focusMainWindow)
