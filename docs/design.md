@@ -78,6 +78,8 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 - Track lists scroll with the main view, so a page header above one scrolls away. Only the rows
   near the screen are in the DOM; a row whose track has not loaded keeps its full height and
   shows a placeholder artwork tile and a bar, so the scrollbar is right from the start.
+- Dense track lists (the `trackListDensity` setting) have 32 px rows with no artwork, and the
+  artists follow the title on the same line.
 
 ### Before login
 
@@ -236,6 +238,10 @@ Below the list, "Edit a copy" opens the theme editor on a copy of the chosen the
 that open the operating system's file dialogs. A result is reported in `muted` text inside an
 `output` element; a rejected file shows the reason in `danger` text inside an `alert`. The dialogs are
 modal to the app window.
+
+Below them, "Track list rows" offers Comfortable and Dense as two filter chips in a `fieldset`,
+with a `text-xs` `muted` line that says what Dense changes. The choice applies to every track
+list at once.
 
 ### Theme editor
 

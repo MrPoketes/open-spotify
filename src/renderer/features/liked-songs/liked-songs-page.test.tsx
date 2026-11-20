@@ -49,7 +49,7 @@ const rowAt = (index: number) =>
     .find((row) => row.getAttribute("aria-rowindex") === String(index + 2))
 
 const scrollToRow = (mainView: HTMLElement, index: number) =>
-  scrollMainView(mainView, index * trackRowHeight)
+  scrollMainView(mainView, index * trackRowHeight.comfortable)
 
 describe("LikedSongsPage", () => {
   it("shows the song count and the estimated total duration from the first page", async () => {
