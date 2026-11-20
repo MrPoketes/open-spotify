@@ -244,6 +244,18 @@ describe("Search", () => {
     expect(searchField()).toHaveValue("glass")
   })
 
+  // The field sends the trimmed query, which must not replace the text the
+  // user is still typing when its page opens.
+  it("keeps typing intact while the search it sent opens", async () => {
+    await renderSearch()
+    await typeSearch("glass ")
+    await screen.findByRole("heading", { name: "Results for “glass”" })
+
+    await userEvent.type(searchField(), "harbour")
+
+    expect(searchField()).toHaveValue("glass harbour")
+  })
+
   it("drops a search still waiting to be sent when the user opens another page", async () => {
     const { router } = await renderSearch()
     await typeSearch("glass")
