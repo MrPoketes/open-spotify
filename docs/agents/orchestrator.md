@@ -100,7 +100,7 @@ first case that applies, then go to step 6.
 Release nothing else. Read the PR's state:
 
 ```sh
-gh pr view <n> --json headRefOid,mergeable,autoMergeRequest
+gh pr view <n> --json state,headRefOid,mergeable,autoMergeRequest
 gh run list --commit <headRefOid> --json databaseId,workflowName,status,conclusion,attempt
 gh pr view <n> --json statusCheckRollup --jq '.statusCheckRollup[] | select(.context == "agent-review") | .state'
 gh pr view <n> --json comments --jq '[.comments[] | select(.body | startswith("## Agent review: CHANGES REQUESTED"))] | length'
@@ -111,7 +111,8 @@ A run **failed** when its `status` is `completed` and its `conclusion` is anythi
 on attempt 2.
 
 Take the first row that applies, then read the state again and repeat until you reach the last
-row, close the PR, or find it merged (auto-merge merges at once when every check has passed):
+row, close the PR, or find its `state` is `MERGED` (auto-merge merges at once when every check
+has passed):
 
 | Situation                                                            | Action                                                                    |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -152,7 +153,8 @@ Linear has no issue titled `Release v<version> failed`.
 
 2. Otherwise read the release workflow's run:
    `gh run list --workflow release.yml --branch v<version> --json databaseId,status,conclusion,attempt`.
-   - No run yet, or `status` is not `completed`: leave it for the next run.
+   - No run yet, or `status` is not `completed`: leave it for the next run. If there is still no
+     run two hours after the PR merged, file the `Release v<version> failed` Bug described below.
    - Failed (as defined in 5.1) on attempt 1: `gh run rerun <databaseId> --failed`.
    - Failed on attempt 2: file a Bug (see 5.1) titled `Release v<version> failed`, linking the
      run. When the Bug is `Done`, the milestone is finished but not released, so 5.3 releases it
@@ -161,35 +163,43 @@ Linear has no issue titled `Release v<version> failed`.
 ### 5.3 The earliest finished milestone is not released
 
 Write the PR body to `<scratch>/release-body.md`: the milestone's name and its `Done` issues as
-`ARM-<n>: <title>`, without `Closes`. Then run:
+`ARM-<n>: <title>`, without `Closes`. Then run the block below as **one** command of the Bash
+tool (it is POSIX shell, not PowerShell), from the project root. It must be one command: a `cd`
+does not carry over to your next tool call, so the commands after it would run in the project
+root and move it off `main`. `set -e` stops it at the first error.
 
 ```sh
+set -e
 git fetch origin
-git worktree add --detach <scratch>/release origin/main
-cd <scratch>/release
-npm version minor --no-git-tag-version   # prints v<version>
-git switch -c release/v<version>
-git commit -am "Release v<version>: <milestone name>"
-git push -u origin release/v<version>
-gh pr create --title "Release v<version>: <milestone name>" --body-file <scratch>/release-body.md
-cd <project root>
-git worktree remove <scratch>/release
-git branch -D release/v<version>
+git worktree add --detach "<scratch>/release" origin/main
+cd "<scratch>/release"
+version=$(npm version minor --no-git-tag-version)   # prints v<version>
+git switch -c "release/$version"
+git commit -am "Release $version: <milestone name>"
+git push -u origin "release/$version"
+gh pr create --title "Release $version: <milestone name>" --body-file "<scratch>/release-body.md"
+cd -
+git worktree remove "<scratch>/release"
+git branch -D "release/$version"
 ```
 
 `git worktree remove` keeps the local branch, which would block the next attempt at the same
-version, so delete it too. Then handle the new PR as in 5.1.
+version, so the block deletes it too. Then handle the new PR as in 5.1.
 
-If an earlier run crashed halfway:
+If the block stops with an error, first clean up with
+`git worktree remove --force "<scratch>/release"` and, if it exists,
+`git branch -D release/v<version>`. Then:
 
-- `git switch -c` fails with `a branch named 'release/v<version>' already exists`: if
+- `a branch named 'release/v<version>' already exists`: an earlier run crashed. If
   `git worktree list` shows the branch in another worktree, run
-  `git worktree remove --force <that path>`. Then `git branch -D release/v<version>` and switch
-  again.
-- `git push` is rejected: if `gh pr list --head release/v<version> --state open --json number`
-  lists a PR, another run opened it first, so remove your worktree and branch and stop.
-  Otherwise delete the leftover branch with `git push origin --delete release/v<version>` and
-  push again.
+  `git worktree remove --force <that path>`, then `git branch -D release/v<version>`.
+- `git push` was rejected: if `gh pr list --head release/v<version> --state open --json number`
+  lists a PR, another run opened it first: leave that PR to the next run and stop here.
+  Otherwise delete the branch an earlier run left behind with
+  `git push origin --delete release/v<version>`.
+
+Unless another run opened the PR, run the block once more. If it fails again, file a Bug (see
+5.1) titled `Release v<version> blocked` with the error.
 
 ## 6. Daily quality sweep
 

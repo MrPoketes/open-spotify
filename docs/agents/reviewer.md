@@ -25,6 +25,7 @@ Check instead:
   to 0. Read it with `git fetch origin` and `git show origin/main:package.json`.
 - Every issue in the milestone is `Done` or `Canceled`: use `list_issues` for project
   `Open Spotify` with the `projectMilestone` and `status` fields.
+- Every item under the milestone's heading in `docs/roadmap.md` has an issue in the milestone.
 - The body names the milestone and lists its `Done` issues.
 
 Request changes for anything that does not hold, then continue with the Verdict.
