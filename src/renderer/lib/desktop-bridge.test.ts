@@ -1,5 +1,5 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect } from "effect"
+import { Effect, Option } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
 import { DesktopBridge } from "./desktop-bridge"
 
@@ -29,6 +29,18 @@ describe("DesktopBridge", () => {
 
       assert.strictEqual(error._tag, "DesktopBridgeError")
       assert.strictEqual(error.channel, "app:get-info")
+    }),
+  )
+
+  // The main process sends a missing setting as null, because IPC messages
+  // cannot carry an Option.
+  it.effect("returns none when the main process has no value for a setting", () =>
+    Effect.gen(function* () {
+      const bridge = DesktopBridge.make(desktopApiReplying(null))
+
+      const clientId = yield* bridge.getSetting("spotifyClientId")
+
+      assert.deepStrictEqual(clientId, Option.none())
     }),
   )
 })
