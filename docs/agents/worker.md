@@ -32,8 +32,10 @@ with the reason, add `blocked by` links where they apply, move it back to `Todo`
 ## 3. Open the pull request
 
 1. Commit with a message like `ARM-123: Add playlist folder persistence`. Push the branch.
-2. Open the PR with `gh pr create`, filling in `.github/pull_request_template.md`. The title
-   matches the commit message. The body contains `Closes ARM-123`.
+2. Fill in `.github/pull_request_template.md` and save it as `pr-body.md` in your scratch
+   folder (see Rules). Open the PR with `gh pr create --body-file <that path>`, and pass the
+   same file to `gh pr edit --body-file` whenever you change the body. The title matches the
+   commit message. The body contains `Closes ARM-123`.
 3. Link the PR to your thread with `link_pull_request`.
 4. Move the Linear issue to `In Review` and add the PR URL to it as a link.
 
@@ -57,7 +59,9 @@ unresolved, move it to `Todo`, and stop.
 
 ## 5. Merge
 
-1. Enable auto-merge: `gh pr merge <number> --squash --auto --delete-branch`.
+1. Enable auto-merge: `gh pr merge <number> --squash --auto`. Do not add `--delete-branch`:
+   it tries to check out `main`, which fails in a worktree because the main checkout holds
+   it. GitHub deletes the branch on merge by itself.
 2. Call `watch_pull_request` for the PR and end your turn. You will be woken when checks finish.
 3. If a check fails, read its log (`gh run view --log-failed`), fix the cause, push, and get a
    new review (any push invalidates the `agent-review` status). Then watch again.
@@ -72,6 +76,10 @@ unresolved, move it to `Todo`, and stop.
 ## Rules
 
 - Never push to `main`. Never merge without the reviewer's approval.
+- Keep scratch files (PR bodies, notes, logs) in your session scratchpad directory, or in
+  `$TEMP/arm-<n>/` named after your issue if you have none. Never write to a fixed path
+  directly in `$TEMP`: other workers run on the same machine at the same time, and one once
+  posted another's PR description because both used `$TEMP/pr-body.md`.
 - Never disable a lint rule to get green, unless the disable comment carries a reason that a
   reviewer would accept.
 - Never edit files outside the scope of your issue, except to fix something that blocks you.
