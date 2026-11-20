@@ -10,6 +10,24 @@ const migrations = SqliteMigrator.fromRecord({
     const sql = yield* SqlClient.SqlClient
     yield* sql`CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`
   }),
+  // A row is a folder when spotify_uri is null, and a Spotify item otherwise.
+  // node:sqlite enables foreign keys by default, so deleting a folder deletes
+  // everything inside it.
+  "0002_create_folder_entries": Effect.gen(function* () {
+    const sql = yield* SqlClient.SqlClient
+    yield* sql`
+      CREATE TABLE folder_entries (
+        id TEXT PRIMARY KEY,
+        parent_id TEXT REFERENCES folder_entries (id) ON DELETE CASCADE,
+        position INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        spotify_uri TEXT,
+        image_url TEXT,
+        UNIQUE (parent_id, spotify_uri),
+        CHECK (spotify_uri IS NULL OR parent_id IS NOT NULL)
+      )
+    `
+  }),
 })
 
 // Migrations run while the layer is built, so every service that uses the

@@ -7,16 +7,19 @@ import { SpotifyTokenEndpoint } from "./auth/spotify-token-endpoint"
 import { SystemBrowser } from "./auth/system-browser"
 import { TokenStore } from "./auth/token-store"
 import { databaseLayer } from "./database"
+import { Folders } from "./folders"
 import { Settings } from "./settings"
 
 const databaseFile = path.join(app.getPath("userData"), "open-spotify.sqlite")
 const spotifySessionFile = path.join(app.getPath("userData"), "spotify-session.bin")
 
-const settingsLayer = Settings.layer.pipe(Layer.provide(databaseLayer(databaseFile)))
+const storageLayer = Layer.mergeAll(Settings.layer, Folders.layer).pipe(
+  Layer.provide(databaseLayer(databaseFile)),
+)
 
 const spotifySessionLayer = SpotifySession.layer.pipe(
   Layer.provide([
-    settingsLayer,
+    storageLayer,
     SpotifyTokenEndpoint.layer,
     TokenStore.layer(safeStorage, spotifySessionFile),
     SystemBrowser.layer((url) => shell.openExternal(url)),
@@ -26,5 +29,5 @@ const spotifySessionLayer = SpotifySession.layer.pipe(
 // Runs Effect programs from Electron callbacks. Every service the main
 // process depends on is provided here, in one place.
 export const mainRuntime = ManagedRuntime.make(
-  Layer.mergeAll(settingsLayer, spotifySessionLayer).pipe(Layer.provideMerge(NodeFileSystem.layer)),
+  Layer.mergeAll(storageLayer, spotifySessionLayer).pipe(Layer.provideMerge(NodeFileSystem.layer)),
 )

@@ -2,6 +2,7 @@ import { assert, describe, it } from "@effect/vitest"
 import { Effect, Option } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
 import { LoginFailed, SessionExpired } from "../../shared/spotify-auth-replies"
+import type { Folder, FolderTree } from "../../shared/folders"
 import { DesktopBridge } from "./desktop-bridge"
 import { fakeMainProcess } from "./fake-main-process"
 
@@ -80,6 +81,39 @@ describe("DesktopBridge", () => {
       const error = yield* Effect.flip(bridge.logIn)
 
       assert.deepStrictEqual(error, new LoginFailed({ message: "Could not open the browser." }))
+    }),
+  )
+
+  // The folder tree is recursive, so a broken Schema would only show up once
+  // folders are nested.
+  it.effect("decodes a folder tree with nested folders and Spotify items", () =>
+    Effect.gen(function* () {
+      const nestedFolder: Folder = {
+        _tag: "Folder",
+        id: "6c4e1f0a-2b3d-4e5f-8a9b-0c1d2e3f4a5b",
+        name: "Classics",
+        entries: [
+          {
+            _tag: "SpotifyItem",
+            uri: "spotify:album:4aawyAB9vmqN3uQ7FjRGTy",
+            name: "Global Warming",
+            imageUrl: "https://i.scdn.co/image/global-warming",
+          },
+        ],
+      }
+      const reply: FolderTree = [
+        {
+          _tag: "Folder",
+          id: "3f1c1b9e-6a51-4d3e-9a43-2f6f0f3d5c11",
+          name: "Rock",
+          entries: [nestedFolder],
+        },
+      ]
+      const bridge = DesktopBridge.make(desktopApiReplying(reply))
+
+      const folderTree = yield* bridge.getFolderTree
+
+      assert.deepStrictEqual(folderTree, reply)
     }),
   )
 })
