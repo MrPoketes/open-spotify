@@ -14,6 +14,11 @@ export interface LibraryEntry {
   readonly name: string
   readonly details: string
   readonly images: ReadonlyArray<Image>
+  // Null for kinds whose page does not exist yet.
+  readonly page: {
+    readonly to: "/show/$showId"
+    readonly params: { readonly showId: string }
+  } | null
 }
 
 const likedSongsEntry = (songCount: number): LibraryEntry => ({
@@ -22,6 +27,7 @@ const likedSongsEntry = (songCount: number): LibraryEntry => ({
   name: "Liked Songs",
   details: `Playlist · ${songCount} ${songCount === 1 ? "song" : "songs"}`,
   images: [],
+  page: null,
 })
 
 const playlistEntry = (playlist: SimplifiedPlaylist): LibraryEntry => ({
@@ -30,6 +36,7 @@ const playlistEntry = (playlist: SimplifiedPlaylist): LibraryEntry => ({
   name: playlist.name,
   details: `Playlist · ${playlist.owner.displayName ?? playlist.owner.id}`,
   images: playlist.images ?? [],
+  page: null,
 })
 
 const albumEntry = ({ album }: SavedAlbum): LibraryEntry => ({
@@ -38,6 +45,7 @@ const albumEntry = ({ album }: SavedAlbum): LibraryEntry => ({
   name: album.name,
   details: `Album · ${album.artists.map(({ name }) => name).join(", ")}`,
   images: album.images,
+  page: null,
 })
 
 const artistEntry = (artist: Artist): LibraryEntry => ({
@@ -46,6 +54,7 @@ const artistEntry = (artist: Artist): LibraryEntry => ({
   name: artist.name,
   details: "Artist",
   images: artist.images,
+  page: null,
 })
 
 const showEntry = ({ show }: SavedShow): LibraryEntry => ({
@@ -54,6 +63,7 @@ const showEntry = ({ show }: SavedShow): LibraryEntry => ({
   name: show.name,
   details: "Show",
   images: show.images,
+  page: { to: "/show/$showId", params: { showId: show.id } },
 })
 
 export const loadLibraryEntries = Effect.gen(function* () {

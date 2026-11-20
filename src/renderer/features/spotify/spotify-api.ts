@@ -13,7 +13,7 @@ import { SpotifyAccessToken } from "./spotify-access-token"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
 import { Paging, streamPages } from "./spotify-paging"
 import { Playlist, PlaylistItem, SimplifiedPlaylist } from "./spotify-playlist"
-import { SavedShow } from "./spotify-show"
+import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
 import { CurrentUser } from "./spotify-user"
 
 export class SpotifyResponseError extends Schema.TaggedError<SpotifyResponseError>()(
@@ -40,8 +40,8 @@ export type SpotifyApiError =
 
 const spotifyApiBaseUrl = "https://api.spotify.com/v1"
 
-// The largest page Spotify allows for playlists, playlist items, and the
-// user's saved and followed collections.
+// The largest page Spotify allows for playlists, playlist items, show episodes,
+// and the user's saved and followed collections.
 const pageSize = 50
 
 // Without this, Spotify only promises to return tracks, and a playlist that
@@ -84,6 +84,11 @@ export class SpotifyApi extends Context.Service<
     readonly savedAlbums: Stream.Stream<SavedAlbum, SpotifyApiError>
     readonly followedArtists: Stream.Stream<Artist, SpotifyApiError>
     readonly savedShows: Stream.Stream<SavedShow, SpotifyApiError>
+    readonly getShow: (showId: string) => Effect.Effect<Show, SpotifyApiError>
+    readonly getShowEpisodePage: (
+      showId: string,
+      offset: number,
+    ) => Effect.Effect<ShowEpisodePage, SpotifyApiError>
   }
 >()("open-spotify/SpotifyApi") {
   static readonly layerWithoutHttpClient = Layer.effect(
@@ -157,6 +162,13 @@ export class SpotifyApi extends Context.Service<
         savedShows: streamPages(`${spotifyApiBaseUrl}/me/shows?limit=${pageSize}`, (url) =>
           getJson(url, Paging(SavedShow)),
         ),
+        getShow: (showId) =>
+          getJson(`${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}`, Show),
+        getShowEpisodePage: (showId, offset) =>
+          getJson(
+            `${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}/episodes?limit=${pageSize}&offset=${offset}`,
+            ShowEpisodePage,
+          ),
       })
     }),
   )

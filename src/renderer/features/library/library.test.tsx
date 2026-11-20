@@ -84,6 +84,45 @@ describe("Library", () => {
     )
   })
 
+  it("links a saved show to its show page", async () => {
+    renderLibrary()
+
+    const showLink = await screen.findByRole("link", { name: /Slow Science/ })
+
+    expect(showLink).toHaveAttribute("href", "/show/fake-show-slow-science")
+  })
+
+  // The sidebar holds every saved item, so Tab must not walk through each one.
+  it("keeps the library list to one tab stop that the arrow keys move within", async () => {
+    renderLibrary()
+    const [likedSongs, secondEntry] = await libraryEntries()
+
+    await userEvent.click(screen.getByRole("searchbox", { name: "Filter by name" }))
+    await userEvent.tab()
+    expect(likedSongs?.firstElementChild).toHaveFocus()
+    await userEvent.keyboard("{ArrowDown}")
+    expect(secondEntry?.firstElementChild).toHaveFocus()
+    await userEvent.tab()
+
+    expect(document.body).toHaveFocus()
+  })
+
+  // The list remembers the last focused entry, and a filter can leave fewer
+  // entries than that, which would take the list out of the tab order.
+  it("keeps the list reachable with Tab after a filter shortens it", async () => {
+    renderLibrary()
+    await screen.findByRole("list")
+    const nameFilter = screen.getByRole("searchbox", { name: "Filter by name" })
+
+    await userEvent.click(nameFilter)
+    await userEvent.tab()
+    await userEvent.keyboard("{End}")
+    await userEvent.type(nameFilter, "slow")
+    await userEvent.tab()
+
+    expect(screen.getByRole("link", { name: /Slow Science/ })).toHaveFocus()
+  })
+
   it("explains where entries come from when the library is empty", async () => {
     renderLibrary(
       spotifyApiWith(() => ({

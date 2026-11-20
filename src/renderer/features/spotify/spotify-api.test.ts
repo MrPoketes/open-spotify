@@ -127,6 +127,23 @@ layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
     }),
   )
 
+  test.effect("pages through a show's episodes, keeping unserved episodes as null", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+
+      const show = yield* spotify.getShow("fake-show-slow-science")
+      const firstPage = yield* spotify.getShowEpisodePage("fake-show-slow-science", 0)
+      const lastPage = yield* spotify.getShowEpisodePage("fake-show-slow-science", 50)
+
+      assert.strictEqual(show.name, "Slow Science")
+      assert.strictEqual(firstPage.items.length, 50)
+      assert.isNotNull(firstPage.next)
+      assert.strictEqual(lastPage.items[0]?.id, "fake-show-slow-science-episode-50")
+      assert.isNull(lastPage.items[5])
+      assert.isNull(lastPage.next)
+    }),
+  )
+
   test.effect("fails with a 403 SpotifyResponseError for items of a followed playlist", () =>
     Effect.gen(function* () {
       const spotify = yield* SpotifyApi
