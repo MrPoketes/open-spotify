@@ -72,6 +72,7 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
   to its album page, and each artist name links to that artist's page, so a track with several
   artists has one link per name. Only the row that is the list's tab stop puts these links in
   the tab order.
+- Search results have no date added, so their track list leaves that column out.
 - An album's track list shows track numbers and leaves out artwork, album, and date added,
   which every track on it shares or lacks. A multi-disc album gets one list per disc, each under
   a "Disc 1", "Disc 2" heading; a single-disc album gets no heading.
@@ -330,6 +331,28 @@ well as its `accent` fill. The choice is the `folderView` setting and applies to
 Both views are one tab stop with roving focus. An entry whose kind has a page links to it; the
 others are plain rows until their page exists.
 
+### Search
+
+The search field sits in the top bar, and `/` focuses it from anywhere outside a text field.
+Typing searches after a 300 ms pause, so a word typed at a normal pace sends one request. The
+first pause opens `/search?q=…` as a new page, which Back leaves; later pauses replace the query
+in place, so Back does not step through every pause. When Back or Forward returns to an earlier
+search, the field shows its query. `Escape` clears the field and the results.
+
+The page title says "Results for “query”". Below it come up to four sections, in this order:
+Tracks (the track list), Artists, Albums, and Playlists (card grids). A
+section with no results is left out. Artist cards have round artwork and say "Artist"; album
+cards name the album's artists; playlist cards say "By owner". Each section shows 10 results,
+the most Spotify returns per request in development mode, and a round `surface-raised`
+"Load more" button under it fetches the next 10 for that section alone. Search breaks the
+scroll-to-load rule (see Loading, empty, and error states) because its sections are stacked: a
+track list that grew as it scrolled would push the other sections out of reach. While a page
+loads, the button stays focusable with `aria-disabled` and "Loading more tracks…" sits beside it.
+
+Before anything is typed the page asks for a query. A query that matches nothing says
+"No results for “query”." A new query replaces the old results with "Searching…" and starts
+from a fresh page, so an earlier query's results can never show up after a later one's.
+
 ### Menus
 
 A menu opens from a 32 px icon button (`MenuButton` in `src/renderer/ui`) and follows the
@@ -377,7 +400,8 @@ text for a failure. It fades in like a menu and goes away after five seconds. It
   the page while entries match, because screen readers only announce changes to a live region
   that already exists.
 - Long lists load their next page when the end of the list scrolls into view, with no "Load
-  more" button. A virtualised list loads the pages under the rows on screen, in any order.
+  more" button. Search results are the one exception (see Search). A virtualised list loads
+  the pages under the rows on screen, in any order.
 
 ### Motion
 

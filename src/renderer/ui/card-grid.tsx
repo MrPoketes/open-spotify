@@ -12,13 +12,15 @@ export interface GridCard {
   // Widest first, the order Spotify lists image sizes in.
   readonly artwork: ReadonlyArray<ArtworkSource>
   readonly placeholderIcon: LucideIcon
+  // Artists have round artwork, which tells them apart from everything else.
+  readonly roundArtwork?: boolean
 }
 
 interface CardGridProps {
-  readonly id: string
+  readonly id?: string
   readonly label: string
   readonly cards: ReadonlyArray<GridCard>
-  readonly ref: Ref<HTMLUListElement>
+  readonly ref?: Ref<HTMLUListElement>
 }
 
 // Its columns must match useCardGridColumnCount.
@@ -43,7 +45,7 @@ export function CardGrid({ id, label, cards, ref }: CardGridProps) {
             <Artwork
               sources={card.artwork}
               size="fill"
-              className="rounded-medium"
+              className={card.roundArtwork ? "rounded-full" : "rounded-medium"}
               placeholderIcon={card.placeholderIcon}
             />
             <span className="truncate text-sm font-semibold">{card.title}</span>

@@ -4,6 +4,7 @@ import { SpotifyAccessToken } from "./spotify-access-token"
 import type { AlbumGroup } from "./spotify-api"
 import { fakeDiscography } from "./spotify-discography-fixtures"
 import { fakePlayer } from "./spotify-fake-player"
+import { searchPageSize } from "./spotify-search"
 import {
   type FakePlaylist,
   fakeAlbums,
@@ -182,6 +183,38 @@ const respondToArtist = (url: URL): readonly [number, unknown] => {
   return [200, pageOf(albums, url, defaultArtistAlbumsLimit)]
 }
 
+// The page size Spotify uses for search results when a request has no limit
+// parameter.
+const defaultSearchLimit = 5
+
+const nameMatches = (query: string) => (result: { readonly name: string } | null) =>
+  result !== null && result.name.toLowerCase().includes(query.toLowerCase())
+
+// Spotify sends null for a playlist it no longer serves and still counts it,
+// so the fake ends every playlist search with one.
+const searchableResults = (
+  query: string,
+): Record<string, readonly [resultsKey: string, matches: ReadonlyArray<unknown>]> => ({
+  track: ["tracks", fakeLikedSongs.map(({ track }) => track).filter(nameMatches(query))],
+  artist: ["artists", fakeFollowedArtists.filter(nameMatches(query))],
+  album: ["albums", fakeAlbums.filter(nameMatches(query))],
+  playlist: [
+    "playlists",
+    [...fakePlaylists.map(simplifiedPlaylist).filter(nameMatches(query)), null],
+  ],
+})
+
+const respondToSearch = (url: URL): readonly [number, unknown] => {
+  if (Number(url.searchParams.get("limit") ?? defaultSearchLimit) > searchPageSize) {
+    return [400, errorBody(400, "Invalid limit")]
+  }
+  const requestedTypes = (url.searchParams.get("type") ?? "").split(",")
+  const results = Object.entries(searchableResults(url.searchParams.get("q") ?? ""))
+    .filter(([type]) => requestedTypes.includes(type))
+    .map(([, [key, matches]]) => [key, pageOf(matches, url, defaultSearchLimit)])
+  return [200, Object.fromEntries(results)]
+}
+
 const currentUserResources: Record<string, (url: URL) => unknown> = {
   "/v1/me": () => fakeCurrentUser,
   "/v1/me/playlists": (url) => pageOf(fakePlaylists.map(simplifiedPlaylist), url, defaultPageLimit),
@@ -190,15 +223,18 @@ const currentUserResources: Record<string, (url: URL) => unknown> = {
   "/v1/me/shows": (url) => pageOf(fakeSavedShows, url, defaultPageLimit),
 }
 
+const resourcesByPathPrefix = [
+  ["/v1/shows/", respondToShow],
+  ["/v1/albums/", respondToAlbum],
+  ["/v1/artists/", respondToArtist],
+  ["/v1/search", respondToSearch],
+] as const
+
 const respondTo = (url: URL): readonly [number, unknown] => {
-  if (url.pathname.startsWith("/v1/shows/")) {
-    return respondToShow(url)
-  }
-  if (url.pathname.startsWith("/v1/albums/")) {
-    return respondToAlbum(url)
-  }
-  if (url.pathname.startsWith("/v1/artists/")) {
-    return respondToArtist(url)
+  const resource = resourcesByPathPrefix.find(([prefix]) => url.pathname.startsWith(prefix))
+  if (resource) {
+    const [, respond] = resource
+    return respond(url)
   }
   const currentUserResource = currentUserResources[url.pathname]
   if (currentUserResource) {

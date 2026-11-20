@@ -14,8 +14,13 @@ import { formatTrackDuration } from "./format-duration"
 import { trackRowHeight } from "./track-row-height"
 
 // Every track on an album shares its artwork and album, and an album has no
-// date added, so its list leaves those out.
-export type TrackListLayout = "playlist" | "album"
+// date added, so its list leaves those out. Search results have no date added
+// either.
+export type TrackListLayout = "playlist" | "album" | "search"
+
+const showsAlbum = (layout: TrackListLayout) => layout !== "album"
+
+const showsDateAdded = (layout: TrackListLayout) => layout === "playlist"
 
 export interface TrackListEntry {
   // Null for a row that is not a Spotify track: a podcast episode, a local
@@ -42,6 +47,8 @@ const columnsByLayout: Record<TrackListLayout, string> = {
   playlist:
     "grid-cols-[2rem_minmax(0,1fr)_4rem] @xl:grid-cols-[2rem_minmax(0,3fr)_minmax(0,2fr)_4rem] @3xl:grid-cols-[2rem_minmax(0,3fr)_minmax(0,2fr)_8rem_4rem]",
   album: "grid-cols-[2rem_minmax(0,1fr)_4rem]",
+  search:
+    "grid-cols-[2rem_minmax(0,1fr)_4rem] @xl:grid-cols-[2rem_minmax(0,3fr)_minmax(0,2fr)_4rem]",
 }
 
 const trackColumns = (layout: TrackListLayout) =>
@@ -50,7 +57,7 @@ const trackColumns = (layout: TrackListLayout) =>
 // Album rows would repeat the album's cover, and dense rows are too short for
 // artwork.
 const showsArtwork = (layout: TrackListLayout, density: TrackListDensity) =>
-  layout === "playlist" && density === "comfortable"
+  showsAlbum(layout) && density === "comfortable"
 
 // A dense row has room for one line, so the artists follow the title on it.
 const titleLinesByDensity: Record<TrackListDensity, string> = {
@@ -69,15 +76,15 @@ export function TrackListHeader({ layout }: { readonly layout: TrackListLayout }
       <th scope="col" className="font-normal">
         Title
       </th>
-      {layout === "playlist" ? (
-        <>
-          <th scope="col" className="hidden font-normal @xl:block">
-            Album
-          </th>
-          <th scope="col" className="hidden font-normal @3xl:block">
-            Date added
-          </th>
-        </>
+      {showsAlbum(layout) ? (
+        <th scope="col" className="hidden font-normal @xl:block">
+          Album
+        </th>
+      ) : null}
+      {showsDateAdded(layout) ? (
+        <th scope="col" className="hidden font-normal @3xl:block">
+          Date added
+        </th>
       ) : null}
       <th scope="col" aria-label="Duration" className="flex justify-end">
         <Clock aria-hidden size={16} />
@@ -174,13 +181,11 @@ function TrackCells({ entry, layout, density, tabIndex }: TrackCellsProps) {
           </span>
         </span>
       </td>
-      {layout === "playlist" ? (
-        <>
-          <AlbumCell album={entry.album} tabIndex={tabIndex} />
-          <td className="hidden text-xs text-muted @3xl:block">
-            {entry.addedAt === null ? "" : addedAtFormat.format(entry.addedAt)}
-          </td>
-        </>
+      {showsAlbum(layout) ? <AlbumCell album={entry.album} tabIndex={tabIndex} /> : null}
+      {showsDateAdded(layout) ? (
+        <td className="hidden text-xs text-muted @3xl:block">
+          {entry.addedAt === null ? "" : addedAtFormat.format(entry.addedAt)}
+        </td>
       ) : null}
       <td className="text-right text-xs text-muted tabular-nums">
         {entry.durationMs === null ? "" : formatTrackDuration(entry.durationMs)}

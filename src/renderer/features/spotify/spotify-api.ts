@@ -22,6 +22,7 @@ import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server
 import { Paging, streamPages } from "./spotify-paging"
 import { PlaybackState, type RepeatMode } from "./spotify-playback-state"
 import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
+import { SearchResults, type SearchType, searchPageSize } from "./spotify-search"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
 import { SavedTracksPage } from "./spotify-track"
 import { CurrentUser } from "./spotify-user"
@@ -137,6 +138,9 @@ const decodeJson = <A>(
     Effect.mapError((cause) => new SpotifyDecodeError({ url: response.request.url, cause })),
   )
 
+const searchUrl = (query: string, types: ReadonlyArray<SearchType>, offset: number) =>
+  `${spotifyApiBaseUrl}/search?q=${encodeURIComponent(query)}&type=${types.join(",")}&limit=${searchPageSize}&offset=${offset}`
+
 // Spotify answers each player command with 204 and no body.
 const playerCommands = <E>(
   sendCommand: (request: HttpClientRequest.HttpClientRequest) => Effect.Effect<void, E>,
@@ -200,6 +204,12 @@ export class SpotifyApi extends Context.Service<
       albumGroup: AlbumGroup,
       offset: number,
     ) => Effect.Effect<ArtistAlbumsPage, SpotifyApiError>
+    // The page of each requested kind of result that starts at the offset.
+    readonly search: (
+      query: string,
+      types: ReadonlyArray<SearchType>,
+      offset: number,
+    ) => Effect.Effect<SearchResults, SpotifyApiError>
     readonly likedSongsCount: Effect.Effect<number, SpotifyApiError>
     readonly getLikedSongsPage: (offset: number) => Effect.Effect<SavedTracksPage, SpotifyApiError>
     readonly savedAlbums: Stream.Stream<SavedAlbum, SpotifyApiError>
@@ -272,6 +282,7 @@ export class SpotifyApi extends Context.Service<
             `${spotifyApiBaseUrl}/artists/${encodeURIComponent(artistId)}/albums?include_groups=${albumGroup}&limit=${artistAlbumsPageSize}&offset=${offset}`,
             ArtistAlbumsPage,
           ),
+        search: (query, types, offset) => getJson(searchUrl(query, types, offset), SearchResults),
         likedSongsCount: getJson(
           `${spotifyApiBaseUrl}/me/tracks?limit=1`,
           Schema.Struct({ total: Schema.Number }),

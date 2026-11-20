@@ -1,6 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router"
-import { ChevronLeft, ChevronRight, Search, Settings } from "lucide-react"
+import { ChevronLeft, ChevronRight, Settings } from "lucide-react"
 import { IconButton } from "../../ui/icon-button"
+import { SearchField } from "../search/search-field"
 
 export function TopBar() {
   const router = useRouter()
@@ -9,19 +10,7 @@ export function TopBar() {
     <header className="flex h-14 shrink-0 items-center gap-2 px-4">
       <IconButton label="Go back" icon={ChevronLeft} onClick={() => router.history.back()} />
       <IconButton label="Go forward" icon={ChevronRight} onClick={() => router.history.forward()} />
-      <div className="relative ml-2 w-full max-w-sm">
-        <Search
-          aria-hidden
-          size={16}
-          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted"
-        />
-        <input
-          type="search"
-          aria-label="Search"
-          placeholder="Search"
-          className="h-8 w-full rounded-small bg-surface-raised pr-3 pl-8 text-base shadow-raised placeholder:text-muted"
-        />
-      </div>
+      <SearchField />
       <Link
         to="/settings"
         aria-label="Settings"
