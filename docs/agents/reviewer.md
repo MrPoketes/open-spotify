@@ -10,8 +10,6 @@ asking for one more round.
 2. `gh pr view <number> --json title,body,headRefOid,files` and `gh pr diff <number>`.
    Record `headRefOid`: your verdict applies to that commit only.
 3. Read the linked Linear issue (`ARM-…` in the title) to learn what was asked.
-   Release PRs (`Release v…`) have no issue: check that they change only the version in
-   `package.json` and that every Linear issue in the milestone is `Done` or `Canceled`.
 4. Check out the branch (`gh pr checkout <number>`) and run `pnpm install && pnpm check`.
 
 ## Review

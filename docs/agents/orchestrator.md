@@ -73,63 +73,7 @@ If fewer than 5 unblocked issues are in `Todo`, create more from
   item is never ticketed twice. Linear is the record of what has been ticketed; do not edit
   the roadmap for that.
 
-## 5. Release finished milestones
-
-A milestone is finished when every roadmap item under its heading is ticketed and all of its
-Linear issues are `Done` or `Canceled`. Release PRs are titled
-`Release v<version>: <milestone name>`. List them with:
-
-```sh
-gh pr list --state all --search "Release in:title" --limit 100 \
-  --json number,title,state,mergeCommit --jq '[.[] | select(.title | startswith("Release v"))]'
-```
-
-A milestone counts as released once it has an open or merged release PR; a closed, unmerged one
-does not count.
-
-Handle the first case that applies, then go on to step 6. Only one release PR is open at a
-time, so two releases never claim the same version. Do branch work in a temporary worktree
-(`git worktree add <scratchpad dir> <branch>`) and remove it after pushing, so the project root
-stays on `main` for step 0.
-
-1. **A release PR is open.** Release nothing else. Move it toward merge with the first
-   action that applies:
-   - it has conflicts: rebase it on `origin/main`, run `npm pkg set version=<version>` again if
-     `package.json` conflicts, and push with `--force-with-lease`;
-   - a check failed on its first attempt: rerun it with `gh run rerun <id> --failed`;
-   - a check failed again, or it has three `## Agent review: CHANGES REQUESTED` comments: close
-     it with `gh pr close <number> --delete-branch` and create a High-priority `Bug` issue
-     titled `Release v<version> blocked`, with the unresolved findings, in the milestone being
-     released. The milestone is then unfinished until that issue is `Done`;
-   - its head commit has no passing `agent-review` status: get it reviewed as in step 4 of
-     worker.md;
-   - auto-merge is off: enable it as in step 5.1 of worker.md.
-2. **The newest merged release PR has no GitHub release** (`gh release view v<version>` fails)
-   and no `Release v<version> failed` issue exists in Linear.
-   - If the tag is missing (`git ls-remote --tags origin v<version>` prints nothing), tag the
-     merge commit and push it. The release workflow builds the installers and publishes the
-     release.
-
-     ```sh
-     git tag v<version> "$(gh pr view <number> --json mergeCommit --jq .mergeCommit.oid)"
-     git push origin v<version>
-     ```
-
-   - Otherwise find the workflow run for the tag
-     (`gh run list --workflow release.yml --branch v<version>`). If it is still running, leave
-     it. If it failed on its first attempt (`gh run view <id> --json attempt,conclusion`), rerun
-     it with `gh run rerun <id> --failed`. If it failed again, create a High-priority `Bug`
-     issue titled `Release v<version> failed` with the failed log; the fix ships in the next
-     milestone's release.
-
-3. **The earliest finished milestone is not released.** Take the version in `package.json` on
-   `origin/main` and bump its minor part (`0.1.0` becomes `0.2.0`). Create the branch with
-   `git worktree add -b release/v<version> <scratchpad dir> origin/main`. In it, run
-   `npm pkg set version=<version>`, commit with the PR title, push, and open the PR. Release PRs have no Linear issue, so the body names the
-   milestone and lists its issues for the reviewer. Get it reviewed and enable auto-merge
-   exactly as in steps 4 and 5.1 of [worker.md](worker.md).
-
-## 6. Daily quality sweep
+## 5. Daily quality sweep
 
 Once per day (look for a `Quality sweep YYYY-MM-DD` issue created today), create an issue titled
 `Quality sweep <date>` with priority High:
@@ -139,7 +83,7 @@ Once per day (look for a `Quality sweep YYYY-MM-DD` issue created today), create
 > code, purposeless tests, duplicated logic. Fix it. For every pattern found more than once,
 > add a lint rule or tighten AGENTS.md, and log it in docs/agents/slop-log.md.
 
-## 7. Report
+## 6. Report
 
 Post a status update on the Linear project (`save_status_update`) only when something changed
 since the last one: issues finished, workers started, problems found. Keep it to a few lines.
