@@ -44,9 +44,15 @@ export function SearchField() {
 
   // Back and forward can show another search than the one typed last, and the
   // field follows it. A query the field sent itself may arrive while the user
-  // types on, so it must not overwrite the field.
+  // types on, so it must not overwrite the field. Away from search the field
+  // can be cleared without sending anything, so what it sent last is
+  // forgotten there.
   useEffect(() => {
-    if (shownQuery !== null && shownQuery !== sentQuery.current) {
+    if (shownQuery === null) {
+      sentQuery.current = null
+      return
+    }
+    if (shownQuery !== sentQuery.current) {
       sentQuery.current = shownQuery
       setText(shownQuery)
     }

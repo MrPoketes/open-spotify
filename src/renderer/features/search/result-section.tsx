@@ -1,17 +1,34 @@
+import { Effect } from "effect"
 import { type ReactNode, useId } from "react"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
-import { type MoreResultsOptions, useMoreResults } from "./use-more-results"
+import { SpotifyApi } from "../spotify/spotify-api"
+import type { Page } from "../spotify/spotify-paging"
+import type { SearchResults, SearchType } from "../spotify/spotify-search"
+import { useNextPages } from "../spotify/use-next-pages"
 
-interface ResultSectionProps<A> extends MoreResultsOptions<A> {
+interface ResultSectionProps<A> {
+  readonly query: string
+  readonly type: SearchType
   // Plural and capitalised, such as "Tracks".
   readonly title: string
+  readonly firstPage: Page<A | null>
+  readonly pageOf: (results: SearchResults) => Page<A | null>
   readonly children: (results: ReadonlyArray<A>) => ReactNode
 }
 
-// A kind of result with nothing on its first page is left out.
-export function ResultSection<A>({ title, children, ...moreResults }: ResultSectionProps<A>) {
+// A kind of result with nothing on its first page is left out. Load more asks
+// Spotify for the next page of this kind alone.
+export function ResultSection<A>(props: ResultSectionProps<A>) {
+  const { query, type, title, firstPage, pageOf, children } = props
   const headingId = useId()
-  const { results, hasMore, nextPage, loadMore } = useMoreResults(moreResults)
+  const loadPage = (offset: number) =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+      return pageOf(yield* spotify.search(query, [type], offset))
+    })
+  const { items, nextOffset, nextPage, loadNextPage } = useNextPages({ firstPage, loadPage })
+  const results = items.filter((item) => item !== null)
+  const hasMore = nextOffset !== null
   const kind = title.toLowerCase()
 
   if (results.length === 0) {
@@ -24,7 +41,7 @@ export function ResultSection<A>({ title, children, ...moreResults }: ResultSect
       </h2>
       {children(results)}
       {nextPage === "failed" ? (
-        <ErrorWithRetry message={`More ${kind} didn't load.`} onRetry={loadMore} />
+        <ErrorWithRetry message={`More ${kind} didn't load.`} onRetry={loadNextPage} />
       ) : null}
       {hasMore && nextPage !== "failed" ? (
         <div className="flex items-center gap-4">
@@ -33,7 +50,7 @@ export function ResultSection<A>({ title, children, ...moreResults }: ResultSect
             type="button"
             aria-label={`Load more ${kind}`}
             aria-disabled={nextPage === "loading"}
-            onClick={loadMore}
+            onClick={loadNextPage}
             className="rounded-full bg-surface-raised px-4 py-2 text-sm font-semibold transition-opacity duration-120 ease-out aria-disabled:opacity-50"
           >
             Load more

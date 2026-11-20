@@ -45,7 +45,7 @@ export function CardGrid({ id, label, cards, ref }: CardGridProps) {
             <Artwork
               sources={card.artwork}
               size="fill"
-              className={card.roundArtwork === true ? "rounded-full" : "rounded-medium"}
+              className={card.roundArtwork ? "rounded-full" : "rounded-medium"}
               placeholderIcon={card.placeholderIcon}
             />
             <span className="truncate text-sm font-semibold">{card.title}</span>

@@ -7,7 +7,7 @@ export const Paging = <ItemSchema extends Schema.Top>(item: ItemSchema) =>
     total: Schema.Number,
   })
 
-interface Page<A> {
+export interface Page<A> {
   readonly items: ReadonlyArray<A>
   readonly next: string | null
 }

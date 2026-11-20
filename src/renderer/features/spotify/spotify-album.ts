@@ -22,6 +22,16 @@ export const SavedAlbum = Schema.Struct({
 
 export type SavedAlbum = typeof SavedAlbum.Type
 
+// What search results list for each album.
+export const SearchAlbum = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  images: Schema.Array(Image),
+  artists: Schema.Array(SimplifiedArtist),
+})
+
+export type SearchAlbum = typeof SearchAlbum.Type
+
 // What an artist's discography lists for each release.
 export const ArtistAlbum = Schema.Struct({
   id: Schema.String,

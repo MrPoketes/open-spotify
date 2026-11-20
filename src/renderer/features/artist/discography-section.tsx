@@ -1,3 +1,4 @@
+import { Effect } from "effect"
 import { Disc3 } from "lucide-react"
 import { useId, useState } from "react"
 import { CardGrid, type GridCard } from "../../ui/card-grid"
@@ -5,8 +6,8 @@ import { useCardGridColumnCount } from "../../ui/use-card-grid-column-count"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
 import type { ArtistAlbum, ArtistAlbumsPage } from "../spotify/spotify-album"
-import type { AlbumGroup } from "../spotify/spotify-api"
-import { useArtistAlbums } from "./use-artist-albums"
+import { type AlbumGroup, SpotifyApi } from "../spotify/spotify-api"
+import { useNextPages } from "../spotify/use-next-pages"
 
 const albumCard = (album: ArtistAlbum): GridCard => ({
   key: album.id,
@@ -37,11 +38,17 @@ export function DiscographySection({
   const gridId = useId()
   const [isExpanded, setIsExpanded] = useState(false)
   const { gridRef, columnCount } = useCardGridColumnCount()
-  const { albums, nextOffset, nextPage, loadNextPage } = useArtistAlbums({
-    artistId,
-    albumGroup,
-    firstPage,
-  })
+  const loadPage = (offset: number) =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+      return yield* spotify.getArtistAlbumsPage(artistId, albumGroup, offset)
+    })
+  const {
+    items: albums,
+    nextOffset,
+    nextPage,
+    loadNextPage,
+  } = useNextPages({ firstPage, loadPage })
   const shownAlbums = isExpanded ? albums : albums.slice(0, columnCount)
   // A wide pane can fit more cards on a row than one page holds.
   const needsMoreAlbums = isExpanded || albums.length < columnCount

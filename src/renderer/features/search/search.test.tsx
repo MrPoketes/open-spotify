@@ -29,8 +29,9 @@ interface SearchRequest {
 }
 
 // The fake Spotify API, recording every search it runs. Searches for
-// slowQuery wait until the test releases them.
-const recordingSpotify = ({ slowQuery = "", failFirstSearch = false } = {}) => {
+// slowQuery wait until the test releases them, and the first search at
+// failFirstAtOffset fails.
+const recordingSpotify = ({ slowQuery = "", failFirstAtOffset = -1 } = {}) => {
   const searches: Array<SearchRequest> = []
   const slowSearchLatch = Latch.makeUnsafe(false)
   const failFirst = failingFirstTime()
@@ -41,7 +42,7 @@ const recordingSpotify = ({ slowQuery = "", failFirstSearch = false } = {}) => {
         return spotify.search(query, types, offset)
       })
       const delayed = query === slowQuery ? slowSearchLatch.whenOpen(search) : search
-      return failFirstSearch ? failFirst(delayed) : delayed
+      return offset === failFirstAtOffset ? failFirst(delayed) : delayed
     },
   }))
   return { searches, releaseSlowSearch: () => Latch.openUnsafe(slowSearchLatch), layer }
@@ -151,6 +152,20 @@ describe("Search", () => {
     expect(spotify.searches.at(-1)).toEqual({ query: "quiet", types: ["track"], offset: 10 })
   })
 
+  it("keeps the loaded results and offers Retry when Load more fails", async () => {
+    await renderSearch(recordingSpotify({ failFirstAtOffset: 10 }))
+    await typeSearch("quiet")
+    const tracks = await screen.findByRole("region", { name: "Tracks" })
+
+    await userEvent.click(within(tracks).getByRole("button", { name: "Load more tracks" }))
+    const alert = await within(tracks).findByRole("alert")
+    expect(alert).toHaveTextContent("More tracks didn't load.")
+    expect(trackRows()).toHaveLength(10)
+    await userEvent.click(within(alert).getByRole("button", { name: "Retry" }))
+
+    await waitFor(() => expect(trackRows()).toHaveLength(20))
+  })
+
   it("says so when nothing matches the query", async () => {
     await renderSearch()
 
@@ -171,7 +186,7 @@ describe("Search", () => {
   })
 
   it("shows the results after Retry when the search failed", async () => {
-    await renderSearch(recordingSpotify({ failFirstSearch: true }))
+    await renderSearch(recordingSpotify({ failFirstAtOffset: 0 }))
     await typeSearch("glass")
 
     const alert = await screen.findByRole("alert")
@@ -213,6 +228,22 @@ describe("Search", () => {
     expect(searchField()).toHaveValue("glass")
   })
 
+  it("shows the query of the search returned to with Back after the field was cleared elsewhere", async () => {
+    const { router } = await renderSearch()
+    await typeSearch("glass")
+    await userEvent.click(await screen.findByRole("link", { name: /^Glass Harbour/ }))
+    await screen.findByRole("heading", { name: "Album" })
+    await userEvent.click(searchField())
+    await userEvent.keyboard("{Escape}")
+    // Long enough for the cleared field to have sent a search, if it did.
+    await new Promise((resolve) => setTimeout(resolve, 400))
+
+    router.history.back()
+
+    expect(await screen.findByRole("heading", { name: "Results for “glass”" })).toBeInTheDocument()
+    expect(searchField()).toHaveValue("glass")
+  })
+
   it("focuses the search field when / is pressed outside a text field", async () => {
     await renderSearch()
 
@@ -220,6 +251,15 @@ describe("Search", () => {
 
     expect(searchField()).toHaveFocus()
     expect(searchField()).toHaveValue("")
+  })
+
+  // Queries such as "AC/DC" contain a slash.
+  it("types / into a text field instead of taking it as the shortcut", async () => {
+    await renderSearch()
+
+    await userEvent.type(searchField(), "AC/DC")
+
+    expect(searchField()).toHaveValue("AC/DC")
   })
 
   it("clears the field and the results when Escape is pressed", async () => {

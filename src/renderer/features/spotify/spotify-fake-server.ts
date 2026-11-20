@@ -233,7 +233,8 @@ const resourcesByPathPrefix = [
 const respondTo = (url: URL): readonly [number, unknown] => {
   const resource = resourcesByPathPrefix.find(([prefix]) => url.pathname.startsWith(prefix))
   if (resource) {
-    return resource[1](url)
+    const [, respond] = resource
+    return respond(url)
   }
   const currentUserResource = currentUserResources[url.pathname]
   if (currentUserResource) {

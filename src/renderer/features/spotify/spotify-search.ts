@@ -1,6 +1,6 @@
 import { Effect, Schema } from "effect"
-import { Artist, SimplifiedArtist } from "./spotify-artist"
-import { Image } from "./spotify-image"
+import { SearchAlbum } from "./spotify-album"
+import { Artist } from "./spotify-artist"
 import { Paging } from "./spotify-paging"
 import { SimplifiedPlaylist } from "./spotify-playlist"
 import { Track } from "./spotify-track"
@@ -10,15 +10,6 @@ export type SearchType = "track" | "artist" | "album" | "playlist"
 // Spotify caps a page of search results at 10 for development-mode apps and
 // answers a larger limit with an error.
 export const searchPageSize = 10
-
-export const SearchAlbum = Schema.Struct({
-  id: Schema.String,
-  name: Schema.String,
-  images: Schema.Array(Image),
-  artists: Schema.Array(SimplifiedArtist),
-})
-
-export type SearchAlbum = typeof SearchAlbum.Type
 
 // Spotify can send null in place of a result it no longer serves, such as a
 // removed playlist, and one missing result must not fail the whole search.
@@ -37,8 +28,3 @@ export const SearchResults = Schema.Struct({
 })
 
 export type SearchResults = typeof SearchResults.Type
-
-export interface SearchPage<A> {
-  readonly items: ReadonlyArray<A | null>
-  readonly next: string | null
-}
