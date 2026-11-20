@@ -1,5 +1,16 @@
 import { Context, Effect, Layer, type Option, Schema } from "effect"
 import { AppInfo } from "../../shared/app-info"
+import {
+  type AddFolderItemRequest,
+  type CreateFolderRequest,
+  type DeleteFolderRequest,
+  FolderId,
+  FolderTree,
+  type MoveFolderItemRequest,
+  type MoveFolderRequest,
+  type RemoveFolderItemRequest,
+  type RenameFolderRequest,
+} from "../../shared/folders"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
 import {
   type SettingKey,
@@ -36,6 +47,22 @@ export class DesktopBridge extends Context.Service<
     readonly logIn: Effect.Effect<void, LogInError | DesktopBridgeError>
     readonly getAccessToken: Effect.Effect<string, AccessTokenError | DesktopBridgeError>
     readonly logOut: Effect.Effect<void, DesktopBridgeError>
+    readonly getFolderTree: Effect.Effect<FolderTree, DesktopBridgeError>
+    readonly createFolder: (
+      request: CreateFolderRequest,
+    ) => Effect.Effect<string, DesktopBridgeError>
+    readonly renameFolder: (request: RenameFolderRequest) => Effect.Effect<void, DesktopBridgeError>
+    readonly deleteFolder: (request: DeleteFolderRequest) => Effect.Effect<void, DesktopBridgeError>
+    readonly addFolderItem: (
+      request: AddFolderItemRequest,
+    ) => Effect.Effect<void, DesktopBridgeError>
+    readonly removeFolderItem: (
+      request: RemoveFolderItemRequest,
+    ) => Effect.Effect<void, DesktopBridgeError>
+    readonly moveFolder: (request: MoveFolderRequest) => Effect.Effect<void, DesktopBridgeError>
+    readonly moveFolderItem: (
+      request: MoveFolderItemRequest,
+    ) => Effect.Effect<void, DesktopBridgeError>
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
@@ -70,6 +97,14 @@ export class DesktopBridge extends Context.Service<
         ),
       ),
       logOut: send(ipcChannels.logOut, Schema.Undefined),
+      getFolderTree: send(ipcChannels.getFolderTree, FolderTree),
+      createFolder: (request) => send(ipcChannels.createFolder, FolderId, request),
+      renameFolder: (request) => send(ipcChannels.renameFolder, Schema.Undefined, request),
+      deleteFolder: (request) => send(ipcChannels.deleteFolder, Schema.Undefined, request),
+      addFolderItem: (request) => send(ipcChannels.addFolderItem, Schema.Undefined, request),
+      removeFolderItem: (request) => send(ipcChannels.removeFolderItem, Schema.Undefined, request),
+      moveFolder: (request) => send(ipcChannels.moveFolder, Schema.Undefined, request),
+      moveFolderItem: (request) => send(ipcChannels.moveFolderItem, Schema.Undefined, request),
     })
   }
 
