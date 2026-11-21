@@ -1,6 +1,6 @@
 import { act, cleanup, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, onTestFinished } from "vitest"
 import type { FolderTree } from "../../../shared/folders"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { fakeMainProcess } from "../../lib/fake-main-process"
@@ -147,6 +147,24 @@ describe("SidebarFolderTree", () => {
 
     expect(await treeItem("Long runs")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "New folder" })).toHaveFocus()
+  })
+
+  // App-wide shortcuts, such as Alt+Left to go back, listen on the window and
+  // must still work while a folder name is edited.
+  it("leaves keys held with Ctrl, Alt, or Cmd in the rename field to app-wide shortcuts", async () => {
+    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await focusTreeItem("Running")
+    await userEvent.keyboard("{F2}")
+    await renameField()
+    const keysHeardByWindow: Array<string> = []
+    const hearKey = (event: KeyboardEvent) => keysHeardByWindow.push(event.key)
+    window.addEventListener("keydown", hearKey)
+    onTestFinished(() => window.removeEventListener("keydown", hearKey))
+
+    await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}{Control>}k{/Control}")
+
+    expect(keysHeardByWindow).toEqual(expect.arrayContaining(["ArrowLeft", "k"]))
+    expect(await renameField()).toHaveFocus()
   })
 
   it("refuses a blank name, and keeps the old one when the rename is cancelled", async () => {

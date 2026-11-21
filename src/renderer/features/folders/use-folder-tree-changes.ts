@@ -12,9 +12,9 @@ const newFolderName = "New folder"
 
 // Focus follows a change that replaces or removes the focused row. Once a
 // rename ends with Enter or Escape, the folder's row takes focus back from
-// the field. A deleted folder hands focus to
-// the row that takes its place once the tree has been read again, or to the
-// New folder button when no folder is left.
+// the field. A deleted folder hands focus to the row that takes its place
+// once the tree has been read again, or to the New folder button when no
+// folder is left.
 function useFocusAfterFolderChange(tree: FolderTree) {
   const rowFocusRef = useRef<RowFocusHandle>(null)
   const newFolderButtonRef = useRef<HTMLButtonElement>(null)

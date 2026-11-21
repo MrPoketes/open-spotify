@@ -1,4 +1,5 @@
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react"
+import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import { blankFolderNameMessage } from "./blank-folder-name-message"
 
 // How a rename ended. Ended with Enter or Escape, focus goes back to the row;
@@ -43,6 +44,8 @@ export function FolderRenameField({ folderName, onRename, onCancel }: FolderRena
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
+    // App-wide shortcuts listen on the window, so they must get past the field.
+    if (hasShortcutModifier(event)) return
     // The tree around the field moves focus on arrow keys, j, and k, which
     // here belong to the text.
     event.stopPropagation()
@@ -56,8 +59,10 @@ export function FolderRenameField({ folderName, onRename, onCancel }: FolderRena
     }
   }
 
+  // Switching to another app also takes focus from the field, and the browser
+  // gives it back on return, so the rename carries on instead.
   const saveOnLeave = () => {
-    if (isDone.current) return
+    if (isDone.current || !document.hasFocus()) return
     if (isNameBlank) finish(() => onCancel("leave"))
     else save("leave")
   }

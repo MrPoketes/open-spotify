@@ -19,8 +19,9 @@ import {
 import { useFolderTreeChanges } from "./use-folder-tree-changes"
 
 // The tree is the one every Add to folder menu shares, so a folder created or
-// imported anywhere shows here at once. It shows nothing while it loads, so
-// the library does not jump around while it appears.
+// imported anywhere shows here at once. It shows nothing while it loads: the
+// tree comes from local storage almost at once, so a loading message would
+// only flash.
 export function SidebarFolderTree() {
   const folderTree = useFolderTree()
   const savedExpandedFolderIds = useLoad(
