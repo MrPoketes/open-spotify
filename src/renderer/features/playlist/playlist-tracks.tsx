@@ -1,6 +1,7 @@
 import { Effect } from "effect"
 import { useCallback } from "react"
-import { SpotifyApi, maximumPageSize } from "../spotify/spotify-api"
+import { SpotifyApi } from "../spotify/spotify-api"
+import { maximumPageSize } from "../spotify/spotify-paging"
 import type { Playlist, PlaylistItem, PlaylistItemsPage } from "../spotify/spotify-playlist"
 import { formatListDuration } from "../track-list/format-duration"
 import { PageFailedAlert } from "../track-list/page-failed-alert"

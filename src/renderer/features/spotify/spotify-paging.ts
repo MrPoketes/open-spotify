@@ -1,5 +1,9 @@
 import { Effect, Option, Schema, Stream } from "effect"
 
+// The largest page Spotify allows for playlists, playlist items, album tracks,
+// show episodes, and the user's saved and followed collections.
+export const maximumPageSize = 50
+
 export const Paging = <ItemSchema extends Schema.Top>(item: ItemSchema) =>
   Schema.Struct({
     items: Schema.Array(item),

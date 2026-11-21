@@ -13,23 +13,24 @@ import {
   AlbumTracksPage,
   type AlbumTrack,
   ArtistAlbumsPage,
-  SavedAlbum,
+  type SavedAlbum,
 } from "./spotify-album"
 import { Artist } from "./spotify-artist"
 import { SpotifyAccessToken } from "./spotify-access-token"
 import { spotifyApiBaseUrl } from "./spotify-api-url"
 import type { Device } from "./spotify-device"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
+import { libraryRequests } from "./spotify-library-requests"
 import { type TimeRange, listeningHistoryRequests } from "./spotify-listening-history"
-import { Paging, streamPages } from "./spotify-paging"
+import { maximumPageSize, streamPages } from "./spotify-paging"
 import type { PlayHistory } from "./spotify-play-history"
 import { PlaybackState, type RepeatMode } from "./spotify-playback-state"
 import type { PlayerQueue } from "./spotify-player-queue"
 import { playerCommands, playerReads, playerUrl } from "./spotify-player-requests"
-import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
+import { Playlist, PlaylistItemsPage, type SimplifiedPlaylist } from "./spotify-playlist"
 import { SearchResults, type SearchType, searchPageSize } from "./spotify-search"
-import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
-import { SavedTracksPage, type Track } from "./spotify-track"
+import { type SavedShow, Show, ShowEpisodePage } from "./spotify-show"
+import type { SavedTracksPage, Track } from "./spotify-track"
 import { CurrentUser } from "./spotify-user"
 
 export class SpotifyResponseError extends Schema.TaggedError<SpotifyResponseError>()(
@@ -58,10 +59,6 @@ export type SpotifyApiError =
   | SpotifyDecodeError
   | NoActiveDevice
 
-// The largest page Spotify allows for playlists, playlist items, album tracks,
-// show episodes, and the user's saved and followed collections.
-export const maximumPageSize = 50
-
 // Spotify caps a page of an artist's albums at 10.
 export const artistAlbumsPageSize = 10
 
@@ -74,8 +71,6 @@ export type AlbumGroup = "album" | "single" | "appears_on"
 // contains a podcast episode would fail to decode, and a playing episode
 // would show up as a null item.
 const trackAndEpisodeTypes = "additional_types=track,episode"
-
-const FollowedArtistsPage = Schema.Struct({ artists: Paging(Artist) })
 
 const SpotifyErrorBody = Schema.Struct({
   error: Schema.Struct({ message: Schema.String, reason: Schema.optionalKey(Schema.String) }),
@@ -242,10 +237,6 @@ export class SpotifyApi extends Context.Service<
 
       return SpotifyApi.of({
         getCurrentUser: getJson(`${spotifyApiBaseUrl}/me`, CurrentUser),
-        currentUserPlaylists: streamPages(
-          `${spotifyApiBaseUrl}/me/playlists?limit=${maximumPageSize}`,
-          (url) => getJson(url, Paging(SimplifiedPlaylist)),
-        ),
         getPlaylist: (playlistId) =>
           getJson(
             `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}?${trackAndEpisodeTypes}`,
@@ -271,25 +262,6 @@ export class SpotifyApi extends Context.Service<
             ArtistAlbumsPage,
           ),
         search: (query, types, offset) => getJson(searchUrl(query, types, offset), SearchResults),
-        likedSongsCount: getJson(
-          `${spotifyApiBaseUrl}/me/tracks?limit=1`,
-          Schema.Struct({ total: Schema.Number }),
-        ).pipe(Effect.map(({ total }) => total)),
-        getLikedSongsPage: (offset) =>
-          getJson(
-            `${spotifyApiBaseUrl}/me/tracks?limit=${maximumPageSize}&offset=${offset}`,
-            SavedTracksPage,
-          ),
-        savedAlbums: streamPages(`${spotifyApiBaseUrl}/me/albums?limit=${maximumPageSize}`, (url) =>
-          getJson(url, Paging(SavedAlbum)),
-        ),
-        followedArtists: streamPages(
-          `${spotifyApiBaseUrl}/me/following?type=artist&limit=${maximumPageSize}`,
-          (url) => getJson(url, FollowedArtistsPage).pipe(Effect.map(({ artists }) => artists)),
-        ),
-        savedShows: streamPages(`${spotifyApiBaseUrl}/me/shows?limit=${maximumPageSize}`, (url) =>
-          getJson(url, Paging(SavedShow)),
-        ),
         getShow: (showId) =>
           getJson(`${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}`, Show),
         getShowEpisodePage: (showId, offset) =>
@@ -297,6 +269,7 @@ export class SpotifyApi extends Context.Service<
             `${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}/episodes?limit=${maximumPageSize}&offset=${offset}`,
             ShowEpisodePage,
           ),
+        ...libraryRequests(getJson),
         ...listeningHistoryRequests(getJson),
         getPlaybackState,
         ...playerReads(getJson),
