@@ -1,7 +1,7 @@
 import type { KeyCombo } from "./key-combo"
 
 // In the order the shortcuts dialog lists them.
-export const shortcutGroups = ["Playback", "General"] as const
+export const shortcutGroups = ["Playback", "General", "Focused row"] as const
 
 export type ShortcutGroupName = (typeof shortcutGroups)[number]
 
@@ -13,8 +13,9 @@ interface KeyboardShortcut {
   readonly macKeys?: KeyCombo
 }
 
-// Every app-wide shortcut, in the order the shortcuts dialog lists them.
-export const keyboardShortcuts = {
+// Every shortcut that works anywhere in the window, in the order the
+// shortcuts dialog lists them.
+export const windowShortcuts = {
   playOrPause: { description: "Play or pause", group: "Playback", keys: { key: " " } },
   nextTrack: {
     description: "Next track",
@@ -61,7 +62,27 @@ export const keyboardShortcuts = {
   showShortcuts: { description: "Show keyboard shortcuts", group: "General", keys: { key: "?" } },
 } satisfies Record<string, KeyboardShortcut>
 
-export type KeyboardShortcutName = keyof typeof keyboardShortcuts
+export type WindowShortcutName = keyof typeof windowShortcuts
+
+// Shortcuts that act on the focused row of a list. Their buttons stay out of
+// the tab order (docs/design.md), so the shortcuts dialog is where a keyboard
+// user finds them.
+export const rowShortcuts = {
+  togglePin: {
+    description: "Pin or unpin a library entry",
+    group: "Focused row",
+    keys: { key: "p" },
+  },
+  // Mac keyboards have no forward Delete key, and label Backspace "delete".
+  deleteTheme: {
+    description: "Delete an imported theme",
+    group: "Focused row",
+    keys: { key: "Delete" },
+    macKeys: { key: "Backspace" },
+  },
+} satisfies Record<string, KeyboardShortcut>
+
+export type RowShortcutName = keyof typeof rowShortcuts
 
 export const shortcutKeys = (shortcut: KeyboardShortcut, isMac: boolean) =>
   isMac ? (shortcut.macKeys ?? shortcut.keys) : shortcut.keys

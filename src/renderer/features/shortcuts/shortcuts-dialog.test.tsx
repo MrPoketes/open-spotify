@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { IsMacContext } from "./is-mac-context"
-import { keyboardShortcuts } from "./keyboard-shortcuts"
+import { rowShortcuts, windowShortcuts } from "./keyboard-shortcuts"
 import { ShortcutsDialog } from "./shortcuts-dialog"
 
 const openShortcutsDialog = async (isMac: boolean) => {
@@ -23,13 +23,18 @@ describe("ShortcutsDialog", () => {
   it("lists every shortcut when ? is pressed", async () => {
     const dialog = await openShortcutsDialog(false)
 
-    for (const { description } of Object.values(keyboardShortcuts)) {
+    for (const { description } of [
+      ...Object.values(windowShortcuts),
+      ...Object.values(rowShortcuts),
+    ]) {
       expect(within(dialog).getByText(description)).toBeInTheDocument()
     }
     expect(keysFor(dialog, "Play or pause")).toHaveTextContent("Space")
     expect(keysFor(dialog, "Next track")).toHaveTextContent("Ctrl→")
     expect(keysFor(dialog, "Go back")).toHaveTextContent("Alt←")
     expect(keysFor(dialog, "Show or hide the queue")).toHaveTextContent("AltShiftQ")
+    expect(keysFor(dialog, "Pin or unpin a library entry")).toHaveTextContent("P")
+    expect(keysFor(dialog, "Delete an imported theme")).toHaveTextContent("Delete")
   })
 
   it("lists the macOS keys on macOS", async () => {
@@ -38,6 +43,8 @@ describe("ShortcutsDialog", () => {
     expect(keysFor(dialog, "Next track")).toHaveTextContent("Cmd→")
     expect(keysFor(dialog, "Go back")).toHaveTextContent("Cmd[")
     expect(keysFor(dialog, "Show or hide the queue")).toHaveTextContent("OptionShiftQ")
+    // Mac keyboards label Backspace "delete".
+    expect(keysFor(dialog, "Delete an imported theme")).toHaveTextContent(/^Delete$/)
   })
 
   it("closes with the Close button", async () => {

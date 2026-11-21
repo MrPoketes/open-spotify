@@ -4,12 +4,15 @@ import { IconButton } from "../../ui/icon-button"
 import { IsMacContext } from "./is-mac-context"
 import { keyComboLabels } from "./key-combo"
 import {
-  keyboardShortcuts,
+  rowShortcuts,
   type ShortcutGroupName,
   shortcutGroups,
   shortcutKeys,
+  windowShortcuts,
 } from "./keyboard-shortcuts"
 import { useKeyboardShortcut } from "./use-keyboard-shortcut"
+
+const allShortcuts = [...Object.values(windowShortcuts), ...Object.values(rowShortcuts)]
 
 interface ShortcutGroupProps {
   readonly group: ShortcutGroupName
@@ -17,7 +20,7 @@ interface ShortcutGroupProps {
 }
 
 function ShortcutGroup({ group, isMac }: ShortcutGroupProps) {
-  const shortcuts = Object.values(keyboardShortcuts).filter((shortcut) => shortcut.group === group)
+  const shortcuts = allShortcuts.filter((shortcut) => shortcut.group === group)
   return (
     <section className="flex flex-col gap-2">
       <h3 className="text-sm font-semibold text-muted">{group}</h3>

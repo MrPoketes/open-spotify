@@ -11,6 +11,7 @@ import { readImportedThemes, readSavedSetting } from "../../lib/desktop-bridge-f
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
+import { IsMacContext } from "../shortcuts/is-mac-context"
 import { AppearanceSettings } from "./appearance-settings"
 import { appliedToken } from "./applied-theme-token"
 
@@ -177,6 +178,25 @@ describe("AppearanceSettings", () => {
       "Ember by A theme author",
     ])
     expect(await importedThemeNames(mainProcess)).toEqual(["Ember"])
+  })
+
+  // Most Mac keyboards have no forward Delete key.
+  it("deletes the focused theme with Backspace on macOS", async () => {
+    const mainProcess = fakeMainProcess({ importedThemes: [sunset, ember] })
+    renderScreen(
+      <IsMacContext value>
+        <AppearanceSettings
+          library={{ themes: themeLibrary([sunset, ember]), savedTheme: sunset }}
+        />
+      </IsMacContext>,
+      mainProcess,
+    )
+    await screen.findByRole("list", { name: "Theme" })
+
+    await userEvent.tab()
+    await userEvent.keyboard("{Backspace}")
+
+    await waitFor(async () => expect(await importedThemeNames(mainProcess)).toEqual(["Ember"]))
   })
 
   // docs/themes.md promises that a new version of the theme in use applies at

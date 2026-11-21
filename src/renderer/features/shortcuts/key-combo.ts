@@ -40,7 +40,15 @@ const keyNames: Partial<Record<string, string>> = {
   " ": "Space",
   ArrowLeft: "←",
   ArrowRight: "→",
+  Delete: "Delete",
 }
+
+const macKeyNames: Partial<Record<string, string>> = {
+  Backspace: "Delete",
+}
+
+const keyName = (key: string, isMac: boolean) =>
+  (isMac ? macKeyNames[key] : undefined) ?? keyNames[key] ?? key.toUpperCase()
 
 // The keys to press, in order, as the platform's keyboards label them.
 export const keyComboLabels = (combo: KeyCombo, isMac: boolean): ReadonlyArray<string> => {
@@ -54,6 +62,30 @@ export const keyComboLabels = (combo: KeyCombo, isMac: boolean): ReadonlyArray<s
   if (combo.shift === true) {
     labels.push("Shift")
   }
-  labels.push(keyNames[combo.key] ?? combo.key.toUpperCase())
+  labels.push(keyName(combo.key, isMac))
   return labels
+}
+
+const ariaKeyName = (key: string) => {
+  if (key === " ") {
+    return "Space"
+  }
+  return isLetter(key) ? key.toUpperCase() : key
+}
+
+// The aria-keyshortcuts spelling, which names keys by their KeyboardEvent.key
+// values, so screen readers can announce the shortcut.
+export const ariaKeyShortcut = (combo: KeyCombo, isMac: boolean) => {
+  const keys: Array<string> = []
+  if (combo.primary === true) {
+    keys.push(isMac ? "Meta" : "Control")
+  }
+  if (combo.alt === true) {
+    keys.push("Alt")
+  }
+  if (combo.shift === true) {
+    keys.push("Shift")
+  }
+  keys.push(ariaKeyName(combo.key))
+  return keys.join("+")
 }
