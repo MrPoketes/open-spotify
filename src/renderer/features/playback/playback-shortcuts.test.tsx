@@ -92,6 +92,15 @@ describe("playback shortcuts", () => {
     expect(screen.getByRole("textbox", { name: "Notes" })).toHaveValue(" ")
   })
 
+  // A held key repeats, and each repeat would send Spotify another command.
+  it("toggles once while Space is held down", async () => {
+    await renderNowPlayingBar()
+
+    await userEvent.keyboard("[Space>4/]")
+
+    expect(await control("Play")).toBeInTheDocument()
+  })
+
   // Space does nothing to a link but scroll, and every library entry in the
   // sidebar is one.
   it("pauses with Space while a link has focus", async () => {

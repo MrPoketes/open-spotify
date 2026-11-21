@@ -36,6 +36,8 @@ interface AppShellProps {
   readonly children: ReactNode
 }
 
+// The layout's own hooks register shortcuts, so the platform has to be
+// provided above them.
 export function AppShell({ platform, ...layoutProps }: AppShellProps) {
   return (
     <IsMacContext value={platform === "darwin"}>

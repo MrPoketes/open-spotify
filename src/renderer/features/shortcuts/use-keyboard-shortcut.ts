@@ -20,9 +20,7 @@ const isKeyForFocusedElement = (event: KeyboardEvent) =>
     event.target.matches(spacePressedControl))
 
 // Runs the action when the user presses the shortcut's keys anywhere in the
-// window, except while typing. A component that handles the key itself
-// prevents its default, and the shortcut leaves it alone. Holding the keys
-// down runs the action once.
+// window, except while typing. Holding the keys down runs the action once.
 export function useKeyboardShortcut(name: KeyboardShortcutName, action: () => void) {
   const isMac = use(IsMacContext)
   const runAction = useEffectEvent(action)
@@ -30,7 +28,7 @@ export function useKeyboardShortcut(name: KeyboardShortcutName, action: () => vo
   useEffect(() => {
     const keys = shortcutKeys(keyboardShortcuts[name], isMac)
     const runOnShortcut = (event: KeyboardEvent) => {
-      if (event.repeat || event.defaultPrevented || !matchesKeyCombo(event, keys, isMac)) {
+      if (event.repeat || !matchesKeyCombo(event, keys, isMac)) {
         return
       }
       if (isKeyForFocusedElement(event)) {

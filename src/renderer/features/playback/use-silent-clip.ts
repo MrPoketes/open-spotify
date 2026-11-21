@@ -22,7 +22,9 @@ const writeText = (view: DataView, offset: number, text: string) => {
 // One second of 8-bit mono PCM in a WAV file, built here so the app ships no
 // audio file.
 const makeSilentClipUrl = () => {
-  const bytes = new Uint8Array(headerLength + sampleRate)
+  const byteRate = sampleRate * channelCount * bytesPerSample
+  const dataLength = byteRate
+  const bytes = new Uint8Array(headerLength + dataLength)
   const view = new DataView(bytes.buffer)
   writeText(view, 0, "RIFF")
   view.setUint32(4, bytes.length - 8, true)
@@ -31,11 +33,11 @@ const makeSilentClipUrl = () => {
   view.setUint16(20, pcmFormat, true)
   view.setUint16(22, channelCount, true)
   view.setUint32(24, sampleRate, true)
-  view.setUint32(28, sampleRate * bytesPerSample, true)
-  view.setUint16(32, bytesPerSample, true)
+  view.setUint32(28, byteRate, true)
+  view.setUint16(32, channelCount * bytesPerSample, true)
   view.setUint16(34, bytesPerSample * 8, true)
   writeText(view, 36, "data")
-  view.setUint32(40, sampleRate * bytesPerSample, true)
+  view.setUint32(40, dataLength, true)
   // 8-bit samples are unsigned, so silence is the middle value.
   bytes.fill(128, headerLength)
   return `data:audio/wav;base64,${btoa(String.fromCharCode(...bytes))}`
