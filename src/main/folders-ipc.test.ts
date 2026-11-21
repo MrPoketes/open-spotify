@@ -20,6 +20,8 @@ const createFolderNamed = Effect.fn("createFolderNamed")(function* (
 })
 
 describe("folder IPC", () => {
+  // IPC replies are structured-cloned, so the tree must reach the renderer as
+  // plain data that its Schema decodes.
   it.effect("applies folder operations sent by the renderer and replies with the tree", () =>
     Effect.gen(function* () {
       const folderId = yield* createFolderNamed("Rock", null)

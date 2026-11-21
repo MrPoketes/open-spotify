@@ -64,7 +64,7 @@ const ipcSender = (desktopApi: DesktopApi) => {
       Effect.mapError((cause) => new DesktopBridgeError({ channel, cause })),
     )
 
-  const sendExpectingFailure = <Value, Failure>(
+  const sendWithTaggedFailures = <Value, Failure>(
     channel: IpcChannel,
     schemas: { readonly value: Schema.Decoder<Value>; readonly failure: Schema.Decoder<Failure> },
     request?: unknown,
@@ -75,34 +75,31 @@ const ipcSender = (desktopApi: DesktopApi) => {
       ),
     )
 
-  return { send, sendExpectingFailure }
+  return { send, sendWithTaggedFailures }
 }
 
 const folderChangeReply = { value: Schema.Undefined, failure: FolderChangeError }
 
-const folderChanges = (desktopApi: DesktopApi) => {
-  const { sendExpectingFailure } = ipcSender(desktopApi)
-  return {
-    createFolder: (request: CreateFolderRequest) =>
-      sendExpectingFailure(
-        ipcChannels.createFolder,
-        { value: FolderId, failure: FolderChangeError },
-        request,
-      ),
-    renameFolder: (request: RenameFolderRequest) =>
-      sendExpectingFailure(ipcChannels.renameFolder, folderChangeReply, request),
-    deleteFolder: (request: DeleteFolderRequest) =>
-      sendExpectingFailure(ipcChannels.deleteFolder, folderChangeReply, request),
-    addFolderItem: (request: AddFolderItemRequest) =>
-      sendExpectingFailure(ipcChannels.addFolderItem, folderChangeReply, request),
-    removeFolderItem: (request: RemoveFolderItemRequest) =>
-      sendExpectingFailure(ipcChannels.removeFolderItem, folderChangeReply, request),
-    moveFolder: (request: MoveFolderRequest) =>
-      sendExpectingFailure(ipcChannels.moveFolder, folderChangeReply, request),
-    moveFolderItem: (request: MoveFolderItemRequest) =>
-      sendExpectingFailure(ipcChannels.moveFolderItem, folderChangeReply, request),
-  }
-}
+const folderChanges = ({ sendWithTaggedFailures }: ReturnType<typeof ipcSender>) => ({
+  createFolder: (request: CreateFolderRequest) =>
+    sendWithTaggedFailures(
+      ipcChannels.createFolder,
+      { value: FolderId, failure: FolderChangeError },
+      request,
+    ),
+  renameFolder: (request: RenameFolderRequest) =>
+    sendWithTaggedFailures(ipcChannels.renameFolder, folderChangeReply, request),
+  deleteFolder: (request: DeleteFolderRequest) =>
+    sendWithTaggedFailures(ipcChannels.deleteFolder, folderChangeReply, request),
+  addFolderItem: (request: AddFolderItemRequest) =>
+    sendWithTaggedFailures(ipcChannels.addFolderItem, folderChangeReply, request),
+  removeFolderItem: (request: RemoveFolderItemRequest) =>
+    sendWithTaggedFailures(ipcChannels.removeFolderItem, folderChangeReply, request),
+  moveFolder: (request: MoveFolderRequest) =>
+    sendWithTaggedFailures(ipcChannels.moveFolder, folderChangeReply, request),
+  moveFolderItem: (request: MoveFolderItemRequest) =>
+    sendWithTaggedFailures(ipcChannels.moveFolderItem, folderChangeReply, request),
+})
 
 // Typed access to the main process. Replies are decoded with a Schema, so the
 // rest of the renderer only ever sees values of the declared type.
@@ -165,7 +162,8 @@ export class DesktopBridge extends Context.Service<
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
-    const { send, sendExpectingFailure } = ipcSender(desktopApi)
+    const sender = ipcSender(desktopApi)
+    const { send, sendWithTaggedFailures } = sender
 
     const setSetting = Effect.fn("DesktopBridge.setSetting")(function* <K extends SettingKey>(
       key: K,
@@ -176,7 +174,7 @@ export class DesktopBridge extends Context.Service<
           (cause) => new DesktopBridgeError({ channel: ipcChannels.setSetting, cause }),
         ),
       )
-      yield* sendExpectingFailure(
+      yield* sendWithTaggedFailures(
         ipcChannels.setSetting,
         { value: Schema.Undefined, failure: MalformedIpcRequest },
         { key, value: encodedValue },
@@ -186,7 +184,7 @@ export class DesktopBridge extends Context.Service<
     return DesktopBridge.of({
       getAppInfo: send(ipcChannels.getAppInfo, AppInfo),
       getSetting: (key) =>
-        sendExpectingFailure(
+        sendWithTaggedFailures(
           ipcChannels.getSetting,
           { value: SettingReply(key), failure: MalformedIpcRequest },
           { key },
@@ -207,7 +205,7 @@ export class DesktopBridge extends Context.Service<
       ),
       logOut: send(ipcChannels.logOut, Schema.Undefined),
       getFolderTree: send(ipcChannels.getFolderTree, FolderTree),
-      ...folderChanges(desktopApi),
+      ...folderChanges(sender),
       listImportedThemes: send(ipcChannels.listImportedThemes, Schema.Array(LibraryTheme)),
       importThemeFile: send(ipcChannels.importThemeFile, ImportThemeReply).pipe(
         Effect.flatMap(importedThemeFromReply),
