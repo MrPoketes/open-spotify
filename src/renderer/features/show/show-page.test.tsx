@@ -51,11 +51,9 @@ const renderShowPage = (showId: string, spotifyApi?: Layer.Layer<SpotifyApi>) =>
 
 const episodeRows = () => screen.getAllByRole("article")
 
-// The show's play button comes before the episodes in the tab order.
-const tabToEpisodes = async () => {
-  await userEvent.tab()
-  await userEvent.tab()
-}
+// The page header, its play button, and its More options button come before
+// the episodes in the tab order.
+const tabToEpisodes = () => userEvent.keyboard("{Tab>4/}")
 
 // Scrolls to the end of the episode list while offline, so the next page fails.
 const loadEpisodesUntilRetry = async (spotify: ReturnType<typeof spotifyWithConnection>) => {

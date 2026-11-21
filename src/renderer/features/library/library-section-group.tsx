@@ -44,7 +44,7 @@ export function LibrarySectionGroup({
             {name}
           </button>
         </h3>
-        <MenuButton label={`${name} section options`} icon={Ellipsis} actions={menuActions} />
+        <MenuButton label={`${name} section options`} icon={Ellipsis} items={menuActions} />
       </div>
       {!section.collapsed && (
         <LibraryEntryList id={listId} entries={entries} pinned={false} actions={entryActions} />

@@ -1,6 +1,5 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
-import { ContextPlayButton } from "../playback/context-play-button"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { Playlist } from "../spotify/spotify-playlist"
@@ -35,7 +34,6 @@ function PlaylistContent({ playlist }: { readonly playlist: Playlist }) {
     return (
       <div className="flex flex-col gap-8">
         <PlaylistHeader playlist={playlist} totalDuration={null} />
-        <ContextPlayButton contextUri={playlist.uri} contextName={playlist.name} />
         <ItemsWithheld playlistId={playlist.id} />
       </div>
     )

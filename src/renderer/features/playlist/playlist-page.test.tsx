@@ -42,11 +42,9 @@ const trackRows = () => within(screen.getByRole("table", { name: "Tracks" })).ge
 
 const renderedRowIndexes = () => trackRows().map((row) => row.getAttribute("aria-rowindex"))
 
-// The playlist's play button comes before the tracks in the tab order.
-const tabToTracks = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.tab()
-  await user.tab()
-}
+// The page header, its play button, and its More options button come before
+// the tracks in the tab order.
+const tabToTracks = (user: ReturnType<typeof userEvent.setup>) => user.keyboard("{Tab>4/}")
 
 describe("PlaylistPage", () => {
   it("shows the playlist's name, description, owner, track count, and duration", async () => {

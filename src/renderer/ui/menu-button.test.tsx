@@ -14,7 +14,7 @@ describe("MenuButton", () => {
   // Keyboard users must be able to leave a menu without choosing anything and
   // continue from where they were.
   it("closes on Escape and returns focus to its button", async () => {
-    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+    render(<MenuButton label="Options" icon={Settings} items={actions} />)
     const menuButton = screen.getByRole("button", { name: "Options" })
 
     await userEvent.click(menuButton)
@@ -26,7 +26,7 @@ describe("MenuButton", () => {
   })
 
   it("wraps arrow key focus around the ends of the menu", async () => {
-    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+    render(<MenuButton label="Options" icon={Settings} items={actions} />)
     screen.getByRole("button", { name: "Options" }).focus()
 
     await userEvent.keyboard("{ArrowUp}")
@@ -37,7 +37,7 @@ describe("MenuButton", () => {
   })
 
   it("moves focus to the first item on Home and the last item on End", async () => {
-    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+    render(<MenuButton label="Options" icon={Settings} items={actions} />)
 
     await userEvent.click(screen.getByRole("button", { name: "Options" }))
     await userEvent.keyboard("{End}")
@@ -50,7 +50,7 @@ describe("MenuButton", () => {
   // App-wide shortcuts, such as Alt+Left to go back, listen on the window and
   // must still work while a menu has focus.
   it("leaves arrow keys, Home and End held with Ctrl, Alt or Cmd to app-wide shortcuts", async () => {
-    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+    render(<MenuButton label="Options" icon={Settings} items={actions} />)
     await userEvent.click(screen.getByRole("button", { name: "Options" }))
     await userEvent.keyboard("{ArrowDown}")
     const keysHeardByWindow: Array<string> = []
@@ -73,7 +73,7 @@ describe("MenuButton", () => {
   it("closes on Tab and moves focus on to the next control", async () => {
     render(
       <>
-        <MenuButton label="Options" icon={Settings} actions={actions} />
+        <MenuButton label="Options" icon={Settings} items={actions} />
         <button type="button">Next</button>
       </>,
     )
@@ -88,7 +88,7 @@ describe("MenuButton", () => {
   // The button comes just before its menu in the tab order, so Shift+Tab
   // lands on it, and a menu left open there would no longer hear Escape.
   it("closes on Shift+Tab and returns focus to its button", async () => {
-    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+    render(<MenuButton label="Options" icon={Settings} items={actions} />)
     const menuButton = screen.getByRole("button", { name: "Options" })
 
     await userEvent.click(menuButton)
@@ -102,7 +102,7 @@ describe("MenuButton", () => {
   it("closes when a click lands outside it", async () => {
     render(
       <>
-        <MenuButton label="Options" icon={Settings} actions={actions} />
+        <MenuButton label="Options" icon={Settings} items={actions} />
         <p>Elsewhere</p>
       </>,
     )

@@ -17,11 +17,7 @@ export function Sidebar({ width }: { readonly width: number }) {
       <div className="flex flex-col px-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-display text-xl font-bold">Your library</h2>
-          <MenuButton
-            label="Folder options"
-            icon={FolderCog}
-            actions={foldersFileActions.actions}
-          />
+          <MenuButton label="Folder options" icon={FolderCog} items={foldersFileActions.actions} />
         </div>
         <FoldersFileOutcomeMessage outcome={foldersFileActions.outcome} />
       </div>

@@ -1,6 +1,6 @@
 import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Stream } from "effect"
+import { Effect, Stream } from "effect"
 import type { ReactNode } from "react"
 import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
@@ -10,7 +10,9 @@ import { fakeMainProcess } from "../../lib/fake-main-process"
 import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
+import { AlbumPage } from "../album/album-page"
 import { Library } from "../library/library"
+import { PlaylistPage } from "../playlist/playlist-page"
 import type { SavedAlbum } from "../spotify/spotify-album"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { FakeMainView } from "../track-list/fake-main-view"
@@ -33,6 +35,8 @@ const quietRivers: TrackListEntry = {
   durationMs: 200_000,
 }
 
+const lateNightDriveUri = "spotify:playlist:37i9dQZF1DX4wta20PHgwo"
+
 // The main process accepts only real Spotify ids, which the shared fixtures
 // do not use.
 const lowOrbit: SavedAlbum = {
@@ -45,7 +49,8 @@ const lowOrbit: SavedAlbum = {
   },
 }
 
-// Running already holds Quiet Rivers; Morning, inside it, and Focus do not.
+// Running already holds Quiet Rivers and Late Night Drive; Morning, inside
+// it, and Focus do not.
 const folderTree: FolderTree = [
   {
     _tag: "Folder",
@@ -59,6 +64,7 @@ const folderTree: FolderTree = [
         name: "Quiet Rivers",
         imageUrl: null,
       },
+      { _tag: "SpotifyItem", uri: lateNightDriveUri, name: "Late Night Drive", imageUrl: null },
     ],
   },
   { _tag: "Folder", id: focusId, name: "Focus", entries: [] },
@@ -76,7 +82,17 @@ const renderWithFolders = (
       </FoldersProvider>
     </StatusMessageProvider>,
     mainProcess,
-    spotifyApiFakeWith(() => ({ savedAlbums: Stream.make(lowOrbit) })),
+    spotifyApiFakeWith((spotify) => ({
+      savedAlbums: Stream.make(lowOrbit),
+      getAlbum: (albumId) =>
+        spotify
+          .getAlbum(albumId)
+          .pipe(Effect.map((album) => ({ ...album, uri: lowOrbit.album.uri }))),
+      getPlaylist: (playlistId) =>
+        spotify
+          .getPlaylist(playlistId)
+          .pipe(Effect.map((playlist) => ({ ...playlist, uri: lateNightDriveUri }))),
+    })),
   )
   return userEvent.setup()
 }
@@ -123,6 +139,11 @@ const openRunningSubmenu = async (user: User, target: HTMLElement) => {
   const folderSubmenu = await openFolderSubmenu(user, target)
   await user.click(within(folderSubmenu).getByRole("menuitem", { name: "Running" }))
   return screen.getByRole("menu", { name: "Running" })
+}
+
+const pageHeader = async (title: string) => {
+  const heading = await screen.findByRole("heading", { level: 1, name: title })
+  return heading.closest("header") ?? heading
 }
 
 // The library has a status region of its own, for its filters.
@@ -206,6 +227,40 @@ describe("Add to folder", () => {
     await user.type(nameField, "Evening")
     expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument()
     expect(nameField).toBeValid()
+  })
+
+  it("adds an album to a folder from its page header's context menu", async () => {
+    const user = renderWithFolders(<AlbumPage albumId="fake-album-4" />)
+    const header = await pageHeader("Low Orbit")
+
+    header.focus()
+    await user.keyboard("{Shift>}{F10}{/Shift}")
+    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
+    const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
+    await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
+
+    expect(await findStatusMessage("Added to Focus")).toBeInTheDocument()
+    const reopenedSubmenu = await openFolderSubmenu(user, header)
+    expect(
+      within(reopenedSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }),
+    ).toHaveAttribute("aria-checked", "true")
+  })
+
+  it("removes a playlist from a folder with its page's More options button", async () => {
+    const user = renderWithFolders(<PlaylistPage playlistId="fake-playlist-late-night-drive" />)
+
+    await user.click(await screen.findByRole("button", { name: "More options" }))
+    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
+    const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
+    await user.click(within(folderSubmenu).getByRole("menuitem", { name: "Running" }))
+    await user.click(
+      within(screen.getByRole("menu", { name: "Running" })).getByRole("menuitemcheckbox", {
+        name: "Running",
+        checked: true,
+      }),
+    )
+
+    expect(await findStatusMessage("Removed from Running")).toBeInTheDocument()
   })
 
   // A page that went back to its loading state to show the item would lose
