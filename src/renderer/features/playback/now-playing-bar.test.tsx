@@ -1,6 +1,6 @@
 import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, type Layer } from "effect"
+import { Effect, type Layer, Option, Schema } from "effect"
 import { useState } from "react"
 import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
@@ -8,7 +8,9 @@ import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
-import { fakePlayingTrack } from "../spotify/spotify-fixtures"
+import { fakeTracks } from "../spotify/spotify-fake-tracks"
+import { fakeEpisode, fakeLocalTrack, fakePlayingTrack } from "../spotify/spotify-fixtures"
+import { PlayableItem } from "../spotify/spotify-playable-item"
 import { NowPlayingBar } from "./now-playing-bar"
 
 const noActiveDevice = { getPlaybackState: Effect.succeedNone }
@@ -30,6 +32,22 @@ function NowPlayingBarWithPicker() {
 const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
   renderScreen(<NowPlayingBarWithPicker />, fakeMainProcess(), spotifyApi)
 
+// The fake's playback with the given fixture playing in place of its own
+// first track.
+const playing = (fixture: unknown) =>
+  spotifyApiFakeWith((spotify) => ({
+    getPlaybackState: spotify.getPlaybackState.pipe(
+      Effect.map(
+        Option.map((playback) => ({
+          ...playback,
+          item: Schema.decodeUnknownSync(PlayableItem)(fixture),
+        })),
+      ),
+    ),
+  }))
+
+const nowPlaying = () => screen.findByRole("region", { name: "Now playing" })
+
 const pickerButton = (deviceLabel: string) =>
   screen.findByRole("button", { name: `Choose a device. ${deviceLabel}` })
 
@@ -48,6 +66,44 @@ describe("NowPlayingBar", () => {
     expect(await screen.findByText(fakePlayingTrack.name)).toBeInTheDocument()
     expect(screen.getByText("Northbound Static")).toBeInTheDocument()
     expect(await pickerButton("Playing on Mira's Laptop")).toBeInTheDocument()
+  })
+
+  it("links the track title to its album and each artist to their page", async () => {
+    const trackWithTwoArtists = fakeTracks.find(({ artists }) => artists.length > 1)
+    renderNowPlayingBar(playing(trackWithTwoArtists))
+    const bar = await nowPlaying()
+
+    const title = await within(bar).findByRole("link", { name: "Glass Harbour, part 1.3" })
+    expect(title).toHaveAttribute("href", "/album/fake-album-0")
+    expect(within(bar).getByRole("link", { name: "Northbound Static" })).toHaveAttribute(
+      "href",
+      "/artist/fake-artist-0",
+    )
+    expect(within(bar).getByRole("link", { name: "Lena Varga" })).toHaveAttribute(
+      "href",
+      "/artist/fake-artist-1",
+    )
+  })
+
+  it("links a playing episode's title to its show", async () => {
+    renderNowPlayingBar(playing(fakeEpisode))
+    const bar = await nowPlaying()
+
+    expect(await within(bar).findByRole("link", { name: fakeEpisode.name })).toHaveAttribute(
+      "href",
+      "/show/fake-show-slow-science",
+    )
+  })
+
+  // A local file has no Spotify id, so there is no album or artist page to
+  // open.
+  it("shows a local file's title and artists as plain text", async () => {
+    renderNowPlayingBar(playing(fakeLocalTrack))
+    const bar = await nowPlaying()
+
+    expect(await within(bar).findByText(fakeLocalTrack.name)).toBeInTheDocument()
+    expect(within(bar).getByText("Mira Kaelin")).toBeInTheDocument()
+    expect(within(bar).queryByRole("link")).not.toBeInTheDocument()
   })
 
   // Playback is remote control, so without an active device pressing play

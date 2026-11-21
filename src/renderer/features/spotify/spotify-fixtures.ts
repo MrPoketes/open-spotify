@@ -103,7 +103,7 @@ export const fakeTrack = (index: number) => {
   }
 }
 
-const localTrack = {
+export const fakeLocalTrack = {
   type: "track",
   id: null,
   name: "Demo Take 3",
@@ -124,12 +124,13 @@ export const fakeEpisode = {
   description: "A look at how a playlist goes from idea to finished sequence.",
   release_date: "2026-03-14",
   release_date_precision: "day",
+  show: { id: "fake-show-slow-science" },
 }
 
 const playlistEntry = (item: unknown, index: number) => ({
   added_at: new Date(Date.UTC(2026, 0, 1 + index)).toISOString(),
   added_by: { id: fakeListenerId },
-  is_local: item === localTrack,
+  is_local: item === fakeLocalTrack,
   item,
 })
 
@@ -167,7 +168,7 @@ export const fakePlaylists: ReadonlyArray<FakePlaylist> = [
     owner: listener,
     collaborative: false,
     // A removed track shows up as a null item.
-    entries: [...tracks(12, 200), localTrack, fakeEpisode, null].map(playlistEntry),
+    entries: [...tracks(12, 200), fakeLocalTrack, fakeEpisode, null].map(playlistEntry),
   },
   {
     id: "fake-playlist-ideas",
