@@ -63,13 +63,14 @@ export const moveIntoFolder = (placed: PlacedEntry, target: Folder): FolderMove 
 export const moveToTopLevel = (placed: PlacedFolder, tree: FolderTree): FolderMove =>
   placeFolder(placed.entry, null, tree.length)
 
+const areSiblings = (first: PlacedEntry, second: PlacedEntry) =>
+  first.parent?.id === second.parent?.id
+
 // The main process counts the position among the parent's other entries, so
 // an entry that moves down within its parent lands one place higher than the
 // line it was dropped on.
 const positionAmongOthers = (dragged: PlacedEntry, target: PlacedEntry, lineIndex: number) =>
-  target.parent?.id === dragged.parent?.id && dragged.position < lineIndex
-    ? lineIndex - 1
-    : lineIndex
+  areSiblings(dragged, target) && dragged.position < lineIndex ? lineIndex - 1 : lineIndex
 
 // The top level holds only folders.
 const placeIn = (
@@ -98,7 +99,7 @@ const moveBeside = (
 ): FolderMove | undefined => {
   const lineIndex = side === "before" ? target.position : target.position + 1
   const position = positionAmongOthers(dragged, target, lineIndex)
-  if (target.parent?.id === dragged.parent?.id && position === dragged.position) {
+  if (areSiblings(dragged, target) && position === dragged.position) {
     return undefined
   }
   return placeIn(dragged, target.parent, position)

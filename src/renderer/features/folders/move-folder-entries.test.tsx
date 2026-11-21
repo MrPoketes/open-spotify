@@ -204,9 +204,12 @@ describe("Moving folder entries", () => {
 
 const statusMessage = (text: string) => screen.findByText(text, { selector: "output > p" })
 
+const sleepId = "8a2d4c6e-1b3f-4d5a-9c7e-0f1a2b3c4d05"
+
 describe("Dragging folder entries", () => {
   beforeEach(() => {
-    layOutTreeRows()
+    const layout = layOutTreeRows()
+    return () => layout.mockRestore()
   })
 
   it("reorders a folder dropped on the line above another one", async () => {
@@ -217,6 +220,56 @@ describe("Dragging folder entries", () => {
     expect(await statusMessage("Moved Focus up")).toBeInTheDocument()
     expect(await treeItem("Focus")).toHaveAttribute("aria-posinset", "1")
     expect(await treeItem("Running")).toHaveAttribute("aria-posinset", "2")
+  })
+
+  // The main process counts the position without the moved entry, so a move
+  // down lands one place above the line it was dropped on.
+  it("reorders a folder dropped on the line below a sibling further down", async () => {
+    const withSleep = [
+      ...folderTree,
+      { _tag: "Folder" as const, id: sleepId, name: "Sleep", entries: [] },
+    ]
+    renderTree(fakeMainProcess({ folderTree: withSleep }))
+
+    await dragTreeItemOnto(await treeItem("Running"), await treeItem("Focus"), 0.9)
+
+    expect(await statusMessage("Moved Running down")).toBeInTheDocument()
+    expect(await treeItem("Running")).toHaveAttribute("aria-posinset", "2")
+    expect(await treeItem("Sleep")).toHaveAttribute("aria-posinset", "3")
+  })
+
+  it("refuses a drop that would leave the entry where it is, and shows no drop indicator", async () => {
+    renderTree()
+
+    const drag = await dragTreeItemOver(await treeItem("Focus"), await treeItem("Running"), 0.9)
+    expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
+    await drag.release()
+
+    await act(() => Promise.resolve())
+    expect(screen.getByRole("status")).toBeEmptyDOMElement()
+  })
+
+  // Pressing in the field and moving the mouse selects text.
+  it("starts no drag from a folder's rename field", async () => {
+    renderTree()
+    await focusTreeItem("Focus")
+    await userEvent.keyboard("{F2}")
+
+    const nameField = screen.getByRole("textbox", { name: "Folder name" })
+    await dragTreeItemOver(nameField, await treeItem("Running"), 0.5)
+
+    expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
+  })
+
+  // The menu is drawn outside the row, but React still hands the row its presses.
+  it("starts no drag from a row's context menu", async () => {
+    renderTree()
+    await userEvent.pointer({ keys: "[MouseRight]", target: await treeItem("Focus") })
+
+    const renameItem = await screen.findByRole("menuitem", { name: "Rename" })
+    await dragTreeItemOver(renameItem, await treeItem("Running"), 0.5)
+
+    expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
   })
 
   it("highlights the folder a dragged entry would go into, then moves the entry into it", async () => {

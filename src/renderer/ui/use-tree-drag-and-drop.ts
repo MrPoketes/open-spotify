@@ -4,11 +4,12 @@ import {
   type DragStartEvent,
   MeasuringStrategy,
   PointerSensor,
+  type PointerSensorOptions,
   pointerWithin,
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import { useEffect, useEffectEvent, useState } from "react"
+import { type PointerEvent, useEffect, useEffectEvent, useState } from "react"
 import { type TreeDrop, type TreeDropPosition, dropPlaceAt } from "./tree-drop"
 import type { VisibleTreeRow } from "./visible-tree-rows"
 
@@ -34,6 +35,25 @@ const dragStartDistance = 4
 
 // Long enough that dragging past a collapsed branch leaves it closed.
 const expandDelayMilliseconds = 600
+
+// A press in a text field, such as a rename field, selects text. A press in a
+// menu that a row opened reaches the row through React even though the menu
+// is drawn elsewhere on the page. Neither starts a drag.
+const pressStartsDrag = ({ target, currentTarget }: PointerEvent) =>
+  target instanceof Element &&
+  currentTarget.contains(target) &&
+  target.closest("input, textarea, [contenteditable]") === null
+
+class RowPointerSensor extends PointerSensor {
+  static override activators = [
+    {
+      eventName: "onPointerDown" as const,
+      handler: (event: PointerEvent, options: PointerSensorOptions) =>
+        pressStartsDrag(event) &&
+        PointerSensor.activators.every(({ handler }) => handler(event, options)),
+    },
+  ]
+}
 
 // Letting go over the row the drag started on clicks that row, such as its
 // link. dnd-kit stops that click before React sees it but leaves the browser's
@@ -77,7 +97,7 @@ function useExpandWhileHovered<Value>(
 export function useTreeDragAndDrop<Value>(options: TreeDragAndDropOptions<Value>) {
   const { rows, expandedKeys, canDrop, onDrop } = options
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: dragStartDistance } }),
+    useSensor(RowPointerSensor, { activationConstraint: { distance: dragStartDistance } }),
   )
   const [draggedKey, setDraggedKey] = useState<string | null>(null)
   const [hoveredKey, setHoveredKey] = useState<string | null>(null)

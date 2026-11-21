@@ -170,7 +170,8 @@ describe("TreeView", () => {
 
 describe("Dragging in a TreeView", () => {
   beforeEach(() => {
-    layOutTreeRows()
+    const layout = layOutTreeRows()
+    return () => layout.mockRestore()
   })
 
   it("expands a collapsed branch that a drag rests on", async () => {
@@ -204,10 +205,12 @@ describe("Dragging in a TreeView", () => {
   it("cancels the click that ends a drag over the item it started on", async () => {
     render(<Tree initiallyExpanded={[]} />)
     const clicks: Array<MouseEvent> = []
-    window.addEventListener("click", (event) => clicks.push(event), { capture: true })
+    const recordClick = (event: MouseEvent) => clicks.push(event)
+    window.addEventListener("click", recordClick, { capture: true })
 
     await dragTreeItemOnto(item("Focus"), item("Focus"), 0.9)
 
+    window.removeEventListener("click", recordClick, { capture: true })
     expect(clicks.map((click) => click.defaultPrevented)).toEqual([true])
   })
 })
