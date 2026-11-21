@@ -38,7 +38,26 @@ status:
   or `completed` with no background task and no watched open PR, meaning it stopped before
   finishing.
 
-For each issue in `In Progress` or `In Review`:
+An active worker is **stuck** when its `pendingBackgroundTasks` is empty and either:
+
+- its thread's `updatedAt` is more than 2 hours old, or
+- its thread's `updatedAt` is more than an hour old and one of its watched open PRs has a CI run
+  that has been unfinished for more than an hour: for the PR's `headRefOid`
+  (`gh pr view <n> --json headRefOid`), `gh run list --commit <headRefOid> --json status,createdAt`
+  lists a run whose `status` is not `completed` and whose `createdAt` is more than an hour old.
+
+With 2 slots, a stuck worker blocks half the pipeline, so it gets one nudge and is then stopped:
+
+- **Nudge it:** comment on the issue `Nudged by the orchestrator: <thread link>`, then send the
+  thread: `You have made no progress for over an hour. Continue, following docs/agents/worker.md.`
+  Add why it counts as stuck (no update since `<updatedAt>`, or CI pending on #<n> since
+  `<createdAt>`), and if its open PR has failed checks or conflicts, say so. It keeps its slot.
+- **Stop it:** `t3_thread_interrupt` the thread, then `unwatch_pull_request` (with its
+  `threadId`) every open PR it watches. Nothing can now restart it but a resume in step 3, which
+  counts it as active again, so stopping never lets more than 2 workers run. Check it with
+  `t3_thread_list`: once it is paused, it holds no slot; if it is still active, it keeps its slot.
+
+For each issue in `In Progress` or `In Review`, take the first row that applies:
 
 | Situation                                                                                                                                                              | Action                                                                                                           |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -46,6 +65,8 @@ For each issue in `In Progress` or `In Review`:
 | No thread exists for it                                                                                                                                                | Move it to `Todo`.                                                                                               |
 | Its worker is paused and has been resumed twice already (two `Resumed by the orchestrator` comments that link this worker's thread; read every comment page as in 3.2) | Comment on the issue with what went wrong, from the thread, and move it to `Todo`.                               |
 | Its worker is paused otherwise                                                                                                                                         | Leave it. Step 3 resumes it when a slot is free.                                                                 |
+| Its worker is stuck and no `Nudged by the orchestrator` comment links this worker's thread (read every comment page as in 3.2)                                         | Nudge it.                                                                                                        |
+| Its worker is stuck otherwise                                                                                                                                          | Stop it.                                                                                                         |
 | Its worker is active, watching a PR whose checks failed or that conflicts, and the thread's `updatedAt` is more than an hour old                                       | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.` |
 
 Then delete the backups (see 3.1) that nobody needs any more. For each branch that
@@ -62,7 +83,8 @@ each one:
 1. `t3_thread_read` the thread to see where it stopped.
 2. Comment on the issue: `Resumed by the orchestrator: <thread link>`.
 3. `t3_thread_send` it a message telling it to continue from there, following
-   `docs/agents/worker.md`. If its open PR has failed checks or conflicts, say so.
+   `docs/agents/worker.md`. If its open PR has failed checks or conflicts, say so. If it was
+   stopped as stuck, say why, and that it must watch its PR again (worker.md step 5).
 
 When no paused worker is left and a slot is still free:
 
