@@ -106,6 +106,24 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
     }).pipe(Effect.provide(freshFolders())),
   )
 
+  // Windows PowerShell 5.1 and older editors start UTF-8 files with a byte
+  // order mark, which JSON does not allow.
+  it.effect("imports a file that starts with a byte order mark", () =>
+    Effect.gen(function* () {
+      const folders = yield* Folders
+      const filePath = yield* writeTempFile(
+        `﻿${foldersFile([{ _tag: "Folder", name: "Rock", entries: [album] }])}`,
+      )
+
+      const reply = yield* importFrom(filePath)
+
+      assert.deepStrictEqual(reply, { _tag: "FoldersImported", folderCount: 1 })
+      assert.deepStrictEqual(withoutIds(yield* folders.readTree), [
+        { name: "Rock", entries: [album] },
+      ])
+    }).pipe(Effect.provide(freshFolders())),
+  )
+
   it.effect("rejects a file that is not JSON", () =>
     Effect.gen(function* () {
       const reply = yield* expectRejectedWithoutChanges("Rock, Jazz, Classics")

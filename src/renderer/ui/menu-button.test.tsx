@@ -36,6 +36,39 @@ describe("MenuButton", () => {
     expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
   })
 
+  it("moves focus to the first item on Home and the last item on End", async () => {
+    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await userEvent.keyboard("{End}")
+    expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus()
+
+    await userEvent.keyboard("{Home}")
+    expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
+  })
+
+  // App-wide shortcuts, such as Alt+Left to go back, listen on the window and
+  // must still work while a menu has focus.
+  it("leaves arrow keys, Home and End held with Ctrl, Alt or Cmd to app-wide shortcuts", async () => {
+    const keysHeardByWindow: Array<string> = []
+    const hearKey = (event: KeyboardEvent) => keysHeardByWindow.push(event.key)
+    window.addEventListener("keydown", hearKey)
+    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await userEvent.keyboard("{ArrowDown}")
+    keysHeardByWindow.length = 0
+    await userEvent.keyboard(
+      "{Control>}{ArrowDown}{/Control}{Alt>}{Home}{/Alt}{Meta>}{End}{/Meta}{Alt>}{ArrowLeft}{/Alt}",
+    )
+    window.removeEventListener("keydown", hearKey)
+
+    expect(screen.getByRole("menuitem", { name: "Second" })).toHaveFocus()
+    expect(keysHeardByWindow).toEqual(
+      expect.arrayContaining(["ArrowDown", "Home", "End", "ArrowLeft"]),
+    )
+  })
+
   // A menu button is one stop in the page's tab order, so Tab carries on to
   // the next control instead of landing back on the button.
   it("closes on Tab and moves focus on to the next control", async () => {
@@ -51,5 +84,33 @@ describe("MenuButton", () => {
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Next" })).toHaveFocus()
+  })
+
+  // The button comes just before its menu in the tab order, so Shift+Tab
+  // lands on it, and a menu left open there would no longer hear Escape.
+  it("closes on Shift+Tab and returns focus to its button", async () => {
+    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+    const menuButton = screen.getByRole("button", { name: "Options" })
+
+    await userEvent.click(menuButton)
+    await userEvent.tab({ shift: true })
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    expect(menuButton).toHaveFocus()
+    expect(menuButton).toHaveAttribute("aria-expanded", "false")
+  })
+
+  it("closes when a click lands outside it", async () => {
+    render(
+      <>
+        <MenuButton label="Options" icon={Settings} actions={actions} />
+        <p>Elsewhere</p>
+      </>,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await userEvent.click(screen.getByText("Elsewhere"))
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
   })
 })

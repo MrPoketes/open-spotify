@@ -11,8 +11,8 @@ interface MenuButtonProps {
 }
 
 // Follows the WAI-ARIA menu button pattern: the arrow keys open the menu on
-// its first or last item, Escape closes it and returns focus to the button,
-// and Tab closes it and moves on.
+// its first or last item, Escape and Shift+Tab close it and return focus to
+// the button, and Tab closes it and moves on.
 export function MenuButton({ label, icon: Icon, actions }: MenuButtonProps) {
   const menuId = useId()
   const buttonRef = useRef<HTMLButtonElement>(null)
