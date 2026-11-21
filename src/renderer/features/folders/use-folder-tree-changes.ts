@@ -12,14 +12,14 @@ const newFolderName = "New folder"
 
 // Focus follows a change that replaces or removes the focused row. When a
 // rename ends, the folder's row takes focus back from the field unless the
-// user moved focus to another control. A deleted folder hands focus to the
-// row that takes its place once the tree has been read again, or to the New
-// folder button when no folder is left.
+// user moved focus to another control. The tree view hands a deleted folder's
+// focus to the row that takes its place, but when no folder is left there is
+// no tree, so the New folder button takes it.
 function useFocusAfterFolderChange(tree: FolderTree) {
   const rowFocusRef = useRef<RowFocusHandle>(null)
   const newFolderButtonRef = useRef<HTMLButtonElement>(null)
   const rowToFocusAfterRender = useRef<number | null>(null)
-  const rowToFocusAfterTreeChange = useRef<number | null>(null)
+  const deletionPending = useRef(false)
 
   useLayoutEffect(() => {
     const row = rowToFocusAfterRender.current
@@ -28,11 +28,9 @@ function useFocusAfterFolderChange(tree: FolderTree) {
   })
 
   useLayoutEffect(() => {
-    const row = rowToFocusAfterTreeChange.current
-    if (row === null) return
-    rowToFocusAfterTreeChange.current = null
+    if (!deletionPending.current) return
+    deletionPending.current = false
     if (tree.length === 0) newFolderButtonRef.current?.focus()
-    else rowFocusRef.current?.focusRow(row)
   }, [tree])
 
   return {
@@ -41,8 +39,8 @@ function useFocusAfterFolderChange(tree: FolderTree) {
     focusRowAfterRender: (row: number) => {
       rowToFocusAfterRender.current = row
     },
-    focusRowAfterTreeChange: (row: number) => {
-      rowToFocusAfterTreeChange.current = row
+    focusAfterDeletion: () => {
+      deletionPending.current = true
     },
   }
 }
@@ -87,7 +85,7 @@ export function useFolderTreeChanges(tree: FolderTree, rowIndex: (folderId: stri
   }
 
   const deleteFolder = (folder: Folder) => {
-    focus.focusRowAfterTreeChange(rowIndex(folder.id))
+    focus.focusAfterDeletion()
     const deletion = Effect.gen(function* () {
       const bridge = yield* DesktopBridge
       yield* bridge.deleteFolder({ folderId: folder.id })

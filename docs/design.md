@@ -235,6 +235,17 @@ page, and clicking a chevron expands or collapses the folder and moves focus to 
 focus is never lost inside a folder that closes. The chevron stays out of the tab order and the
 accessibility tree, since the row announces whether it is expanded.
 
+Every way of rearranging the tree works from the keyboard. `Alt+↑` and `Alt+↓` (`Option+↑` and
+`Option+↓` on macOS) move the focused entry up or down among its siblings; the row's
+`aria-keyshortcuts` and the shortcuts dialog announce them. Each row's context menu has "Move to
+folder", a submenu of the places the entry can go, nested like "Add to folder": every folder it is
+not already in, never a folder itself or one inside it, and "Top level" for a folder inside another.
+A moved entry goes last in its new place. When the tree changes under the focused row, focus
+follows that row to its new place, or goes to the row that takes its place when it is no longer on
+screen. The status message reports each move ("Moved Warm-up down"); a move the main process
+refuses leaves the tree as it was and says why ("Couldn't move Warm-up. A folder can't go inside
+itself.").
+
 Folders start collapsed. The ones the user expands are the `expandedFolders` setting, so they
 stay open after a restart.
 
@@ -242,7 +253,7 @@ A 32 px `FolderPlus` icon button named "New folder" ends the Folders heading row
 top-level folder. The heading and the button show even for a user without folders, since the
 button is how they make their first one; the tree under them is left out until there is a folder.
 Each folder row has a context menu with New folder (a folder inside it, which opens it), Rename,
-and Delete…; Spotify items in the tree have none yet.
+Move to folder, and Delete…; a Spotify item in the tree has Move to folder alone (see above).
 
 A new folder starts in inline rename mode, named "New folder" with the name selected, so typing
 replaces it. Rename, or `F2` on a focused folder (which its `aria-keyshortcuts` announces), puts

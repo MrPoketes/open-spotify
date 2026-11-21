@@ -45,8 +45,14 @@ export const useRovingFocus = (rowCount: number, initialIndex = 0) => {
 
   // Focuses the row at a position, or the last row if the list has shrunk
   // below it. Stable while the row count holds, so an effect can depend on it.
+  // It also makes that row the tab stop, because a row that already has focus,
+  // such as one that moved within the list, gets no focus event.
   const focusRow = useCallback(
-    (index: number) => rows.current[Math.min(index, rowCount - 1)]?.focus(),
+    (index: number) => {
+      const targetIndex = Math.min(index, rowCount - 1)
+      setLastFocusedIndex(targetIndex)
+      rows.current[targetIndex]?.focus()
+    },
     [rowCount],
   )
 
