@@ -1,7 +1,12 @@
 import { use, useEffect, useEffectEvent } from "react"
 import { IsMacContext } from "./is-mac-context"
 import { matchesKeyCombo } from "./key-combo"
-import { shortcutKeys, type WindowShortcutName, windowShortcuts } from "./keyboard-shortcuts"
+import {
+  type KeyboardShortcut,
+  shortcutKeys,
+  type WindowShortcutName,
+  windowShortcuts,
+} from "./keyboard-shortcuts"
 
 const isTextEntry = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
@@ -17,15 +22,18 @@ const isKeyForFocusedElement = (event: KeyboardEvent) =>
   isTextEntry(event.target) || (event.key === " " && event.target instanceof HTMLButtonElement)
 
 // Runs the action when the user presses the shortcut's keys anywhere in the
-// window, except while typing. Holding the keys down runs the action once.
+// window, except while typing. Holding the keys down runs the action once,
+// unless the shortcut repeats while held.
 export function useKeyboardShortcut(name: WindowShortcutName, action: () => void) {
   const isMac = use(IsMacContext)
   const runAction = useEffectEvent(action)
 
   useEffect(() => {
-    const keys = shortcutKeys(windowShortcuts[name], isMac)
+    const shortcut: KeyboardShortcut = windowShortcuts[name]
+    const keys = shortcutKeys(shortcut, isMac)
     const runOnShortcut = (event: KeyboardEvent) => {
-      if (event.repeat || !matchesKeyCombo(event, keys, isMac)) {
+      const isIgnoredRepeat = event.repeat && shortcut.repeatsWhileHeld !== true
+      if (isIgnoredRepeat || !matchesKeyCombo(event, keys, isMac)) {
         return
       }
       if (isKeyForFocusedElement(event)) {

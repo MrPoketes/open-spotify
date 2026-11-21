@@ -623,19 +623,21 @@ changes. Window shortcuts work anywhere in the window; row shortcuts act on the 
 list, which matches its keys through the same registry. Where Windows and Linux use Ctrl and
 Alt, macOS uses Cmd and Option.
 
-| Windows and Linux   | macOS             | Action                                  |
-| ------------------- | ----------------- | --------------------------------------- |
-| `Space`             | `Space`           | Play or pause                           |
-| `Ctrl+→` / `Ctrl+←` | `Cmd+→` / `Cmd+←` | Next / previous track                   |
-| `Ctrl+S`            | `Cmd+S`           | Turn shuffle on or off                  |
-| `Ctrl+L`            | `Cmd+L`           | Change repeat (off, the context, track) |
-| `/`                 | `/`               | Search                                  |
-| `Alt+←` / `Alt+→`   | `Cmd+[` / `Cmd+]` | Go back / forward                       |
-| `Alt+Shift+Q`       | `Option+Shift+Q`  | Show or hide the queue                  |
-| `?`                 | `?`               | Show the shortcuts dialog               |
-| `P` on a row        | `P` on a row      | Pin or unpin a library entry            |
-| `F2` on a row       | `F2` on a row     | Rename a folder in the sidebar          |
-| `Delete` on a row   | `Delete` on a row | Delete an imported theme                |
+| Windows and Linux    | macOS               | Action                                  |
+| -------------------- | ------------------- | --------------------------------------- |
+| `Space`              | `Space`             | Play or pause                           |
+| `Ctrl+→` / `Ctrl+←`  | `Cmd+→` / `Cmd+←`   | Next / previous track                   |
+| `Ctrl+S`             | `Cmd+S`             | Turn shuffle on or off                  |
+| `Ctrl+L`             | `Cmd+L`             | Change repeat (off, the context, track) |
+| `Ctrl+Shift+→` / `←` | `Cmd+Shift+→` / `←` | Seek forward / back 5 seconds           |
+| `Ctrl+↑` / `Ctrl+↓`  | `Cmd+↑` / `Cmd+↓`   | Volume up / down by 10                  |
+| `/`                  | `/`                 | Search                                  |
+| `Alt+←` / `Alt+→`    | `Cmd+[` / `Cmd+]`   | Go back / forward                       |
+| `Alt+Shift+Q`        | `Option+Shift+Q`    | Show or hide the queue                  |
+| `?`                  | `?`                 | Show the shortcuts dialog               |
+| `P` on a row         | `P` on a row        | Pin or unpin a library entry            |
+| `F2` on a row        | `F2` on a row       | Rename a folder in the sidebar          |
+| `Delete` on a row    | `Delete` on a row   | Delete an imported theme                |
 
 The Mac `Delete` key is the one other keyboards label `Backspace`, since most Mac keyboards have
 no forward Delete key.
@@ -649,7 +651,11 @@ position works instead.
 No shortcut fires while focus is in a text field, and `Space` leaves a focused button (menu
 items included) to press itself. On a focused link, which `Space` would only scroll past, or a
 focused radio button, which is already checked, it plays or pauses. Holding the keys down runs a
-shortcut once. A playback shortcut whose control cannot be used says why in the status message,
+shortcut once, except for the volume, which keeps stepping like a volume key. Quick presses add
+up: each seek starts from where the last one moved the seek bar, before Spotify reports it, and
+the volume slider shows each step at once and sends the total once the presses stop. A seek stays
+within the item and the volume between 0 and 100. A menu button opens on `↓` or `↑` only without
+a modifier, so `Ctrl+↓` turns the volume down even there. A playback shortcut whose control cannot be used says why in the status message,
 since the control's tooltip may never have been seen.
 
 `?` opens the shortcuts dialog: a modal Overlay (`surface-overlay`, `shadow-overlay`,

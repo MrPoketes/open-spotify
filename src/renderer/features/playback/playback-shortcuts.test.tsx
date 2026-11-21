@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react"
+import { screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
@@ -10,6 +10,7 @@ import type { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import { nowPlayingBarAlone } from "./now-playing-bar-alone"
+import { lastingMs, pausedPlaybackRecordingSeeks } from "./paused-playback-fake"
 
 interface RenderOptions {
   readonly isMac?: boolean
@@ -35,6 +36,14 @@ const renderNowPlayingBar = async ({ isMac = false, spotifyApi }: RenderOptions 
 }
 
 const control = (name: string) => screen.findByRole("button", { name })
+
+const seekBarShows = (position: string) =>
+  waitFor(() =>
+    expect(screen.getByRole("slider", { name: "Playback position" })).toHaveAttribute(
+      "aria-valuetext",
+      position,
+    ),
+  )
 
 describe("playback shortcuts", () => {
   it("pauses with Space and plays again", async () => {
@@ -156,6 +165,47 @@ describe("playback shortcuts", () => {
 
     expect(shuffle).toHaveAttribute("aria-pressed", "true")
     expect(await control("Pause")).toBeInTheDocument()
+  })
+
+  it("seeks forward 5 seconds with Ctrl+Shift+→ and back with Ctrl+Shift+←", async () => {
+    const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
+    await renderNowPlayingBar({ spotifyApi })
+    await seekBarShows("0:42 of 2:30")
+
+    await userEvent.keyboard("{Control>}{Shift>}{ArrowRight}{/Shift}{/Control}")
+    await waitFor(() => expect(seekPositions).toEqual([47_000]))
+    await userEvent.keyboard("{Control>}{Shift>}{ArrowLeft}{/Shift}{/Control}")
+
+    await waitFor(() => expect(seekPositions).toEqual([47_000, 42_000]))
+  })
+
+  // Spotify reports the new position only on the next poll, two seconds
+  // later, and each press must start from where the last one went.
+  it("adds up quick seek presses before Spotify reports the new position", async () => {
+    const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
+    await renderNowPlayingBar({ spotifyApi })
+    await seekBarShows("0:42 of 2:30")
+
+    await userEvent.keyboard(
+      "{Control>}{Shift>}{ArrowRight}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
+    )
+
+    await waitFor(() => expect(seekPositions).toEqual([47_000, 52_000, 57_000]))
+  })
+
+  it("seeks no further back than the start or forward than the end", async () => {
+    const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks((playback) => ({
+      ...lastingMs(7_000)(playback),
+      progressMs: 3_000,
+    }))
+    await renderNowPlayingBar({ spotifyApi })
+    await seekBarShows("0:03 of 0:07")
+
+    await userEvent.keyboard(
+      "{Control>}{Shift>}{ArrowLeft}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
+    )
+
+    await waitFor(() => expect(seekPositions).toEqual([0, 5_000, 7_000]))
   })
 
   // The reason is in the control's tooltip, which a keyboard user may never

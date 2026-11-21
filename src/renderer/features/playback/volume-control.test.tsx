@@ -97,6 +97,57 @@ describe("NowPlayingBar volume", () => {
     expect(fireEvent.keyDown(slider, { key: "ArrowLeft", altKey: true })).toBe(false)
   })
 
+  it("turns the volume up 10 with Ctrl+↑ and down 10 with Ctrl+↓", async () => {
+    const spotify = recordingVolumes()
+    renderNowPlayingBarAlone(spotify.layer)
+    const slider = await volumeSlider()
+    await waitFor(() => expect(slider).toHaveValue(fakeVolume))
+
+    await userEvent.keyboard("{Control>}{ArrowUp}{/Control}")
+    await waitFor(() => expect(spotify.sentVolumes).toEqual([70]))
+    await userEvent.keyboard("{Control>}{ArrowDown}{/Control}")
+
+    await waitFor(() => expect(spotify.sentVolumes).toEqual([70, 60]))
+  })
+
+  // Like a slider drag, quick presses send one request, for the volume they
+  // add up to.
+  it("adds up quick volume presses into one request", async () => {
+    const spotify = recordingVolumes()
+    renderNowPlayingBarAlone(spotify.layer)
+    const slider = await volumeSlider()
+    await waitFor(() => expect(slider).toHaveValue(fakeVolume))
+
+    await userEvent.keyboard("{Control>}{ArrowUp}{ArrowUp}{ArrowUp}{/Control}")
+
+    expect(slider).toHaveValue("90")
+    await waitFor(() => expect(spotify.sentVolumes).toEqual([90]))
+  })
+
+  it("keeps changing the volume while Ctrl+↑ is held down", async () => {
+    const spotify = recordingVolumes()
+    renderNowPlayingBarAlone(spotify.layer)
+    const slider = await volumeSlider()
+    await waitFor(() => expect(slider).toHaveValue(fakeVolume))
+
+    await userEvent.keyboard("{Control>}{ArrowUp>3/}{/Control}")
+
+    await waitFor(() => expect(spotify.sentVolumes).toEqual([90]))
+  })
+
+  it("keeps the volume from the shortcuts between 0 and 100", async () => {
+    const spotify = recordingVolumes()
+    renderNowPlayingBarAlone(spotify.layer)
+    const slider = await volumeSlider()
+    await waitFor(() => expect(slider).toHaveValue(fakeVolume))
+
+    await userEvent.keyboard(`{Control>}${"{ArrowUp}".repeat(5)}{/Control}`)
+    await waitFor(() => expect(spotify.sentVolumes).toEqual([100]))
+    await userEvent.keyboard(`{Control>}${"{ArrowDown}".repeat(11)}{/Control}`)
+
+    await waitFor(() => expect(spotify.sentVolumes).toEqual([100, 0]))
+  })
+
   it("unmutes to half volume when Spotify has reported no volume above zero", async () => {
     const spotify = recordingVolumes((device) => ({ ...device, volumePercent: 0 }))
     renderNowPlayingBarAlone(spotify.layer)

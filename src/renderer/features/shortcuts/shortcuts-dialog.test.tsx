@@ -31,6 +31,8 @@ describe("ShortcutsDialog", () => {
     }
     expect(keysFor(dialog, "Play or pause")).toHaveTextContent("Space")
     expect(keysFor(dialog, "Next track")).toHaveTextContent("Ctrl→")
+    expect(keysFor(dialog, "Seek forward")).toHaveTextContent("CtrlShift→")
+    expect(keysFor(dialog, "Turn the volume down")).toHaveTextContent("Ctrl↓")
     expect(keysFor(dialog, "Go back")).toHaveTextContent("Alt←")
     expect(keysFor(dialog, "Show or hide the queue")).toHaveTextContent("AltShiftQ")
     expect(keysFor(dialog, "Pin or unpin a library entry")).toHaveTextContent(/^P$/)

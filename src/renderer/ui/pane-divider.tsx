@@ -1,4 +1,5 @@
 import type { KeyboardEvent, PointerEvent } from "react"
+import { clamp } from "../lib/clamp"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
 
 const keyboardStep = 16
@@ -30,8 +31,7 @@ export function PaneDivider({
   const growDirection = paneSide === "left" ? 1 : -1
 
   // Whole pixels, because high-DPI screens report fractional pointer positions.
-  const clampWidth = (width: number) =>
-    Math.round(Math.min(maximumWidth, Math.max(minimumWidth, width)))
+  const clampWidth = (width: number) => Math.round(clamp(width, minimumWidth, maximumWidth))
 
   const resizeTo = (width: number) => {
     const clampedWidth = clampWidth(width)
