@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import { SpotifyApi, maximumPageSize } from "../spotify/spotify-api"
+import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import type { SavedTrack, SavedTracksPage } from "../spotify/spotify-track"
 import { formatListDuration } from "../track-list/format-duration"
 import { PageFailedAlert } from "../track-list/page-failed-alert"
@@ -16,6 +17,17 @@ const loadLikedSongsPage = Effect.fn("loadLikedSongsPage")(function* (offset: nu
 
 const loadedDurationsMs = (songs: ReadonlyArray<SavedTrack | undefined>) =>
   songs.filter((song) => song !== undefined).map(({ track }) => track.durationMs)
+
+// Liked Songs has no context URI that the API accepts, so the songs that have
+// loaded play as a list, from the one at the index on.
+const likedSongsPlaybackAt = (
+  songs: ReadonlyArray<SavedTrack | undefined>,
+  index: number,
+): PlaybackStart => {
+  const loadedBefore = songs.slice(0, index).filter((song) => song !== undefined)
+  const uris = songs.filter((song) => song !== undefined).map(({ track }) => track.uri)
+  return { uris, offset: { position: loadedBefore.length } }
+}
 
 export function LikedSongsTracks({ firstPage }: { readonly firstPage: SavedTracksPage }) {
   const songs = usePagedItems({
@@ -40,6 +52,7 @@ export function LikedSongsTracks({ firstPage }: { readonly firstPage: SavedTrack
         layout="playlist"
         trackCount={firstPage.total}
         trackAt={trackAt}
+        playbackStartAt={(index) => likedSongsPlaybackAt(songs.items, index)}
         onRowsRendered={songs.loadRange}
       />
       {songs.pageFailed ? <PageFailedAlert onRetry={songs.retry} /> : null}

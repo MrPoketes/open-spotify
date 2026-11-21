@@ -1,6 +1,7 @@
 import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, type Layer } from "effect"
+import { useState } from "react"
 import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
@@ -12,16 +13,22 @@ import { NowPlayingBar } from "./now-playing-bar"
 
 const noActiveDevice = { getPlaybackState: Effect.succeedNone }
 
-const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
-  renderScreen(
+// The app shell holds whether the device picker is open.
+function NowPlayingBarWithPicker() {
+  const [isDevicePickerOpen, setDevicePickerOpen] = useState(false)
+  return (
     <NowPlayingBar
       isQueueOpen={false}
       onQueueToggle={() => undefined}
       queueButtonRef={{ current: null }}
-    />,
-    fakeMainProcess(),
-    spotifyApi,
+      isDevicePickerOpen={isDevicePickerOpen}
+      onDevicePickerOpenChange={setDevicePickerOpen}
+    />
   )
+}
+
+const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
+  renderScreen(<NowPlayingBarWithPicker />, fakeMainProcess(), spotifyApi)
 
 const pickerButton = (deviceLabel: string) =>
   screen.findByRole("button", { name: `Choose a device. ${deviceLabel}` })

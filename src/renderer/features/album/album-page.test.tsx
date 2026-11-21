@@ -100,6 +100,22 @@ describe("AlbumPage", () => {
     expect(within(firstTrack).getAllByRole("cell")[0]).toHaveTextContent(/^1$/)
   })
 
+  // Each disc is its own list, so a row's position in its list is not its
+  // position in the album that Spotify starts from.
+  it("plays a double-clicked track on the second disc within the album", async () => {
+    renderAlbumPage("fake-album-4")
+    const track = await screen.findByRole("row", { name: "Low Orbit, part 2.3 by Kite Theory" })
+
+    await userEvent.dblClick(track)
+
+    await waitFor(() => expect(track).toHaveAccessibleDescription("Playing"))
+    const sameNumberOnFirstDisc = screen.getByRole("row", {
+      name: "Low Orbit, part 1.3 by Kite Theory",
+    })
+    expect(sameNumberOnFirstDisc).toHaveAccessibleDescription("")
+    expect(screen.getByRole("button", { name: "Pause Low Orbit" })).toBeInTheDocument()
+  })
+
   // A track opened on its own, such as from a folder, lands on its album and
   // can sit far below the screen on a long disc.
   it("scrolls to, highlights, and focuses the track the page was opened for", async () => {

@@ -91,6 +91,22 @@ describe("SpotifyApi player", () => {
     }).pipe(Effect.provide(spotifyApiFake)),
   )
 
+  // The offset names the track to start at, so a wrong key or position in the
+  // request body would start the context somewhere else.
+  it.effect("starts a playlist at the given position and reports it as the context", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+      // Late Night Drive holds the fake's tracks from the first on.
+      const playlistUri = "spotify:playlist:fake-playlist-late-night-drive"
+
+      yield* spotify.startPlayback({ contextUri: playlistUri, offset: { position: 7 } })
+      const playback = Option.getOrThrow(yield* spotify.getPlaybackState)
+
+      assert.strictEqual(playback.context?.uri, playlistUri)
+      assert.strictEqual(playback.item?.name, fakeTrack(7).name)
+    }).pipe(Effect.provide(spotifyApiFake)),
+  )
+
   // Spotify answers a player command with 404 and this reason when no device
   // is active, which the bar explains instead of showing a generic failure.
   it.effect("fails with NoActiveDevice when a command finds no active device", () => {

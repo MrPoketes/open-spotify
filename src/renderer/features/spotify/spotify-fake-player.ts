@@ -1,5 +1,6 @@
 import { Option, Schema } from "effect"
 import type { HttpClientRequest } from "effect/http"
+import { fakePlaybackStart } from "./spotify-fake-playback-start"
 import { fakeDevices, fakeEpisode, fakePlaybackState, fakeTrack } from "./spotify-fixtures"
 import { RepeatMode } from "./spotify-playback-state"
 
@@ -15,6 +16,9 @@ interface FakePlayerState {
   isPlaying: boolean
   shuffle: boolean
   repeat: RepeatMode
+  // The fake plays its own order until a client starts something else.
+  context: { readonly uri: string } | null
+  playOrder: (position: number) => unknown
   playPosition: number
 }
 
@@ -68,11 +72,28 @@ const withState =
     return accepted
   }
 
-const playerCommands: Record<string, (player: FakePlayerState, url: URL) => FakeResponse> = {
-  "PUT /v1/me/player/play": (player) => {
+// Without a body, Spotify resumes what was playing.
+const startPlayback = (
+  player: FakePlayerState,
+  request: HttpClientRequest.HttpClientRequest,
+): FakeResponse => {
+  if (request.body._tag === "Empty") {
     player.isPlaying = true
     return accepted
-  },
+  }
+  const start = fakePlaybackStart(request)
+  if (Option.isNone(start)) {
+    return [400, { error: { status: 400, message: "Invalid request" } }]
+  }
+  const { context, items, position } = start.value
+  player.context = context
+  player.playOrder = (playPosition) => items[playPosition]
+  player.playPosition = position
+  player.isPlaying = true
+  return accepted
+}
+
+const playerCommands: Record<string, (player: FakePlayerState, url: URL) => FakeResponse> = {
   "PUT /v1/me/player/pause": (player) => {
     player.isPlaying = false
     return accepted
@@ -104,16 +125,17 @@ const playbackState = (player: FakePlayerState) => ({
   is_playing: player.isPlaying,
   shuffle_state: player.shuffle,
   repeat_state: player.repeat,
-  item: fakePlayOrder(player.playPosition),
+  context: player.context,
+  item: player.playOrder(player.playPosition) ?? null,
 })
 
 const upNextCount = 10
 
 const queue = (player: FakePlayerState) => ({
-  currently_playing: fakePlayOrder(player.playPosition),
+  currently_playing: player.playOrder(player.playPosition) ?? null,
   queue: Array.from({ length: upNextCount }, (_, offset) =>
-    fakePlayOrder(player.playPosition + 1 + offset),
-  ),
+    player.playOrder(player.playPosition + 1 + offset),
+  ).filter((item) => item !== undefined),
 })
 
 const availableDevices = (player: FakePlayerState) => ({
@@ -132,6 +154,8 @@ export const fakePlayer = () => {
     isPlaying: true,
     shuffle: false,
     repeat: "off",
+    context: null,
+    playOrder: fakePlayOrder,
     playPosition: 0,
   }
 
@@ -139,6 +163,9 @@ export const fakePlayer = () => {
     const command = playerCommands[`${request.method} ${url.pathname}`]
     if (command) {
       return command(player, url)
+    }
+    if (request.method === "PUT" && url.pathname === "/v1/me/player/play") {
+      return startPlayback(player, request)
     }
     if (url.pathname === "/v1/me/player/devices") {
       return [200, availableDevices(player)]

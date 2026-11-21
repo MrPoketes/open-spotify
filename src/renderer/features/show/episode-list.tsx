@@ -3,18 +3,22 @@ import { useId } from "react"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { useRovingFocus } from "../../ui/use-roving-focus"
 import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
+import { useNowPlaying } from "../playback/use-now-playing"
+import { usePlayerCommandFromPage } from "../playback/use-player-command-from-page"
 import { SpotifyApi } from "../spotify/spotify-api"
+import type { Episode } from "../spotify/spotify-episode"
 import type { ShowEpisodePage } from "../spotify/spotify-show"
 import { useNextPages } from "../spotify/use-next-pages"
 import { EpisodeRow } from "./episode-row"
 
 interface EpisodeListProps {
   readonly showId: string
+  readonly showUri: string
   readonly firstPage: ShowEpisodePage
 }
 
 // Later pages load as the end of the list scrolls into view.
-export function EpisodeList({ showId, firstPage }: EpisodeListProps) {
+export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
   const headingId = useId()
   const loadPage = (offset: number) =>
     Effect.gen(function* () {
@@ -25,6 +29,16 @@ export function EpisodeList({ showId, firstPage }: EpisodeListProps) {
   const episodes = items.filter((episode) => episode !== null)
   const hasMoreEpisodes = nextOffset !== null
   const { onKeyDown, rowProps } = useRovingFocus(episodes.length)
+  const playingItemId = useNowPlaying()?.itemId ?? null
+  const sendCommand = usePlayerCommandFromPage()
+  // Spotify documents offsets only for albums and playlists. A show starts at
+  // the episode's uri rather than its position, which a newly published
+  // episode would shift.
+  const playEpisode = (episode: Episode) =>
+    sendCommand(
+      (player) => player.startPlayback({ contextUri: showUri, offset: { uri: episode.uri } }),
+      "Couldn't play this episode.",
+    )
   const scrollEndRef = useScrolledIntoView(loadNextPage, hasMoreEpisodes && nextPage === "idle")
 
   return (
@@ -40,7 +54,12 @@ export function EpisodeList({ showId, firstPage }: EpisodeListProps) {
         <ul onKeyDown={onKeyDown} className="flex flex-col">
           {episodes.map((episode, index) => (
             <li key={episode.id}>
-              <EpisodeRow episode={episode} rovingProps={rowProps(index)} />
+              <EpisodeRow
+                episode={episode}
+                isCurrentItem={episode.id === playingItemId}
+                rovingProps={rowProps(index)}
+                onPlay={() => playEpisode(episode)}
+              />
             </li>
           ))}
         </ul>

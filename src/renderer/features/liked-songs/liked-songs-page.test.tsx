@@ -64,6 +64,20 @@ describe("LikedSongsPage", () => {
     )
   })
 
+  // Only the songs that have loaded are sent, so a song's offset counts the
+  // loaded songs before it, not its row: here the first page and the page
+  // scrolled to.
+  it("plays a double-clicked song from the loaded songs, past pages that never loaded", async () => {
+    const mainView = await renderLikedSongsPage()
+    await screen.findByRole("table", { name: "Liked Songs" })
+
+    scrollToRow(mainView, 3000)
+    const row = await screen.findByRole("row", { name: songName(3005) })
+    await userEvent.dblClick(row)
+
+    await waitFor(() => expect(row).toHaveAccessibleDescription("Playing"))
+  })
+
   // Loading every page before the last would take a hundred requests.
   it("requests only the last page when End jumps to the end of the list", async () => {
     const { requestedOffsets, spotifyApi } = spotifyRecordingPageRequests()

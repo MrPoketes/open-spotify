@@ -8,11 +8,20 @@ import {
 } from "@tanstack/react-router"
 import { render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
+import { Effect, type ManagedRuntime } from "effect"
+import type { ReactNode } from "react"
 import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
-import { RendererRuntimeContext, rendererRuntime } from "../../lib/renderer-runtime"
+import {
+  RendererRuntimeContext,
+  type RendererServices,
+  rendererRuntime,
+} from "../../lib/renderer-runtime"
 import { loadSavedSetting } from "../../lib/saved-setting"
+import { ContextPlayButton } from "../playback/context-play-button"
+import { NoActiveDevice } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { AppShell } from "./app-shell"
 
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
@@ -25,6 +34,9 @@ interface ShellOptions {
   readonly savedSidebarWidth?: number
   readonly savedRightPaneWidth?: number
   readonly platform?: string
+  readonly runtime?: ManagedRuntime.ManagedRuntime<RendererServices, never>
+  // Shown under the album page's heading.
+  readonly albumPageContent?: ReactNode
 }
 
 // Starts on a second page so there is a page to go back to.
@@ -32,6 +44,8 @@ const renderAppShell = async ({
   savedSidebarWidth = 280,
   savedRightPaneWidth = 320,
   platform = "win32",
+  runtime = runtimeWithFakeSpotify,
+  albumPageContent = null,
 }: ShellOptions = {}) => {
   const rootRoute = createRootRoute({
     component: () => (
@@ -53,7 +67,12 @@ const renderAppShell = async ({
   const albumRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/album",
-    component: () => <h1>Album</h1>,
+    component: () => (
+      <div>
+        <h1>Album</h1>
+        {albumPageContent}
+      </div>
+    ),
   })
   const settingsRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -65,7 +84,7 @@ const renderAppShell = async ({
     history: createMemoryHistory({ initialEntries: ["/", "/album"], initialIndex: 1 }),
   })
   const view = render(
-    <RendererRuntimeContext value={runtimeWithFakeSpotify}>
+    <RendererRuntimeContext value={runtime}>
       <RouterProvider router={router} />
     </RendererRuntimeContext>,
   )
@@ -248,6 +267,30 @@ describe("AppShell", () => {
 
     expect(screen.queryByRole("complementary", { name: "Queue" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Queue" })).toHaveFocus()
+  })
+
+  // Playback is remote control (decision 0002), so playing from a page with
+  // no device to play on must lead to choosing one, not fail silently.
+  it("opens the device picker and says why when playing from a page finds no device", async () => {
+    await renderAppShell({
+      runtime: fakeRendererRuntime({
+        mainProcess: window.desktop,
+        spotifyApi: spotifyApiFakeWith(() => ({
+          getPlaybackState: Effect.succeedNone,
+          startPlayback: () => Effect.fail(new NoActiveDevice()),
+        })),
+      }),
+      albumPageContent: (
+        <ContextPlayButton contextUri="spotify:album:fake-album-0" contextName="Glass Harbour" />
+      ),
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "Play Glass Harbour" }))
+
+    expect(await screen.findByRole("dialog", { name: "Connect to a device" })).toBeInTheDocument()
+    expect(
+      screen.getByText("No device is playing. Choose a device, then try again."),
+    ).toBeInTheDocument()
   })
 
   it("goes back when the mouse's back button is released", async () => {

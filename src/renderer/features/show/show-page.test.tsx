@@ -48,6 +48,12 @@ const renderShowPage = (showId: string, spotifyApi?: Layer.Layer<SpotifyApi>) =>
 
 const episodeRows = () => screen.getAllByRole("article")
 
+// The show's play button comes before the episodes in the tab order.
+const tabToEpisodes = async () => {
+  await userEvent.tab()
+  await userEvent.tab()
+}
+
 describe("ShowPage", () => {
   it("shows the show's header and the first page of its episodes", async () => {
     renderShowPage("fake-show-slow-science")
@@ -98,11 +104,31 @@ describe("ShowPage", () => {
     expect(screen.queryByRole("list")).not.toBeInTheDocument()
   })
 
+  it("plays a double-clicked episode within its show and marks it as playing", async () => {
+    renderShowPage("fake-show-slow-science")
+    const thirdEpisode = await screen.findByRole("article", { name: "Deep Time, part 1" })
+
+    await userEvent.dblClick(thirdEpisode)
+
+    await waitFor(() => expect(thirdEpisode).toHaveAccessibleDescription("Playing"))
+    expect(screen.getByRole("button", { name: "Pause Slow Science" })).toBeInTheDocument()
+  })
+
+  it("plays the focused episode when Enter is pressed", async () => {
+    renderShowPage("fake-show-slow-science")
+    const secondEpisode = await screen.findByRole("article", { name: "Lichen, part 1" })
+
+    await tabToEpisodes()
+    await userEvent.keyboard("{j}{Enter}")
+
+    await waitFor(() => expect(secondEpisode).toHaveAccessibleDescription("Playing"))
+  })
+
   it("moves between episodes with the arrow keys and j and k", async () => {
     renderShowPage("fake-show-slow-science")
     await screen.findByRole("heading", { level: 1 })
 
-    await userEvent.tab()
+    await tabToEpisodes()
     expect(episodeRows()[0]).toHaveFocus()
     await userEvent.keyboard("{ArrowDown}j")
     expect(episodeRows()[2]).toHaveFocus()
@@ -116,7 +142,7 @@ describe("ShowPage", () => {
     renderShowPage("fake-show-slow-science")
     await screen.findByRole("heading", { level: 1 })
 
-    await userEvent.tab()
+    await tabToEpisodes()
     await userEvent.keyboard("{Control>}k{/Control}{Control>}{ArrowDown}{/Control}")
 
     expect(episodeRows()[0]).toHaveFocus()
@@ -130,7 +156,7 @@ describe("ShowPage", () => {
 
     const latestEpisode = screen.getByRole("article", { name: "Tide Pools, part 1" })
 
-    await userEvent.tab()
+    await tabToEpisodes()
     await userEvent.tab()
     expect(within(latestEpisode).getByRole("button", { name: "Show more" })).toHaveFocus()
     await userEvent.tab()

@@ -2,6 +2,7 @@ import { Clock, Context, Effect, Layer, Option, PubSub, Ref, Schema, Stream } fr
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { Device } from "../spotify/spotify-device"
 import type { PlaybackState, RepeatMode } from "../spotify/spotify-playback-state"
+import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { makePendingPlaybackChanges } from "./pending-playback-changes"
 import { type QueuedItem, positionInQueue } from "./queued-item"
 
@@ -53,7 +54,9 @@ export class Player extends Context.Service<
     readonly queueChanges: Stream.Stream<void>
     readonly listDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => PlayerCommand
+    // Resumes what was playing.
     readonly play: PlayerCommand
+    readonly startPlayback: (start: PlaybackStart) => PlayerCommand
     readonly pause: PlayerCommand
     readonly skipToNext: PlayerCommand
     readonly skipToPrevious: PlayerCommand
@@ -129,6 +132,11 @@ export class Player extends Context.Service<
         listDevices: spotify.getAvailableDevices,
         transferPlayback: (deviceId) => sendThenRefresh(spotify.transferPlayback(deviceId)),
         play: pendingChanges.showWhileSending({ isPlaying: true }, send(spotify.play)),
+        startPlayback: (start) =>
+          pendingChanges.showWhileSending(
+            { isPlaying: true },
+            sendThenRefresh(spotify.startPlayback(start)),
+          ),
         pause: pendingChanges.showWhileSending({ isPlaying: false }, send(spotify.pause)),
         skipToNext: sendThenRefresh(spotify.skipToNext),
         skipToPrevious: sendThenRefresh(spotify.skipToPrevious),

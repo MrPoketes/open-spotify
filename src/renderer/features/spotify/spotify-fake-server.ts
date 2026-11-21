@@ -4,6 +4,7 @@ import { SpotifyAccessToken } from "./spotify-access-token"
 import type { AlbumGroup } from "./spotify-artist-requests"
 import { fakeDiscography } from "./spotify-discography-fixtures"
 import { fakePlayer } from "./spotify-fake-player"
+import { fakeTracks } from "./spotify-fake-tracks"
 import { searchPageSize } from "./spotify-search"
 import type { TimeRange } from "./spotify-listening-history"
 import {
@@ -170,12 +171,6 @@ const respondToAlbum = (url: URL): readonly [number, unknown] => {
   const tracksUrl = new URL(`${url.origin}${url.pathname}/tracks`)
   return [200, { ...album, tracks: pageOf(album.tracks, tracksUrl, embeddedAlbumTrackLimit) }]
 }
-
-// An album's tracks leave out the album, which a track on its own carries.
-const fakeTracks = [
-  ...fakeAlbums.flatMap(({ tracks, ...album }) => tracks.map((track) => ({ ...track, album }))),
-  ...fakeLikedSongs.map(({ track }) => track),
-]
 
 const respondToTrack = (url: URL): readonly [number, unknown] => {
   const trackId = url.pathname.slice("/v1/tracks/".length)

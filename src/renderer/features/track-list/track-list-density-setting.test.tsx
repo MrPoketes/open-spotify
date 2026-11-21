@@ -27,6 +27,7 @@ const launchApp = async (mainProcess: DesktopApi) => {
           label="Tracks"
           layout="playlist"
           trackCount={20}
+          playbackStartAt={(index) => ({ uris: [], offset: { position: index } })}
           trackAt={(index) => ({
             trackId: null,
             title: `Track ${index + 1}`,

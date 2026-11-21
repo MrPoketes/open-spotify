@@ -1,4 +1,4 @@
-import { type ReactNode, use, useState } from "react"
+import { type ReactNode, use, useCallback, useState } from "react"
 import {
   defaultRightPaneWidth,
   maximumRightPaneWidth,
@@ -16,6 +16,7 @@ import { PaneDivider } from "../../ui/pane-divider"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { LibraryPlaylistsProvider } from "../library/library-playlists-provider"
 import { NowPlayingBar } from "../playback/now-playing-bar"
+import { OpenDevicePickerContext } from "../playback/open-device-picker-context"
 import { QueuePane } from "../queue/queue-pane"
 import { useQueuePane } from "../queue/use-queue-pane"
 import { EditablePlaylistsProvider } from "../track-actions/editable-playlists-provider"
@@ -43,6 +44,8 @@ export function AppShell({
   const [sidebarWidth, setSidebarWidth] = useState(savedSidebarWidth)
   const [rightPaneWidth, setRightPaneWidth] = useState(savedRightPaneWidth)
   const { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef } = useQueuePane()
+  const [isDevicePickerOpen, setDevicePickerOpen] = useState(false)
+  const openDevicePicker = useCallback(() => setDevicePickerOpen(true), [])
   useHistoryShortcuts(platform)
 
   return (
@@ -65,7 +68,11 @@ export function AppShell({
               <TopBar />
               <main className="min-h-0 flex-1 overflow-y-auto p-6">
                 <TrackListDensityProvider savedDensity={savedTrackListDensity}>
-                  <EditablePlaylistsProvider>{children}</EditablePlaylistsProvider>
+                  <EditablePlaylistsProvider>
+                    <OpenDevicePickerContext value={openDevicePicker}>
+                      {children}
+                    </OpenDevicePickerContext>
+                  </EditablePlaylistsProvider>
                 </TrackListDensityProvider>
               </main>
             </div>
@@ -89,6 +96,8 @@ export function AppShell({
             isQueueOpen={isQueueOpen}
             onQueueToggle={toggleQueue}
             queueButtonRef={queueButtonRef}
+            isDevicePickerOpen={isDevicePickerOpen}
+            onDevicePickerOpenChange={setDevicePickerOpen}
           />
         </div>
       </LibraryPlaylistsProvider>

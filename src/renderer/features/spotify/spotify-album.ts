@@ -69,6 +69,7 @@ export const Album = Schema.Struct({
   name: Schema.String,
   images: Schema.Array(Image),
   artists: Schema.Array(SimplifiedArtist),
+  uri: Schema.String,
   // A year, a year and month, or a full date, depending on what Spotify knows.
   releaseDate: Schema.String,
   totalTracks: Schema.Number,

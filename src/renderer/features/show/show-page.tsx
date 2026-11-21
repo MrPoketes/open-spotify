@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
+import { ContextPlayButton } from "../playback/context-play-button"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { EpisodeList } from "./episode-list"
@@ -28,7 +29,8 @@ export function ShowPage({ showId }: { readonly showId: string }) {
   return (
     <div className="flex flex-col gap-8">
       <ShowHeader show={show} />
-      <EpisodeList showId={showId} firstPage={firstPage} />
+      <ContextPlayButton contextUri={show.uri} contextName={show.name} />
+      <EpisodeList showId={showId} showUri={show.uri} firstPage={firstPage} />
     </div>
   )
 }

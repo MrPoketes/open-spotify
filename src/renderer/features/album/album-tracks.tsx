@@ -5,6 +5,8 @@ import type { TrackListEntry } from "../track-list/track-row"
 interface Disc {
   readonly discNumber: number
   readonly entries: ReadonlyArray<TrackListEntry>
+  // Where the disc's first track sits in the whole album.
+  readonly firstPosition: number
 }
 
 const albumTrackEntry = (track: AlbumTrack): TrackListEntry => ({
@@ -25,18 +27,24 @@ const discsOf = (tracks: ReadonlyArray<AlbumTrack>) => {
     discEntries.push(albumTrackEntry(track))
     entriesByDisc.set(track.discNumber, discEntries)
   }
-  return Array.from(entriesByDisc, ([discNumber, entries]): Disc => ({ discNumber, entries }))
+  let firstPosition = 0
+  return Array.from(entriesByDisc, ([discNumber, entries]): Disc => {
+    const disc = { discNumber, entries, firstPosition }
+    firstPosition += entries.length
+    return disc
+  })
 }
 
 interface AlbumTracksProps {
+  readonly albumUri: string
   readonly tracks: ReadonlyArray<AlbumTrack>
   readonly highlightedTrackId: string | undefined
 }
 
-export function AlbumTracks({ tracks, highlightedTrackId }: AlbumTracksProps) {
+export function AlbumTracks({ albumUri, tracks, highlightedTrackId }: AlbumTracksProps) {
   const discs = discsOf(tracks)
   const hasDiscHeadings = discs.length > 1
-  return discs.map(({ discNumber, entries }) => {
+  return discs.map(({ discNumber, entries, firstPosition }) => {
     const label = hasDiscHeadings ? `Disc ${discNumber}` : "Tracks"
     const highlightedIndex = entries.findIndex(({ trackId }) => trackId === highlightedTrackId)
     return (
@@ -47,6 +55,10 @@ export function AlbumTracks({ tracks, highlightedTrackId }: AlbumTracksProps) {
           layout="album"
           trackCount={entries.length}
           trackAt={(index) => entries[index]}
+          playbackStartAt={(index) => ({
+            contextUri: albumUri,
+            offset: { position: firstPosition + index },
+          })}
           highlightedIndex={highlightedIndex === -1 ? undefined : highlightedIndex}
         />
       </div>

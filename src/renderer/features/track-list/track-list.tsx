@@ -1,9 +1,11 @@
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { type RefObject, use, useEffect, useLayoutEffect, useRef, useState } from "react"
+import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { type TrackListEntry, TrackListHeader, type TrackListLayout, TrackRow } from "./track-row"
 import { TrackListDensityContext } from "./track-list-density-context"
 import { trackRowHeight } from "./track-row-height"
 import { useRowFocus } from "./use-row-focus"
+import { useTrackPlayback } from "./use-track-playback"
 
 // The app shell's main view scrolls the whole page, so whatever sits above
 // the list, such as a playlist header, scrolls away with it.
@@ -45,6 +47,9 @@ interface TrackListProps {
   readonly layout: TrackListLayout
   readonly trackCount: number
   readonly trackAt: (index: number) => TrackListEntry | undefined
+  // What plays when the track at the index is played: its album, playlist,
+  // or list, starting at it.
+  readonly playbackStartAt: (index: number) => PlaybackStart
   // For lists that load their tracks as they scroll into view.
   readonly onRowsRendered?: (firstIndex: number, lastIndex: number) => void
   // A track the list highlights and opens scrolled to and focused, such as a
@@ -57,10 +62,12 @@ export function TrackList({
   layout,
   trackCount,
   trackAt,
+  playbackStartAt,
   onRowsRendered,
   highlightedIndex,
 }: TrackListProps) {
   const { density } = use(TrackListDensityContext)
+  const playback = useTrackPlayback(playbackStartAt)
   const rowsRef = useRef<HTMLTableSectionElement>(null)
   const rowsOffset = useRowsOffset(rowsRef)
   // oxlint-disable-next-line react/incompatible-library -- The warning is about the React Compiler, which this project does not use.
@@ -118,22 +125,19 @@ export function TrackList({
           style={{ height: virtualizer.getTotalSize() }}
         >
           {rows.map(({ index, start }) => {
+            const entry = trackAt(index)
             const slot = {
               index,
               tabIndex: index === tabStopIndex ? 0 : -1,
               isHighlighted: index === highlightedIndex,
+              isCurrentItem: playback.isCurrentItem(entry),
               offset: start - rowsOffset,
               onFocus: () => rowFocus.setFocusedIndex(index),
               onKeyDown: rowFocus.onKeyDown,
+              onPlay: () => playback.play(index),
             } as const
             return (
-              <TrackRow
-                key={index}
-                entry={trackAt(index)}
-                layout={layout}
-                density={density}
-                slot={slot}
-              />
+              <TrackRow key={index} entry={entry} layout={layout} density={density} slot={slot} />
             )
           })}
         </tbody>

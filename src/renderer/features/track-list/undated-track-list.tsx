@@ -12,5 +12,15 @@ export function UndatedTrackList({ label, tracks }: UndatedTrackListProps) {
     const track = tracks[index]
     return track === undefined ? undefined : trackEntry(track, null)
   }
-  return <TrackList label={label} layout="undated" trackCount={tracks.length} trackAt={trackAt} />
+  // These tracks share no context, so they play as a list.
+  const uris = tracks.map(({ uri }) => uri)
+  return (
+    <TrackList
+      label={label}
+      layout="undated"
+      trackCount={tracks.length}
+      trackAt={trackAt}
+      playbackStartAt={(index) => ({ uris, offset: { position: index } })}
+    />
+  )
 }

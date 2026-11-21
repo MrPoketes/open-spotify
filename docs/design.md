@@ -247,6 +247,27 @@ one tab stop, starting on the first device, and moves like any other list (see K
 `Escape` or choosing a device closes the picker and returns focus to its button; clicking or
 tabbing outside closes it.
 
+### Playing from a page
+
+Album, playlist, artist, and show pages have a 56 px round `accent` play button with a 24 px
+filled `Play` icon in `on-accent`, between the header and the list. It starts the page's context
+from the beginning. While that context plays it shows `Pause` and pauses it; while the context is
+paused it resumes it. Its name says what it acts on ("Play Late Night Drive"). A playlist whose
+tracks Spotify withholds still has the button. Liked Songs has none, because Spotify has no
+context for it that the API accepts.
+
+Double-clicking a track row or an episode, or pressing `Enter` on a focused one, plays it within
+its page's context, so playback continues through the album, playlist, or show. Liked Songs plays
+the songs that have loaded as a list, and search results and the home page's tracks play the
+tracks of their list. `Enter` on a link inside a row follows the link instead.
+
+The row of the item that plays, or is paused, shows a 16 px `Volume2` icon in `accent` in place
+of its number, and its title in `accent`, on every page that lists it. The row's accessible
+description is "Playing", so screen readers announce it when the row has focus.
+
+A play that fails says so in the status message. With no active device, the device picker opens
+as well, and the message says to choose a device and try again.
+
 ### Queue pane
 
 The queue opens in the right pane from the bar's queue button or `Alt+Shift+Q` (`Option+Shift+Q`
@@ -456,11 +477,11 @@ inside an `alert`.
 
 ### Status message
 
-What an action from a context menu did is said in a small Overlay message (`surface-overlay`,
-`shadow-overlay`, `rounded-large`, `text-sm`) centered 16 px above the now-playing bar, in `danger`
-text for a failure. It fades in like a menu and goes away after five seconds. It sits in a
-`output` (`role="status"`) that stays on the page, so screen readers announce every message
-(`useShowStatusMessage` in `src/renderer/ui`).
+What an action from a context menu or a page's play controls did is said in a small Overlay
+message (`surface-overlay`, `shadow-overlay`, `rounded-large`, `text-sm`) centered 16 px above the
+now-playing bar, in `danger` text for a failure. It fades in like a menu and goes away after five
+seconds. It sits in a `output` (`role="status"`) that stays on the page, so screen readers
+announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 
 ### Loading, empty, and error states
 

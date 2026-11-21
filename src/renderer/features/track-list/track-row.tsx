@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router"
-import { Clock, Music } from "lucide-react"
-import type { CSSProperties, KeyboardEvent } from "react"
+import { Clock, Music, Volume2 } from "lucide-react"
+import { type CSSProperties, type KeyboardEvent, useId } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
 import { ContextMenu } from "../../ui/context-menu"
@@ -101,9 +101,12 @@ interface TrackRowSlot {
   readonly index: number
   readonly tabIndex: 0 | -1
   readonly isHighlighted: boolean
+  // The row holds the track that the active device plays or has paused.
+  readonly isCurrentItem: boolean
   readonly offset: number
   readonly onFocus: () => void
   readonly onKeyDown: (event: KeyboardEvent) => void
+  readonly onPlay: () => void
 }
 
 const rowAttributes = (
@@ -123,7 +126,8 @@ const rowAttributes = (
     transform: `translateY(${offset}px)`,
   } satisfies CSSProperties,
   // The highlight is also bold, so it does not rest on color alone.
-  className: `${trackColumns(layout)} rounded-small text-sm transition-colors duration-120 ease-out hover:bg-surface-raised focus-visible:bg-surface-raised ${isHighlighted ? "bg-surface-raised font-semibold" : ""}`,
+  // A double-click plays the row, so it must not select its text as well.
+  className: `${trackColumns(layout)} rounded-small text-sm select-none transition-colors duration-120 ease-out hover:bg-surface-raised focus-visible:bg-surface-raised ${isHighlighted ? "bg-surface-raised font-semibold" : ""}`,
 })
 
 const accessibleName = (index: number, entry: TrackListEntry | undefined) => {
@@ -160,14 +164,43 @@ function AlbumCell({ album, tabIndex }: AlbumCellProps) {
   )
 }
 
+interface PositionCellProps {
+  readonly index: number
+  readonly isCurrentItem: boolean
+  // The row's aria-label replaces its contents, so the row is described by
+  // the "Playing" text instead.
+  readonly playingTextId: string
+}
+
+// The playing row shows an icon in place of its number and its title in the
+// accent color, so it does not rest on color alone.
+function PositionCell({ index, isCurrentItem, playingTextId }: PositionCellProps) {
+  if (!isCurrentItem) {
+    return <td className="text-right text-muted tabular-nums">{index + 1}</td>
+  }
+  return (
+    <td className="flex justify-end text-accent">
+      <Volume2 aria-hidden size={16} />
+      <span id={playingTextId} className="sr-only">
+        Playing
+      </span>
+    </td>
+  )
+}
+
 interface TrackCellsProps {
   readonly entry: TrackListEntry
   readonly layout: TrackListLayout
   readonly density: TrackListDensity
-  readonly tabIndex: 0 | -1
+  readonly slot: TrackRowSlot
 }
 
-function TrackCells({ entry, layout, density, tabIndex }: TrackCellsProps) {
+function TrackCells({
+  entry,
+  layout,
+  density,
+  slot: { tabIndex, isCurrentItem },
+}: TrackCellsProps) {
   return (
     <>
       <td className="flex min-w-0 items-center gap-3">
@@ -180,7 +213,7 @@ function TrackCells({ entry, layout, density, tabIndex }: TrackCellsProps) {
           />
         ) : null}
         <span className={titleLinesByDensity[density]}>
-          <span className="truncate">{entry.title}</span>
+          <span className={`truncate ${isCurrentItem ? "text-accent" : ""}`}>{entry.title}</span>
           <span className="truncate text-xs text-muted">
             <ArtistLinks artists={entry.artists} tabIndex={tabIndex} />
           </span>
@@ -230,6 +263,7 @@ export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
   const trackMenu = useContextMenu()
   const trackActions = useTrackActions()
   const editablePlaylists = useEditablePlaylists()
+  const playingTextId = useId()
   // A row that is still loading has no actions yet, and a row whose actions
   // would all lead nowhere, such as a local file's, opens no menu.
   const menuItems =
@@ -240,19 +274,29 @@ export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
     <tr
       {...rowAttributes(slot, layout, density)}
       aria-label={accessibleName(slot.index, entry)}
+      aria-describedby={slot.isCurrentItem ? playingTextId : undefined}
       onContextMenu={opensMenu ? trackMenu.openAtPointer : undefined}
+      onDoubleClick={entry === undefined ? undefined : slot.onPlay}
       onKeyDown={(event) => {
         if (opensMenu) {
           trackMenu.openWithKeyboard(event)
         }
+        // Enter on a link in the row follows the link instead.
+        if (event.key === "Enter" && event.target === event.currentTarget && entry !== undefined) {
+          slot.onPlay()
+        }
         slot.onKeyDown(event)
       }}
     >
-      <td className="text-right text-muted tabular-nums">{slot.index + 1}</td>
+      <PositionCell
+        index={slot.index}
+        isCurrentItem={slot.isCurrentItem}
+        playingTextId={playingTextId}
+      />
       {entry === undefined ? (
         <PlaceholderCells layout={layout} density={density} />
       ) : (
-        <TrackCells entry={entry} layout={layout} density={density} tabIndex={slot.tabIndex} />
+        <TrackCells entry={entry} layout={layout} density={density} slot={slot} />
       )}
       {entry !== undefined && opensMenu && trackMenu.anchor !== null ? (
         <ContextMenu

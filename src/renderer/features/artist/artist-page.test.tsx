@@ -53,6 +53,17 @@ describe("ArtistPage", () => {
     expect(title.parentElement).toHaveTextContent("dream pop, shoegaze")
   })
 
+  it("plays the artist from the play button, and pauses them from the same button", async () => {
+    renderArtistPage("fake-artist-0")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Play Northbound Static" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Pause Northbound Static" }))
+
+    expect(
+      await screen.findByRole("button", { name: "Play Northbound Static" }),
+    ).toBeInTheDocument()
+  })
+
   it("shows a row of albums, singles and EPs, and appearances, each linking to its album", async () => {
     renderArtistPage("fake-artist-0")
 

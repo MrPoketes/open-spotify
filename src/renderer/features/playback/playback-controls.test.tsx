@@ -16,6 +16,8 @@ const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
       isQueueOpen={false}
       onQueueToggle={() => undefined}
       queueButtonRef={{ current: null }}
+      isDevicePickerOpen={false}
+      onDevicePickerOpenChange={() => undefined}
     />,
     fakeMainProcess(),
     spotifyApi,

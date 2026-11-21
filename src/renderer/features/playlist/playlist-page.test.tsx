@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest"
 import { NotLoggedIn, SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
-import type { SpotifyApi } from "../spotify/spotify-api"
+import { StatusMessageProvider } from "../../ui/status-message-provider"
+import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { giveMainViewALayout, scrollMainView } from "../track-list/fake-main-view-layout"
@@ -40,6 +41,12 @@ const renderPlaylistPage = async (playlistId: string, spotifyApi?: Layer.Layer<S
 const trackRows = () => within(screen.getByRole("table", { name: "Tracks" })).getAllByRole("row")
 
 const renderedRowIndexes = () => trackRows().map((row) => row.getAttribute("aria-rowindex"))
+
+// The playlist's play button comes before the tracks in the tab order.
+const tabToTracks = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.tab()
+  await user.tab()
+}
 
 describe("PlaylistPage", () => {
   it("shows the playlist's name, description, owner, track count, and duration", async () => {
@@ -90,7 +97,7 @@ describe("PlaylistPage", () => {
     await screen.findByRole("table", { name: "Tracks" })
     const user = userEvent.setup()
 
-    await user.tab()
+    await tabToTracks(user)
     await user.keyboard("{ArrowDown}")
     expect(trackRows()[2]).toHaveFocus()
 
@@ -146,6 +153,68 @@ describe("PlaylistPage", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/artist/fake-artist-0"))
   })
 
+  // The fake player starts on the playlist's first track. Playing the fifth
+  // in the playlist's context makes the playlist's play button its pause
+  // button, which an offset alone or a list of tracks would not.
+  it("plays a double-clicked track within the playlist and marks its row as playing", async () => {
+    await renderPlaylistPage("fake-playlist-late-night-drive")
+    const firstRow = await screen.findByRole("row", { name: "Quiet Rivers by Northbound Static" })
+    await waitFor(() => expect(firstRow).toHaveAccessibleDescription("Playing"))
+    const fifthRow = screen.getByRole("row", { name: "Restless Rivers by Kite Theory" })
+
+    await userEvent.dblClick(fifthRow)
+
+    await waitFor(() => expect(fifthRow).toHaveAccessibleDescription("Playing"))
+    expect(firstRow).toHaveAccessibleDescription("")
+    expect(screen.getByRole("button", { name: "Pause Late Night Drive" })).toBeInTheDocument()
+  })
+
+  it("plays the focused track when Enter is pressed", async () => {
+    await renderPlaylistPage("fake-playlist-late-night-drive")
+    await screen.findByRole("table", { name: "Tracks" })
+    const user = userEvent.setup()
+
+    await tabToTracks(user)
+    await user.keyboard("{ArrowDown}{Enter}")
+
+    const secondRow = screen.getByRole("row", { name: "Electric Rivers by Lena Varga" })
+    await waitFor(() => expect(secondRow).toHaveAccessibleDescription("Playing"))
+  })
+
+  // A play Spotify refuses, such as a list of tracks too long for it, must
+  // not fail silently.
+  it("says so when Spotify refuses to play a track", async () => {
+    renderScreen(
+      <StatusMessageProvider>
+        <main ref={giveMainViewALayout}>
+          <PlaylistPage playlistId="fake-playlist-late-night-drive" />
+        </main>
+      </StatusMessageProvider>,
+      fakeMainProcess(),
+      spotifyApiFakeWith(() => ({
+        startPlayback: () =>
+          Effect.fail(new SpotifyResponseError({ status: 400, message: "Invalid request" })),
+      })),
+    )
+
+    await userEvent.dblClick(
+      await screen.findByRole("row", { name: "Restless Rivers by Kite Theory" }),
+    )
+
+    expect(await screen.findByText("Couldn't play this track.")).toBeInTheDocument()
+  })
+
+  it("starts the playlist from its play button, and pauses it from the same button", async () => {
+    await renderPlaylistPage("fake-playlist-late-night-drive")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Play Late Night Drive" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Pause Late Night Drive" }))
+
+    expect(await screen.findByRole("button", { name: "Play Late Night Drive" })).toBeInTheDocument()
+    const firstRow = screen.getByRole("row", { name: "Quiet Rivers by Northbound Static" })
+    expect(firstRow).toHaveAccessibleDescription("Playing")
+  })
+
   // Tab must leave a long list after one row, not walk every link in it.
   it("puts only the tab stop row's artist and album links in the tab order", async () => {
     await renderPlaylistPage("fake-playlist-late-night-drive")
@@ -154,7 +223,7 @@ describe("PlaylistPage", () => {
 
     const firstRow = screen.getByRole("row", { name: "Quiet Rivers by Northbound Static" })
 
-    await user.tab()
+    await tabToTracks(user)
     await user.tab()
     expect(within(firstRow).getByRole("link", { name: "Northbound Static" })).toHaveFocus()
     await user.tab()
