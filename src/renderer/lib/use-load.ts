@@ -29,13 +29,23 @@ export interface RetryableLoad<A, E> {
   readonly retry: () => void
 }
 
+export interface ReplaceableLoad<A, E> extends RetryableLoad<A, E> {
+  // Shows a value read some other way, such as again after a change, without
+  // passing through the loading state.
+  readonly replace: (value: A) => void
+}
+
 // Loads once when the component mounts. retry loads again from the start,
 // showing the loading state meanwhile.
 export function useLoad<A, E>(
   load: Effect.Effect<A, E, RendererServices>,
   failureMessage: string,
-): RetryableLoad<A, E> {
+): ReplaceableLoad<A, E> {
   const [loadStream, setLoadStream] = useState(() => loadOnce(load, failureMessage))
   const state = useStreamValue(loadStream, { status: "loading" } as const)
-  return { state, retry: () => setLoadStream(loadOnce(load, failureMessage)) }
+  return {
+    state,
+    retry: () => setLoadStream(loadOnce(load, failureMessage)),
+    replace: (value) => setLoadStream(Stream.succeed<LoadState<A, E>>({ status: "loaded", value })),
+  }
 }

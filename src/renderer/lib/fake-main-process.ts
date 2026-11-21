@@ -6,6 +6,7 @@ import { GetSettingRequest, SetSettingRequest } from "../../shared/settings"
 import { Theme } from "../../shared/theme"
 import type { ExportThemeReply, ImportThemeReply } from "../../shared/theme-file-replies"
 import { ImportedThemeId, type LibraryTheme } from "../../shared/theme-library"
+import { fakeFolderChannels } from "./fake-folder-channels"
 
 // The theme file channels reply as if the user had answered their dialogs.
 // Both default to the user canceling.
@@ -17,10 +18,11 @@ interface FakeMainProcessOptions {
   readonly exportThemeReply?: typeof ExportThemeReply.Encoded
 }
 
-// Stands in for the main process in renderer tests. It decodes settings
-// and theme requests with the same Schemas as the real one, keeps settings and
-// imported and edited themes in memory, starting from the given imported
-// themes, and serves the given folder tree and OPEN_SPOTIFY_CLIENT_ID.
+// Stands in for the main process in renderer tests. It decodes settings,
+// theme, and folder requests with the same Schemas as the real one, and keeps
+// settings, imported and edited themes, and folders in memory, starting from
+// the given imported themes and folder tree, and serves the given
+// OPEN_SPOTIFY_CLIENT_ID.
 export const fakeMainProcess = ({
   environmentClientId,
   folderTree = [],
@@ -43,7 +45,7 @@ export const fakeMainProcess = ({
       return { _tag: "IpcSucceeded", value: undefined }
     },
     [ipcChannels.getEnvironmentClientId]: () => environmentClientId ?? null,
-    [ipcChannels.getFolderTree]: () => folderTree,
+    ...fakeFolderChannels(folderTree),
     [ipcChannels.listImportedThemes]: () => [...importedThemes.values()],
     [ipcChannels.importThemeFile]: () => {
       // Like the real main process, a theme imported again replaces its row.

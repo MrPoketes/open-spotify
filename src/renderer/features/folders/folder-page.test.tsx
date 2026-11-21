@@ -6,6 +6,7 @@ import type { FolderTree } from "../../../shared/folders"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { FolderPage } from "./folder-page"
+import { FoldersProvider } from "./folders-provider"
 
 const runningId = "6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4e01"
 const warmUpId = "6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4e02"
@@ -74,7 +75,13 @@ const folderTree: FolderTree = [
 const renderFolderPage = (
   folderId: string,
   mainProcess: DesktopApi = fakeMainProcess({ folderTree }),
-) => renderScreen(<FolderPage folderId={folderId} />, mainProcess)
+) =>
+  renderScreen(
+    <FoldersProvider>
+      <FolderPage folderId={folderId} />
+    </FoldersProvider>,
+    mainProcess,
+  )
 
 // Serves the folder tree while reachable and fails like a main process that
 // does not reply while unreachable.

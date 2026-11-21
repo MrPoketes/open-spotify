@@ -6,6 +6,7 @@ import { Artwork, type ArtworkSource } from "../../ui/artwork"
 import { ContextMenu } from "../../ui/context-menu"
 import { useContextMenu } from "../../ui/use-context-menu"
 import { ArtistLinks } from "../artist/artist-links"
+import { useAddToFolder } from "../folders/use-add-to-folder"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SimplifiedArtist } from "../spotify/spotify-artist"
 import { useEditablePlaylists } from "../track-actions/editable-playlists"
@@ -263,11 +264,17 @@ export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
   const trackMenu = useContextMenu()
   const trackActions = useTrackActions()
   const editablePlaylists = useEditablePlaylists()
+  const addToFolder = useAddToFolder()
   const playingTextId = useId()
   // A row that is still loading has no actions yet, and a row whose actions
   // would all lead nowhere, such as a local file's, opens no menu.
   const menuItems =
-    entry === undefined ? [] : trackMenuItems(entry, trackActions, editablePlaylists.state)
+    entry === undefined
+      ? []
+      : trackMenuItems(entry, trackActions, {
+          editablePlaylists: editablePlaylists.state,
+          addToFolder,
+        })
   const opensMenu = menuItems.length > 0
 
   return (

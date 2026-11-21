@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router"
 import { Pin, PinOff } from "lucide-react"
 import type { KeyboardEvent } from "react"
+import { ContextMenu } from "../../ui/context-menu"
+import { useContextMenu } from "../../ui/use-context-menu"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
+import { useAddToFolder } from "../folders/use-add-to-folder"
 import type { LibraryEntry } from "./library-entries"
 import { LibraryEntryArtwork } from "./library-entry-artwork"
 import type { FocusAfterChange } from "./use-focus-after-change"
@@ -23,6 +26,11 @@ interface LibraryEntryRowProps {
 export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: LibraryEntryRowProps) {
   const pinLabel = pinned ? `Unpin ${entry.name}` : `Pin ${entry.name} to the top`
   const focusAfterPin = actions.focusAfterChange(entry.uri)
+  const entryMenu = useContextMenu()
+  const addToFolder = useAddToFolder()
+  // Liked Songs is not an item Spotify can link to, so no folder can hold it,
+  // and it has no other action for a menu.
+  const opensMenu = entry.kind !== "liked-songs"
 
   const togglePinWithKey = (event: KeyboardEvent) => {
     // Lowercased so the shortcut also works with Caps Lock on.
@@ -40,7 +48,13 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
           rovingProps.ref(row)
           focusAfterPin(row)
         }}
-        onKeyDown={togglePinWithKey}
+        onKeyDown={(event) => {
+          togglePinWithKey(event)
+          if (opensMenu) {
+            entryMenu.openWithKeyboard(event)
+          }
+        }}
+        onContextMenu={opensMenu ? entryMenu.openAtPointer : undefined}
         aria-keyshortcuts="P"
         className="flex min-w-0 flex-1 items-center gap-3 rounded-small px-2 py-1"
       >
@@ -60,6 +74,14 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
       >
         {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}
       </button>
+      {opensMenu && entryMenu.anchor !== null ? (
+        <ContextMenu
+          label={`Actions for ${entry.name}`}
+          items={[addToFolder(entry)]}
+          anchor={entryMenu.anchor}
+          onClose={entryMenu.close}
+        />
+      ) : null}
     </div>
   )
 }
