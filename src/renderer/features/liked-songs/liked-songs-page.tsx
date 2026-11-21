@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { LikedSongsHeader } from "./liked-songs-header"
@@ -15,7 +16,7 @@ export function LikedSongsPage() {
   const { state, retry } = useLoad(loadFirstPage, "Liked Songs failed to load")
 
   if (state.status === "loading") {
-    return <output className="text-sm text-muted">Loading Liked Songs…</output>
+    return <LoadingMessage>Loading Liked Songs…</LoadingMessage>
   }
   if (state.status === "failed") {
     return (

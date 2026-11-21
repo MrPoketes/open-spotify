@@ -1,5 +1,6 @@
 import { type LoadState, useLoad } from "../../lib/use-load"
 import { CardGrid } from "../../ui/card-grid"
+import { LoadingMessage } from "../../ui/loading-message"
 import type { SpotifyApiError } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { PlayHistory } from "../spotify/spotify-play-history"
@@ -41,7 +42,7 @@ export function JumpBackInSection({ recentlyPlayed, onRetry }: JumpBackInSection
   if (recentlyPlayed.status === "loading") {
     return (
       <HomeSection title={title}>
-        <output className="text-sm text-muted">{loadingMessage}</output>
+        <LoadingMessage>{loadingMessage}</LoadingMessage>
       </HomeSection>
     )
   }

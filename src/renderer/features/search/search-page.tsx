@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { SearchResults, SearchType } from "../spotify/spotify-search"
@@ -19,7 +20,7 @@ function QueryResults({ query }: { readonly query: string }) {
   const { state, retry } = useLoad(loadFirstPages(query), "Search failed")
 
   if (state.status === "loading") {
-    return <output className="text-sm text-muted">Searching…</output>
+    return <LoadingMessage>Searching…</LoadingMessage>
   }
   if (state.status === "failed") {
     return <SpotifyLoadFailure error={state.error} message="Search didn't load." onRetry={retry} />

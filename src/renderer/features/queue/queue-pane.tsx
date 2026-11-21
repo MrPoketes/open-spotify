@@ -3,6 +3,7 @@ import { type ReactNode, type RefObject, useId, useState } from "react"
 import { useStreamValue } from "../../lib/use-stream-value"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { IconButton } from "../../ui/icon-button"
+import { LoadingMessage } from "../../ui/loading-message"
 import { PlayableItemSummary } from "../playback/playable-item-summary"
 import type { PlayerQueue } from "../spotify/spotify-player-queue"
 import { makeQueueContents } from "./queue-contents"
@@ -42,7 +43,11 @@ function QueueBody() {
   const contents = useStreamValue(contentsStream, { status: "loading" } as const)
 
   if (contents.status === "loading") {
-    return <output className="px-2 text-sm text-muted">Loading the queue…</output>
+    return (
+      <div className="px-2">
+        <LoadingMessage>Loading the queue…</LoadingMessage>
+      </div>
+    )
   }
   if (contents.status === "failed") {
     return (

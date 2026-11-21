@@ -2,8 +2,7 @@ import { Effect } from "effect"
 import { useId, useState } from "react"
 import { CardGrid, type GridCard } from "../../ui/card-grid"
 import { useCardGridColumnCount } from "../../ui/use-card-grid-column-count"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
-import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
+import { NextPageFooter } from "../spotify/next-page-footer"
 import type { ArtistAlbum, ArtistAlbumsPage } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { AlbumGroup } from "../spotify/spotify-artist-requests"
@@ -60,10 +59,6 @@ export function DiscographySection({
   )
   // A wide pane can fit more cards on a row than one page holds.
   const needsMoreAlbums = isExpanded || albums.length < columnCount
-  const scrollEndRef = useScrolledIntoView(
-    loadNextPage,
-    needsMoreAlbums && nextOffset !== null && nextPage === "idle",
-  )
 
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-4">
@@ -90,17 +85,13 @@ export function DiscographySection({
         cards={shownAlbums.map(albumCard)}
         rowFocusRef={resultRowsRef}
       />
-      {nextPage === "loading" ? (
-        <output className="text-sm text-muted">Loading more releases…</output>
-      ) : null}
-      {nextPage === "failed" ? (
-        <ErrorWithRetry
-          message="More releases didn't load."
-          onRetry={loadNextPage}
-          retryRef={retryRef}
-        />
-      ) : null}
-      <div ref={scrollEndRef} />
+      <NextPageFooter
+        kind="releases"
+        nextPage={nextPage}
+        loadNextPage={loadNextPage}
+        wantsNextPage={needsMoreAlbums && nextOffset !== null}
+        retryRef={retryRef}
+      />
     </section>
   )
 }

@@ -3,6 +3,7 @@ import { useState } from "react"
 import { defaultLibrarySections } from "../../../shared/library-layout"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { arrangeLibrary } from "./arrange-library"
 import { HiddenLibrarySections } from "./hidden-library-sections"
@@ -28,7 +29,11 @@ export function Library() {
   const { state, retry } = useLoad(loadLibrary(useLibraryPlaylists()), "The library failed to load")
 
   if (state.status === "loading") {
-    return <output className="px-2 text-sm text-muted">Loading your library…</output>
+    return (
+      <div className="px-2">
+        <LoadingMessage>Loading your library…</LoadingMessage>
+      </div>
+    )
   }
 
   if (state.status === "failed") {

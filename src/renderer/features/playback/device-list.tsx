@@ -3,6 +3,7 @@ import { Volume2 } from "lucide-react"
 import { type KeyboardEvent, use, useState } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useLoad } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import { AccentButton } from "../../ui/pill-button"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { type RovingRowProps, useRovingFocus } from "../../ui/use-roving-focus"
@@ -26,7 +27,7 @@ export function DeviceList({ onDeviceChosen }: DeviceListProps) {
   )
 
   if (availableDevices.status === "loading") {
-    return <output className="text-sm text-muted">Looking for devices…</output>
+    return <LoadingMessage>Looking for devices…</LoadingMessage>
   }
 
   if (availableDevices.status === "failed") {

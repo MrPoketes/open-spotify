@@ -1,6 +1,7 @@
 import { Effect } from "effect"
 import { type ReactNode, type Ref, useId } from "react"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
+import { LoadingMessage } from "../../ui/loading-message"
 import { SecondaryButton } from "../../ui/pill-button"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import { SpotifyApi } from "../spotify/spotify-api"
@@ -69,7 +70,7 @@ export function ResultSection<A>(props: ResultSectionProps<A>) {
             ref={loadMoreRef}
           />
           {nextPage === "loading" ? (
-            <output className="text-sm text-muted">Loading more {kind}…</output>
+            <LoadingMessage>{`Loading more ${kind}…`}</LoadingMessage>
           ) : null}
         </div>
       ) : null}

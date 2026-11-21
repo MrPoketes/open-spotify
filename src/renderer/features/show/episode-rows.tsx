@@ -1,5 +1,6 @@
-import { type Ref, useImperativeHandle } from "react"
-import { type RowFocusHandle, useRovingFocus } from "../../ui/use-roving-focus"
+import type { Ref } from "react"
+import { RovingList } from "../../ui/roving-list"
+import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import { useNowPlaying } from "../playback/use-now-playing"
 import { usePlayerCommandFromPage } from "../playback/use-player-command-from-page"
 import type { Episode } from "../spotify/spotify-episode"
@@ -12,8 +13,6 @@ interface EpisodeRowsProps {
 }
 
 export function EpisodeRows({ showUri, episodes, rowFocusRef }: EpisodeRowsProps) {
-  const { onKeyDown, rowProps, focusRow } = useRovingFocus(episodes.length)
-  useImperativeHandle(rowFocusRef, () => ({ focusRow }), [focusRow])
   const playingItemId = useNowPlaying()?.itemId ?? null
   const sendCommand = usePlayerCommandFromPage()
   // Spotify documents offsets only for albums and playlists. A show starts at
@@ -26,18 +25,19 @@ export function EpisodeRows({ showUri, episodes, rowFocusRef }: EpisodeRowsProps
     )
 
   return (
-    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- key presses bubble up from the focused episode, and the list moves focus between its episodes: the roving focus docs/design.md requires for lists
-    <ul onKeyDown={onKeyDown} className="flex flex-col">
-      {episodes.map((episode, index) => (
-        <li key={episode.id}>
-          <EpisodeRow
-            episode={episode}
-            isCurrentItem={episode.id === playingItemId}
-            rovingProps={rowProps(index)}
-            onPlay={() => playEpisode(episode)}
-          />
-        </li>
-      ))}
-    </ul>
+    <RovingList
+      rowFocusRef={rowFocusRef}
+      rows={episodes}
+      rowKey={(episode) => episode.id}
+      className="flex flex-col"
+      renderRow={(episode, rovingProps) => (
+        <EpisodeRow
+          episode={episode}
+          isCurrentItem={episode.id === playingItemId}
+          rovingProps={rovingProps}
+          onPlay={() => playEpisode(episode)}
+        />
+      )}
+    />
   )
 }

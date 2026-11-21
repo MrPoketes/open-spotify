@@ -4,6 +4,7 @@ import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
 import { useSavedSettingState } from "../../lib/use-saved-setting-state"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
+import { LoadingMessage } from "../../ui/loading-message"
 import { PageHeader } from "../../ui/page-header"
 import { FolderBreadcrumb } from "./folder-breadcrumb"
 import { FolderEntryGrid } from "./folder-entry-grid"
@@ -26,7 +27,7 @@ export function FolderPage({ folderId }: { readonly folderId: string }) {
     return <ErrorWithRetry message="This folder didn't load." onRetry={folderTree.retry} />
   }
   if (folderTree.state.status === "loading" || savedView.state.status !== "loaded") {
-    return <output className="text-muted">Loading folder…</output>
+    return <LoadingMessage>Loading folder…</LoadingMessage>
   }
   const location = locateFolder(folderTree.state.value, folderId)
   if (location === undefined) {
