@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { ContextMenu } from "./context-menu"
@@ -51,13 +51,15 @@ const renderMenuTarget = () => {
   const selected: Array<string> = []
   const action = (label: string) => ({ label, onSelect: () => selected.push(label) })
   render(
-    <MenuTarget
-      items={[
-        action("First"),
-        { label: "More", items: [action("Inner first"), action("Inner second")] },
-        action("Last"),
-      ]}
-    />,
+    <main>
+      <MenuTarget
+        items={[
+          action("First"),
+          { label: "More", items: [action("Inner first"), action("Inner second")] },
+          action("Last"),
+        ]}
+      />
+    </main>,
   )
   const target = screen.getByRole("button", { name: "Target" })
   target.focus()
@@ -140,6 +142,28 @@ describe("ContextMenu", () => {
     expect(menuItem("More")).toHaveFocus()
     await userEvent.keyboard("{ArrowRight}{ArrowDown}{Enter}")
     expect(selected).toEqual(["Inner second"])
+  })
+
+  // The menu stays where it opened, so once the pane under it scrolls it no
+  // longer sits next to the element it belongs to.
+  it("closes when the pane it was opened from scrolls, returning focus to its target", async () => {
+    const { target } = renderMenuTarget()
+    await userEvent.keyboard("{ContextMenu}")
+
+    fireEvent.scroll(screen.getByRole("main"))
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    expect(target).toHaveFocus()
+  })
+
+  // A long menu, such as a list of playlists, scrolls by itself.
+  it("stays open while the menu itself scrolls", async () => {
+    renderMenuTarget()
+    await userEvent.keyboard("{ContextMenu}{ArrowDown}{ArrowRight}")
+
+    fireEvent.scroll(screen.getByRole("menu", { name: "More" }))
+
+    expect(screen.getByRole("menu", { name: "More" })).toBeInTheDocument()
   })
 
   // Arrow keys inside the menu must not also move whatever list the menu was
