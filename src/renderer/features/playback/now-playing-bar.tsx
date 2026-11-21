@@ -1,6 +1,6 @@
 import { ListMusic } from "lucide-react"
 import { type RefObject, useState } from "react"
-import { AccentButton } from "../../ui/accent-button"
+import { AccentButton } from "../../ui/pill-button"
 import { DevicePicker } from "./device-picker"
 import { PlayableItemSummary } from "./playable-item-summary"
 import { PlaybackControls } from "./playback-controls"
