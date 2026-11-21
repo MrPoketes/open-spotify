@@ -17,13 +17,6 @@ const gridWidth = 800
 
 beforeEach(() => {
   installFakeIntersectionObserver()
-  vi.stubGlobal(
-    "ResizeObserver",
-    class {
-      observe() {}
-      disconnect() {}
-    },
-  )
   vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(gridWidth)
 })
 

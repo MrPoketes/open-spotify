@@ -83,5 +83,5 @@ export async function logInThroughOnboarding(appWindow: Page): Promise<void> {
   await appWindow.getByRole("textbox", { name: "Client ID" }).fill("fake-client-id")
   await appWindow.keyboard.press("Enter")
   await appWindow.getByRole("button", { name: "Log in with Spotify" }).click()
-  await expect(appWindow.getByRole("heading", { name: "Open Spotify", exact: true })).toBeVisible()
+  await expect(appWindow.getByRole("heading", { name: "Hello, Mira Kaelin" })).toBeVisible()
 }

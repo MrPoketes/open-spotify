@@ -21,7 +21,7 @@ const fakeAlbum = (albumName: string, artistName: string, index: number) => ({
   name: albumName,
   images: [{ url: coverUrl(`album-${index}`), width: 640, height: 640 }],
   artists: [{ id: `fake-artist-${index}`, name: artistName }],
-  uri: `spotify:album:fake-${index}`,
+  uri: `spotify:album:fake-album-${index}`,
 })
 
 const albums = [
@@ -235,7 +235,7 @@ export const fakeFollowedArtists = followedArtistNames.map((name, index) => ({
   name,
   images: [{ url: coverUrl(`artist-${index}`), width: 320, height: 320 }],
   genres: index === 0 ? ["dream pop", "shoegaze"] : [],
-  uri: `spotify:artist:fake-${index}`,
+  uri: `spotify:artist:fake-artist-${index}`,
   type: "artist",
 }))
 

@@ -72,7 +72,8 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
   to its album page, and each artist name links to that artist's page, so a track with several
   artists has one link per name. Only the row that is the list's tab stop puts these links in
   the tab order.
-- Search results have no date added, so their track list leaves that column out.
+- Search results and the home page's tracks were never added to a list, so their track lists
+  leave out date added.
 - An album's track list shows track numbers and leaves out artwork, album, and date added,
   which every track on it shares or lacks. A multi-disc album gets one list per disc, each under
   a "Disc 1", "Disc 2" heading; a single-disc album gets no heading.
@@ -295,6 +296,36 @@ chooses it; with a field still invalid or the name or author empty, it says so i
 instead. A theme the main process refuses, such as one named like a built-in theme, shows its
 reason in the same `alert`. Cancel (round `surface-raised`), or leaving the page, discards the
 changes and restores the saved theme.
+
+### Home page
+
+The home page opens with a `text-3xl` greeting, "Hello, <display name>" ("Hello" until the name
+loads, or when Spotify has none). Below it come up to four sections, each with a `text-xl`
+heading:
+
+- **Jump back in:** cards for up to eight distinct albums, playlists, and artists the user
+  recently played from, most recent first, in the standard card grid. A card shows the artwork
+  (round for artists), the name in `text-sm` at 600, and the kind in `text-xs` `muted`, and
+  links to its page. Plays from anything else, such as Liked Songs, are skipped, and so is a page
+  Spotify won't return: its own playlists, such as Discover Weekly, which development-mode apps
+  cannot read, or a deleted playlist.
+- **Recently played:** the ten most recent tracks in the shared track list, with a track played
+  several times in a row listed once.
+- **Your top artists:** the ten top artists as round cards.
+- **Your top tracks:** the ten top tracks in the shared track list.
+
+The two top sections have a time range switch at the right end of the heading: filter chips for
+"Last 4 weeks", "Last 6 months" (the default), and "Last year". Spotify computes its longest
+range from about a year of listening, so the app does not call it "All time".
+
+Each section loads on its own, with the usual loading and error states, and one failing section
+leaves the others in place. Jump back in and Recently played both come from the play history, so
+when it fails to load, both say so, and either Retry loads it for both. A section with nothing to
+show is left out. A top section stays once the user picks another time range, so the switch back
+stays too, and says when that range has nothing. An account with no listening history at all
+sees a short welcome message instead.
+
+Log out and the app version live in Settings, under Account.
 
 ### Artist page
 

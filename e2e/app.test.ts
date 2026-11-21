@@ -67,6 +67,6 @@ test("starts on onboarding, logs in against fake Spotify, and moves between page
   await expect(appWindow.getByRole("heading", { name: "Slow Science", exact: true })).toBeVisible()
 
   await appWindow.keyboard.press(goBackShortcut)
-  await expect(appWindow.getByRole("heading", { name: "Open Spotify", exact: true })).toBeVisible()
+  await expect(appWindow.getByRole("heading", { name: "Hello, Mira Kaelin" })).toBeVisible()
   expect(await windowErrors(appWindow)).toEqual([])
 })

@@ -17,14 +17,17 @@ import {
 } from "./spotify-album"
 import { Artist } from "./spotify-artist"
 import { SpotifyAccessToken } from "./spotify-access-token"
+import { spotifyApiBaseUrl } from "./spotify-api-url"
 import { Device } from "./spotify-device"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
+import { type TimeRange, listeningHistoryRequests } from "./spotify-listening-history"
 import { Paging, streamPages } from "./spotify-paging"
+import type { PlayHistory } from "./spotify-play-history"
 import { PlaybackState, type RepeatMode } from "./spotify-playback-state"
 import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
 import { SearchResults, type SearchType, searchPageSize } from "./spotify-search"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
-import { SavedTracksPage } from "./spotify-track"
+import { SavedTracksPage, type Track } from "./spotify-track"
 import { CurrentUser } from "./spotify-user"
 
 export class SpotifyResponseError extends Schema.TaggedError<SpotifyResponseError>()(
@@ -52,8 +55,6 @@ export type SpotifyApiError =
   | SpotifyRequestError
   | SpotifyDecodeError
   | NoActiveDevice
-
-const spotifyApiBaseUrl = "https://api.spotify.com/v1"
 
 const playerUrl = `${spotifyApiBaseUrl}/me/player`
 
@@ -220,6 +221,14 @@ export class SpotifyApi extends Context.Service<
       showId: string,
       offset: number,
     ) => Effect.Effect<ShowEpisodePage, SpotifyApiError>
+    // Newest first.
+    readonly getRecentlyPlayed: Effect.Effect<ReadonlyArray<PlayHistory>, SpotifyApiError>
+    readonly getTopArtists: (
+      timeRange: TimeRange,
+    ) => Effect.Effect<ReadonlyArray<Artist>, SpotifyApiError>
+    readonly getTopTracks: (
+      timeRange: TimeRange,
+    ) => Effect.Effect<ReadonlyArray<Track>, SpotifyApiError>
     readonly getPlaybackState: Effect.Effect<Option.Option<PlaybackState>, SpotifyApiError>
     readonly getAvailableDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => Effect.Effect<void, SpotifyApiError>
@@ -309,6 +318,7 @@ export class SpotifyApi extends Context.Service<
             `${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}/episodes?limit=${maximumPageSize}&offset=${offset}`,
             ShowEpisodePage,
           ),
+        ...listeningHistoryRequests(getJson),
         getPlaybackState,
         getAvailableDevices: getJson(`${playerUrl}/devices`, AvailableDevices).pipe(
           Effect.map(({ devices }) => devices),

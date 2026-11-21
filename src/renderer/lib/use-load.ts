@@ -8,7 +8,12 @@ export type LoadState<A, E> =
   | { readonly status: "loaded"; readonly value: A }
   | { readonly status: "failed"; readonly error: E }
 
-const loadOnce = <A, E>(load: Effect.Effect<A, E, RendererServices>, failureMessage: string) =>
+// A stream of one load's states, for hooks that start a load in more ways than
+// useLoad does.
+export const loadOnce = <A, E>(
+  load: Effect.Effect<A, E, RendererServices>,
+  failureMessage: string,
+) =>
   Stream.fromEffect(
     load.pipe(
       Effect.tapError((error) => Effect.logError(failureMessage, error)),
