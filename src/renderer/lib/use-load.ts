@@ -41,11 +41,18 @@ export function useLoad<A, E>(
   load: Effect.Effect<A, E, RendererServices>,
   failureMessage: string,
 ): ReplaceableLoad<A, E> {
-  const [loadStream, setLoadStream] = useState(() => loadOnce(load, failureMessage))
-  const state = useStreamValue(loadStream, { status: "loading" } as const)
+  const loading = { status: "loading" } as const
+  // A stream shows its starting state until its first value arrives, so a
+  // replaced value is the starting state of a stream that adds nothing.
+  const [currentLoad, setCurrentLoad] = useState<{
+    readonly stream: Stream.Stream<LoadState<A, E>, never, RendererServices>
+    readonly startingState: LoadState<A, E>
+  }>(() => ({ stream: loadOnce(load, failureMessage), startingState: loading }))
+  const state = useStreamValue(currentLoad.stream, currentLoad.startingState)
   return {
     state,
-    retry: () => setLoadStream(loadOnce(load, failureMessage)),
-    replace: (value) => setLoadStream(Stream.succeed<LoadState<A, E>>({ status: "loaded", value })),
+    retry: () => setCurrentLoad({ stream: loadOnce(load, failureMessage), startingState: loading }),
+    replace: (value) =>
+      setCurrentLoad({ stream: Stream.empty, startingState: { status: "loaded", value } }),
   }
 }

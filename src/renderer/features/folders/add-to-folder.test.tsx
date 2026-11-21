@@ -213,6 +213,19 @@ describe("Add to folder", () => {
     expect(within(contents).getByRole("link", { name: /Low Orbit/ })).toBeInTheDocument()
   })
 
+  // A page that went back to its loading state would lose the user's place
+  // in a long folder.
+  it("keeps the open folder's page on screen while it shows a change", async () => {
+    const user = renderWithFolders(<FolderPage folderId={focusId} />)
+    const heading = await screen.findByRole("heading", { level: 1, name: "Focus" })
+
+    const folderSubmenu = await openFolderSubmenu(user, await sidebarAlbum())
+    await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
+
+    await screen.findByRole("list", { name: "Folder contents" })
+    expect(heading).toBeInTheDocument()
+  })
+
   // Liked Songs is not an item Spotify can link to, so no folder can hold it.
   it("opens no menu for Liked Songs", async () => {
     const user = renderWithFolders(trackList)
@@ -235,6 +248,27 @@ describe("Add to folder", () => {
     await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
 
     expect(await findStatusMessage("Couldn't add to Focus.")).toBeInTheDocument()
+  })
+
+  // The folder exists even though the item did not go in, so it must show up
+  // in the menu instead of being created again on the next try.
+  it("lists a new folder whose item could not be added", async () => {
+    const user = renderWithFolders(
+      trackList,
+      mainProcessFailingOn(ipcChannels.addFolderItem, fakeMainProcess({ folderTree })),
+    )
+
+    const folderSubmenu = await openFolderSubmenu(user, await trackRow())
+    await user.click(within(folderSubmenu).getByRole("menuitem", { name: "New folder…" }))
+    const dialog = screen.getByRole("dialog", { name: "New folder" })
+    await user.type(within(dialog).getByRole("textbox", { name: "Name" }), "Evening")
+    await user.click(within(dialog).getByRole("button", { name: "Create folder" }))
+
+    expect(await findStatusMessage("Couldn't add to Evening.")).toBeInTheDocument()
+    const reopenedSubmenu = await openFolderSubmenu(user, await trackRow())
+    expect(
+      within(reopenedSubmenu).getByRole("menuitemcheckbox", { name: "Evening" }),
+    ).toHaveAttribute("aria-checked", "false")
   })
 
   it("loads the folders again after they failed to load", async () => {

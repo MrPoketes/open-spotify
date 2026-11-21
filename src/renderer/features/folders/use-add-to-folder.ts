@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { use } from "react"
-import type { Folder, SpotifyItem } from "../../../shared/folders"
+import type { SpotifyItem } from "../../../shared/folders"
 import { DesktopBridge, type DesktopBridgeError } from "../../lib/desktop-bridge"
 import type { RendererServices } from "../../lib/renderer-runtime"
 import { useShowStatusMessage } from "../../ui/status-message-context"
@@ -31,9 +31,9 @@ const addOutcome = (folderName: string): AnnouncedOutcome<DesktopBridgeError> =>
   failureLog: "Could not add an item to a folder",
 })
 
-const removeOutcome = (folder: Folder): AnnouncedOutcome<DesktopBridgeError> => ({
-  success: `Removed from ${folder.name}`,
-  failure: () => `Couldn't remove from ${folder.name}.`,
+const removeOutcome = (folderName: string): AnnouncedOutcome<DesktopBridgeError> => ({
+  success: `Removed from ${folderName}`,
+  failure: () => `Couldn't remove from ${folderName}.`,
   failureLog: "Could not remove an item from a folder",
 })
 
@@ -44,19 +44,20 @@ export function useAddToFolder() {
   const runAnnounced = useRunAnnounced()
   const showStatusMessage = useShowStatusMessage()
 
-  // Reads the tree again after the change, so every menu and the open folder
-  // page show it.
+  const readTreeAgain = loadFolderTree.pipe(
+    Effect.andThen((tree) => Effect.sync(() => folderTree.replace(tree))),
+    Effect.catch((error) =>
+      Effect.logWarning("Could not read the folders again after a change", error),
+    ),
+  )
+
+  // Reads the tree again even after a failure, because part of the change,
+  // such as a new folder, may have happened. The message is about the change
+  // alone.
   const changeFolders = (
     change: Effect.Effect<unknown, DesktopBridgeError, RendererServices>,
     outcome: AnnouncedOutcome<DesktopBridgeError>,
-  ) =>
-    runAnnounced(
-      change.pipe(
-        Effect.andThen(loadFolderTree),
-        Effect.tap((tree) => Effect.sync(() => folderTree.replace(tree))),
-      ),
-      outcome,
-    )
+  ) => runAnnounced(change.pipe(Effect.ensuring(readTreeAgain)), outcome)
 
   const actions: AddToFolderActions = {
     toggleItem: (folder, item) => {
@@ -66,7 +67,7 @@ export function useAddToFolder() {
           const bridge = yield* DesktopBridge
           yield* bridge.removeFolderItem({ folderId, uri: item.uri })
         })
-        changeFolders(removal, removeOutcome(folder))
+        changeFolders(removal, removeOutcome(folder.name))
         return
       }
       const addition = Effect.gen(function* () {
