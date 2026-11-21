@@ -8,8 +8,8 @@ import type { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { fakeLikedSongs } from "../spotify/spotify-fixtures"
-import { giveMainViewALayout, scrollMainView } from "../track-list/fake-main-view-layout"
-import { trackRowHeight } from "../track-list/track-row-height"
+import { FakeMainView } from "../track-list/fake-main-view"
+import { scrollMainViewToRow } from "../track-list/fake-main-view-layout"
 import { LikedSongsPage } from "./liked-songs-page"
 
 // Serves the 5,000 fake liked songs and records the offset of every page
@@ -27,10 +27,9 @@ const spotifyRecordingPageRequests = () => {
 
 const renderLikedSongsPage = async (spotifyApi?: Layer.Layer<SpotifyApi>) => {
   renderScreen(
-    // The layout is applied as <main> mounts, before the track list reads it.
-    <main ref={giveMainViewALayout}>
+    <FakeMainView>
       <LikedSongsPage />
-    </main>,
+    </FakeMainView>,
     fakeMainProcess(),
     spotifyApi,
   )
@@ -48,9 +47,6 @@ const rowAt = (index: number) =>
   within(screen.getByRole("table", { name: "Liked Songs" }))
     .getAllByRole("row")
     .find((row) => row.getAttribute("aria-rowindex") === String(index + 2))
-
-const scrollToRow = (mainView: HTMLElement, index: number) =>
-  scrollMainView(mainView, index * trackRowHeight.comfortable)
 
 describe("LikedSongsPage", () => {
   it("shows the song count and the estimated total duration from the first page", async () => {
@@ -71,7 +67,7 @@ describe("LikedSongsPage", () => {
     const mainView = await renderLikedSongsPage()
     await screen.findByRole("table", { name: "Liked Songs" })
 
-    scrollToRow(mainView, 3000)
+    scrollMainViewToRow(mainView, 3000)
     const row = await screen.findByRole("row", { name: songName(3005) })
     await userEvent.dblClick(row)
 
@@ -98,14 +94,14 @@ describe("LikedSongsPage", () => {
     await screen.findByRole("table", { name: "Liked Songs" })
 
     // The second visit arrives while the first request is still on its way.
-    scrollToRow(mainView, 2500)
-    scrollToRow(mainView, 0)
-    scrollToRow(mainView, 2500)
+    scrollMainViewToRow(mainView, 2500)
+    scrollMainViewToRow(mainView, 0)
+    scrollMainViewToRow(mainView, 2500)
     await waitFor(() => expect(rowAt(2500)).toHaveAccessibleName(songName(2500)))
     // The third arrives after the page has loaded.
-    scrollToRow(mainView, 0)
+    scrollMainViewToRow(mainView, 0)
     await waitFor(() => expect(rowAt(0)).toHaveAccessibleName(songName(0)))
-    scrollToRow(mainView, 2500)
+    scrollMainViewToRow(mainView, 2500)
     await waitFor(() => expect(rowAt(2500)).toHaveAccessibleName(songName(2500)))
 
     expect(requestedOffsets).toContain(2500)

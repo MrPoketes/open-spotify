@@ -135,13 +135,16 @@ export const fakeBrowser = (onOpen: (authorizeUrl: URL) => Effect.Effect<unknown
     open: (url) => Effect.asVoid(onOpen(new URL(url))),
   })
 
+// Like Spotify, sends back the state the login put in the authorize URL.
+export const callBackFrom = (authorizeUrl: URL, query: Record<string, string>) =>
+  callBack({ ...query, state: authorizeUrl.searchParams.get("state") ?? "" })
+
+// What the browser does when the user approves the login on Spotify's page.
+export const approveLogin = (spotifyAccounts: FakeSpotifyAccounts, authorizeUrl: URL) =>
+  callBackFrom(authorizeUrl, { code: spotifyAccounts.approve(authorizeUrl) })
+
 export const approvingBrowser = (spotifyAccounts: FakeSpotifyAccounts) =>
-  fakeBrowser((authorizeUrl) =>
-    callBack({
-      code: spotifyAccounts.approve(authorizeUrl),
-      state: authorizeUrl.searchParams.get("state") ?? "",
-    }),
-  )
+  fakeBrowser((authorizeUrl) => approveLogin(spotifyAccounts, authorizeUrl))
 
 const temporaryTokenStore = Layer.unwrap(
   Effect.gen(function* () {

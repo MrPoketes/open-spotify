@@ -5,6 +5,7 @@ import { TestClock } from "effect/testing"
 import { SpotifyApi } from "./spotify-api"
 import { spotifyApiFake } from "./spotify-api-fake"
 import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
+import { spotifyErrorBody } from "./spotify-fake-error-body"
 import {
   fakeCurrentUser,
   fakeFollowedArtists,
@@ -13,9 +14,6 @@ import {
   fakeSavedAlbums,
   fakeSavedShows,
 } from "./spotify-fixtures"
-
-const spotifyErrorBody = (status: number, message: string) =>
-  JSON.stringify({ error: { status, message } })
 
 layer(spotifyApiFake)("spotifyApiFake", (test) => {
   test.effect("decodes the current user and every fixture playlist", () =>
@@ -146,7 +144,7 @@ describe("SpotifyApi responses", () => {
     const spotify = scriptedSpotify([
       {
         status: 429,
-        body: spotifyErrorBody(429, "API rate limit exceeded"),
+        body: JSON.stringify(spotifyErrorBody(429, "API rate limit exceeded")),
         headers: { "retry-after": "5" },
       },
       { status: 200, body: JSON.stringify(fakeCurrentUser) },
@@ -168,7 +166,7 @@ describe("SpotifyApi responses", () => {
 
   it.effect("fails with SessionExpired on 401", () => {
     const spotify = scriptedSpotify([
-      { status: 401, body: spotifyErrorBody(401, "The access token expired") },
+      { status: 401, body: JSON.stringify(spotifyErrorBody(401, "The access token expired")) },
     ])
     return Effect.gen(function* () {
       const api = yield* SpotifyApi

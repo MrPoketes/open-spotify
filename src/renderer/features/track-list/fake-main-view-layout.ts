@@ -1,4 +1,5 @@
 import { fireEvent } from "@testing-library/react"
+import { trackRowHeight } from "./track-row-height"
 
 // jsdom does no layout, so a test gives the main view the size of a short
 // window and scrolls it by setting scrollTop, as a browser would. The
@@ -25,3 +26,7 @@ export const scrollMainView = (mainView: HTMLElement, top: number) => {
   mainView.scrollTop = top
   fireEvent.scroll(mainView)
 }
+
+// Rows are comfortable unless a test saves another density.
+export const scrollMainViewToRow = (mainView: HTMLElement, rowIndex: number) =>
+  scrollMainView(mainView, rowIndex * trackRowHeight.comfortable)

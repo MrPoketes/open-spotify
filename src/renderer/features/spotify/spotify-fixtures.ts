@@ -341,7 +341,6 @@ export const fakePlaybackState = (activeDevice: (typeof fakeDevices)[number]) =>
   timestamp: Date.UTC(2026, 10, 20, 18, 0),
   progress_ms: 42_000,
   is_playing: true,
-  item: fakePlayingTrack,
   currently_playing_type: "track",
   actions: { disallows: { resuming: true } },
 })

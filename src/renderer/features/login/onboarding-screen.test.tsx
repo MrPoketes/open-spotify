@@ -1,9 +1,9 @@
 import { screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Option } from "effect"
+import { Option } from "effect"
 import { describe, expect, it } from "vitest"
 import { ipcChannels } from "../../../shared/ipc-channels"
-import { DesktopBridge } from "../../lib/desktop-bridge"
+import { readSavedSetting } from "../../lib/desktop-bridge-fakes"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
@@ -18,9 +18,7 @@ describe("OnboardingScreen", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save and continue" }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/"))
-    const savedClientId = await Effect.runPromise(
-      DesktopBridge.make(mainProcess).getSetting("spotifyClientId"),
-    )
+    const savedClientId = await readSavedSetting(mainProcess, "spotifyClientId")
     expect(savedClientId).toStrictEqual(Option.some("my-client-id"))
   })
 
@@ -31,9 +29,7 @@ describe("OnboardingScreen", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Save and continue" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Paste the Client ID")
-    const savedClientId = await Effect.runPromise(
-      DesktopBridge.make(mainProcess).getSetting("spotifyClientId"),
-    )
+    const savedClientId = await readSavedSetting(mainProcess, "spotifyClientId")
     expect(savedClientId).toStrictEqual(Option.none())
   })
 

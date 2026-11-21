@@ -1,23 +1,18 @@
 import { screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Option } from "effect"
+import { Option } from "effect"
 import { useState } from "react"
 import { beforeEach, describe, expect, it } from "vitest"
-import type { DesktopApi } from "../../../preload/desktop-api"
 import { builtInThemes } from "../../../shared/built-in-themes"
 import { type ThemeId, themeLibrary } from "../../../shared/theme-library"
-import { DesktopBridge } from "../../lib/desktop-bridge"
+import { readSavedSetting } from "../../lib/desktop-bridge-fakes"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
+import { appliedToken } from "./applied-theme-token"
 import { ThemePicker } from "./theme-picker"
-
-const appliedAccent = () => document.documentElement.style.getPropertyValue("--theme-color-accent")
 
 const darkAccent = builtInThemes.dark.tokens["color-accent"]
 const lightAccent = builtInThemes.light.tokens["color-accent"]
-
-const savedThemeId = (mainProcess: DesktopApi) =>
-  Effect.runPromise(DesktopBridge.make(mainProcess).getSetting("themeId"))
 
 // The picker's owner keeps the chosen theme, as AppearanceSettings does.
 function PickerWithSavedTheme({ initialThemeId }: { readonly initialThemeId: ThemeId }) {
@@ -69,9 +64,9 @@ describe("ThemePicker", () => {
     await userEvent.tab()
 
     expect(lightOption()).toHaveAttribute("aria-pressed", "true")
-    expect(appliedAccent()).toBe(lightAccent)
+    expect(appliedToken("color-accent")).toBe(lightAccent)
     await waitFor(async () => {
-      expect(await savedThemeId(mainProcess)).toEqual(Option.some("light"))
+      expect(await readSavedSetting(mainProcess, "themeId")).toEqual(Option.some("light"))
     })
   })
 
@@ -79,11 +74,11 @@ describe("ThemePicker", () => {
     const mainProcess = await renderPickerWithDarkSaved()
 
     await userEvent.hover(lightOption())
-    expect(appliedAccent()).toBe(lightAccent)
+    expect(appliedToken("color-accent")).toBe(lightAccent)
 
     await userEvent.unhover(lightOption())
-    expect(appliedAccent()).toBe(darkAccent)
-    expect(await savedThemeId(mainProcess)).toEqual(Option.none())
+    expect(appliedToken("color-accent")).toBe(darkAccent)
+    expect(await readSavedSetting(mainProcess, "themeId")).toEqual(Option.none())
   })
 
   it("previews with the arrow keys and restores the saved theme when focus leaves", async () => {
@@ -92,11 +87,11 @@ describe("ThemePicker", () => {
     await userEvent.tab()
     await userEvent.keyboard("{ArrowDown}")
     expect(lightOption()).toHaveFocus()
-    expect(appliedAccent()).toBe(lightAccent)
+    expect(appliedToken("color-accent")).toBe(lightAccent)
 
     await userEvent.tab()
     expect(screen.getByRole("button", { name: "Elsewhere" })).toHaveFocus()
-    expect(appliedAccent()).toBe(darkAccent)
+    expect(appliedToken("color-accent")).toBe(darkAccent)
   })
 
   // A history shortcut can leave the settings page while a theme is hovered,
@@ -106,13 +101,13 @@ describe("ThemePicker", () => {
     const router = renderScreen(<PickerWithSavedTheme initialThemeId="dark" />, mainProcess)
 
     await userEvent.hover(await screen.findByRole("button", { name: /Open Spotify Light/ }))
-    expect(appliedAccent()).toBe(lightAccent)
+    expect(appliedToken("color-accent")).toBe(lightAccent)
     await router.navigate({ to: "/login" })
 
     await waitFor(() =>
       expect(screen.queryByRole("list", { name: "Theme" })).not.toBeInTheDocument(),
     )
-    expect(appliedAccent()).toBe(darkAccent)
+    expect(appliedToken("color-accent")).toBe(darkAccent)
   })
 
   it("enters the list on the saved theme when tabbed into", async () => {
@@ -131,9 +126,9 @@ describe("ThemePicker", () => {
     await userEvent.keyboard("{ArrowDown}{Enter}")
     await userEvent.tab()
 
-    expect(appliedAccent()).toBe(lightAccent)
+    expect(appliedToken("color-accent")).toBe(lightAccent)
     await waitFor(async () => {
-      expect(await savedThemeId(mainProcess)).toEqual(Option.some("light"))
+      expect(await readSavedSetting(mainProcess, "themeId")).toEqual(Option.some("light"))
     })
   })
 })

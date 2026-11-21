@@ -1,13 +1,13 @@
 import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Option } from "effect"
+import { Option } from "effect"
 import { beforeEach, describe, expect, it } from "vitest"
 import { builtInThemes } from "../../../shared/built-in-themes"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import type { ImportThemeReply } from "../../../shared/theme-file-replies"
 import { type LibraryTheme, findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
-import { DesktopBridge } from "../../lib/desktop-bridge"
+import { readImportedThemes, readSavedSetting } from "../../lib/desktop-bridge-fakes"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
@@ -42,12 +42,9 @@ const ember = {
 }
 
 const importedThemeNames = async (mainProcess: DesktopApi) => {
-  const importedThemes = await Effect.runPromise(DesktopBridge.make(mainProcess).listImportedThemes)
+  const importedThemes = await readImportedThemes(mainProcess)
   return importedThemes.map((libraryTheme) => libraryTheme.theme.name)
 }
-
-const savedThemeId = (mainProcess: DesktopApi) =>
-  Effect.runPromise(DesktopBridge.make(mainProcess).getSetting("themeId"))
 
 // The fake main process starts with the imported themes stored, as after a
 // restart.
@@ -154,7 +151,7 @@ describe("AppearanceSettings", () => {
     await userEvent.click(screen.getByRole("button", { name: "Delete Ember" }))
 
     await waitFor(async () => {
-      expect(await savedThemeId(mainProcess)).toEqual(Option.some("dark"))
+      expect(await readSavedSetting(mainProcess, "themeId")).toEqual(Option.some("dark"))
     })
     expect(
       screen.getByRole("button", { name: "Open Spotify Dark by Open Spotify", pressed: true }),

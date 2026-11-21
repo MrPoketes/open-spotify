@@ -4,11 +4,11 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router"
-import { Layer, ManagedRuntime } from "effect"
+import { ManagedRuntime } from "effect"
 import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
-import { DesktopBridge } from "../../lib/desktop-bridge"
+import { desktopBridgeOver } from "../../lib/desktop-bridge-fakes"
 import { redirectUnlessLoggedIn } from "./require-login"
 
 // The only setting the guard reads is the Client ID, and a missing setting
@@ -27,7 +27,7 @@ const mainProcessWith = ({
 // Visits an app route guarded the way the `_app` layout route is, and returns
 // where the router ended up.
 const visitAppRoute = async (mainProcess: DesktopApi) => {
-  const runtime = ManagedRuntime.make(Layer.succeed(DesktopBridge)(DesktopBridge.make(mainProcess)))
+  const runtime = ManagedRuntime.make(desktopBridgeOver(mainProcess))
   const rootRoute = createRootRoute()
   const routes = ["/login", "/onboarding"].map((path) =>
     createRoute({ getParentRoute: () => rootRoute, path }),

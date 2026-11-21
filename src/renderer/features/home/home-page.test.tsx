@@ -11,15 +11,14 @@ import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { TimeRange } from "../spotify/spotify-listening-history"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import { fakeTopArtists, fakeTopTracks } from "../spotify/spotify-listening-history-fixtures"
-import { giveMainViewALayout } from "../track-list/fake-main-view-layout"
+import { FakeMainView } from "../track-list/fake-main-view"
 import { HomePage } from "./home-page"
 
 const renderHomePage = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
   renderScreen(
-    // The layout is applied as <main> mounts, before the track lists read it.
-    <main ref={giveMainViewALayout}>
+    <FakeMainView>
       <HomePage />
-    </main>,
+    </FakeMainView>,
     fakeMainProcess(),
     spotifyApi,
   )

@@ -4,8 +4,10 @@ import { Deferred, Effect, Fiber } from "effect"
 import { TestClock } from "effect/testing"
 import { spotifyRedirectPort } from "../../shared/spotify-redirect-uri"
 import {
+  approveLogin,
   approvingBrowser,
   callBack,
+  callBackFrom,
   fakeBrowser,
   fakeSpotifySession,
   makeFakeSpotifyAccounts,
@@ -41,10 +43,9 @@ describe("SpotifySession.logIn", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
     let pageShown = ""
     const browser = fakeBrowser((authorizeUrl) =>
-      callBack({
-        code: spotifyAccounts.approve(authorizeUrl),
-        state: authorizeUrl.searchParams.get("state") ?? "",
-      }).pipe(Effect.tap((page) => Effect.sync(() => (pageShown = page)))),
+      approveLogin(spotifyAccounts, authorizeUrl).pipe(
+        Effect.tap((page) => Effect.sync(() => (pageShown = page))),
+      ),
     )
     return Effect.gen(function* () {
       const session = yield* SpotifySession
@@ -86,7 +87,7 @@ describe("SpotifySession.logIn", () => {
   it.effect("fails with LoginDenied when the user denies access on Spotify's page", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
     const denyingBrowser = fakeBrowser((authorizeUrl) =>
-      callBack({ error: "access_denied", state: authorizeUrl.searchParams.get("state") ?? "" }),
+      callBackFrom(authorizeUrl, { error: "access_denied" }),
     )
     return Effect.gen(function* () {
       const session = yield* SpotifySession
@@ -139,7 +140,7 @@ describe("SpotifySession.logIn", () => {
   it.effect("fails with LoginFailed when Spotify refuses to exchange the code", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
     const browserWithUnknownCode = fakeBrowser((authorizeUrl) =>
-      callBack({ code: "unknown-code", state: authorizeUrl.searchParams.get("state") ?? "" }),
+      callBackFrom(authorizeUrl, { code: "unknown-code" }),
     )
     return Effect.gen(function* () {
       const session = yield* SpotifySession
@@ -179,10 +180,7 @@ describe("SpotifySession.logIn", () => {
       if (browserOpenings === 1) {
         return Deferred.succeed(firstBrowserOpened, undefined)
       }
-      return callBack({
-        code: spotifyAccounts.approve(authorizeUrl),
-        state: authorizeUrl.searchParams.get("state") ?? "",
-      })
+      return approveLogin(spotifyAccounts, authorizeUrl)
     })
     return Effect.gen(function* () {
       const session = yield* SpotifySession

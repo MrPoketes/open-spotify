@@ -1,18 +1,17 @@
 import { assert, beforeEach, describe, it } from "@effect/vitest"
-import { Effect, Layer } from "effect"
+import { Effect } from "effect"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { builtInThemes } from "../../../shared/built-in-themes"
 import { findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
 import { DesktopBridge } from "../../lib/desktop-bridge"
+import { desktopBridgeOver } from "../../lib/desktop-bridge-fakes"
 import { fakeMainProcess } from "../../lib/fake-main-process"
+import { appliedToken } from "./applied-theme-token"
 import { loadSavedThemeLibrary, restoreSavedTheme, selectTheme } from "./saved-theme"
 
 const unreachableMainProcess: DesktopApi = {
   invoke: () => Promise.reject(new Error("The main process did not reply")),
 }
-
-const bridgeOver = (desktopApi: DesktopApi) =>
-  Layer.succeed(DesktopBridge)(DesktopBridge.make(desktopApi))
 
 const lightTheme = findLibraryTheme(themeLibrary([]), "light")
 
@@ -25,9 +24,6 @@ const sunset = {
     tokens: { ...builtInThemes.dark.tokens, "radius-medium": "13px" },
   },
 }
-
-const appliedToken = (token: string) =>
-  document.documentElement.style.getPropertyValue(`--theme-${token}`)
 
 describe("saved theme", () => {
   beforeEach(() => {
@@ -43,7 +39,7 @@ describe("saved theme", () => {
 
       assert.strictEqual(appliedToken("color-canvas"), builtInThemes.light.tokens["color-canvas"])
       assert.strictEqual(document.documentElement.style.colorScheme, "light")
-    }).pipe(Effect.provide(bridgeOver(fakeMainProcess()))),
+    }).pipe(Effect.provide(desktopBridgeOver(fakeMainProcess()))),
   )
 
   // Without this the app would forget an imported theme on every restart.
@@ -59,7 +55,7 @@ describe("saved theme", () => {
       assert.deepStrictEqual((yield* loadSavedThemeLibrary).savedTheme, sunset)
     }).pipe(
       Effect.provide(
-        bridgeOver(
+        desktopBridgeOver(
           fakeMainProcess({ importThemeReply: { _tag: "ThemeImported", importedTheme: sunset } }),
         ),
       ),
@@ -72,7 +68,7 @@ describe("saved theme", () => {
 
       assert.strictEqual(appliedToken("color-canvas"), builtInThemes.dark.tokens["color-canvas"])
       assert.strictEqual(document.documentElement.style.colorScheme, "dark")
-    }).pipe(Effect.provide(bridgeOver(fakeMainProcess()))),
+    }).pipe(Effect.provide(desktopBridgeOver(fakeMainProcess()))),
   )
 
   // Without a theme every color is unset, so a failed read must not leave the
@@ -82,7 +78,7 @@ describe("saved theme", () => {
       yield* restoreSavedTheme
 
       assert.strictEqual(appliedToken("color-canvas"), builtInThemes.dark.tokens["color-canvas"])
-    }).pipe(Effect.provide(bridgeOver(unreachableMainProcess))),
+    }).pipe(Effect.provide(desktopBridgeOver(unreachableMainProcess))),
   )
 
   it.effect("restyles the page at once when a theme is selected and remembers it", () =>
@@ -93,7 +89,7 @@ describe("saved theme", () => {
 
       assert.strictEqual(appliedToken("color-accent"), builtInThemes.light.tokens["color-accent"])
       assert.deepStrictEqual((yield* loadSavedThemeLibrary).savedTheme, lightTheme)
-    }).pipe(Effect.provide(bridgeOver(fakeMainProcess()))),
+    }).pipe(Effect.provide(desktopBridgeOver(fakeMainProcess()))),
   )
 
   // A failed save must not undo the switch the user just saw happen.
@@ -102,6 +98,6 @@ describe("saved theme", () => {
       yield* selectTheme(lightTheme)
 
       assert.strictEqual(appliedToken("color-accent"), builtInThemes.light.tokens["color-accent"])
-    }).pipe(Effect.provide(bridgeOver(unreachableMainProcess))),
+    }).pipe(Effect.provide(desktopBridgeOver(unreachableMainProcess))),
   )
 })

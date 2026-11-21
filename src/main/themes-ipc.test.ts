@@ -1,8 +1,8 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Layer, Option } from "effect"
 import { builtInThemes } from "../shared/built-in-themes"
-import { databaseLayer } from "./database"
 import { ImportedThemes } from "./imported-themes"
+import { freshThemeStorage, storedThemes } from "./imported-themes-fakes"
 import { ThemeFileDialogs } from "./theme-file-dialogs"
 import { deleteImportedThemeFromIpc, saveEditedThemeFromIpc } from "./themes-ipc"
 
@@ -14,14 +14,7 @@ const unusedDialogs = ThemeFileDialogs.of({
 })
 
 const freshStorage = () =>
-  Layer.mergeAll(ImportedThemes.layer, Layer.succeed(ThemeFileDialogs)(unusedDialogs)).pipe(
-    Layer.provide(databaseLayer(":memory:")),
-  )
-
-const storedThemes = Effect.gen(function* () {
-  const importedThemes = yield* ImportedThemes
-  return yield* importedThemes.list
-})
+  freshThemeStorage().pipe(Layer.merge(Layer.succeed(ThemeFileDialogs)(unusedDialogs)))
 
 const editedTheme = {
   ...builtInThemes.dark,

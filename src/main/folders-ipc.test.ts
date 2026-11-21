@@ -1,20 +1,9 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect, Layer } from "effect"
-import type { SpotifyItem } from "../shared/folders"
+import { Effect } from "effect"
 import { ipcChannels } from "../shared/ipc-channels"
-import { databaseLayer } from "./database"
 import { MalformedIpcRequest } from "./decode-ipc-request"
-import { Folders } from "./folders"
+import { album, freshFolders } from "./folders-fakes"
 import { folderIpcOperations } from "./folders-ipc"
-
-const freshFolders = () => Folders.layer.pipe(Layer.provide(databaseLayer(":memory:")))
-
-const album: SpotifyItem = {
-  _tag: "SpotifyItem",
-  uri: "spotify:album:4aawyAB9vmqN3uQ7FjRGTy",
-  name: "Global Warming",
-  imageUrl: null,
-}
 
 describe("folder IPC", () => {
   // IPC replies are structured-cloned, so the tree must reach the renderer as
