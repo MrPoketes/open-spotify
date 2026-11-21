@@ -141,11 +141,6 @@ const openRunningSubmenu = async (user: User, target: HTMLElement) => {
   return screen.getByRole("menu", { name: "Running" })
 }
 
-const pageHeader = async (title: string) => {
-  const heading = await screen.findByRole("heading", { level: 1, name: title })
-  return heading.closest("header") ?? heading
-}
-
 // The library has a status region of its own, for its filters.
 const findStatusMessage = (text: string) => screen.findByText(text, { selector: "output > p" })
 
@@ -231,7 +226,7 @@ describe("Add to folder", () => {
 
   it("adds an album to a folder from its page header's context menu", async () => {
     const user = renderWithFolders(<AlbumPage albumId="fake-album-4" />)
-    const header = await pageHeader("Low Orbit")
+    const header = await screen.findByRole("group", { name: "Low Orbit" })
 
     header.focus()
     await user.keyboard("{Shift>}{F10}{/Shift}")

@@ -1,7 +1,6 @@
 import { Ellipsis, type LucideIcon } from "lucide-react"
-import type { ReactNode } from "react"
+import { type ReactNode, useId } from "react"
 import { Artwork, type ArtworkSource } from "./artwork"
-import { ContextMenu } from "./context-menu"
 import { MenuButton } from "./menu-button"
 import type { MenuItem } from "./menu-list"
 import { useContextMenu } from "./use-context-menu"
@@ -41,17 +40,27 @@ export function PageHeader({
   playButton,
 }: PageHeaderProps) {
   const { isRound = false, ...artwork } = cover
-  const headerMenu = useContextMenu()
-  const opensMenu = menuItems !== undefined
+  const titleId = useId()
+  const headerMenu = useContextMenu(
+    menuItems === undefined ? null : { label: `Actions for ${title}`, items: menuItems },
+  )
+  const { opensMenu } = headerMenu
 
   return (
     <>
-      {/* oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- The header only opens its context menu; the menu handles every interaction, as ContextMenu's wrapper does. */}
+      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- The header only opens its context menu; the menu handles every interaction, as ContextMenu's wrapper does. */}
       <header
+        // A header inside the main view is a generic element, which cannot
+        // have a name, so a group named after the title says what the focused
+        // header is.
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- The tags the rule suggests (fieldset, details, hgroup, ...) mean form fields, a disclosure, or headings only, not a page header with a cover.
+        role="group"
+        aria-labelledby={titleId}
+        aria-keyshortcuts={opensMenu ? "Shift+F10" : undefined}
         // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Shift+F10 and the context-menu key open the header's menu only while it has focus, so it must be reachable with Tab.
         tabIndex={opensMenu ? 0 : undefined}
-        onContextMenu={opensMenu ? headerMenu.openAtPointer : undefined}
-        onKeyDown={opensMenu ? headerMenu.openWithKeyboard : undefined}
+        onContextMenu={headerMenu.openAtPointer}
+        onKeyDown={headerMenu.openWithKeyboard}
         className="flex items-end gap-6 rounded-medium"
       >
         <Artwork
@@ -61,18 +70,13 @@ export function PageHeader({
         />
         <div className="flex min-w-0 flex-col gap-2">
           <p className="text-xs font-semibold text-muted">{kind}</p>
-          <h1 className="font-display text-5xl font-bold break-words">{title}</h1>
+          <h1 id={titleId} className="font-display text-5xl font-bold break-words">
+            {title}
+          </h1>
           {children}
         </div>
       </header>
-      {opensMenu && headerMenu.anchor !== null ? (
-        <ContextMenu
-          label={`Actions for ${title}`}
-          items={menuItems}
-          anchor={headerMenu.anchor}
-          onClose={headerMenu.close}
-        />
-      ) : null}
+      {headerMenu.menu}
       <PageControls menuItems={menuItems} playButton={playButton} />
     </>
   )

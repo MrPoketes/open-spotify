@@ -34,7 +34,7 @@ export function PlaylistHeader({ playlist, totalDuration }: PlaylistHeaderProps)
       kind="Playlist"
       title={playlist.name}
       cover={{ sources: images, placeholderIcon: ListMusic }}
-      menuItems={[addToFolder({ ...playlist, images })]}
+      menuItems={[addToFolder({ uri: playlist.uri, name: playlist.name, images })]}
       playButton={
         isEmpty ? undefined : (
           <ContextPlayButton contextUri={playlist.uri} contextName={playlist.name} />

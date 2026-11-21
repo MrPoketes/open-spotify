@@ -2,7 +2,14 @@ import { useEffect, useEffectEvent } from "react"
 import { createPortal } from "react-dom"
 import { closeWhenFocusLeaves } from "./close-when-focus-leaves"
 import { type MenuItem, MenuList } from "./menu-list"
-import type { ContextMenuAnchor } from "./use-context-menu"
+
+// Where a context menu opens, and the element that gets focus back when it
+// closes.
+export interface ContextMenuAnchor {
+  readonly x: number
+  readonly y: number
+  readonly opener: HTMLElement
+}
 
 interface ContextMenuProps {
   readonly label: string
