@@ -181,9 +181,9 @@ of them sits in a `fieldset` whose `legend` names it for screen readers.
 
 The sidebar library has a chip per kind (Playlists, Albums, Artists, Shows) and a name filter
 under them. Pressing the active chip shows every kind again. The filters stay at the top of the
-pane while the list scrolls. The sidebar folders sit above the filters and scroll away first,
-since the filters apply only to the library. When they match nothing, the list says so instead
-of going blank.
+pane while the list scrolls. When the filters match nothing, the list says so instead of going
+blank. The sidebar folders sit above the filters and scroll away first, since the filters apply
+only to the library.
 
 ### Text fields
 

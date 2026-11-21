@@ -36,20 +36,17 @@ export function SidebarFolderTree() {
   return (
     <LoadedFolderTree
       tree={folderTree.state.value}
-      expandedFolderIds={savedExpandedFolderIds.state.value}
+      savedExpandedFolderIds={savedExpandedFolderIds.state.value}
     />
   )
 }
 
 interface LoadedFolderTreeProps {
   readonly tree: FolderTree
-  readonly expandedFolderIds: ReadonlyArray<string>
+  readonly savedExpandedFolderIds: ReadonlyArray<string>
 }
 
-function LoadedFolderTree({
-  tree,
-  expandedFolderIds: savedExpandedFolderIds,
-}: LoadedFolderTreeProps) {
+function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProps) {
   const [expandedFolderIds, changeExpandedFolderIds] = useSavedSettingState(
     "expandedFolders",
     savedExpandedFolderIds,

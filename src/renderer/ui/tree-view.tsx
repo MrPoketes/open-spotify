@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight } from "lucide-react"
 import type { KeyboardEvent, ReactNode } from "react"
+import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { type RovingRowProps, useRovingFocus } from "./use-roving-focus"
 import { type TreeNode, type VisibleTreeRow, visibleTreeRows } from "./visible-tree-rows"
 
@@ -53,8 +54,7 @@ export function TreeView<Value>({
     row: VisibleTreeRow<Value>,
     index: number,
   ) => {
-    // Alt+Left and Alt+Right go back and forward in history.
-    if (event.ctrlKey || event.metaKey || event.altKey) return
+    if (hasShortcutModifier(event)) return
     if (event.key === "ArrowRight" && row.node.children !== null) {
       event.preventDefault()
       expandOrEnter(row, index)
