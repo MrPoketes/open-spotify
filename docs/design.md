@@ -614,6 +614,7 @@ Alt, macOS uses Cmd and Option.
 | `Alt+Shift+Q`       | `Option+Shift+Q`  | Show or hide the queue                  |
 | `?`                 | `?`               | Show the shortcuts dialog               |
 | `P` on a row        | `P` on a row      | Pin or unpin a library entry            |
+| `F2` on a row       | `F2` on a row     | Rename a folder in the sidebar          |
 | `Delete` on a row   | `Delete` on a row | Delete an imported theme                |
 
 The Mac `Delete` key is the one other keyboards label `Backspace`, since most Mac keyboards have

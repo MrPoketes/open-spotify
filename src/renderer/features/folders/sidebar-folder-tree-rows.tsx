@@ -3,9 +3,9 @@ import type { KeyboardEvent } from "react"
 import type { Folder, SpotifyItem } from "../../../shared/folders"
 import { Artwork } from "../../ui/artwork"
 import { ArtworkSummary } from "../../ui/artwork-summary"
-import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import type { TreeItemProps } from "../../ui/tree-view"
 import { useContextMenu } from "../../ui/use-context-menu"
+import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import { describeFolderEntry } from "./folder-entry-description"
 import { type FocusAfterRename, FolderRenameField } from "./folder-rename-field"
 
@@ -41,6 +41,7 @@ export function SidebarFolderRow({
       { label: "Delete…", onSelect: () => actions.askToDelete(folder) },
     ],
   })
+  const renameShortcut = useRowShortcut("renameFolder")
 
   // While the name is edited, the field is the row's tab stop. Shift+Tab
   // from it must leave the row, which the end of the rename replaces.
@@ -63,7 +64,7 @@ export function SidebarFolderRow({
   }
 
   const startRenamingWithKey = (event: KeyboardEvent) => {
-    if (event.key !== "F2" || hasShortcutModifier(event)) return
+    if (!renameShortcut.isPressed(event)) return
     event.preventDefault()
     actions.startRenaming(folder)
   }
@@ -79,7 +80,7 @@ export function SidebarFolderRow({
           folderMenu.openWithKeyboard(event)
         }}
         onContextMenu={folderMenu.openAtPointer}
-        aria-keyshortcuts="F2"
+        aria-keyshortcuts={renameShortcut.ariaKeyShortcuts}
         className={rowClassName}
       >
         <ArtworkSummary

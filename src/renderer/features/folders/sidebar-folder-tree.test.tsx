@@ -136,6 +136,17 @@ describe("SidebarFolderTree", () => {
     expect(screen.queryByRole("treeitem", { name: /^Running/ })).not.toBeInTheDocument()
   })
 
+  it("renames a folder from its context menu", async () => {
+    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+
+    await userEvent.pointer({ keys: "[MouseRight]", target: await treeItem("Focus") })
+    await userEvent.click(screen.getByRole("menuitem", { name: "Rename" }))
+    await userEvent.clear(await renameField())
+    await userEvent.keyboard("Deep focus{Enter}")
+
+    expect(await treeItem("Deep focus")).toHaveFocus()
+  })
+
   it("saves a rename when the user leaves the field, and leaves focus where they moved it", async () => {
     renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
