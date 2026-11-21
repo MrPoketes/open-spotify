@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Settings } from "lucide-react"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, onTestFinished } from "vitest"
 import { MenuButton } from "./menu-button"
 
 const actions = [
@@ -50,18 +50,17 @@ describe("MenuButton", () => {
   // App-wide shortcuts, such as Alt+Left to go back, listen on the window and
   // must still work while a menu has focus.
   it("leaves arrow keys, Home and End held with Ctrl, Alt or Cmd to app-wide shortcuts", async () => {
+    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await userEvent.keyboard("{ArrowDown}")
     const keysHeardByWindow: Array<string> = []
     const hearKey = (event: KeyboardEvent) => keysHeardByWindow.push(event.key)
     window.addEventListener("keydown", hearKey)
-    render(<MenuButton label="Options" icon={Settings} actions={actions} />)
+    onTestFinished(() => window.removeEventListener("keydown", hearKey))
 
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
-    await userEvent.keyboard("{ArrowDown}")
-    keysHeardByWindow.length = 0
     await userEvent.keyboard(
       "{Control>}{ArrowDown}{/Control}{Alt>}{Home}{/Alt}{Meta>}{End}{/Meta}{Alt>}{ArrowLeft}{/Alt}",
     )
-    window.removeEventListener("keydown", hearKey)
 
     expect(screen.getByRole("menuitem", { name: "Second" })).toHaveFocus()
     expect(keysHeardByWindow).toEqual(

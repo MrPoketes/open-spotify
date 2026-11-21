@@ -41,6 +41,8 @@ const withoutIds = (entries: ReadonlyArray<FolderEntry>): ReadonlyArray<unknown>
     entry._tag === "Folder" ? { name: entry.name, entries: withoutIds(entry.entries) } : entry,
   )
 
+const byteOrderMark = "\uFEFF"
+
 const foldersFile = (folders: ReadonlyArray<unknown>) =>
   JSON.stringify({ format: "open-spotify-folders", version: 1, folders })
 
@@ -112,7 +114,7 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
     Effect.gen(function* () {
       const folders = yield* Folders
       const filePath = yield* writeTempFile(
-        `﻿${foldersFile([{ _tag: "Folder", name: "Rock", entries: [album] }])}`,
+        `${byteOrderMark}${foldersFile([{ _tag: "Folder", name: "Rock", entries: [album] }])}`,
       )
 
       const reply = yield* importFrom(filePath)
