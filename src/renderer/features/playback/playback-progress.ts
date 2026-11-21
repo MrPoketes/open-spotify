@@ -13,7 +13,7 @@ export interface PlaybackProgress {
 
 // Spotify reports the position only when it is polled, so between polls it
 // is worked out from the time that has passed while playing.
-export const positionAt = ({ playback, progressReadAt }: TimedPlayback, now: number) => {
+const positionAt = ({ playback, progressReadAt }: TimedPlayback, now: number) => {
   if (playback.progressMs === null) {
     return null
   }
