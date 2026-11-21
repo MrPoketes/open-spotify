@@ -11,6 +11,7 @@ import {
   fakeBrowser,
   fakeSpotifySession,
   makeFakeSpotifyAccounts,
+  restoreFakeSession,
   saveFakeClientId,
 } from "./spotify-session-fakes"
 import { SpotifySession } from "./spotify-session"
@@ -194,5 +195,20 @@ describe("SpotifySession.logIn", () => {
       assert.strictEqual(firstLoginError._tag, "LoginCancelled")
       assert.strictEqual(yield* session.getAccessToken, "access-token-1")
     }).pipe(Effect.provide(fakeSpotifySession(spotifyAccounts, browserIgnoringFirstLogin)))
+  })
+
+  it.effect("provides access tokens again after logging in over an expired session", () => {
+    const spotifyAccounts = makeFakeSpotifyAccounts()
+    return Effect.gen(function* () {
+      const session = yield* restoreFakeSession(spotifyAccounts)
+      yield* saveFakeClientId
+      spotifyAccounts.revokeRefreshTokens()
+      yield* TestClock.adjust("1 hour")
+      yield* Effect.flip(session.getAccessToken)
+
+      yield* session.logIn
+
+      assert.strictEqual(yield* session.getAccessToken, "access-token-2")
+    }).pipe(Effect.provide(fakeSpotifySession(spotifyAccounts, approvingBrowser(spotifyAccounts))))
   })
 })

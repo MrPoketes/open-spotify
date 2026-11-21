@@ -67,7 +67,9 @@ describe("SpotifySession.getAccessToken", () => {
     }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
   })
 
-  it.effect("ends the session with SessionExpired when Spotify refuses the refresh token", () => {
+  // Several screens request tokens. If only the first request learned that
+  // the session expired, the login screen could miss the explanation.
+  it.effect("keeps answering SessionExpired after Spotify refuses the refresh token", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
     return Effect.gen(function* () {
       const session = yield* restoreFakeSession(spotifyAccounts)
@@ -78,7 +80,7 @@ describe("SpotifySession.getAccessToken", () => {
       const errorAfterwards = yield* Effect.flip(session.getAccessToken)
 
       assert.strictEqual(refreshError._tag, "SessionExpired")
-      assert.strictEqual(errorAfterwards._tag, "NotLoggedIn")
+      assert.strictEqual(errorAfterwards._tag, "SessionExpired")
     }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
   })
 
@@ -122,6 +124,21 @@ describe("SpotifySession.logOut", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
     return Effect.gen(function* () {
       const session = yield* restoreFakeSession(spotifyAccounts)
+
+      yield* session.logOut
+      const error = yield* Effect.flip(session.getAccessToken)
+
+      assert.strictEqual(error._tag, "NotLoggedIn")
+    }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
+  })
+
+  it.effect("answers NotLoggedIn after logging out of an expired session", () => {
+    const spotifyAccounts = makeFakeSpotifyAccounts()
+    return Effect.gen(function* () {
+      const session = yield* restoreFakeSession(spotifyAccounts)
+      spotifyAccounts.revokeRefreshTokens()
+      yield* TestClock.adjust("1 hour")
+      yield* Effect.flip(session.getAccessToken)
 
       yield* session.logOut
       const error = yield* Effect.flip(session.getAccessToken)

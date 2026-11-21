@@ -106,11 +106,14 @@ writing Effect code, and grep `node_modules/effect/dist/*.d.ts` when unsure.
 - Define services with `Context.Service` and give them a static `layer`. See
   `DesktopBridge` for the house style.
 - Define errors with `Schema.TaggedError`. Never `throw`, never `try`/`catch` (lint enforces
-  this). Use `Effect.try` / `Effect.tryPromise` at the boundary with a tagged error.
+  the second). Use `Effect.try` / `Effect.tryPromise` at the boundary with a tagged error. The
+  one exception is `throw redirect(...)` in a route's `beforeLoad`, which TanStack Router
+  requires (see `src/renderer/features/login/require-login.ts`).
 - Use `Effect.fn("name")` for reusable effectful functions and `Effect.gen` inline.
 - Access a service with `const x = yield* Service` inside `Effect.gen`. Do not use
   `Service.use(...)`: the React hooks lint rule mistakes it for a hook.
-- Run effects only at the edges: `rendererRuntime` in loaders and event handlers,
+- Run effects only at the edges: `rendererRuntime` in loaders, the runtime from
+  `RendererRuntimeContext` in component event handlers (so component tests can swap it), and
   `mainRuntime` in Electron callbacks. Provide every layer in those two runtime files.
 - Import Node platform modules by subpath, e.g. `@effect/platform-node/NodeFileSystem`. The
   package root also loads optional modules (Redis) that break the packaged app.

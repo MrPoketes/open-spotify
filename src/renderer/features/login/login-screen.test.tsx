@@ -4,6 +4,7 @@ import { Deferred, Effect } from "effect"
 import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
+import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
 import { LoginScreen } from "./login-screen"
 
@@ -12,8 +13,7 @@ const mainProcessReplyingToLogIn = (logInReply: unknown): DesktopApi => ({
 })
 
 // Like the real main process, a cancelled login replies with LoginCancelled.
-const mainProcessWaitingForBrowser = (): DesktopApi => {
-  const logInReply = Deferred.makeUnsafe<unknown>()
+const mainProcessWaitingForBrowser = (logInReply = Deferred.makeUnsafe<unknown>()): DesktopApi => {
   return {
     invoke: (channel) => {
       if (channel === ipcChannels.logIn) {
@@ -79,6 +79,31 @@ describe("LoginScreen", () => {
     await userEvent.keyboard("{Enter}")
 
     await waitFor(() => expect(logInButton).toHaveFocus())
+  })
+
+  it("says when Cancel fails and keeps waiting for the browser", async () => {
+    renderScreen(
+      <LoginScreen sessionExpired={false} />,
+      mainProcessFailingOn(ipcChannels.cancelLogIn, mainProcessWaitingForBrowser()),
+    )
+
+    await userEvent.click(await screen.findByRole("button", { name: "Log in with Spotify" }))
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not cancel the login")
+    expect(screen.getByRole("status")).toHaveTextContent("Finish logging in in your browser")
+  })
+
+  // Otherwise the login could finish in the browser after the user saved a
+  // different Client ID, and store a session for the old one.
+  it("cancels the pending login when the user leaves the login screen", async () => {
+    const logInReply = Deferred.makeUnsafe<unknown>()
+    renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser(logInReply))
+
+    await userEvent.click(await screen.findByRole("button", { name: "Log in with Spotify" }))
+    await userEvent.click(screen.getByRole("link", { name: "Change Client ID" }))
+
+    await waitFor(() => expect(Deferred.isDoneUnsafe(logInReply)).toBe(true))
   })
 
   it("keeps waiting when Log in is double-clicked", async () => {
