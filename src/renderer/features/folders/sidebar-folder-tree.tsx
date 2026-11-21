@@ -111,16 +111,17 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
           expandedKeys={expandedKeys}
           onToggleExpanded={toggleExpanded}
           rowFocusRef={rowFocusRef}
-          renderItem={(entry, itemProps) =>
-            entry._tag === "Folder" ? (
+          renderItem={(placed, itemProps) =>
+            placed._tag === "PlacedFolder" ? (
               <SidebarFolderRow
-                folder={entry}
-                isRenaming={entry.id === renamingFolderId}
+                placed={placed}
+                tree={tree}
+                isRenaming={placed.entry.id === renamingFolderId}
                 itemProps={itemProps}
                 actions={actions}
               />
             ) : (
-              <SpotifyItemRow item={entry} itemProps={itemProps} />
+              <SpotifyItemRow placed={placed} tree={tree} itemProps={itemProps} />
             )
           }
         />

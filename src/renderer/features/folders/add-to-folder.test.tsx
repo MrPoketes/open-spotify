@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react"
+import { act, screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Stream } from "effect"
 import type { ReactNode } from "react"
@@ -21,6 +21,7 @@ import { TrackList } from "../track-list/track-list"
 import type { TrackListEntry } from "../track-list/track-row"
 import { FolderPage } from "./folder-page"
 import { FoldersProvider } from "./folders-provider"
+import { SidebarFolderTree } from "./sidebar-folder-tree"
 
 const runningId = "3f9a6c1e-8b2d-4e7a-9c5f-1a2b3c4d5e6f"
 const morningId = "7c2e9a4b-1d3f-4a6b-8e5c-9f0a1b2c3d4e"
@@ -296,6 +297,18 @@ describe("Add to folder", () => {
     const contents = await screen.findByRole("list", { name: "Folder contents" })
     expect(within(contents).getByRole("link", { name: /Low Orbit/ })).toBeInTheDocument()
     expect(heading).toBeInTheDocument()
+  })
+
+  it("shows a library entry added to a folder in the sidebar folder tree", async () => {
+    const user = renderWithFolders(<SidebarFolderTree />)
+
+    const folderSubmenu = await openFolderSubmenu(user, await sidebarAlbum())
+    await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
+    act(() => screen.getByRole("treeitem", { name: /^Focus/ }).focus())
+    await user.keyboard("{ArrowRight}")
+
+    const addedItem = await screen.findByRole("treeitem", { name: /^Low Orbit/ })
+    expect(addedItem).toHaveAttribute("aria-level", "2")
   })
 
   // Liked Songs is not an item Spotify can link to, so no folder can hold it.

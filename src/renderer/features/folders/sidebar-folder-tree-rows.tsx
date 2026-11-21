@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import type { KeyboardEvent } from "react"
-import type { Folder, SpotifyItem } from "../../../shared/folders"
+import type { Folder, FolderTree } from "../../../shared/folders"
 import { Artwork } from "../../ui/artwork"
 import { ArtworkSummary } from "../../ui/artwork-summary"
 import type { TreeItemProps } from "../../ui/tree-view"
@@ -8,6 +8,8 @@ import { useContextMenu } from "../../ui/use-context-menu"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import { describeFolderEntry } from "./folder-entry-description"
 import { type FocusAfterRename, FolderRenameField } from "./folder-rename-field"
+import type { PlacedFolder, PlacedItem } from "./folder-tree-nodes"
+import { useMoveFolderEntry } from "./use-move-folder-entry"
 
 const rowClassName = "flex min-w-0 flex-1 rounded-small py-1 pr-2"
 
@@ -20,24 +22,29 @@ export interface SidebarFolderActions {
 }
 
 interface SidebarFolderRowProps {
-  readonly folder: Folder
+  readonly placed: PlacedFolder
+  readonly tree: FolderTree
   readonly isRenaming: boolean
   readonly itemProps: TreeItemProps
   readonly actions: SidebarFolderActions
 }
 
 export function SidebarFolderRow({
-  folder,
+  placed,
+  tree,
   isRenaming,
   itemProps,
   actions,
 }: SidebarFolderRowProps) {
+  const folder = placed.entry
   const { name, details, icon, page } = describeFolderEntry(folder)
+  const { moveWithKey, ariaKeyShortcuts, moveToFolderItem } = useMoveFolderEntry(placed, tree)
   const folderMenu = useContextMenu({
     label: `Actions for ${name}`,
     items: [
       { label: "New folder", onSelect: () => actions.createFolderInside(folder) },
       { label: "Rename", onSelect: () => actions.startRenaming(folder) },
+      ...(moveToFolderItem === undefined ? [] : [moveToFolderItem]),
       { label: "Delete…", onSelect: () => actions.askToDelete(folder) },
     ],
   })
@@ -77,10 +84,11 @@ export function SidebarFolderRow({
         onKeyDown={(event) => {
           itemProps.onKeyDown(event)
           startRenamingWithKey(event)
+          moveWithKey(event)
           folderMenu.openWithKeyboard(event)
         }}
         onContextMenu={folderMenu.openAtPointer}
-        aria-keyshortcuts={renameShortcut.ariaKeyShortcuts}
+        aria-keyshortcuts={`${renameShortcut.ariaKeyShortcuts} ${ariaKeyShortcuts}`}
         className={rowClassName}
       >
         <ArtworkSummary
@@ -95,19 +103,39 @@ export function SidebarFolderRow({
 }
 
 interface SpotifyItemRowProps {
-  readonly item: SpotifyItem
+  readonly placed: PlacedItem
+  readonly tree: FolderTree
   readonly itemProps: TreeItemProps
 }
 
-export function SpotifyItemRow({ item, itemProps }: SpotifyItemRowProps) {
-  const { name, details, artwork, icon, isArtist, page } = describeFolderEntry(item)
+export function SpotifyItemRow({ placed, tree, itemProps }: SpotifyItemRowProps) {
+  const { name, details, artwork, icon, isArtist, page } = describeFolderEntry(placed.entry)
+  const { moveWithKey, ariaKeyShortcuts, moveToFolderItem } = useMoveFolderEntry(placed, tree)
+  const itemMenu = useContextMenu({
+    label: `Actions for ${name}`,
+    items: moveToFolderItem === undefined ? [] : [moveToFolderItem],
+  })
   return (
-    <Link {...page} {...itemProps} className={rowClassName}>
-      <ArtworkSummary
-        artwork={{ sources: artwork, placeholderIcon: icon, round: isArtist }}
-        title={name}
-        details={details}
-      />
-    </Link>
+    <>
+      <Link
+        {...page}
+        {...itemProps}
+        onKeyDown={(event) => {
+          itemProps.onKeyDown(event)
+          moveWithKey(event)
+          itemMenu.openWithKeyboard(event)
+        }}
+        onContextMenu={itemMenu.openAtPointer}
+        aria-keyshortcuts={ariaKeyShortcuts}
+        className={rowClassName}
+      >
+        <ArtworkSummary
+          artwork={{ sources: artwork, placeholderIcon: icon, round: isArtist }}
+          title={name}
+          details={details}
+        />
+      </Link>
+      {itemMenu.menu}
+    </>
   )
 }

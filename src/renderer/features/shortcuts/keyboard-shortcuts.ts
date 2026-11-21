@@ -103,6 +103,16 @@ export const rowShortcuts = {
     group: "Focused row",
     keys: { key: "F2" },
   },
+  moveFolderEntryUp: {
+    description: "Move a folder entry up",
+    group: "Focused row",
+    keys: { key: "ArrowUp", alt: true },
+  },
+  moveFolderEntryDown: {
+    description: "Move a folder entry down",
+    group: "Focused row",
+    keys: { key: "ArrowDown", alt: true },
+  },
   // Most Mac keyboards have no forward Delete key, and label Backspace "delete".
   deleteTheme: {
     description: "Delete an imported theme",

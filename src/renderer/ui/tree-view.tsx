@@ -1,5 +1,12 @@
 import { ChevronDown, ChevronRight } from "lucide-react"
-import { type KeyboardEvent, type ReactNode, type Ref, useImperativeHandle } from "react"
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+} from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { type RovingRowProps, type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
 import { type TreeNode, type VisibleTreeRow, visibleTreeRows } from "./visible-tree-rows"
@@ -27,6 +34,50 @@ interface TreeViewProps<Value> {
 
 const levelIndent = 16
 
+interface FocusedRow {
+  readonly key: string
+  readonly index: number
+  readonly element: Element | null
+}
+
+// When the rows change under the focused item, such as when it moves, focus
+// follows it to its new place, or goes to the row that takes its place when it
+// is gone. A moved or removed element can lose focus to the body, so focus
+// follows from there too. Focus that went anywhere else, such as into a
+// rename field, went there on purpose and stays.
+function useFocusFollowsRow<Value>(
+  rows: ReadonlyArray<VisibleTreeRow<Value>>,
+  focusRow: (index: number) => void,
+) {
+  const focusedRow = useRef<FocusedRow | null>(null)
+  const rowKeys = JSON.stringify(rows.map((row) => row.node.key))
+  const renderedRowKeys = useRef(rowKeys)
+
+  // Runs after every render, but acts only when the rows changed, so a render
+  // for any other reason never pulls focus back into the tree.
+  useLayoutEffect(() => {
+    if (renderedRowKeys.current === rowKeys) return
+    renderedRowKeys.current = rowKeys
+    if (focusedRow.current === null) return
+    const { key, index, element } = focusedRow.current
+    const { activeElement } = document
+    if (activeElement !== element && activeElement !== document.body) return
+    const newIndex = rows.findIndex((row) => row.node.key === key)
+    if (newIndex === -1) {
+      focusRow(index)
+      return
+    }
+    // The row may have kept focus, so it gets no focus event to remember its
+    // new index by.
+    focusRow(newIndex)
+    focusedRow.current = { ...focusedRow.current, index: newIndex }
+  })
+
+  return (row: FocusedRow) => {
+    focusedRow.current = row
+  }
+}
+
 // The WAI-ARIA tree view pattern, rendered flat: every visible item is a
 // sibling that carries its level and position, so no group element has to wrap
 // an expanded item's children. The tree is one tab stop, and the arrow keys
@@ -42,6 +93,7 @@ export function TreeView<Value>({
   const rows = visibleTreeRows(nodes, expandedKeys)
   const { onKeyDown, rowProps, focusRow } = useRovingFocus(rows.length)
   useImperativeHandle(rowFocusRef, () => ({ focusRow }), [focusRow])
+  const rememberFocusedRow = useFocusFollowsRow(rows, focusRow)
 
   // An expanded item has its first child right below it.
   const expandOrEnter = ({ node }: VisibleTreeRow<Value>, index: number) => {
@@ -72,6 +124,10 @@ export function TreeView<Value>({
 
   const itemProps = (row: VisibleTreeRow<Value>, index: number): TreeItemProps => ({
     ...rowProps(index),
+    onFocus: () => {
+      rowProps(index).onFocus()
+      rememberFocusedRow({ key: row.node.key, index, element: document.activeElement })
+    },
     role: "treeitem",
     "aria-level": row.level,
     "aria-setsize": row.setSize,
