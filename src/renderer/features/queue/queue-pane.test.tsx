@@ -164,6 +164,23 @@ describe("QueuePane", () => {
     expect(await upNextRow(fakePlayOrder(4).name)).toHaveFocus()
   })
 
+  it("leaves focus alone when the user moved it out of the list before the new list arrived", async () => {
+    // The pane's first read and the press's lookup.
+    const queueReads = gateAfter(2)
+    renderQueuePane(
+      SpotifyApi.layerFakeWith((spotify) => ({ getQueue: queueReads.pass(spotify.getQueue) })),
+    )
+    const closeButton = screen.getByRole("button", { name: "Close queue" })
+
+    await userEvent.click(await upNextRow(fakeEpisode.name))
+    await queueReads.firstHeld()
+    act(() => closeButton.focus())
+    queueReads.open()
+
+    await nowPlaying(fakeEpisode.name)
+    expect(closeButton).toHaveFocus()
+  })
+
   // The queue on screen can be out of date, for example after shuffle was
   // turned on, and skipping by its positions would play the wrong item.
   it("says so instead of skipping when the item has left the queue since it was shown", async () => {
@@ -171,6 +188,8 @@ describe("QueuePane", () => {
 
     await userEvent.click(await upNextRow(fakeTrack(2).name))
 
+    // The queue is read again after the failed press, and comes back empty.
+    expect(await screen.findByText("Nothing plays after this.")).toBeInTheDocument()
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "That item is no longer in the queue.",
     )

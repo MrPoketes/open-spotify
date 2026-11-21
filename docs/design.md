@@ -232,9 +232,8 @@ makes it the accessible description.
 
 The bar's right end holds the queue button (`ListMusic`, a toggle drawn like shuffle) and always
 the device picker button, labelled with the playing device ("Playing on Kitchen Speaker") or
-"No active device". With no active device, the bar's left
-side says that audio plays in the Spotify app or on another device, next to a "Choose a device"
-button that opens the picker.
+"No active device". With no active device, the bar's left side says that audio plays in the
+Spotify app or on another device, next to a "Choose a device" button that opens the picker.
 
 The picker is a non-modal popover above its button: `surface-overlay`, `shadow-overlay`,
 `rounded-large`, 320 px wide. Each device is a row with a 20 px Lucide icon for its type, the
