@@ -98,6 +98,15 @@ describe("ContextMenu", () => {
     expect(target).toHaveFocus()
   })
 
+  it("closes when the pointer clicks outside it", async () => {
+    renderMenuTarget()
+    await userEvent.keyboard("{ContextMenu}")
+
+    await userEvent.click(screen.getByRole("main"))
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+  })
+
   it("opens where the pointer right-clicks, with focus on the first item", async () => {
     const { target } = renderMenuTarget()
 

@@ -492,7 +492,7 @@ inside an `alert`.
 What an action from a context menu or a page's play controls did is said in a small Overlay
 message (`surface-overlay`, `shadow-overlay`, `rounded-large`, `text-sm`) centered 16 px above the
 now-playing bar, in `danger` text for a failure. It fades in like a menu and goes away after five
-seconds. It sits in a `output` (`role="status"`) that stays on the page, so screen readers
+seconds. It sits in an `output` (`role="status"`) that stays on the page, so screen readers
 announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 
 ### Loading, empty, and error states
