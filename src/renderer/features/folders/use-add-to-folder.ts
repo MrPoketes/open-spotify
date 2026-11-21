@@ -10,14 +10,15 @@ import { AskForFolderNameContext } from "./ask-for-folder-name"
 import { useFolderTree, useReadFolderTreeAgain } from "./folder-tree"
 
 // What a menu knows about the playlist, artist, album, show, or track it
-// belongs to. Images are widest first, as Spotify lists them.
+// belongs to.
 export interface FolderItemSource {
   readonly uri: string
   readonly name: string
   readonly images: ReadonlyArray<{ readonly url: string }>
 }
 
-// A folder shows its items as cards, so it keeps the widest image.
+// A folder shows its items as cards, so it keeps the widest image, which
+// Spotify lists first.
 const toSpotifyItem = ({ uri, name, images }: FolderItemSource): SpotifyItem => ({
   _tag: "SpotifyItem",
   uri,

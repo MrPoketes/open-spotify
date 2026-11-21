@@ -195,11 +195,17 @@ describe("Add to folder", () => {
     const folderSubmenu = await openFolderSubmenu(user, await trackRow())
     await user.click(within(folderSubmenu).getByRole("menuitem", { name: "New folder…" }))
     const dialog = screen.getByRole("dialog", { name: "New folder" })
-    await user.type(within(dialog).getByRole("textbox", { name: "Name" }), "   ")
+    const nameField = within(dialog).getByRole("textbox", { name: "Name" })
+    await user.type(nameField, "   ")
     await user.click(within(dialog).getByRole("button", { name: "Create folder" }))
 
     expect(within(dialog).getByRole("alert")).toHaveTextContent("Enter a name for the folder.")
+    expect(nameField).toHaveAccessibleDescription("Enter a name for the folder.")
     expect(screen.getByRole("dialog", { name: "New folder" })).toBeInTheDocument()
+
+    await user.type(nameField, "Evening")
+    expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument()
+    expect(nameField).toBeValid()
   })
 
   // A page that went back to its loading state to show the item would lose

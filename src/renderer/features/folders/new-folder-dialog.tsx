@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useId, useRef, useState } from "react"
 import { AccentButton, SecondaryButton } from "../../ui/pill-button"
+import { TextField } from "../../ui/text-field"
 
 interface NewFolderDialogProps {
   readonly onCreate: (name: string) => void
@@ -11,9 +12,9 @@ interface NewFolderDialogProps {
 export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const headingId = useId()
-  const nameErrorId = useId()
   const [name, setName] = useState("")
-  const [isNameBlank, setNameBlank] = useState(false)
+  const [triedToCreate, setTriedToCreate] = useState(false)
+  const isNameBlank = name.trim() === ""
 
   useEffect(() => {
     dialogRef.current?.showModal()
@@ -21,12 +22,11 @@ export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
 
   const create = (event: FormEvent) => {
     event.preventDefault()
-    const trimmedName = name.trim()
-    if (trimmedName === "") {
-      setNameBlank(true)
+    if (isNameBlank) {
+      setTriedToCreate(true)
       return
     }
-    onCreate(trimmedName)
+    onCreate(name.trim())
     dialogRef.current?.close()
   }
 
@@ -41,21 +41,12 @@ export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
         <h2 id={headingId} className="font-display text-xl font-bold">
           New folder
         </h2>
-        <label className="flex flex-col gap-1 text-sm font-semibold">
-          Name
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            aria-invalid={isNameBlank}
-            aria-describedby={isNameBlank ? nameErrorId : undefined}
-            className="rounded-small bg-surface-raised px-3 py-2 text-base font-normal"
-          />
-        </label>
-        {isNameBlank ? (
-          <p id={nameErrorId} role="alert" className="text-xs text-danger">
-            Enter a name for the folder.
-          </p>
-        ) : null}
+        <TextField
+          label="Name"
+          value={name}
+          onChange={setName}
+          errorMessage={triedToCreate && isNameBlank ? "Enter a name for the folder." : undefined}
+        />
         <div className="flex justify-end gap-2">
           <SecondaryButton label="Cancel" onClick={() => dialogRef.current?.close()} />
           <AccentButton type="submit" label="Create folder" />

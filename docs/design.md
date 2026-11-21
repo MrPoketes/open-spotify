@@ -183,6 +183,15 @@ The sidebar library has a chip per kind (Playlists, Albums, Artists, Shows) and 
 under them. Pressing the active chip shows every kind again. The filters stay at the top of the
 pane while the list scrolls. When they match nothing, the list says so instead of going blank.
 
+### Text fields
+
+A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 4 px
+gap between them. The input is `surface-raised` and `rounded-small`, with 12 px across and 8 px
+down inside and `text-base` text. An invalid field gets a `danger` ring and a `text-xs`
+`danger` message in an `alert` under it, which also describes it (`aria-describedby`). The
+theme editor's Name and Author and the New folder dialog's Name use it
+(`src/renderer/ui/text-field.tsx`).
+
 ### Sidebar sections and pins
 
 The sidebar library is split into sections: Liked Songs, Playlists, Albums, Artists, and Shows,
@@ -502,8 +511,8 @@ of opening a submenu, and after a failed load it loads them again.
 "New folder…" opens a modal dialog (`surface-overlay`, `shadow-overlay`, `rounded-large`, 320 px
 wide, over a `canvas` backdrop at 60 % opacity) with a Name field, then Cancel (round
 `surface-raised`) and Create folder (round `accent`). Create folder makes a top-level folder with
-the item in it. A blank name keeps the dialog open and says "Enter a name for the folder." in
-`text-xs` `danger` under the field (`aria-describedby`). Focus starts in the field, stays in the
+the item in it. A blank name keeps the dialog open and marks the field invalid with "Enter a
+name for the folder.", until the name is no longer blank. Focus starts in the field, stays in the
 dialog, and returns to the menu's opener when the dialog closes; `Escape` closes it.
 
 The sidebar's folder menu sits beside the "Your library" heading. What an action did is said

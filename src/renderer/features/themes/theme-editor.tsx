@@ -1,7 +1,8 @@
-import { type FormEvent, useEffect, useId, useRef } from "react"
+import { type FormEvent, useId } from "react"
 import type { Theme } from "../../../shared/theme"
 import type { LibraryTheme } from "../../../shared/theme-library"
 import { AccentButton, SecondaryButton } from "../../ui/pill-button"
+import { TextField } from "../../ui/text-field"
 import { themeTokenGroups } from "./theme-token-fields"
 import { TokenInput } from "./theme-token-input"
 import { useThemeEditor } from "./use-theme-editor"
@@ -34,6 +35,7 @@ export function ThemeEditor({ savedTheme, onSave, onCancel }: ThemeEditorProps) 
         Edit a copy of {savedTheme.name}
       </h3>
       <div className="grid grid-cols-2 gap-4">
+        {/* The button that opened the editor is gone, so focus would fall to the page. */}
         <TextField label="Name" value={editor.name} onChange={editor.setName} focusOnMount />
         <TextField label="Author" value={editor.author} onChange={editor.setAuthor} />
       </div>
@@ -77,39 +79,5 @@ export function ThemeEditor({ savedTheme, onSave, onCancel }: ThemeEditorProps) 
         <SecondaryButton label="Cancel" onClick={onCancel} />
       </div>
     </form>
-  )
-}
-
-interface TextFieldProps {
-  readonly label: string
-  readonly value: string
-  readonly onChange: (value: string) => void
-  readonly focusOnMount?: boolean
-}
-
-function TextField({ label, value, onChange, focusOnMount = false }: TextFieldProps) {
-  const inputId = useId()
-  const input = useRef<HTMLInputElement>(null)
-
-  // The button that opened the editor is gone, so focus would fall to the page.
-  useEffect(() => {
-    if (focusOnMount) {
-      input.current?.focus()
-    }
-  }, [focusOnMount])
-
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={inputId} className="text-sm font-semibold">
-        {label}
-      </label>
-      <input
-        ref={input}
-        id={inputId}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="rounded-small bg-surface-raised px-3 py-2 text-sm"
-      />
-    </div>
   )
 }
