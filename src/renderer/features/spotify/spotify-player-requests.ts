@@ -53,6 +53,9 @@ export const playerCommands = <E>(
   pause: sendCommand(HttpClientRequest.put(`${playerUrl}/pause`)),
   skipToNext: sendCommand(HttpClientRequest.post(`${playerUrl}/next`)),
   skipToPrevious: sendCommand(HttpClientRequest.post(`${playerUrl}/previous`)),
+  // A position past the end of the item makes Spotify play the next one.
+  seek: (positionMs: number) =>
+    sendCommand(HttpClientRequest.put(`${playerUrl}/seek?position_ms=${positionMs}`)),
   setShuffle: (isOn: boolean) =>
     sendCommand(HttpClientRequest.put(`${playerUrl}/shuffle?state=${isOn}`)),
   setRepeat: (mode: RepeatMode) =>

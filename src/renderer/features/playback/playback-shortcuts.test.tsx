@@ -134,6 +134,19 @@ describe("playback shortcuts", () => {
     expect(await control("Play")).toBeInTheDocument()
   })
 
+  // The seek bar is an input, but it takes only unmodified arrow, page, Home
+  // and End keys. Space and Ctrl+arrow do nothing to it.
+  it("pauses with Space and skips with Ctrl+→ while the seek bar has focus", async () => {
+    await renderNowPlayingBar()
+
+    screen.getByRole("slider", { name: "Playback position" }).focus()
+    await userEvent.keyboard("{Control>}{ArrowRight}{/Control}")
+    expect(await screen.findByText(fakeTrack(1).name)).toBeInTheDocument()
+    await userEvent.keyboard(" ")
+
+    expect(await control("Play")).toBeInTheDocument()
+  })
+
   it("presses the focused button with Space instead of pausing", async () => {
     await renderNowPlayingBar()
 

@@ -35,10 +35,10 @@ const idlePlayback: Pick<PlaybackState, "isPlaying" | "shuffle" | "repeat" | "ac
   actions: {},
 }
 
-export interface PlaybackAction {
+export interface PlaybackAction<Arguments extends ReadonlyArray<unknown> = []> {
   // Why the action cannot run right now, or null when it can.
   readonly unavailableReason: string | null
-  readonly run: () => void
+  readonly run: (...args: Arguments) => void
 }
 
 // What the playback controls, the keyboard shortcuts, and the media keys can
@@ -49,7 +49,10 @@ export function usePlaybackActions(playerState: PlayerStateOrLoading) {
     playerState.status === "active" ? playerState.playback : idlePlayback
   const disallows = actions.disallows ?? {}
   const playbackUnavailableReason = unavailableReason(playerState)
-  const action = (run: () => void, isDisallowed: boolean | undefined = false): PlaybackAction => ({
+  const action = <Arguments extends ReadonlyArray<unknown>>(
+    run: (...args: Arguments) => void,
+    isDisallowed: boolean | undefined = false,
+  ): PlaybackAction<Arguments> => ({
     unavailableReason: playbackUnavailableReason ?? (isDisallowed ? disallowedReason : null),
     run,
   })
@@ -76,6 +79,11 @@ export function usePlaybackActions(playerState: PlayerStateOrLoading) {
     toggleShuffle: action(
       () => send((player) => player.setShuffle(!shuffle), "Couldn't change shuffle."),
       disallows.togglingShuffle,
+    ),
+    seek: action(
+      (positionMs: number) =>
+        send((player) => player.seek(positionMs), "Couldn't move to that position."),
+      disallows.seeking,
     ),
     // From off, repeat turns on for the context. From the other modes, it
     // turns on or off for the track.

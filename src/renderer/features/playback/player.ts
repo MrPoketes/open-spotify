@@ -1,13 +1,19 @@
 import { Clock, Context, Effect, Layer, Option, PubSub, Ref, Schema, Stream } from "effect"
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { Device } from "../spotify/spotify-device"
-import type { PlaybackState, RepeatMode } from "../spotify/spotify-playback-state"
+import type { RepeatMode } from "../spotify/spotify-playback-state"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { makePendingPlaybackChanges } from "./pending-playback-changes"
+import {
+  type PlaybackProgress,
+  type TimedPlayback,
+  positionAt,
+  progressAt,
+} from "./playback-progress"
 import { type QueuedItem, positionInQueue } from "./queued-item"
 
 export type PlayerState =
-  | { readonly status: "active"; readonly playback: PlaybackState }
+  | ({ readonly status: "active" } & TimedPlayback)
   | { readonly status: "noActiveDevice" }
   | { readonly status: "unreachable" }
 
@@ -19,6 +25,9 @@ export class QueuedItemGone extends Schema.TaggedError<QueuedItemGone>()("Queued
 // users of a development-mode Client ID share it.
 const pollInterval = "2 seconds"
 
+// Often enough for the seek bar to move smoothly between polls.
+const progressInterval = "250 millis"
+
 const isWindowVisible = () => document.visibilityState === "visible"
 
 // Electron reports the window as hidden while it is minimized.
@@ -29,14 +38,23 @@ const windowVisibility = Stream.concat(
   ),
 ).pipe(Stream.changes)
 
-const readState = (spotify: SpotifyApi["Service"]) =>
-  spotify.getPlaybackState.pipe(
-    Effect.map(
-      Option.match({
-        onNone: (): PlayerState => ({ status: "noActiveDevice" }),
-        onSome: (playback): PlayerState => ({ status: "active", playback }),
-      }),
+const pollRequests = (refreshRequests: PubSub.PubSub<void>) =>
+  Stream.merge(
+    windowVisibility.pipe(
+      Stream.switchMap((isVisible) => (isVisible ? Stream.tick(pollInterval) : Stream.empty)),
     ),
+    Stream.fromPubSub(refreshRequests),
+  )
+
+const readState = (spotify: SpotifyApi["Service"]) =>
+  Effect.gen(function* () {
+    const polledPlayback = yield* spotify.getPlaybackState
+    const progressReadAt = yield* Clock.currentTimeMillis
+    return Option.match(polledPlayback, {
+      onNone: (): PlayerState => ({ status: "noActiveDevice" }),
+      onSome: (playback): PlayerState => ({ status: "active", playback, progressReadAt }),
+    })
+  }).pipe(
     Effect.catch((error) =>
       Effect.logWarning("The playback state failed to load", error).pipe(
         Effect.as<PlayerState>({ status: "unreachable" }),
@@ -71,6 +89,49 @@ const isShuffleChange = (previous: Option.Option<PlayerState>, next: PlayerState
   next.status === "active" &&
   previous.value.playback.shuffle !== next.playback.shuffle
 
+type PendingPlaybackChanges = Effect.Success<typeof makePendingPlaybackChanges>
+
+const shownStateOf = (
+  polledState: Ref.Ref<Option.Option<PlayerState>>,
+  pendingChanges: PendingPlaybackChanges,
+) =>
+  Effect.gen(function* () {
+    const latest = yield* Ref.get(polledState)
+    if (Option.isNone(latest) || latest.value.status !== "active") {
+      return latest
+    }
+    const timedPlayback = yield* pendingChanges.applyTo(latest.value)
+    return Option.some<PlayerState>({ status: "active", ...timedPlayback })
+  })
+
+const positionShownBy = (shownState: Effect.Effect<Option.Option<PlayerState>>) =>
+  Effect.gen(function* () {
+    const shown = yield* shownState
+    const now = yield* Clock.currentTimeMillis
+    if (Option.isNone(shown) || shown.value.status !== "active") {
+      return null
+    }
+    const { item } = shown.value.playback
+    const progressMs = positionAt(shown.value, now)
+    if (item === null || progressMs === null) {
+      return null
+    }
+    return { itemUri: item.uri, progressMs }
+  })
+
+const progressOf = (playerState: PlayerState): Stream.Stream<PlaybackProgress | null> => {
+  if (playerState.status !== "active") {
+    return Stream.succeed(null)
+  }
+  const updates = playerState.playback.isPlaying
+    ? Stream.tick(progressInterval)
+    : Stream.succeed(undefined)
+  return updates.pipe(
+    Stream.mapEffect(() => Clock.currentTimeMillis),
+    Stream.map((now) => progressAt(playerState, now)),
+  )
+}
+
 export class Player extends Context.Service<
   Player,
   {
@@ -80,6 +141,9 @@ export class Player extends Context.Service<
     // has to change the item that is playing, so a queue on screen cannot
     // rely on the playback state alone.
     readonly queueChanges: Stream.Stream<void>
+    // Null while there is no active device, no item is playing, or Spotify
+    // does not say how far into the item playback is.
+    readonly progress: Stream.Stream<PlaybackProgress | null>
     readonly listDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => PlayerCommand
     // Resumes what was playing.
@@ -88,6 +152,7 @@ export class Player extends Context.Service<
     readonly pause: PlayerCommand
     readonly skipToNext: PlayerCommand
     readonly skipToPrevious: PlayerCommand
+    readonly seek: (positionMs: number) => PlayerCommand
     readonly playQueuedItem: (
       queuedItem: QueuedItem,
     ) => Effect.Effect<void, SpotifyApiError | QueuedItemGone>
@@ -115,14 +180,7 @@ export class Player extends Context.Service<
         }
       })
 
-      const latestState = Effect.gen(function* () {
-        const latest = yield* Ref.get(polledState)
-        if (Option.isNone(latest) || latest.value.status !== "active") {
-          return latest
-        }
-        const playback = yield* pendingChanges.applyTo(latest.value.playback)
-        return Option.some<PlayerState>({ status: "active", playback })
-      })
+      const latestState = shownStateOf(polledState, pendingChanges)
 
       // Every subscriber shares one poll, which runs only while someone is
       // subscribed and the window is visible. A new subscriber gets the
@@ -132,12 +190,7 @@ export class Player extends Context.Service<
       // keys send commands from the background and the operating system's
       // media overlay shows what they changed.
       const state = yield* Stream.merge(
-        Stream.merge(
-          windowVisibility.pipe(
-            Stream.switchMap((isVisible) => (isVisible ? Stream.tick(pollInterval) : Stream.empty)),
-          ),
-          Stream.fromPubSub(refreshRequests),
-        ).pipe(Stream.mapEffect(() => poll)),
+        pollRequests(refreshRequests).pipe(Stream.mapEffect(() => poll)),
         pendingChanges.updates,
       ).pipe(
         Stream.mapEffect(() => latestState),
@@ -147,6 +200,17 @@ export class Player extends Context.Service<
       )
 
       const refresh = PubSub.publish(refreshRequests, undefined)
+
+      const shownPosition = positionShownBy(latestState)
+
+      // Pausing stops the position where it is when pressed, not where the
+      // last poll had it, and resuming moves it on from there.
+      const showPlayingWhileSending = (isPlaying: boolean, command: PlayerCommand) =>
+        shownPosition.pipe(
+          Effect.flatMap((position) =>
+            pendingChanges.showWhileSending({ isPlaying }, command, position),
+          ),
+        )
 
       // A command that finds no active device means the shown state is out
       // of date, so the bar should switch to the no-active-device state.
@@ -162,17 +226,25 @@ export class Player extends Context.Service<
       return Player.of({
         state,
         queueChanges: Stream.fromPubSub(queueChanges),
+        progress: Stream.switchMap(state, progressOf),
         listDevices: spotify.getAvailableDevices,
         transferPlayback: (deviceId) => sendThenRefresh(spotify.transferPlayback(deviceId)),
-        play: pendingChanges.showWhileSending({ isPlaying: true }, send(spotify.play)),
+        play: showPlayingWhileSending(true, send(spotify.play)),
         startPlayback: (start) =>
           pendingChanges.showWhileSending(
             { isPlaying: true },
             sendThenRefresh(spotify.startPlayback(start)),
           ),
-        pause: pendingChanges.showWhileSending({ isPlaying: false }, send(spotify.pause)),
+        pause: showPlayingWhileSending(false, send(spotify.pause)),
         skipToNext: sendThenRefresh(spotify.skipToNext),
         skipToPrevious: sendThenRefresh(spotify.skipToPrevious),
+        seek: (positionMs) =>
+          Effect.gen(function* () {
+            const shown = yield* shownPosition
+            const position =
+              shown === null ? null : { itemUri: shown.itemUri, progressMs: positionMs }
+            yield* pendingChanges.showWhileSending({}, send(spotify.seek(positionMs)), position)
+          }),
         playQueuedItem: (queuedItem) =>
           skipToQueuedItem(spotify, queuedItem).pipe(
             Effect.ensuring(refresh),

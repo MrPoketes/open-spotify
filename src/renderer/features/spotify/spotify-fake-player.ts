@@ -22,6 +22,7 @@ interface FakePlayerState {
   context: { readonly uri: string } | null
   playOrder: (position: number) => unknown
   playPosition: number
+  progressMs: number
 }
 
 type FakeResponse = readonly [number, unknown]
@@ -31,6 +32,8 @@ const TransferPlaybackBody = Schema.fromJsonString(
 )
 
 const ShuffleState = Schema.Literals(["true", "false"])
+
+const SeekPosition = Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0))
 
 const QueuedUri = Schema.TemplateLiteral(["spotify:track:", Schema.String])
 
@@ -61,8 +64,6 @@ const setShuffle = (player: FakePlayerState, isOn: boolean) => {
 
 const accepted: FakeResponse = [204, undefined]
 
-const invalidState: FakeResponse = [400, spotifyErrorBody(400, "Invalid state")]
-
 const findDevice = (deviceId: string) =>
   Option.fromNullishOr(fakeDevices.find(({ id }) => id === deviceId))
 
@@ -87,17 +88,27 @@ const transferPlayback = (
   return accepted
 }
 
-// Applies a command that Spotify accepts only with a valid `state` parameter.
-const withState =
-  <A>(stateSchema: Schema.Decoder<A>, apply: (player: FakePlayerState, state: A) => void) =>
+// Applies a command that Spotify accepts only with a valid query parameter.
+const withParameter =
+  <A>(
+    name: string,
+    parameterSchema: Schema.Decoder<A>,
+    apply: (player: FakePlayerState, value: A) => void,
+  ) =>
   (player: FakePlayerState, url: URL): FakeResponse => {
-    const state = Schema.decodeUnknownOption(stateSchema)(url.searchParams.get("state"))
-    if (Option.isNone(state)) {
-      return invalidState
+    const value = Schema.decodeUnknownOption(parameterSchema)(url.searchParams.get(name))
+    if (Option.isNone(value)) {
+      return [400, spotifyErrorBody(400, `Invalid ${name}`)]
     }
-    apply(player, state.value)
+    apply(player, value.value)
     return accepted
   }
+
+// Like Spotify, a new item starts from its beginning.
+const playAt = (player: FakePlayerState, position: number) => {
+  player.playPosition = position
+  player.progressMs = 0
+}
 
 // Without a body, Spotify resumes what was playing.
 const startPlayback = (
@@ -115,7 +126,7 @@ const startPlayback = (
   const { context, items, position } = start.value
   player.context = context
   player.playOrder = (playPosition) => items[playPosition]
-  player.playPosition = position
+  playAt(player, position)
   if (player.shuffledAfter !== null) {
     player.shuffledAfter = position
   }
@@ -129,18 +140,21 @@ const playerCommands: Record<string, (player: FakePlayerState, url: URL) => Fake
     return accepted
   },
   "POST /v1/me/player/next": (player) => {
-    player.playPosition += 1
+    playAt(player, player.playPosition + 1)
     return accepted
   },
   "POST /v1/me/player/previous": (player) => {
-    player.playPosition = Math.max(0, player.playPosition - 1)
+    playAt(player, Math.max(0, player.playPosition - 1))
     return accepted
   },
-  "PUT /v1/me/player/shuffle": withState(ShuffleState, (player, state) => {
+  "PUT /v1/me/player/shuffle": withParameter("state", ShuffleState, (player, state) => {
     setShuffle(player, state === "true")
   }),
-  "PUT /v1/me/player/repeat": withState(RepeatMode, (player, state) => {
+  "PUT /v1/me/player/repeat": withParameter("state", RepeatMode, (player, state) => {
     player.repeat = state
+  }),
+  "PUT /v1/me/player/seek": withParameter("position_ms", SeekPosition, (player, position) => {
+    player.progressMs = position
   }),
   // Like Spotify, refuses a uri that is not a playable item's. The fake plays
   // its tracks in order, so a queued track is accepted but never plays.
@@ -157,6 +171,7 @@ const playbackState = (player: FakePlayerState) => ({
   repeat_state: player.repeat,
   context: player.context,
   item: itemAt(player, player.playPosition) ?? null,
+  progress_ms: player.progressMs,
 })
 
 const upNextCount = 10
@@ -187,6 +202,7 @@ export const fakePlayer = () => {
     context: null,
     playOrder: fakePlayOrder,
     playPosition: 0,
+    progressMs: fakePlaybackState(fakeDevices[0]).progress_ms,
   }
 
   return (request: HttpClientRequest.HttpClientRequest, url: URL): FakeResponse | undefined => {
