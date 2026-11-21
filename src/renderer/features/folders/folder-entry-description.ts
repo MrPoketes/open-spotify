@@ -8,6 +8,7 @@ import {
   Radio,
 } from "lucide-react"
 import type { FolderEntry } from "../../../shared/folders"
+import type { ArtworkSource } from "../../ui/artwork"
 import { formatCount } from "../../ui/format-count"
 
 type SpotifyItemKind = "playlist" | "artist" | "album" | "show" | "track"
@@ -65,7 +66,7 @@ interface FolderEntryDescription {
   readonly key: string
   readonly name: string
   readonly details: string
-  readonly imageUrl: string | null
+  readonly artwork: ReadonlyArray<ArtworkSource>
   readonly icon: LucideIcon
   readonly isArtist: boolean
   readonly page: FolderEntryPage
@@ -77,7 +78,7 @@ export const describeFolderEntry = (entry: FolderEntry): FolderEntryDescription 
       key: entry.id,
       name: entry.name,
       details: `Folder · ${formatCount(entry.entries.length, "item", "items")}`,
-      imageUrl: null,
+      artwork: [],
       icon: FolderIcon,
       isArtist: false,
       page: { to: "/folder/$folderId", params: { folderId: entry.id } },
@@ -88,7 +89,8 @@ export const describeFolderEntry = (entry: FolderEntry): FolderEntryDescription 
     key: entry.uri,
     name: entry.name,
     details: spotifyItemKinds[kind].label,
-    imageUrl: entry.imageUrl,
+    // The folder tree caches one image per item, without its width.
+    artwork: entry.imageUrl === null ? [] : [{ url: entry.imageUrl, width: null }],
     icon: spotifyItemKinds[kind].icon,
     isArtist: kind === "artist",
     page: spotifyItemKinds[kind].page(id),

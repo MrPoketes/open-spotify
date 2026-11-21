@@ -1,4 +1,5 @@
 import { Schema } from "effect"
+import { ExpandedFolders } from "./expanded-folders"
 import { FolderView } from "./folder-view"
 import { LibrarySections, PinnedLibraryEntries } from "./library-layout"
 import { RightPaneWidth } from "./right-pane-width"
@@ -15,6 +16,7 @@ export const SettingKey = Schema.Literals([
   "trackListDensity",
   "pinnedLibraryEntries",
   "librarySections",
+  "expandedFolders",
 ])
 
 export type SettingKey = typeof SettingKey.Type
@@ -30,6 +32,7 @@ export const settingSchemas = {
   trackListDensity: TrackListDensity,
   pinnedLibraryEntries: PinnedLibraryEntries,
   librarySections: LibrarySections,
+  expandedFolders: ExpandedFolders,
 } satisfies Record<SettingKey, Schema.Top>
 
 export type SettingValue<K extends SettingKey> = (typeof settingSchemas)[K]["Type"]

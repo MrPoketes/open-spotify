@@ -3,14 +3,13 @@ import { CardGrid, type GridCard } from "../../ui/card-grid"
 import { describeFolderEntry } from "./folder-entry-description"
 
 const folderEntryCard = (entry: FolderEntry): GridCard => {
-  const { key, name, details, imageUrl, icon, isArtist, page } = describeFolderEntry(entry)
+  const { key, name, details, artwork, icon, isArtist, page } = describeFolderEntry(entry)
   return {
     key,
     link: page,
     title: name,
     details,
-    // The folder tree caches one image per item, without its width.
-    artwork: imageUrl === null ? [] : [{ url: imageUrl, width: null }],
+    artwork,
     placeholderIcon: icon,
     roundArtwork: isArtist,
   }

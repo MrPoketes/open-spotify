@@ -2,6 +2,7 @@ import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
+import type { FolderTree } from "../../../shared/folders"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
@@ -121,5 +122,40 @@ describe("Sidebar folder menu", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The file couldn't be imported. No folders were imported.",
     )
+  })
+})
+
+const roadTripTree: FolderTree = [
+  { _tag: "Folder", id: "6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4e01", name: "Road trip", entries: [] },
+]
+
+describe("Sidebar folder tree", () => {
+  it("shows the folder tree above the library sections", async () => {
+    renderScreen(
+      <FoldersProvider>
+        <Sidebar width={280} />
+      </FoldersProvider>,
+      fakeMainProcess({ folderTree: roadTripTree }),
+    )
+
+    const folders = await screen.findByRole("tree", { name: "Folders" })
+    const playlists = await screen.findByRole("region", { name: "Playlists" })
+
+    expect(folders.compareDocumentPosition(playlists)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  it("shows imported folders in the tree without a restart", async () => {
+    const user = userEvent.setup()
+    renderScreen(
+      <FoldersProvider>
+        <Sidebar width={280} />
+      </FoldersProvider>,
+      mainProcessImportingOneFolder(),
+    )
+
+    await user.click(await screen.findByRole("button", { name: "Folder options" }))
+    await user.click(screen.getByRole("menuitem", { name: "Import folders…" }))
+
+    expect(await screen.findByRole("treeitem", { name: /^Imported/ })).toBeInTheDocument()
   })
 })

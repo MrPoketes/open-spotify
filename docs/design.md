@@ -182,7 +182,9 @@ of them sits in a `fieldset` whose `legend` names it for screen readers.
 
 The sidebar library has a chip per kind (Playlists, Albums, Artists, Shows) and a name filter
 under them. Pressing the active chip shows every kind again. The filters stay at the top of the
-pane while the list scrolls. When they match nothing, the list says so instead of going blank.
+pane while the list scrolls. When the filters match nothing, the list says so instead of going
+blank. The sidebar folders sit above the filters and scroll away first, since the filters apply
+only to the library.
 
 ### Text fields
 
@@ -220,6 +222,21 @@ hidden section, it says that instead, so a hidden section never looks like a mis
 
 Pins are the `pinnedLibraryEntries` setting and the section order and states are the
 `librarySections` setting, so both survive a restart.
+
+### Sidebar folders
+
+The user's folders sit above the library sections under a "Folders" heading, as a tree that
+follows the WAI-ARIA tree view pattern. Its rows look like library rows (the shared
+`ArtworkSummary`), with a 16 px chevron in front of each folder and 16 px more indent for each
+level. The tree is one tab stop: the up and down arrows (or `j` and `k`) move through the
+visible rows, the right arrow expands a folder and then moves into it, the left arrow collapses
+a folder or moves to its parent, and `Enter` opens the row's page. Clicking a row opens its
+page, and clicking a chevron expands or collapses the folder and moves focus to its row, so
+focus is never lost inside a folder that closes. The chevron stays out of the tab order and the
+accessibility tree, since the row announces whether it is expanded.
+
+Folders start collapsed. The ones the user expands are the `expandedFolders` setting, so they
+stay open after a restart. A user without folders sees no Folders heading at all.
 
 ### Now-playing bar and device picker
 
