@@ -56,6 +56,7 @@ export function useMediaSession(playerState: PlayerStateOrLoading, playback: Pla
         navigator.mediaSession.setActionHandler(action, null)
       }
       navigator.mediaSession.metadata = null
+      navigator.mediaSession.playbackState = "none"
       shownItemUri.current = null
     }
   }, [])

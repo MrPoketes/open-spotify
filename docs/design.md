@@ -573,10 +573,10 @@ since the control's tooltip may never have been seen.
 
 `?` opens the shortcuts dialog: a modal Overlay (`surface-overlay`, `shadow-overlay`,
 `rounded-large`) at most 448 px wide with 24 px of padding, over a `canvas` backdrop at 60 %
-opacity, with a `font-display` `text-xl` "Keyboard shortcuts" heading and a Close icon button. Below them come a Playback and a General section, each with a
-`text-sm` 600 `muted` heading and one row per shortcut: the action in `text-sm` and its keys as
-`kbd` chips (`surface-raised`, `rounded-small`, `text-xs` 600). `Escape` closes it and focus
-returns to where it was.
+opacity, with a `font-display` `text-xl` "Keyboard shortcuts" heading and a Close icon button.
+Below them come a Playback and a General section, each with a `text-sm` 600 `muted` heading and
+one row per shortcut: the action in `text-sm` and its keys as `kbd` chips (`surface-raised`,
+`rounded-small`, `text-xs` 600). `Escape` closes it and focus returns to where it was.
 
 The keyboard's play/pause, next, and previous keys control playback while a device is active,
 even with the window in the background, and the operating system's media overlay shows the
