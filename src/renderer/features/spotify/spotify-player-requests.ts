@@ -36,4 +36,6 @@ export const playerCommands = <E>(
     sendCommand(HttpClientRequest.put(`${playerUrl}/shuffle?state=${isOn}`)),
   setRepeat: (mode: RepeatMode) =>
     sendCommand(HttpClientRequest.put(`${playerUrl}/repeat?state=${mode}`)),
+  addToQueue: (uri: string) =>
+    sendCommand(HttpClientRequest.post(`${playerUrl}/queue?uri=${encodeURIComponent(uri)}`)),
 })

@@ -12,6 +12,9 @@ import { menuItemTargetForKey } from "./menu-item-target"
 import type { ContextMenuAnchor } from "./use-context-menu"
 
 export interface ContextMenuAction {
+  // Tells apart actions with the same label, such as two playlists that
+  // share a name.
+  readonly id?: string
   readonly label: string
   readonly onSelect: () => void
 }
@@ -24,6 +27,9 @@ export interface ContextSubmenu {
 export type ContextMenuItem = ContextMenuAction | ContextSubmenu
 
 const isSubmenu = (item: ContextMenuItem): item is ContextSubmenu => "items" in item
+
+const menuItemKey = (item: ContextMenuItem) =>
+  isSubmenu(item) ? item.label : (item.id ?? item.label)
 
 // A menu opened near the right or bottom edge of the window moves back
 // inside it.
@@ -41,6 +47,12 @@ function useShiftIntoWindow(menuRef: RefObject<HTMLElement | null>) {
   }, [menuRef])
   return shift
 }
+
+// A long menu, such as a list of playlists, scrolls instead of running off
+// the window. A menu with submenus cannot scroll, because its scroll box
+// would clip the submenus that open beside it.
+const scrollClassNames = (items: ReadonlyArray<ContextMenuItem>) =>
+  items.some(isSubmenu) ? "" : "max-h-[calc(100dvh-1rem)] overflow-y-auto"
 
 interface MenuListProps {
   readonly label: string
@@ -105,10 +117,10 @@ function MenuList({ label, items, closeAll, backToParent }: MenuListProps) {
       tabIndex={-1}
       onKeyDown={onKeyDown}
       style={shift}
-      className="flex min-w-48 flex-col rounded-large bg-surface-overlay p-1 shadow-overlay transition-[opacity,translate] duration-200 ease-out starting:-translate-y-2 starting:opacity-0"
+      className={`flex min-w-48 flex-col rounded-large bg-surface-overlay p-1 shadow-overlay transition-[opacity,translate] duration-200 ease-out starting:-translate-y-2 starting:opacity-0 ${scrollClassNames(items)}`}
     >
       {items.map((item, index) => (
-        <li key={item.label} role="none" className="relative">
+        <li key={menuItemKey(item)} role="none" className="relative">
           <button
             ref={(element) => {
               itemRefs.current[index] = element

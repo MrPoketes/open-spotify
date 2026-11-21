@@ -140,6 +140,11 @@ const decodeJson = <A>(
 const searchUrl = (query: string, types: ReadonlyArray<SearchType>, offset: number) =>
   `${spotifyApiBaseUrl}/search?q=${encodeURIComponent(query)}&type=${types.join(",")}&limit=${searchPageSize}&offset=${offset}`
 
+const addToPlaylistRequest = (playlistId: string, uri: string) =>
+  HttpClientRequest.post(
+    `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items`,
+  ).pipe(HttpClientRequest.bodyJsonUnsafe({ uris: [uri] }))
+
 const authorizedClient = Effect.gen(function* () {
   const accessToken = yield* SpotifyAccessToken
   return (yield* HttpClient.HttpClient).pipe(
@@ -170,6 +175,10 @@ export class SpotifyApi extends Context.Service<
       playlistId: string,
       offset: number,
     ) => Effect.Effect<PlaylistItemsPage, SpotifyApiError>
+    readonly addToPlaylist: (
+      playlistId: string,
+      uri: string,
+    ) => Effect.Effect<void, SpotifyApiError>
     readonly getAlbum: (albumId: string) => Effect.Effect<Album, SpotifyApiError>
     // The album's tracks from the offset on, for albums longer than the page
     // Spotify embeds in the album.
@@ -217,6 +226,7 @@ export class SpotifyApi extends Context.Service<
     readonly skipToPrevious: Effect.Effect<void, SpotifyApiError>
     readonly setShuffle: (isOn: boolean) => Effect.Effect<void, SpotifyApiError>
     readonly setRepeat: (mode: RepeatMode) => Effect.Effect<void, SpotifyApiError>
+    readonly addToQueue: (uri: string) => Effect.Effect<void, SpotifyApiError>
   }
 >()("open-spotify/SpotifyApi") {
   static readonly layerWithoutHttpClient = Layer.effect(
@@ -256,6 +266,10 @@ export class SpotifyApi extends Context.Service<
             `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items?limit=${maximumPageSize}&offset=${offset}&${trackAndEpisodeTypes}`,
             PlaylistItemsPage,
           ),
+        // Spotify answers with the playlist's new snapshot id, which nothing
+        // needs.
+        addToPlaylist: (playlistId, uri) =>
+          send(addToPlaylistRequest(playlistId, uri)).pipe(Effect.asVoid),
         getAlbum: (albumId) =>
           getJson(`${spotifyApiBaseUrl}/albums/${encodeURIComponent(albumId)}`, Album),
         albumTracks: (albumId, offset) =>

@@ -1,4 +1,4 @@
-import { Effect, Layer } from "effect"
+import { Effect, Layer, Option, Schema } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
 import { SpotifyAccessToken } from "./spotify-access-token"
 import type { AlbumGroup } from "./spotify-api"
@@ -96,7 +96,9 @@ const cursorPageOf = (artists: typeof fakeFollowedArtists, url: URL) => {
   }
 }
 
-const listenerCanReadItems = (playlist: FakePlaylist) =>
+// Spotify lets a user read the items of, and add items to, only the
+// playlists they own or collaborate on.
+const isOwnedOrCollaborative = (playlist: FakePlaylist) =>
   playlist.owner.id === fakeListenerId || playlist.collaborative
 
 // Spotify returns episodes only to clients that list them in
@@ -128,7 +130,7 @@ const simplifiedPlaylist = (playlist: FakePlaylist) => ({
 })
 
 const fullPlaylist = (playlist: FakePlaylist, url: URL) => {
-  if (!listenerCanReadItems(playlist)) {
+  if (!isOwnedOrCollaborative(playlist)) {
     return playlistMetadata(playlist)
   }
   return {
@@ -271,10 +273,46 @@ const respondTo = (url: URL): readonly [number, unknown] => {
   if (itemsPath === undefined) {
     return [200, fullPlaylist(playlist, url)]
   }
-  if (!listenerCanReadItems(playlist)) {
+  if (!isOwnedOrCollaborative(playlist)) {
     return [403, errorBody(403, "Forbidden")]
   }
   return [200, pageOf(entriesServed(playlist, url), url, defaultPageLimit)]
+}
+
+const PlaylistAdditionBody = Schema.fromJsonString(
+  Schema.Struct({
+    uris: Schema.NonEmptyArray(Schema.TemplateLiteral(["spotify:track:", Schema.String])),
+  }),
+)
+
+const isPlaylistAdditionBody = (request: HttpClientRequest.HttpClientRequest) =>
+  request.body._tag === "Uint8Array" &&
+  Option.isSome(
+    Schema.decodeUnknownOption(PlaylistAdditionBody)(new TextDecoder().decode(request.body.body)),
+  )
+
+// Like Spotify, accepts only a POST to the playlist's items (the /tracks
+// endpoint is removed) with the URIs in the body. The fixtures stay as they
+// are, so an added track does not show up in the playlist afterwards.
+const respondToPlaylistAddition = (
+  request: HttpClientRequest.HttpClientRequest,
+  url: URL,
+): readonly [number, unknown] | undefined => {
+  const [, playlistId] = /^\/v1\/playlists\/([^/]+)\/items$/.exec(url.pathname) ?? []
+  if (request.method !== "POST" || playlistId === undefined) {
+    return undefined
+  }
+  const playlist = fakePlaylists.find(({ id }) => id === playlistId)
+  if (!playlist) {
+    return notFound
+  }
+  if (!isOwnedOrCollaborative(playlist)) {
+    return [403, errorBody(403, "Forbidden")]
+  }
+  if (!isPlaylistAdditionBody(request)) {
+    return [400, errorBody(400, "Invalid request body")]
+  }
+  return [201, { snapshot_id: `fake-snapshot-${playlist.id}` }]
 }
 
 // A stand-in for api.spotify.com that serves the fixtures, so features can be
@@ -285,7 +323,8 @@ export const spotifyFakeServer = Layer.sync(HttpClient.HttpClient, () => {
     if (request.headers["authorization"] !== `Bearer ${fakeAccessToken}`) {
       return Effect.succeed(jsonResponse(request, 401, errorBody(401, "No token provided")))
     }
-    const [status, body] = respondToPlayer(request, url) ?? respondTo(url)
+    const [status, body] =
+      respondToPlayer(request, url) ?? respondToPlaylistAddition(request, url) ?? respondTo(url)
     return Effect.succeed(jsonResponse(request, status, body))
   })
 })
