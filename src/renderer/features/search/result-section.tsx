@@ -1,6 +1,7 @@
 import { Effect } from "effect"
 import { type ReactNode, useId } from "react"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
+import { SecondaryButton } from "../../ui/pill-button"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { Page } from "../spotify/spotify-paging"
 import type { SearchResults, SearchType } from "../spotify/spotify-search"
@@ -46,15 +47,12 @@ export function ResultSection<A>(props: ResultSectionProps<A>) {
       {hasMore && nextPage !== "failed" ? (
         <div className="flex items-center gap-4">
           {/* Disabled with aria-disabled rather than disabled, so the button keeps focus while its page loads. */}
-          <button
-            type="button"
+          <SecondaryButton
+            label="Load more"
             aria-label={`Load more ${kind}`}
             aria-disabled={nextPage === "loading"}
             onClick={loadNextPage}
-            className="rounded-full bg-surface-raised px-4 py-2 text-sm font-semibold transition-opacity duration-120 ease-out aria-disabled:opacity-50"
-          >
-            Load more
-          </button>
+          />
           {nextPage === "loading" ? (
             <output className="text-sm text-muted">Loading more {kind}…</output>
           ) : null}

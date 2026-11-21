@@ -1,4 +1,4 @@
-import { AccentButton } from "./accent-button"
+import { AccentButton } from "./pill-button"
 
 interface ErrorWithRetryProps {
   readonly message: string

@@ -4,6 +4,7 @@ import { type FormEvent, use, useId, useState } from "react"
 import { settingSchemas } from "../../../shared/settings"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { AccentButton } from "../../ui/pill-button"
 import { SpotifyAppSteps } from "./spotify-app-steps"
 
 const saveClientId = Effect.fn("saveClientId")(function* (clientId: string) {
@@ -70,12 +71,9 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
               Paste the Client ID from your Spotify app.
             </p>
           )}
-          <button
-            type="submit"
-            className="mt-2 self-start rounded-full bg-accent px-6 py-3 text-sm font-semibold text-on-accent"
-          >
-            Save and continue
-          </button>
+          <div className="mt-2">
+            <AccentButton type="submit" label="Save and continue" />
+          </div>
           {saveFailed && (
             <p role="alert" className="text-sm text-danger">
               Could not save the Client ID. Try again.
