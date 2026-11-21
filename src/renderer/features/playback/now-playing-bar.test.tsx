@@ -228,6 +228,8 @@ describe("NowPlayingBar", () => {
       type: "AVR",
       isActive: false,
       isRestricted: false,
+      volumePercent: null,
+      supportsVolume: false,
     }
     renderNowPlayingBar(
       spotifyApiFakeWith((spotify) => ({

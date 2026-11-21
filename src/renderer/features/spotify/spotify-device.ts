@@ -9,6 +9,15 @@ export const Device = Schema.Struct({
   isActive: Schema.Boolean,
   // A restricted device accepts no commands from the Web API.
   isRestricted: Schema.Boolean,
-}).pipe(Schema.encodeKeys({ isActive: "is_active", isRestricted: "is_restricted" }))
+  volumePercent: Schema.NullOr(Schema.Number),
+  supportsVolume: Schema.Boolean,
+}).pipe(
+  Schema.encodeKeys({
+    isActive: "is_active",
+    isRestricted: "is_restricted",
+    volumePercent: "volume_percent",
+    supportsVolume: "supports_volume",
+  }),
+)
 
 export type Device = typeof Device.Type

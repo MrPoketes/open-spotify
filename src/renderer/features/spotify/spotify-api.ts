@@ -227,6 +227,8 @@ export class SpotifyApi extends Context.Service<
     readonly seek: (positionMs: number) => Effect.Effect<void, SpotifyApiError>
     readonly setShuffle: (isOn: boolean) => Effect.Effect<void, SpotifyApiError>
     readonly setRepeat: (mode: RepeatMode) => Effect.Effect<void, SpotifyApiError>
+    // From 0 to 100.
+    readonly setVolume: (volumePercent: number) => Effect.Effect<void, SpotifyApiError>
     readonly addToQueue: (uri: string) => Effect.Effect<void, SpotifyApiError>
   }
 >()("open-spotify/SpotifyApi") {

@@ -304,6 +304,17 @@ the device picker button, labelled with the playing device ("Playing on Kitchen 
 "No active device". With no active device, the bar's left side says that audio plays in the
 Spotify app or on another device, next to a "Choose a device" button that opens the picker.
 
+After the device picker come a mute button and a 96 px volume slider for the active device. The
+slider is a native range input, 24 px tall as a pointer target, whose 4 px track fills with
+`accent` up to a 12 px `foreground` thumb. Moving it shows the new volume at once and sends it
+once the slider has rested for 250 ms, so a drag or a held arrow key sends one request. The
+change then behaves like any other control's: it holds for a second after Spotify accepts it,
+and a rejected change goes back with a `text-xs` `danger` alert under the slider. Mute
+(`Volume2`) turns the volume down to zero and becomes Unmute (`VolumeX`), which restores the
+last volume above zero. Both are unavailable whenever the playback controls are, and also when
+the device does not let Spotify change its volume; like the controls, they stay focusable and
+their `title` says why.
+
 The picker is a non-modal popover above its button: `surface-overlay`, `shadow-overlay`,
 `rounded-large`, 320 px wide. Each device is a row with a 20 px Lucide icon for its type, the
 name in `text-sm`, and the type in `text-xs` `muted`. The active device is drawn in `accent`,

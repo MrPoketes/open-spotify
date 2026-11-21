@@ -16,7 +16,7 @@ const unavailableReasons = {
   noActiveDevice: "Choose a device to control playback.",
 } as const
 
-const unavailableReason = (playerState: PlayerStateOrLoading): string | null => {
+export const unavailableReason = (playerState: PlayerStateOrLoading): string | null => {
   if (playerState.status !== "active") {
     return unavailableReasons[playerState.status]
   }
