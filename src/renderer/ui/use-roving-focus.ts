@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useRef, useState } from "react"
+import { type KeyboardEvent, useCallback, useRef, useState } from "react"
 
 type Move = (activeIndex: number, rowCount: number) => number
 
@@ -44,8 +44,11 @@ export const useRovingFocus = (rowCount: number, initialIndex = 0) => {
   }
 
   // Focuses the row at a position, or the last row if the list has shrunk
-  // below it.
-  const focusRow = (index: number) => rows.current[Math.min(index, rowCount - 1)]?.focus()
+  // below it. Stable while the row count holds, so an effect can depend on it.
+  const focusRow = useCallback(
+    (index: number) => rows.current[Math.min(index, rowCount - 1)]?.focus(),
+    [rowCount],
+  )
 
   const rowProps = (index: number) => ({
     tabIndex: index === activeIndex ? 0 : -1,

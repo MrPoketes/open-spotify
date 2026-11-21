@@ -8,6 +8,10 @@ export const ThemeId = Schema.NonEmptyString
 
 export type ThemeId = typeof ThemeId.Type
 
+// Only imported themes can be deleted, and their UUIDs never match a built-in
+// theme's id.
+export const ImportedThemeId = Schema.String.check(Schema.isUUID(4))
+
 export const LibraryTheme = Schema.Struct({ id: ThemeId, theme: Theme })
 
 export type LibraryTheme = typeof LibraryTheme.Type
@@ -22,13 +26,17 @@ export const themeLibrary = (
   importedThemes: ReadonlyArray<LibraryTheme>,
 ): ReadonlyArray<LibraryTheme> => [...builtInLibraryThemes, ...importedThemes]
 
+export const defaultLibraryTheme: LibraryTheme = {
+  id: defaultThemeId,
+  theme: builtInThemes[defaultThemeId],
+}
+
+export const isBuiltInTheme = (themeId: ThemeId) => Object.hasOwn(builtInThemes, themeId)
+
 // A saved id can come from a newer build or name a theme that is gone, and
 // the app must still have a theme to show.
 export const findLibraryTheme = (
   library: ReadonlyArray<LibraryTheme>,
   themeId: ThemeId,
 ): LibraryTheme =>
-  library.find((libraryTheme) => libraryTheme.id === themeId) ?? {
-    id: defaultThemeId,
-    theme: builtInThemes[defaultThemeId],
-  }
+  library.find((libraryTheme) => libraryTheme.id === themeId) ?? defaultLibraryTheme

@@ -18,13 +18,14 @@ import {
 import { Artist } from "./spotify-artist"
 import { SpotifyAccessToken } from "./spotify-access-token"
 import { spotifyApiBaseUrl } from "./spotify-api-url"
-import { Device } from "./spotify-device"
+import type { Device } from "./spotify-device"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
 import { type TimeRange, listeningHistoryRequests } from "./spotify-listening-history"
 import { Paging, streamPages } from "./spotify-paging"
 import type { PlayHistory } from "./spotify-play-history"
 import { PlaybackState, type RepeatMode } from "./spotify-playback-state"
-import { PlayerQueue } from "./spotify-player-queue"
+import type { PlayerQueue } from "./spotify-player-queue"
+import { playerCommands, playerReads, playerUrl } from "./spotify-player-requests"
 import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
 import { SearchResults, type SearchType, searchPageSize } from "./spotify-search"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
@@ -57,8 +58,6 @@ export type SpotifyApiError =
   | SpotifyDecodeError
   | NoActiveDevice
 
-const playerUrl = `${spotifyApiBaseUrl}/me/player`
-
 // The largest page Spotify allows for playlists, playlist items, album tracks,
 // show episodes, and the user's saved and followed collections.
 export const maximumPageSize = 50
@@ -77,8 +76,6 @@ export type AlbumGroup = "album" | "single" | "appears_on"
 const trackAndEpisodeTypes = "additional_types=track,episode"
 
 const FollowedArtistsPage = Schema.Struct({ artists: Paging(Artist) })
-
-const AvailableDevices = Schema.Struct({ devices: Schema.Array(Device) })
 
 const SpotifyErrorBody = Schema.Struct({
   error: Schema.Struct({ message: Schema.String, reason: Schema.optionalKey(Schema.String) }),
@@ -142,26 +139,6 @@ const decodeJson = <A>(
 
 const searchUrl = (query: string, types: ReadonlyArray<SearchType>, offset: number) =>
   `${spotifyApiBaseUrl}/search?q=${encodeURIComponent(query)}&type=${types.join(",")}&limit=${searchPageSize}&offset=${offset}`
-
-// Spotify answers each player command with 204 and no body.
-const playerCommands = <E>(
-  sendCommand: (request: HttpClientRequest.HttpClientRequest) => Effect.Effect<void, E>,
-) => ({
-  transferPlayback: (deviceId: string) =>
-    sendCommand(
-      HttpClientRequest.put(playerUrl).pipe(
-        HttpClientRequest.bodyJsonUnsafe({ device_ids: [deviceId] }),
-      ),
-    ),
-  play: sendCommand(HttpClientRequest.put(`${playerUrl}/play`)),
-  pause: sendCommand(HttpClientRequest.put(`${playerUrl}/pause`)),
-  skipToNext: sendCommand(HttpClientRequest.post(`${playerUrl}/next`)),
-  skipToPrevious: sendCommand(HttpClientRequest.post(`${playerUrl}/previous`)),
-  setShuffle: (isOn: boolean) =>
-    sendCommand(HttpClientRequest.put(`${playerUrl}/shuffle?state=${isOn}`)),
-  setRepeat: (mode: RepeatMode) =>
-    sendCommand(HttpClientRequest.put(`${playerUrl}/repeat?state=${mode}`)),
-})
 
 const authorizedClient = Effect.gen(function* () {
   const accessToken = yield* SpotifyAccessToken
@@ -322,10 +299,7 @@ export class SpotifyApi extends Context.Service<
           ),
         ...listeningHistoryRequests(getJson),
         getPlaybackState,
-        getAvailableDevices: getJson(`${playerUrl}/devices`, AvailableDevices).pipe(
-          Effect.map(({ devices }) => devices),
-        ),
-        getQueue: getJson(`${playerUrl}/queue`, PlayerQueue),
+        ...playerReads(getJson),
         ...playerCommands((request) => send(request).pipe(Effect.asVoid)),
       })
     }),

@@ -1,99 +1,104 @@
-import { Check } from "lucide-react"
-import { type KeyboardEvent, use } from "react"
-import type { Theme } from "../../../shared/theme"
-import { type LibraryTheme, type ThemeId, findLibraryTheme } from "../../../shared/theme-library"
+import { use, useEffect, useRef } from "react"
+import {
+  type LibraryTheme,
+  type ThemeId,
+  defaultLibraryTheme,
+  findLibraryTheme,
+  isBuiltInTheme,
+} from "../../../shared/theme-library"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
-import { type RovingRowProps, useRovingFocus } from "../../ui/use-roving-focus"
+import { useRovingFocus } from "../../ui/use-roving-focus"
 import { selectTheme } from "./saved-theme"
-import { ThemeSwatch } from "./theme-swatch"
+import { type DeleteTrigger, ThemeOption } from "./theme-option"
+import { useDeleteImportedTheme } from "./use-delete-imported-theme"
 import { useThemePreview } from "./use-theme-preview"
 
 interface ThemePickerProps {
   readonly themes: ReadonlyArray<LibraryTheme>
   readonly chosenThemeId: ThemeId
-  // The picker applies and saves a chosen theme itself.
+  // The picker applies and saves a chosen theme itself, and deletes a theme
+  // from storage before it reports the deletion.
   readonly onChoose: (themeId: ThemeId) => void
+  readonly onDelete: (themeId: ThemeId) => void
 }
 
-export function ThemePicker({ themes, chosenThemeId, onChoose }: ThemePickerProps) {
+export function ThemePicker({ themes, chosenThemeId, onChoose, onDelete }: ThemePickerProps) {
   const runtime = use(RendererRuntimeContext)
   const { setHoveredTheme, setFocusedTheme } = useThemePreview(
     findLibraryTheme(themes, chosenThemeId).theme,
   )
   // Tab enters the list on the chosen theme.
-  const { onKeyDown, rowProps } = useRovingFocus(
+  const { onKeyDown, rowProps, focusRow } = useRovingFocus(
     themes.length,
     themes.findIndex((libraryTheme) => libraryTheme.id === chosenThemeId),
   )
+  // A row deleted from the keyboard hands focus to the row that takes its
+  // place, so the user can carry on without tabbing back into the list.
+  const focusAfterDelete = useRef<{ themeId: ThemeId; index: number } | null>(null)
+
+  useEffect(() => {
+    const pendingFocus = focusAfterDelete.current
+    if (pendingFocus === null || themes.some(({ id }) => id === pendingFocus.themeId)) {
+      return
+    }
+    focusAfterDelete.current = null
+    focusRow(pendingFocus.index)
+  }, [themes, focusRow])
 
   const chooseTheme = (libraryTheme: LibraryTheme) => {
     onChoose(libraryTheme.id)
     runtime.runFork(selectTheme(libraryTheme))
   }
 
-  return (
-    // The rows touch, so the pointer never crosses a gap that would flash the
-    // saved theme between two previews.
-    <ul aria-label="Theme" className="flex flex-col">
-      {themes.map((libraryTheme, index) => (
-        <li key={libraryTheme.id}>
-          <ThemeOption
-            theme={libraryTheme.theme}
-            isChosen={libraryTheme.id === chosenThemeId}
-            rovingProps={rowProps(index)}
-            onKeyDown={onKeyDown}
-            onHover={() => setHoveredTheme(libraryTheme.theme)}
-            onUnhover={() => setHoveredTheme(null)}
-            onFocus={() => setFocusedTheme(libraryTheme.theme)}
-            onBlur={() => setFocusedTheme(null)}
-            onChoose={() => chooseTheme(libraryTheme)}
-          />
-        </li>
-      ))}
-    </ul>
-  )
-}
+  const { deleteImportedTheme, failureMessage } = useDeleteImportedTheme((libraryTheme) => {
+    // The deleted row's pointer and focus events never arrive, so its preview
+    // is cleared here.
+    setHoveredTheme(null)
+    setFocusedTheme(null)
+    onDelete(libraryTheme.id)
+    if (libraryTheme.id === chosenThemeId) {
+      chooseTheme(defaultLibraryTheme)
+    }
+  })
 
-interface ThemeOptionProps {
-  readonly theme: Theme
-  readonly isChosen: boolean
-  readonly rovingProps: RovingRowProps
-  readonly onKeyDown: (event: KeyboardEvent) => void
-  readonly onHover: () => void
-  readonly onUnhover: () => void
-  readonly onFocus: () => void
-  readonly onBlur: () => void
-  readonly onChoose: () => void
-}
-
-function ThemeOption(props: ThemeOptionProps) {
-  const { theme, isChosen, rovingProps, onKeyDown, onHover, onUnhover, onFocus, onBlur, onChoose } =
-    props
-  const chosenStyle = isChosen ? "bg-accent/15 font-semibold" : "hover:bg-surface-raised"
+  // A pointer delete leaves focus alone: a focused neighbour would keep
+  // previewing its theme after the pointer leaves the picker.
+  const deleteRow = (libraryTheme: LibraryTheme, index: number, trigger: DeleteTrigger) => {
+    focusAfterDelete.current = trigger === "keyboard" ? { themeId: libraryTheme.id, index } : null
+    deleteImportedTheme(libraryTheme)
+  }
 
   return (
-    <button
-      type="button"
-      {...rovingProps}
-      aria-pressed={isChosen}
-      aria-label={`${theme.name} by ${theme.author}`}
-      onKeyDown={onKeyDown}
-      onMouseEnter={onHover}
-      onMouseLeave={onUnhover}
-      onFocus={() => {
-        rovingProps.onFocus()
-        onFocus()
-      }}
-      onBlur={onBlur}
-      onClick={onChoose}
-      className={`flex w-full items-center gap-3 rounded-small p-3 text-left text-sm transition-colors duration-120 ease-out ${chosenStyle}`}
-    >
-      <ThemeSwatch theme={theme} />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate">{theme.name}</span>
-        <span className="truncate text-xs font-normal text-muted">by {theme.author}</span>
-      </span>
-      {isChosen && <Check aria-hidden size={16} />}
-    </button>
+    <div className="flex flex-col gap-3">
+      {/* The rows touch, so the pointer never crosses a gap that would flash
+          the saved theme between two previews. */}
+      <ul aria-label="Theme" className="flex flex-col">
+        {themes.map((libraryTheme, index) => (
+          <li key={libraryTheme.id}>
+            <ThemeOption
+              theme={libraryTheme.theme}
+              isChosen={libraryTheme.id === chosenThemeId}
+              rovingProps={rowProps(index)}
+              onKeyDown={onKeyDown}
+              onHover={() => setHoveredTheme(libraryTheme.theme)}
+              onUnhover={() => setHoveredTheme(null)}
+              onFocus={() => setFocusedTheme(libraryTheme.theme)}
+              onBlur={() => setFocusedTheme(null)}
+              onChoose={() => chooseTheme(libraryTheme)}
+              onDelete={
+                isBuiltInTheme(libraryTheme.id)
+                  ? null
+                  : (trigger) => deleteRow(libraryTheme, index, trigger)
+              }
+            />
+          </li>
+        ))}
+      </ul>
+      {failureMessage !== null && (
+        <p role="alert" className="text-sm text-danger">
+          {failureMessage}
+        </p>
+      )}
+    </div>
   )
 }

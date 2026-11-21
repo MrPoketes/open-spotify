@@ -4,7 +4,7 @@ import { builtInThemes } from "../shared/built-in-themes"
 import { databaseLayer } from "./database"
 import { ImportedThemes } from "./imported-themes"
 import { ThemeFileDialogs } from "./theme-file-dialogs"
-import { saveEditedThemeFromIpc } from "./themes-ipc"
+import { deleteImportedThemeFromIpc, saveEditedThemeFromIpc } from "./themes-ipc"
 
 // The editor never opens a file dialog, and no test here replaces a theme.
 const unusedDialogs = ThemeFileDialogs.of({
@@ -67,6 +67,29 @@ describe("saveEditedThemeFromIpc", () => {
 
       assert.strictEqual(reply._tag, "ThemeImportFailed")
       assert.deepStrictEqual(yield* storedThemes, [])
+    }).pipe(Effect.provide(freshStorage())),
+  )
+})
+
+describe("deleteImportedThemeFromIpc", () => {
+  it.effect("removes the imported theme from storage", () =>
+    Effect.gen(function* () {
+      const importedThemes = yield* ImportedThemes
+      const sunset = yield* importedThemes.save({ ...editedTheme, name: "Sunset" })
+      const ember = yield* importedThemes.save({ ...editedTheme, name: "Ember" })
+
+      yield* deleteImportedThemeFromIpc(sunset.id)
+
+      assert.deepStrictEqual(yield* storedThemes, [ember])
+    }).pipe(Effect.provide(freshStorage())),
+  )
+
+  // Built-in themes ship with the app and must always be there to fall back on.
+  it.effect("rejects the id of a built-in theme", () =>
+    Effect.gen(function* () {
+      const error = yield* Effect.flip(deleteImportedThemeFromIpc("dark"))
+
+      assert.strictEqual(error._tag, "MalformedIpcRequest")
     }).pipe(Effect.provide(freshStorage())),
   )
 })

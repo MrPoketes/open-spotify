@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Option, Schema } from "effect"
 import { SqlClient, type SqlError, SqlSchema } from "effect/sql"
 import { type Theme, ThemeFile } from "../shared/theme"
-import type { LibraryTheme } from "../shared/theme-library"
+import type { LibraryTheme, ThemeId } from "../shared/theme-library"
 
 type StorageError = SqlError.SqlError | Schema.SchemaError
 
@@ -15,6 +15,7 @@ export class ImportedThemes extends Context.Service<
     // Replaces the imported theme with the same name and author, keeping its
     // id, so a theme the user picked stays picked when it is updated.
     readonly save: (theme: Theme) => Effect.Effect<LibraryTheme, StorageError>
+    readonly delete: (themeId: ThemeId) => Effect.Effect<void, SqlError.SqlError>
   }
 >()("open-spotify/ImportedThemes") {
   static readonly layer = Layer.effect(
@@ -58,7 +59,10 @@ export class ImportedThemes extends Context.Service<
           Effect.map(({ id }) => ({ id, theme })),
         )
 
-      return ImportedThemes.of({ list, hasSameNameAndAuthor, save })
+      const deleteTheme = (themeId: ThemeId) =>
+        sql`DELETE FROM imported_themes WHERE id = ${themeId}`.pipe(Effect.asVoid)
+
+      return ImportedThemes.of({ list, hasSameNameAndAuthor, save, delete: deleteTheme })
     }),
   )
 }

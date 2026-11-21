@@ -14,6 +14,7 @@ import { folderIpcOperations } from "./folders-ipc"
 import { mainRuntime } from "./main-runtime"
 import { getSettingFromIpc, setSettingFromIpc } from "./settings-ipc"
 import {
+  deleteImportedThemeFromIpc,
   exportCurrentThemeFromIpc,
   importThemeFileFromIpc,
   listImportedThemesFromIpc,
@@ -55,6 +56,9 @@ export function registerIpcHandlers(): void {
     mainRuntime.runPromise(
       saveEditedThemeFromIpc(BrowserWindow.fromWebContents(event.sender), request),
     ),
+  )
+  ipcMain.handle(ipcChannels.deleteImportedTheme, (_event, request: unknown) =>
+    mainRuntime.runPromise(deleteImportedThemeFromIpc(request)),
   )
   ipcMain.handle(ipcChannels.exportFolders, (event) =>
     mainRuntime.runPromise(exportFoldersFromIpc(BrowserWindow.fromWebContents(event.sender))),
