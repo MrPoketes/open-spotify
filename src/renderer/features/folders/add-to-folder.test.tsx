@@ -75,7 +75,14 @@ const renderWithFolders = async (
       </FoldersProvider>
     </StatusMessageProvider>,
     mainProcess,
+    // The tests reach the sidebar only through Low Orbit and Liked Songs. The
+    // shared fixtures' sixty-odd other entries made every test render them on
+    // load and again after each folder change, which made the first test the
+    // slowest in the suite and ran it past its timeout on a busy machine.
     spotifyApiFakeWith((spotify) => ({
+      currentUserPlaylists: Stream.empty,
+      followedArtists: Stream.empty,
+      savedShows: Stream.empty,
       savedAlbums: Stream.make(lowOrbit),
       getAlbum: (albumId) =>
         spotify
