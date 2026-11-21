@@ -1,5 +1,5 @@
 import { Effect, Stream } from "effect"
-import { useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import type { RendererServices } from "./renderer-runtime"
 import { useStreamValue } from "./use-stream-value"
 
@@ -35,13 +35,14 @@ export interface ReplaceableLoad<A, E> extends RetryableLoad<A, E> {
   readonly replace: (value: A) => void
 }
 
+const loading = { status: "loading" } as const
+
 // Loads once when the component mounts. retry loads again from the start,
 // showing the loading state meanwhile.
 export function useLoad<A, E>(
   load: Effect.Effect<A, E, RendererServices>,
   failureMessage: string,
 ): ReplaceableLoad<A, E> {
-  const loading = { status: "loading" } as const
   // A stream shows its starting state until its first value arrives, so a
   // replaced value is the starting state of a stream that adds nothing.
   const [currentLoad, setCurrentLoad] = useState<{
@@ -49,10 +50,16 @@ export function useLoad<A, E>(
     readonly startingState: LoadState<A, E>
   }>(() => ({ stream: loadOnce(load, failureMessage), startingState: loading }))
   const state = useStreamValue(currentLoad.stream, currentLoad.startingState)
-  return {
-    state,
-    retry: () => setCurrentLoad({ stream: loadOnce(load, failureMessage), startingState: loading }),
-    replace: (value) =>
+  const retry = useCallback(
+    () => setCurrentLoad({ stream: loadOnce(load, failureMessage), startingState: loading }),
+    [load, failureMessage],
+  )
+  const replace = useCallback(
+    (value: A) =>
       setCurrentLoad({ stream: Stream.empty, startingState: { status: "loaded", value } }),
-  }
+    [],
+  )
+  // Shared through context, where a new object on every render would
+  // re-render every reader, such as each row of the library.
+  return useMemo(() => ({ state, retry, replace }), [state, retry, replace])
 }
