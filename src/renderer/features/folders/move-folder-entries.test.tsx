@@ -118,14 +118,17 @@ describe("Moving folder entries", () => {
 
   // A step past the first entry has no position to land at, so it must not
   // reach the main process and come back as a "Couldn't move" error.
-  it("leaves the first entry in place, and says nothing, when Alt+Up is pressed on it", async () => {
+  it("leaves the first and last entries in place, and says nothing, when moved past the end", async () => {
     renderTree()
-    await focusTreeItem("Running")
 
+    await focusTreeItem("Running")
     await userEvent.keyboard("{Alt>}{ArrowUp}{/Alt}")
+    await focusTreeItem("Focus")
+    await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}")
 
     await act(() => Promise.resolve())
     expect(await treeItem("Running")).toHaveAttribute("aria-posinset", "1")
+    expect(await treeItem("Focus")).toHaveAttribute("aria-posinset", "2")
     expect(screen.getByRole("status")).toBeEmptyDOMElement()
   })
 
@@ -152,6 +155,33 @@ describe("Moving folder entries", () => {
     await focusTreeItem("Focus")
     await userEvent.keyboard("{ArrowRight}")
     expect(await treeItem("Easy Start")).toHaveAttribute("aria-level", "2")
+  })
+
+  it("moves a folder to the end of the top level", async () => {
+    renderTree()
+    await expandRunning()
+
+    const moveSubmenu = await openMoveSubmenu("Warm-up")
+    await userEvent.click(within(moveSubmenu).getByRole("menuitem", { name: "Top level" }))
+
+    await waitFor(async () => expect(await treeItem("Warm-up")).toHaveAttribute("aria-level", "1"))
+    expect(await treeItem("Warm-up")).toHaveAttribute("aria-posinset", "3")
+  })
+
+  it("moves a folder, with what is inside it, into another folder", async () => {
+    renderTree()
+    await expandRunning()
+
+    const moveSubmenu = await openMoveSubmenu("Warm-up")
+    await userEvent.click(within(moveSubmenu).getByRole("menuitem", { name: "Focus" }))
+
+    await waitFor(() =>
+      expect(screen.queryByRole("treeitem", { name: /^Warm-up/ })).not.toBeInTheDocument(),
+    )
+    await focusTreeItem("Focus")
+    await userEvent.keyboard("{ArrowRight}{ArrowDown}{ArrowRight}")
+    expect(await treeItem("Warm-up")).toHaveAttribute("aria-level", "2")
+    expect(await treeItem("Stretch")).toHaveAttribute("aria-level", "3")
   })
 
   it("leaves the tree as it was and says why when the main process refuses a move", async () => {

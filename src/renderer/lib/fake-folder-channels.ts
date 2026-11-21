@@ -60,12 +60,12 @@ const makeFolderStore = (initialTree: FolderTree) => {
     replace: (newTree: FolderTree) => {
       tree = newTree
     },
-    changeFolder: (folderId: string, change: FolderChange) => {
+    change: (folderId: string, change: FolderChange) => {
       if (!holdsFolder(tree, folderId)) return folderNotFound(folderId)
       tree = tree.map((folder) => changeFolder(folder, folderId, change))
       return succeeded(undefined)
     },
-    withoutFolder: (folderId: string) =>
+    treeWithoutFolder: (folderId: string) =>
       tree
         .filter((folder) => folder.id !== folderId)
         .map((folder) => withEntries(folder, withoutFolder(folder.entries, folderId))),
@@ -83,7 +83,7 @@ const moveChannels = (store: FolderStore) => ({
     const moved = locateFolder(store.read(), folderId)?.folder
     if (moved === undefined) return folderNotFound(folderId)
     if (parentFolderId === null) {
-      store.replace(store.withoutFolder(folderId).toSpliced(position, 0, moved))
+      store.replace(store.treeWithoutFolder(folderId).toSpliced(position, 0, moved))
       return succeeded(undefined)
     }
     if (parentFolderId === folderId || holdsFolder(moved.entries, parentFolderId)) {
@@ -93,8 +93,8 @@ const moveChannels = (store: FolderStore) => ({
       }
     }
     if (!holdsFolder(store.read(), parentFolderId)) return folderNotFound(parentFolderId)
-    store.replace(store.withoutFolder(folderId))
-    return store.changeFolder(parentFolderId, (parent) =>
+    store.replace(store.treeWithoutFolder(folderId))
+    return store.change(parentFolderId, (parent) =>
       withEntries(parent, parent.entries.toSpliced(position, 0, moved)),
     )
   },
@@ -108,9 +108,9 @@ const moveChannels = (store: FolderStore) => ({
       return { _tag: "IpcFailed", error: { _tag: "FolderItemNotFound", folderId, uri } }
     }
     if (!holdsFolder(store.read(), targetFolderId)) return folderNotFound(targetFolderId)
-    store.changeFolder(folderId, (folder) => withoutItem(folder, uri))
+    store.change(folderId, (folder) => withoutItem(folder, uri))
     // The target keeps a single copy of the item.
-    return store.changeFolder(targetFolderId, (target) =>
+    return store.change(targetFolderId, (target) =>
       withEntries(target, withoutItem(target, uri).entries.toSpliced(position, 0, item)),
     )
   },
@@ -134,14 +134,14 @@ export const fakeFolderChannels = (
         store.replace([...store.read(), created])
         return succeeded(created.id)
       }
-      const reply = store.changeFolder(parentFolderId, (parent) =>
+      const reply = store.change(parentFolderId, (parent) =>
         withEntries(parent, [...parent.entries, created]),
       )
       return reply._tag === "IpcSucceeded" ? succeeded(created.id) : reply
     },
     [ipcChannels.renameFolder]: (request) => {
       const { folderId, name } = Schema.decodeUnknownSync(RenameFolderRequest)(request)
-      return store.changeFolder(folderId, (folder) => ({
+      return store.change(folderId, (folder) => ({
         _tag: "Folder",
         id: folder.id,
         name,
@@ -151,12 +151,12 @@ export const fakeFolderChannels = (
     [ipcChannels.deleteFolder]: (request) => {
       const { folderId } = Schema.decodeUnknownSync(DeleteFolderRequest)(request)
       if (!holdsFolder(store.read(), folderId)) return folderNotFound(folderId)
-      store.replace(store.withoutFolder(folderId))
+      store.replace(store.treeWithoutFolder(folderId))
       return succeeded(undefined)
     },
     [ipcChannels.addFolderItem]: (request) => {
       const { folderId, item } = Schema.decodeUnknownSync(AddFolderItemRequest)(request)
-      return store.changeFolder(folderId, (folder) =>
+      return store.change(folderId, (folder) =>
         folder.entries.some((entry) => entry._tag === "SpotifyItem" && entry.uri === item.uri)
           ? folder
           : withEntries(folder, [...folder.entries, item]),
@@ -164,7 +164,7 @@ export const fakeFolderChannels = (
     },
     [ipcChannels.removeFolderItem]: (request) => {
       const { folderId, uri } = Schema.decodeUnknownSync(RemoveFolderItemRequest)(request)
-      return store.changeFolder(folderId, (folder) => withoutItem(folder, uri))
+      return store.change(folderId, (folder) => withoutItem(folder, uri))
     },
     ...moveChannels(store),
   }

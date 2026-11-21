@@ -1,13 +1,14 @@
 import type { Folder, FolderEntry, FolderTree, SpotifyItem } from "../../../shared/folders"
 import type { TreeNode } from "../../ui/visible-tree-rows"
 
-// Where an entry sits: its parent folder, or null at the top level, and its
-// index among the parent's entries. Spotify items live only inside folders.
+// An entry's index among its parent's entries.
 interface Placement {
   readonly position: number
   readonly siblingCount: number
 }
 
+// Where an entry sits: its parent folder, or null at the top level. Spotify
+// items live only inside folders.
 export interface PlacedFolder extends Placement {
   readonly _tag: "PlacedFolder"
   readonly entry: Folder

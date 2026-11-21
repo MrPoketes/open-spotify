@@ -27,8 +27,8 @@ interface TreeViewProps<Value> {
   readonly onToggleExpanded: (key: string) => void
   // Renders the focusable tree item, spreading itemProps onto it.
   readonly renderItem: (value: Value, itemProps: TreeItemProps) => ReactNode
-  // Lets the owner move focus to a row, such as after a change removed the
-  // focused one.
+  // Lets the owner move focus to a row, such as a folder's row after its
+  // rename field closes.
   readonly rowFocusRef?: Ref<RowFocusHandle>
 }
 
