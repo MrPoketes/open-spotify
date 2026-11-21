@@ -1,13 +1,13 @@
 import { Effect } from "effect"
 import { use } from "react"
-import type { FolderChangeError, SpotifyItem } from "../../../shared/folders"
-import { DesktopBridge, type DesktopBridgeError } from "../../lib/desktop-bridge"
-import type { RendererServices } from "../../lib/renderer-runtime"
+import type { SpotifyItem } from "../../../shared/folders"
+import { DesktopBridge } from "../../lib/desktop-bridge"
 import { useShowStatusMessage } from "../../ui/status-message-context"
-import { type AnnouncedOutcome, useRunAnnounced } from "../../ui/use-run-announced"
+import type { AnnouncedOutcome } from "../../ui/use-run-announced"
 import { type AddToFolderActions, addToFolderItem, holdsItem } from "./add-to-folder-item"
 import { AskForFolderNameContext } from "./ask-for-folder-name"
-import { useFolderTree, useReadFolderTreeAgain } from "./folder-tree"
+import { useFolderTree } from "./folder-tree"
+import { type FolderChangeFailure, useChangeFolders } from "./use-change-folders"
 
 // What a menu knows about the playlist, artist, album, show, or track it
 // belongs to.
@@ -26,8 +26,6 @@ const toSpotifyItem = ({ uri, name, images }: FolderItemSource): SpotifyItem => 
   imageUrl: images[0]?.url ?? null,
 })
 
-type FolderChangeFailure = FolderChangeError | DesktopBridgeError
-
 const addOutcome = (folderName: string): AnnouncedOutcome<FolderChangeFailure> => ({
   success: `Added to ${folderName}`,
   failure: () => `Couldn't add to ${folderName}.`,
@@ -43,18 +41,8 @@ const removeOutcome = (folderName: string): AnnouncedOutcome<FolderChangeFailure
 export function useAddToFolder() {
   const folderTree = useFolderTree()
   const askForFolderName = use(AskForFolderNameContext)
-  const runAnnounced = useRunAnnounced()
   const showStatusMessage = useShowStatusMessage()
-
-  const readTreeAgain = useReadFolderTreeAgain()
-
-  // Reads the tree again even after a failure, because part of the change,
-  // such as a new folder, may have happened. The message is about the change
-  // alone.
-  const changeFolders = (
-    change: Effect.Effect<unknown, FolderChangeFailure, RendererServices>,
-    outcome: AnnouncedOutcome<FolderChangeFailure>,
-  ) => runAnnounced(change.pipe(Effect.ensuring(readTreeAgain)), outcome)
+  const changeFolders = useChangeFolders()
 
   const actions: AddToFolderActions = {
     toggleItem: (folder, item) => {
