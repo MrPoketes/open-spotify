@@ -8,59 +8,74 @@ import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
 
 // The overlay is updated by effects that run after the bar renders, so each
 // check waits for it instead of reading it as soon as the bar changes.
-const overlayShows = (expected: object) =>
-  waitFor(() => expect(fakeMediaSession).toMatchObject(expected))
 
 describe("media keys and the operating system's media overlay", () => {
   it("shows the playing track's title, artists, album, and artwork", async () => {
     renderNowPlayingBarAlone()
 
     const { album } = fakeTrack(0)
-    await overlayShows({
-      playbackState: "playing",
-      metadata: {
-        title: fakeTrack(0).name,
-        artist: "Northbound Static",
-        album: album.name,
-        artwork: album.images.map(({ url, width, height }) => ({
-          src: url,
-          sizes: `${width}x${height}`,
-        })),
-      },
-    })
+    await waitFor(() =>
+      expect(fakeMediaSession).toMatchObject({
+        playbackState: "playing",
+        metadata: {
+          title: fakeTrack(0).name,
+          artist: "Northbound Static",
+          album: album.name,
+          artwork: album.images.map(({ url, width, height }) => ({
+            src: url,
+            sizes: `${width}x${height}`,
+          })),
+        },
+      }),
+    )
   })
 
   it("pauses, plays, and skips when the media keys are pressed", async () => {
     renderNowPlayingBarAlone()
-    await overlayShows({ playbackState: "playing", metadata: { title: fakeTrack(0).name } })
+    await waitFor(() =>
+      expect(fakeMediaSession).toMatchObject({
+        playbackState: "playing",
+        metadata: { title: fakeTrack(0).name },
+      }),
+    )
 
     fakeMediaSession.press("pause")
-    await overlayShows({ playbackState: "paused" })
+    await waitFor(() => expect(fakeMediaSession).toMatchObject({ playbackState: "paused" }))
     fakeMediaSession.press("play")
-    await overlayShows({ playbackState: "playing" })
+    await waitFor(() => expect(fakeMediaSession).toMatchObject({ playbackState: "playing" }))
     fakeMediaSession.press("nexttrack")
-    await overlayShows({ metadata: { title: fakeTrack(1).name } })
+    await waitFor(() =>
+      expect(fakeMediaSession).toMatchObject({ metadata: { title: fakeTrack(1).name } }),
+    )
     fakeMediaSession.press("previoustrack")
 
-    await overlayShows({ metadata: { title: fakeTrack(0).name } })
+    await waitFor(() =>
+      expect(fakeMediaSession).toMatchObject({ metadata: { title: fakeTrack(0).name } }),
+    )
   })
 
   it("leaves the overlay when the device stops being active", async () => {
-    let isDeviceActive = true
+    let device: "active" | "gone" = "active"
     renderNowPlayingBarAlone(
-      spotifyApiFakeWith((spotify) => ({
-        getPlaybackState: Effect.suspend(() =>
-          isDeviceActive ? spotify.getPlaybackState : Effect.succeedNone,
-        ),
-      })),
+      spotifyApiFakeWith((spotify) => {
+        const playbackStates = { active: spotify.getPlaybackState, gone: Effect.succeedNone }
+        return { getPlaybackState: Effect.suspend(() => playbackStates[device]) }
+      }),
     )
-    await overlayShows({ playbackState: "playing", metadata: { title: fakeTrack(0).name } })
+    await waitFor(() =>
+      expect(fakeMediaSession).toMatchObject({
+        playbackState: "playing",
+        metadata: { title: fakeTrack(0).name },
+      }),
+    )
 
-    isDeviceActive = false
+    device = "gone"
     // A skip reads the playback state again at once.
     fakeMediaSession.press("nexttrack")
     await screen.findByText("No device is playing")
 
-    await overlayShows({ playbackState: "none", metadata: null })
+    await waitFor(() =>
+      expect(fakeMediaSession).toMatchObject({ playbackState: "none", metadata: null }),
+    )
   })
 })
