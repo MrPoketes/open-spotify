@@ -16,6 +16,7 @@ import {
   SidebarFolderRow,
   SpotifyItemRow,
 } from "./sidebar-folder-tree-rows"
+import { useDropFolderEntry } from "./use-drop-folder-entry"
 import { useFolderTreeChanges } from "./use-folder-tree-changes"
 
 // The tree is the one every Add to folder menu shares, so a folder created or
@@ -78,6 +79,7 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
     deleteFolder,
     ...renaming
   } = useFolderTreeChanges(tree, (folderId) => rows.findIndex((row) => row.node.key === folderId))
+  const { canDrop, onDrop } = useDropFolderEntry()
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null)
   const headingId = useId()
 
@@ -111,6 +113,8 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
           expandedKeys={expandedKeys}
           onToggleExpanded={toggleExpanded}
           rowFocusRef={rowFocusRef}
+          canDrop={canDrop}
+          onDrop={onDrop}
           renderItem={(placed, itemProps) =>
             placed._tag === "PlacedFolder" ? (
               <SidebarFolderRow

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { DndContext } from "@dnd-kit/core"
 import {
   type KeyboardEvent,
   type ReactNode,
@@ -9,6 +9,8 @@ import {
 } from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { type RovingRowProps, type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
+import { Expander, TreeRow } from "./tree-row"
+import { type TreeDropRules, useTreeDragAndDrop } from "./use-tree-drag-and-drop"
 import { type TreeNode, type VisibleTreeRow, visibleTreeRows } from "./visible-tree-rows"
 
 export interface TreeItemProps extends RovingRowProps {
@@ -20,7 +22,7 @@ export interface TreeItemProps extends RovingRowProps {
   readonly onKeyDown: (event: KeyboardEvent) => void
 }
 
-interface TreeViewProps<Value> {
+interface TreeViewProps<Value> extends TreeDropRules<Value> {
   readonly labelledBy: string
   readonly nodes: ReadonlyArray<TreeNode<Value>>
   readonly expandedKeys: ReadonlySet<string>
@@ -31,8 +33,6 @@ interface TreeViewProps<Value> {
   // rename field closes.
   readonly rowFocusRef?: Ref<RowFocusHandle>
 }
-
-const levelIndent = 16
 
 interface FocusedRow {
   readonly key: string
@@ -78,23 +78,13 @@ function useFocusFollowsRow<Value>(
   }
 }
 
-// The WAI-ARIA tree view pattern, rendered flat: every visible item is a
-// sibling that carries its level and position, so no group element has to wrap
-// an expanded item's children. The tree is one tab stop, and the arrow keys
-// move between items and expand or collapse them.
-export function TreeView<Value>({
-  labelledBy,
-  nodes,
-  expandedKeys,
-  onToggleExpanded,
-  renderItem,
-  rowFocusRef,
-}: TreeViewProps<Value>) {
-  const rows = visibleTreeRows(nodes, expandedKeys)
-  const { onKeyDown, rowProps, focusRow } = useRovingFocus(rows.length)
-  useImperativeHandle(rowFocusRef, () => ({ focusRow }), [focusRow])
-  const rememberFocusedRow = useFocusFollowsRow(rows, focusRow)
-
+// The right arrow expands an item and then moves into it; the left arrow
+// collapses an item and then moves to its parent.
+function arrowKeyExpansion<Value>(
+  expandedKeys: ReadonlySet<string>,
+  onToggleExpanded: (key: string) => void,
+  focusRow: (index: number) => void,
+) {
   // An expanded item has its first child right below it.
   const expandOrEnter = ({ node }: VisibleTreeRow<Value>, index: number) => {
     if (!expandedKeys.has(node.key)) onToggleExpanded(node.key)
@@ -106,11 +96,7 @@ export function TreeView<Value>({
     else if (parentIndex !== undefined) focusRow(parentIndex)
   }
 
-  const expandOrCollapseWithKey = (
-    event: KeyboardEvent,
-    row: VisibleTreeRow<Value>,
-    index: number,
-  ) => {
+  return (event: KeyboardEvent, row: VisibleTreeRow<Value>, index: number) => {
     if (hasShortcutModifier(event)) return
     if (event.key === "ArrowRight" && row.node.children !== null) {
       event.preventDefault()
@@ -121,6 +107,35 @@ export function TreeView<Value>({
       collapseOrLeave(row)
     }
   }
+}
+
+// The WAI-ARIA tree view pattern, rendered flat: every visible item is a
+// sibling that carries its level and position, so no group element has to wrap
+// an expanded item's children. The tree is one tab stop, and the arrow keys
+// move between items and expand or collapse them.
+export function TreeView<Value>({
+  labelledBy,
+  nodes,
+  expandedKeys,
+  onToggleExpanded,
+  renderItem,
+  rowFocusRef,
+  canDrop,
+  onDrop,
+}: TreeViewProps<Value>) {
+  const rows = visibleTreeRows(nodes, expandedKeys)
+  const { draggedKey, dropIndicator, contextProps } = useTreeDragAndDrop({
+    rows,
+    expandedKeys,
+    onToggleExpanded,
+    canDrop,
+    onDrop,
+  })
+  const { onKeyDown, rowProps, focusRow } = useRovingFocus(rows.length)
+  useImperativeHandle(rowFocusRef, () => ({ focusRow }), [focusRow])
+  const rememberFocusedRow = useFocusFollowsRow(rows, focusRow)
+
+  const expandOrCollapseWithKey = arrowKeyExpansion(expandedKeys, onToggleExpanded, focusRow)
 
   const itemProps = (row: VisibleTreeRow<Value>, index: number): TreeItemProps => {
     const rovingProps = rowProps(index)
@@ -140,62 +155,38 @@ export function TreeView<Value>({
   }
 
   return (
-    <div
-      role="tree"
-      tabIndex={-1}
-      aria-labelledby={labelledBy}
-      onKeyDown={onKeyDown}
-      className="flex flex-col"
-    >
-      {rows.map((row, index) => (
-        <div
-          key={row.node.key}
-          role="none"
-          style={{ paddingLeft: (row.level - 1) * levelIndent }}
-          className="flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised"
-        >
-          <Expander
-            isBranch={row.node.children !== null}
-            isExpanded={expandedKeys.has(row.node.key)}
-            onToggle={() => {
-              focusRow(index)
-              onToggleExpanded(row.node.key)
-            }}
-          />
-          {renderItem(row.node.value, itemProps(row, index))}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-interface ExpanderProps {
-  readonly isBranch: boolean
-  readonly isExpanded: boolean
-  readonly onToggle: () => void
-}
-
-// A shortcut for the mouse. Keyboard and screen reader users expand and
-// collapse the tree item itself with the arrow keys, and the item announces
-// its state, so the button stays out of the tab order and the accessibility
-// tree.
-function Expander({ isBranch, isExpanded, onToggle }: ExpanderProps) {
-  if (!isBranch) {
-    return <span aria-hidden className="w-6 shrink-0" />
-  }
-  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight
-  return (
-    <button
-      type="button"
-      tabIndex={-1}
-      aria-hidden
-      // Focus goes to the tree item instead, since the button is hidden from
-      // assistive technology.
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={onToggle}
-      className="flex h-8 w-6 shrink-0 items-center justify-center rounded-small text-muted transition-colors duration-120 ease-out hover:text-foreground"
-    >
-      <ChevronIcon size={16} />
-    </button>
+    <DndContext {...contextProps}>
+      <div
+        role="tree"
+        tabIndex={-1}
+        aria-labelledby={labelledBy}
+        onKeyDown={onKeyDown}
+        className="flex flex-col"
+      >
+        {rows.map((row, index) => (
+          <TreeRow
+            key={row.node.key}
+            rowKey={row.node.key}
+            level={row.level}
+            isDragged={row.node.key === draggedKey}
+            dropPosition={
+              dropIndicator?.targetKey === row.node.key ? dropIndicator.position : undefined
+            }
+            expander={
+              <Expander
+                isBranch={row.node.children !== null}
+                isExpanded={expandedKeys.has(row.node.key)}
+                onToggle={() => {
+                  focusRow(index)
+                  onToggleExpanded(row.node.key)
+                }}
+              />
+            }
+          >
+            {renderItem(row.node.value, itemProps(row, index))}
+          </TreeRow>
+        ))}
+      </div>
+    </DndContext>
   )
 }
