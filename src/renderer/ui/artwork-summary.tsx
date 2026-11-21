@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react"
+import type { ReactNode } from "react"
 import { Artwork, type ArtworkSource } from "./artwork"
 
 export interface SummaryArtwork {
@@ -10,8 +11,8 @@ export interface SummaryArtwork {
 
 interface ArtworkSummaryProps {
   readonly artwork: SummaryArtwork
-  readonly title: string
-  readonly details: string
+  readonly title: ReactNode
+  readonly details: ReactNode
 }
 
 // The library row layout from docs/design.md: 40 px artwork beside the name and

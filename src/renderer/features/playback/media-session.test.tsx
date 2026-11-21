@@ -1,9 +1,9 @@
 import { screen, waitFor } from "@testing-library/react"
-import { Effect, Option } from "effect"
+import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
 import { mediaPlayerStates } from "../../lib/fake-media-elements"
 import { fakeMediaSession } from "../../lib/fake-media-session"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { spotifyApiFakeWith, spotifyApiFakeWithPlayback } from "../spotify/spotify-api-fake"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
 
@@ -91,11 +91,7 @@ describe("media keys and the operating system's media overlay", () => {
   // would do nothing until the user started Spotify some other way.
   it("keeps a paused media player when Spotify starts out paused", async () => {
     renderNowPlayingBarAlone(
-      spotifyApiFakeWith((spotify) => ({
-        getPlaybackState: spotify.getPlaybackState.pipe(
-          Effect.map(Option.map((playbackState) => ({ ...playbackState, isPlaying: false }))),
-        ),
-      })),
+      spotifyApiFakeWithPlayback((playbackState) => ({ ...playbackState, isPlaying: false })),
     )
 
     await waitFor(() => expect(fakeMediaSession).toMatchObject({ playbackState: "paused" }))

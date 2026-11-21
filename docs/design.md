@@ -243,7 +243,9 @@ stay open after a restart. A user without folders sees no Folders heading at all
 The bar has three columns: what is playing on the left, the playback controls in the middle,
 and the queue button and device picker on the right. The left column shows 40 px artwork, as in
 library rows, then the title in `text-sm` and the artists in `text-xs` `muted` ("Show
-episode" for an episode).
+episode" for an episode). A track's title links to its album page and each artist name to that
+artist's page; an episode's title links to its show page. A local file has no Spotify pages, so
+its title and artists are plain text.
 
 The controls are, in order: shuffle, previous, play or pause, next, repeat. They are 32 px
 round icon buttons; play or pause is `accent` with `on-accent` icons, and the others are

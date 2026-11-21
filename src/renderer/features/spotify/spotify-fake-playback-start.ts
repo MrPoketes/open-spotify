@@ -20,12 +20,17 @@ const PlaybackStartBody = Schema.fromJsonString(
 
 type PlaybackStartBody = typeof PlaybackStartBody.Type
 
+// A show lists its episodes without the show, but the player reports each
+// one with it.
+const withShow = (showId: string) => (episode: object | null) =>
+  episode === null ? null : { ...episode, show: { id: showId } }
+
 const contextItemsByKind: Record<string, (id: string) => ReadonlyArray<unknown> | undefined> = {
   playlist: (id) =>
     fakePlaylists.find((playlist) => playlist.id === id)?.entries.map(({ item }) => item),
   album: (id) => fakeTracks.filter((track) => track.album.id === id),
   artist: (id) => fakeTracks.filter((track) => track.artists.some((artist) => artist.id === id)),
-  show: (id) => fakeShows.find((show) => show.id === id)?.episodes,
+  show: (id) => fakeShows.find((show) => show.id === id)?.episodes.map(withShow(id)),
 }
 
 // The items a context plays through, in order, if the fixtures have it.

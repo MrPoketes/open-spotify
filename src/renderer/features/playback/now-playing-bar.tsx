@@ -2,7 +2,7 @@ import { ListMusic } from "lucide-react"
 import type { RefObject } from "react"
 import { AccentButton } from "../../ui/pill-button"
 import { DevicePicker } from "./device-picker"
-import { PlayableItemSummary } from "./playable-item-summary"
+import { NowPlayingItemSummary } from "./now-playing-item-summary"
 import { PlaybackControls } from "./playback-controls"
 import { PlayerControlButton } from "./player-control-button"
 import { type PlayerStateOrLoading, usePlayerState } from "./use-player-state"
@@ -100,5 +100,5 @@ function NowPlayingSummary({ playerState, onChooseDevice }: NowPlayingSummaryPro
     return <p className="text-sm text-muted">Nothing is playing</p>
   }
 
-  return <PlayableItemSummary item={item} />
+  return <NowPlayingItemSummary item={item} />
 }
