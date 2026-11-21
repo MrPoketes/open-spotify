@@ -41,6 +41,8 @@ const withoutIds = (entries: ReadonlyArray<FolderEntry>): ReadonlyArray<unknown>
     entry._tag === "Folder" ? { name: entry.name, entries: withoutIds(entry.entries) } : entry,
   )
 
+const byteOrderMark = "\uFEFF"
+
 const foldersFile = (folders: ReadonlyArray<unknown>) =>
   JSON.stringify({ format: "open-spotify-folders", version: 1, folders })
 
@@ -103,6 +105,24 @@ layer(NodeFileSystem.layer)("folders file IPC", (it) => {
         importedFolders.map((folder) => folder.id),
         rockId,
       )
+    }).pipe(Effect.provide(freshFolders())),
+  )
+
+  // Windows PowerShell 5.1 and older editors start UTF-8 files with a byte
+  // order mark, which JSON does not allow.
+  it.effect("imports a file that starts with a byte order mark", () =>
+    Effect.gen(function* () {
+      const folders = yield* Folders
+      const filePath = yield* writeTempFile(
+        `${byteOrderMark}${foldersFile([{ _tag: "Folder", name: "Rock", entries: [album] }])}`,
+      )
+
+      const reply = yield* importFrom(filePath)
+
+      assert.deepStrictEqual(reply, { _tag: "FoldersImported", folderCount: 1 })
+      assert.deepStrictEqual(withoutIds(yield* folders.readTree), [
+        { name: "Rock", entries: [album] },
+      ])
     }).pipe(Effect.provide(freshFolders())),
   )
 

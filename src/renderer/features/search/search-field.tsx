@@ -2,6 +2,7 @@ import { type ParsedLocation, useRouter } from "@tanstack/react-router"
 import { Option, Schema } from "effect"
 import { Search } from "lucide-react"
 import { type KeyboardEvent, type RefObject, useEffect, useRef, useState } from "react"
+import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import { SearchParams } from "./search-params"
 
 // Long enough that a word typed at a normal pace sends one search, short
@@ -16,7 +17,7 @@ const isTextEntry = (target: EventTarget | null) =>
 function useSlashToFocus(input: RefObject<HTMLInputElement | null>) {
   useEffect(() => {
     const focusSearch = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) {
+      if (event.key !== "/" || hasShortcutModifier(event)) {
         return
       }
       if (isTextEntry(event.target)) {

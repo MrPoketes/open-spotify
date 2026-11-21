@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react"
+import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { menuItemTargetForKey } from "./menu-item-target"
 
 export interface MenuAction {
@@ -104,6 +105,8 @@ export function MenuList({
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
+    // App-wide shortcuts listen on the window, so they must get past the menu.
+    if (hasShortcutModifier(event)) return
     // A submenu sits inside its parent menu, and the whole menu sits inside
     // the element that opened it in the React tree. Neither may act on a key
     // meant for this menu.
@@ -121,7 +124,7 @@ export function MenuList({
       setOpenSubmenuIndex(focusedIndex)
       return
     }
-    if (closeWithKey(event.key, { closeAll, tabReturnsToOpener, backToParent })) {
+    if (closeWithKey(event, { closeAll, tabReturnsToOpener, backToParent })) {
       event.preventDefault()
     }
   }
@@ -226,17 +229,20 @@ interface CloseActions {
 
 // Escape and the left arrow close a submenu and go back to its item; Escape
 // closes the top menu too. Tab closes every level at once, unless it should
-// go on to the next control, which the browser does by itself. Returns
-// whether the menu handled the key.
+// go on to the next control, which the browser does by itself. Shift+Tab
+// always goes back to the opener: a menu button comes just before its menu,
+// so the browser would land on it and leave the menu open. Returns whether
+// the menu handled the key.
 const closeWithKey = (
-  key: string,
+  { key, shiftKey }: KeyboardEvent,
   { closeAll, tabReturnsToOpener, backToParent }: CloseActions,
 ): boolean => {
   if (key === "Tab") {
-    if (tabReturnsToOpener) {
+    const returnsToOpener = tabReturnsToOpener || shiftKey
+    if (returnsToOpener) {
       closeAll()
     }
-    return tabReturnsToOpener
+    return returnsToOpener
   }
   if (key !== "Escape" && key !== "ArrowLeft") {
     return false
