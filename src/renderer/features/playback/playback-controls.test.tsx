@@ -1,13 +1,19 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Option } from "effect"
+import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
-import { NoActiveDevice, type SpotifyApi } from "../spotify/spotify-api"
+import { NoActiveDevice } from "../spotify/spotify-api"
 import { spotifyApiFakeWith, spotifyApiFakeWithPlayback } from "../spotify/spotify-api-fake"
 import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
 import { fakeTrack } from "../spotify/spotify-fixtures"
-import type { PlaybackState } from "../spotify/spotify-playback-state"
 import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
+import {
+  lastingMs,
+  pausedPlayback,
+  pausedPlaybackRecordingSeeks,
+  pausedPlaybackWithSeek,
+} from "./paused-playback-fake"
+import { seekBar, showsPosition } from "./seek-bar-queries"
 
 const control = (name: string) => screen.findByRole("button", { name })
 
@@ -123,48 +129,6 @@ describe("NowPlayingBar controls", () => {
     expect(await seekBar()).toHaveAttribute("aria-disabled", "true")
   })
 })
-
-// Paused playback keeps the position still, so the times a test reads do not
-// move on while it runs.
-type PlaybackChange = (playback: PlaybackState) => PlaybackState
-
-const unchanged: PlaybackChange = (playback) => playback
-
-const pausedPlaybackWithSeek = (
-  seek: (spotify: SpotifyApi["Service"]) => SpotifyApi["Service"]["seek"],
-  change: PlaybackChange = unchanged,
-) =>
-  spotifyApiFakeWith((spotify) => ({
-    getPlaybackState: spotify.getPlaybackState.pipe(
-      Effect.map(Option.map((playback) => ({ ...change(playback), isPlaying: false }))),
-    ),
-    seek: seek(spotify),
-  }))
-
-const pausedPlayback = pausedPlaybackWithSeek((spotify) => spotify.seek)
-
-const pausedPlaybackRecordingSeeks = (change: PlaybackChange = unchanged) => {
-  const seekPositions: Array<number> = []
-  const spotifyApi = pausedPlaybackWithSeek(
-    (spotify) => (positionMs) => {
-      seekPositions.push(positionMs)
-      return spotify.seek(positionMs)
-    },
-    change,
-  )
-  return { seekPositions, spotifyApi }
-}
-
-// The fake's tracks last 2:30, which a page step divides evenly.
-const lastingMs =
-  (durationMs: number): PlaybackChange =>
-  (playback) =>
-    playback.item === null ? playback : { ...playback, item: { ...playback.item, durationMs } }
-
-const seekBar = () => screen.findByRole("slider", { name: "Playback position" })
-
-const showsPosition = (slider: HTMLElement, position: string) =>
-  waitFor(() => expect(slider).toHaveAttribute("aria-valuetext", position))
 
 describe("NowPlayingBar seek bar", () => {
   it("steps with the arrow and page keys and jumps to the start and end with Home and End", async () => {

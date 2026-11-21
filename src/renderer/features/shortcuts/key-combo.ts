@@ -46,6 +46,8 @@ const keyNames: Partial<Record<string, string>> = {
   " ": "Space",
   ArrowLeft: "←",
   ArrowRight: "→",
+  ArrowUp: "↑",
+  ArrowDown: "↓",
   Delete: "Delete",
 }
 

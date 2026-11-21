@@ -68,6 +68,18 @@ describe("MenuButton", () => {
     )
   })
 
+  // Ctrl+↓ turns the volume down from anywhere in the window.
+  it("stays closed when an arrow key is pressed with Ctrl, Alt or Cmd", async () => {
+    render(<MenuButton label="Options" icon={Settings} items={actions} />)
+    screen.getByRole("button", { name: "Options" }).focus()
+
+    await userEvent.keyboard(
+      "{Control>}{ArrowDown}{/Control}{Alt>}{ArrowDown}{/Alt}{Meta>}{ArrowUp}{/Meta}",
+    )
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+  })
+
   // A menu button is one stop in the page's tab order, so Tab carries on to
   // the next control instead of landing back on the button.
   it("closes on Tab and moves focus on to the next control", async () => {

@@ -5,12 +5,14 @@ export const shortcutGroups = ["Playback", "General", "Focused row"] as const
 
 export type ShortcutGroupName = (typeof shortcutGroups)[number]
 
-interface KeyboardShortcut {
+export interface KeyboardShortcut {
   readonly description: string
   readonly group: ShortcutGroupName
   readonly keys: KeyCombo
   // Set only where macOS has its own convention.
   readonly macKeys?: KeyCombo
+  // Set where holding the keys down should keep running the action.
+  readonly repeatsWhileHeld?: true
 }
 
 // Every shortcut that works anywhere in the window, in the order the
@@ -38,6 +40,29 @@ export const windowShortcuts = {
     description: "Change repeat",
     group: "Playback",
     keys: { key: "l", primary: true },
+  },
+  seekForward: {
+    description: "Seek forward",
+    group: "Playback",
+    keys: { key: "ArrowRight", primary: true, shift: true },
+  },
+  seekBack: {
+    description: "Seek back",
+    group: "Playback",
+    keys: { key: "ArrowLeft", primary: true, shift: true },
+  },
+  // Like a volume key, which keeps turning the volume while held.
+  volumeUp: {
+    description: "Turn the volume up",
+    group: "Playback",
+    keys: { key: "ArrowUp", primary: true },
+    repeatsWhileHeld: true,
+  },
+  volumeDown: {
+    description: "Turn the volume down",
+    group: "Playback",
+    keys: { key: "ArrowDown", primary: true },
+    repeatsWhileHeld: true,
   },
   focusSearch: { description: "Search", group: "General", keys: { key: "/" } },
   // The shortcuts each platform's browsers use, so they work from muscle

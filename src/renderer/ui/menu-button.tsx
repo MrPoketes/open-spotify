@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import { type KeyboardEvent, useId, useRef, useState } from "react"
 import { closeWhenFocusLeaves } from "./close-when-focus-leaves"
+import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { iconControlClassName } from "./icon-control-class-name"
 import { type MenuItem, MenuList, type MenuOpenFocus } from "./menu-list"
 
@@ -33,7 +34,7 @@ export function MenuButton({ label, icon: Icon, items, menuAlignment = "right" }
   const openWithKeyboard = (event: KeyboardEvent) => {
     const openedOnByKey: Record<string, MenuOpenFocus> = { ArrowDown: "first", ArrowUp: "last" }
     const openedOn = openedOnByKey[event.key]
-    if (openedOn === undefined) return
+    if (openedOn === undefined || hasShortcutModifier(event)) return
     event.preventDefault()
     setMenuOpenedOn(openedOn)
   }
