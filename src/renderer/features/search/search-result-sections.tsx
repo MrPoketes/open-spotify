@@ -1,10 +1,10 @@
-import { Disc3, ListMusic } from "lucide-react"
 import { CardGrid, type GridCard } from "../../ui/card-grid"
 import { artistCard } from "../artist/artist-card"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import type { SearchAlbum } from "../spotify/spotify-album"
 import type { SearchResults } from "../spotify/spotify-search"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import { UndatedTrackList } from "../track-list/undated-track-list"
 import { ResultSection } from "./result-section"
 
@@ -14,7 +14,7 @@ const albumCard = (album: SearchAlbum): GridCard => ({
   title: album.name,
   details: formatArtistNames(album.artists),
   artwork: album.images,
-  placeholderIcon: Disc3,
+  placeholderIcon: spotifyItemKinds.album.icon,
 })
 
 const playlistCard = (playlist: SimplifiedPlaylist): GridCard => ({
@@ -23,7 +23,7 @@ const playlistCard = (playlist: SimplifiedPlaylist): GridCard => ({
   title: playlist.name,
   details: `By ${playlist.owner.displayName ?? playlist.owner.id}`,
   artwork: playlist.images ?? [],
-  placeholderIcon: ListMusic,
+  placeholderIcon: spotifyItemKinds.playlist.icon,
 })
 
 interface SearchResultSectionsProps {

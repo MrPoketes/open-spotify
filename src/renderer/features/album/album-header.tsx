@@ -1,9 +1,9 @@
-import { Disc3 } from "lucide-react"
 import { PageHeader } from "../../ui/page-header"
 import { ArtistLinks } from "../artist/artist-links"
 import { useAddToFolder } from "../folders/use-add-to-folder"
 import { ContextPlayButton } from "../playback/context-play-button"
 import type { Album } from "../spotify/spotify-album"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import { formatTotalDuration } from "../track-list/format-duration"
 import { formatCount } from "../../ui/format-count"
 
@@ -23,9 +23,9 @@ export function AlbumHeader({ album, totalDurationMs }: AlbumHeaderProps) {
 
   return (
     <PageHeader
-      kind="Album"
+      kind={spotifyItemKinds.album.label}
       title={album.name}
-      cover={{ sources: album.images, placeholderIcon: Disc3 }}
+      cover={{ sources: album.images, placeholderIcon: spotifyItemKinds.album.icon }}
       menuItems={[addToFolder(album)]}
       playButton={<ContextPlayButton contextUri={album.uri} contextName={album.name} />}
     >

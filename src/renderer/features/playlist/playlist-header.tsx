@@ -1,8 +1,8 @@
-import { ListMusic } from "lucide-react"
 import { PageHeader } from "../../ui/page-header"
 import { useAddToFolder } from "../folders/use-add-to-folder"
 import { ContextPlayButton } from "../playback/context-play-button"
 import type { Playlist } from "../spotify/spotify-playlist"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import { formatCount } from "../../ui/format-count"
 
 // Spotify sends descriptions HTML-escaped and sometimes with links in them.
@@ -31,9 +31,9 @@ export function PlaylistHeader({ playlist, totalDuration }: PlaylistHeaderProps)
 
   return (
     <PageHeader
-      kind="Playlist"
+      kind={spotifyItemKinds.playlist.label}
       title={playlist.name}
-      cover={{ sources: images, placeholderIcon: ListMusic }}
+      cover={{ sources: images, placeholderIcon: spotifyItemKinds.playlist.icon }}
       menuItems={[addToFolder({ uri: playlist.uri, name: playlist.name, images })]}
       playButton={
         isEmpty ? undefined : (

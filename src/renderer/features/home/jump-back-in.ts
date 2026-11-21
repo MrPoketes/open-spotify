@@ -1,9 +1,9 @@
 import { Effect } from "effect"
-import { Disc3, ListMusic } from "lucide-react"
 import type { GridCard } from "../../ui/card-grid"
 import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { PlayHistory } from "../spotify/spotify-play-history"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import { artistCard } from "../artist/artist-card"
 
 const jumpBackInLimit = 8
@@ -41,9 +41,9 @@ const loadCard = Effect.fn("loadJumpBackInCard")(function* ({ uri, kind, id }: P
       key: uri,
       link: { to: "/album/$albumId", params: { albumId: id } },
       title: album.name,
-      details: "Album",
+      details: spotifyItemKinds.album.label,
       artwork: album.images,
-      placeholderIcon: Disc3,
+      placeholderIcon: spotifyItemKinds.album.icon,
     } satisfies GridCard
   }
   if (kind === "playlist") {
@@ -52,9 +52,9 @@ const loadCard = Effect.fn("loadJumpBackInCard")(function* ({ uri, kind, id }: P
       key: uri,
       link: { to: "/playlist/$playlistId", params: { playlistId: id } },
       title: playlist.name,
-      details: "Playlist",
+      details: spotifyItemKinds.playlist.label,
       artwork: playlist.images ?? [],
-      placeholderIcon: ListMusic,
+      placeholderIcon: spotifyItemKinds.playlist.icon,
     } satisfies GridCard
   }
   return artistCard(yield* spotify.getArtist(id))

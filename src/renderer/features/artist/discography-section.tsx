@@ -1,5 +1,4 @@
 import { Effect } from "effect"
-import { Disc3 } from "lucide-react"
 import { useId, useState } from "react"
 import { CardGrid, type GridCard } from "../../ui/card-grid"
 import { useCardGridColumnCount } from "../../ui/use-card-grid-column-count"
@@ -8,6 +7,7 @@ import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
 import type { ArtistAlbum, ArtistAlbumsPage } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { AlbumGroup } from "../spotify/spotify-artist-requests"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import { scrollLoadedListControls, useLoadControlFocus } from "../spotify/use-load-control-focus"
 import { useNextPages } from "../spotify/use-next-pages"
 
@@ -18,7 +18,7 @@ const albumCard = (album: ArtistAlbum): GridCard => ({
   // Release dates start with the year, whatever their precision.
   details: album.releaseDate.slice(0, 4),
   artwork: album.images,
-  placeholderIcon: Disc3,
+  placeholderIcon: spotifyItemKinds.album.icon,
 })
 
 interface DiscographySectionProps {
