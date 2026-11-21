@@ -3,15 +3,10 @@ import { userEvent } from "@testing-library/user-event"
 import { Effect, Option } from "effect"
 import { describe, expect, it } from "vitest"
 import { NoActiveDevice, type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { spotifyApiFakeWith, spotifyApiFakeWithPlayback } from "../spotify/spotify-api-fake"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
 import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
-
-const withPlayback = (change: (playback: PlaybackState) => PlaybackState) =>
-  spotifyApiFakeWith((spotify) => ({
-    getPlaybackState: spotify.getPlaybackState.pipe(Effect.map(Option.map(change))),
-  }))
 
 const control = (name: string) => screen.findByRole("button", { name })
 
@@ -95,7 +90,7 @@ describe("NowPlayingBar controls", () => {
 
   it("disables every control on a device that other apps cannot control", async () => {
     renderNowPlayingBarAlone(
-      withPlayback((playback) => ({
+      spotifyApiFakeWithPlayback((playback) => ({
         ...playback,
         device: { ...playback.device, isRestricted: true },
       })),
@@ -113,7 +108,7 @@ describe("NowPlayingBar controls", () => {
   // at the start of a playlist, and the command would only fail.
   it("disables only the controls Spotify disallows right now", async () => {
     renderNowPlayingBarAlone(
-      withPlayback((playback) => ({
+      spotifyApiFakeWithPlayback((playback) => ({
         ...playback,
         actions: { disallows: { skippingPrev: true, seeking: true } },
       })),
@@ -284,7 +279,9 @@ describe("NowPlayingBar seek bar", () => {
 
   // Spotify reports no item while an ad plays, and there is nothing to seek in.
   it("disables the seek bar while nothing is playing", async () => {
-    renderNowPlayingBarAlone(withPlayback((playback) => ({ ...playback, item: null })))
+    renderNowPlayingBarAlone(
+      spotifyApiFakeWithPlayback((playback) => ({ ...playback, item: null })),
+    )
     await screen.findByText("Nothing is playing")
 
     const slider = await seekBar()

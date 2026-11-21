@@ -1,14 +1,13 @@
 import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, type Layer, Option, Schema } from "effect"
+import { Effect, type Layer, Schema } from "effect"
 import { useState } from "react"
 import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
-import { fakeTracks } from "../spotify/spotify-fake-tracks"
+import { spotifyApiFakeWith, spotifyApiFakeWithPlayback } from "../spotify/spotify-api-fake"
 import { fakeEpisode, fakeLocalTrack, fakePlayingTrack } from "../spotify/spotify-fixtures"
 import { PlayableItem } from "../spotify/spotify-playable-item"
 import { NowPlayingBar } from "./now-playing-bar"
@@ -32,18 +31,10 @@ function NowPlayingBarWithPicker() {
 const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
   renderScreen(<NowPlayingBarWithPicker />, fakeMainProcess(), spotifyApi)
 
-// The fake's playback with the given fixture playing in place of its own
-// first track.
 const playing = (fixture: unknown) =>
-  spotifyApiFakeWith((spotify) => ({
-    getPlaybackState: spotify.getPlaybackState.pipe(
-      Effect.map(
-        Option.map((playback) => ({
-          ...playback,
-          item: Schema.decodeUnknownSync(PlayableItem)(fixture),
-        })),
-      ),
-    ),
+  spotifyApiFakeWithPlayback((playback) => ({
+    ...playback,
+    item: Schema.decodeUnknownSync(PlayableItem)(fixture),
   }))
 
 const nowPlaying = () => screen.findByRole("region", { name: "Now playing" })
@@ -69,11 +60,15 @@ describe("NowPlayingBar", () => {
   })
 
   it("links the track title to its album and each artist to their page", async () => {
-    const trackWithTwoArtists = fakeTracks.find(({ artists }) => artists.length > 1)
-    renderNowPlayingBar(playing(trackWithTwoArtists))
+    renderNowPlayingBar(
+      playing({
+        ...fakePlayingTrack,
+        artists: [...fakePlayingTrack.artists, { id: "fake-artist-1", name: "Lena Varga" }],
+      }),
+    )
     const bar = await nowPlaying()
 
-    const title = await within(bar).findByRole("link", { name: "Glass Harbour, part 1.3" })
+    const title = await within(bar).findByRole("link", { name: fakePlayingTrack.name })
     expect(title).toHaveAttribute("href", "/album/fake-album-0")
     expect(within(bar).getByRole("link", { name: "Northbound Static" })).toHaveAttribute(
       "href",

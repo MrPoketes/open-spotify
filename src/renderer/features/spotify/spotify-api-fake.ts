@@ -1,6 +1,7 @@
-import { Effect, Layer } from "effect"
+import { Effect, Layer, Option } from "effect"
 import { SpotifyApi } from "./spotify-api"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
+import type { PlaybackState } from "./spotify-playback-state"
 
 // Kept out of spotify-api.ts so the fixtures stay out of the app's bundle.
 export const spotifyApiFake = SpotifyApi.layerWithoutHttpClient.pipe(
@@ -19,3 +20,10 @@ export const spotifyApiFakeWith = (
       return SpotifyApi.of({ ...spotify, ...overrides(spotify) })
     }),
   ).pipe(Layer.provide(spotifyApiFake))
+
+// The fake with its playback state changed, for tests of a state the fake
+// player does not reach on its own.
+export const spotifyApiFakeWithPlayback = (change: (playback: PlaybackState) => PlaybackState) =>
+  spotifyApiFakeWith((spotify) => ({
+    getPlaybackState: spotify.getPlaybackState.pipe(Effect.map(Option.map(change))),
+  }))
