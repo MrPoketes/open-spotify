@@ -1,4 +1,5 @@
 import { Clock, Context, Effect, Layer, Option, PubSub, Ref, Schema, Stream } from "effect"
+import { clamp } from "../../lib/clamp"
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { Device } from "../spotify/spotify-device"
 import type { RepeatMode } from "../spotify/spotify-playback-state"
@@ -138,8 +139,39 @@ const positionShownBy = (shownState: Effect.Effect<Option.Option<PlayerState>>) 
     if (item === null || progressMs === null) {
       return null
     }
-    return { itemUri: item.uri, progressMs }
+    return { itemUri: item.uri, progressMs, durationMs: item.durationMs }
   })
+
+// A seek shows at once at the position it goes to, which Spotify reports only
+// on the next poll.
+const seekCommands = (
+  sendSeek: (positionMs: number) => PlayerCommand,
+  pendingChanges: PendingPlaybackChanges,
+  shownPosition: ReturnType<typeof positionShownBy>,
+) => {
+  const seekInItem = (itemUri: string | null, positionMs: number) =>
+    pendingChanges.showWhileSending(
+      {},
+      sendSeek(positionMs),
+      itemUri === null ? null : { itemUri, progressMs: positionMs },
+    )
+  return {
+    seek: (positionMs: number) =>
+      shownPosition.pipe(Effect.flatMap((shown) => seekInItem(shown?.itemUri ?? null, positionMs))),
+    seekBy: (offsetMs: number) =>
+      Effect.gen(function* () {
+        const shown = yield* shownPosition
+        if (shown === null) {
+          return
+        }
+        const fromMs = Math.min(shown.progressMs, shown.durationMs)
+        const targetMs = clamp(fromMs + offsetMs, 0, shown.durationMs)
+        if (targetMs !== fromMs) {
+          yield* seekInItem(shown.itemUri, targetMs)
+        }
+      }),
+  }
+}
 
 const progressOf = (playerState: PlayerState): Stream.Stream<PlaybackProgress | null> => {
   if (playerState.status !== "active") {
@@ -175,6 +207,10 @@ export class Player extends Context.Service<
     readonly skipToNext: PlayerCommand
     readonly skipToPrevious: PlayerCommand
     readonly seek: (positionMs: number) => PlayerCommand
+    // Steps from the position shown now, which counts the seeks Spotify has
+    // not reported yet, so quick steps add up. A step stops at the start or
+    // the end of the item, and sends nothing when it is already there.
+    readonly seekBy: (offsetMs: number) => PlayerCommand
     readonly playQueuedItem: (
       queuedItem: QueuedItem,
     ) => Effect.Effect<void, SpotifyApiError | QueuedItemGone>
@@ -263,13 +299,11 @@ export class Player extends Context.Service<
         pause: showPlayingWhileSending(false, send(spotify.pause)),
         skipToNext: sendThenRefresh(spotify.skipToNext),
         skipToPrevious: sendThenRefresh(spotify.skipToPrevious),
-        seek: (positionMs) =>
-          Effect.gen(function* () {
-            const shown = yield* shownPosition
-            const position =
-              shown === null ? null : { itemUri: shown.itemUri, progressMs: positionMs }
-            yield* pendingChanges.showWhileSending({}, send(spotify.seek(positionMs)), position)
-          }),
+        ...seekCommands(
+          (positionMs) => send(spotify.seek(positionMs)),
+          pendingChanges,
+          shownPosition,
+        ),
         playQueuedItem: (queuedItem) =>
           skipToQueuedItem(spotify, queuedItem).pipe(
             Effect.ensuring(refresh),

@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
@@ -173,32 +173,36 @@ describe("playback shortcuts", () => {
   })
 
   // Spotify reports the new position only on the next poll, two seconds
-  // later, and each press must start from where the last one went.
-  it("adds up quick seek presses before Spotify reports the new position", async () => {
+  // later, and a position the bar received before a press can reach it after
+  // the press. Each press must still start from where the last one went, so
+  // here all three come before the bar renders again.
+  it("adds up quick seek presses before the bar or Spotify shows the new position", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
     await renderNowPlayingBar({ spotifyApi })
     await showsPosition(await seekBar(), "0:42 of 2:30")
 
-    await userEvent.keyboard(
-      "{Control>}{Shift>}{ArrowRight}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
-    )
+    act(() => {
+      for (let press = 0; press < 3; press += 1) {
+        fireEvent.keyDown(document.body, { key: "ArrowRight", ctrlKey: true, shiftKey: true })
+      }
+    })
 
     await waitFor(() => expect(seekPositions).toEqual([47_000, 52_000, 57_000]))
   })
 
-  it("seeks no further back than the start or forward than the end, and not again there", async () => {
-    const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks((playback) => ({
-      ...lastingMs(7_000)(playback),
-      progressMs: 3_000,
-    }))
+  // The fake's track is at 0:42, past the end of this 0:07 item, so the bar
+  // starts at the end. Polls report where each seek went: a fixed position
+  // would pull the bar back to it once a seek settles.
+  it("seeks no further forward than the end or back than the start, and not again there", async () => {
+    const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks(lastingMs(7_000))
     await renderNowPlayingBar({ spotifyApi })
-    await showsPosition(await seekBar(), "0:03 of 0:07")
+    await showsPosition(await seekBar(), "0:07 of 0:07")
 
     await userEvent.keyboard(
-      "{Control>}{Shift>}{ArrowLeft}{ArrowLeft}{ArrowRight}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
+      "{Control>}{Shift>}{ArrowRight}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowRight}{/Shift}{/Control}",
     )
 
-    await waitFor(() => expect(seekPositions).toEqual([0, 5_000, 7_000]))
+    await waitFor(() => expect(seekPositions).toEqual([2_000, 0, 5_000]))
   })
 
   it("says why and sends nothing when Spotify does not allow seeking", async () => {

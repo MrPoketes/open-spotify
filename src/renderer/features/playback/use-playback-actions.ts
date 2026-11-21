@@ -10,6 +10,8 @@ const nextRepeatMode: Record<RepeatMode, RepeatMode> = {
 
 const disallowedReason = "Spotify doesn't allow this right now."
 
+const seekFailure = "Couldn't move to that position."
+
 const unavailableReasons = {
   loading: "Checking what's playing…",
   unreachable: "Can't reach Spotify right now.",
@@ -81,8 +83,11 @@ export function usePlaybackActions(playerState: PlayerStateOrLoading) {
       disallows.togglingShuffle,
     ),
     seek: action(
-      (positionMs: number) =>
-        send((player) => player.seek(positionMs), "Couldn't move to that position."),
+      (positionMs: number) => send((player) => player.seek(positionMs), seekFailure),
+      disallows.seeking,
+    ),
+    seekBy: action(
+      (offsetMs: number) => send((player) => player.seekBy(offsetMs), seekFailure),
       disallows.seeking,
     ),
     // From off, repeat turns on for the context. From the other modes, it
