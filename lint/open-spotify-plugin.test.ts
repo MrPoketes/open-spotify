@@ -2,6 +2,7 @@ import path from "node:path"
 import { RuleTester } from "oxlint/plugins-dev"
 import { describe, it } from "vitest"
 import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
+import { noConstructedContextValues } from "./rules/no-constructed-context-values.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
@@ -87,6 +88,28 @@ ruleTester.run("no-hard-coded-colors", noHardCodedColors, {
     {
       code: "const classes = `${base} hover:text-red-500/50 !border-white`",
       errors: [{ messageId: "paletteClass" }, { messageId: "paletteClass" }],
+    },
+  ],
+})
+
+ruleTester.run("no-constructed-context-values", noConstructedContextValues, {
+  valid: [
+    {
+      code: "<DensityContext value={densityChoice}>{children}</DensityContext>",
+      filename: "view.tsx",
+    },
+    { code: "<Dialog value={{ open }} />", filename: "view.tsx" },
+  ],
+  invalid: [
+    {
+      code: "<DensityContext value={{ density, chooseDensity }}>{children}</DensityContext>",
+      filename: "view.tsx",
+      errors: 1,
+    },
+    {
+      code: "<StatusMessageContext value={(message) => show(message)} />",
+      filename: "view.tsx",
+      errors: 1,
     },
   ],
 })

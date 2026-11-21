@@ -8,6 +8,8 @@ import { loadSavedSetting } from "../../lib/saved-setting"
 import { ContextPlayButton } from "../playback/context-play-button"
 import { NoActiveDevice } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+// Importing it also installs the fake main process as window.desktop, which
+// rendererRuntime and these tests read.
 import { openQueue, renderAppShell } from "./render-app-shell"
 
 const sidebarDivider = () => screen.getByRole("separator", { name: "Resize sidebar" })
