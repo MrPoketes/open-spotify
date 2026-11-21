@@ -59,6 +59,9 @@ export function ThemeEditor({ savedTheme, onSave, onCancel }: ThemeEditorProps) 
               key={field.token}
               field={field}
               value={editor.tokenValues[field.token]}
+              contrastShortfalls={editor.contrastShortfalls.filter(
+                (shortfall) => shortfall.foreground === field.token,
+              )}
               onChange={(value) => editor.setTokenValue(field.token, value)}
             />
           ))}

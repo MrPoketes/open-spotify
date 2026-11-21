@@ -347,11 +347,20 @@ to the editor. Each field is labelled with its token name, and its control fits 
 
 Every valid change applies to the whole app at once. An invalid value gets a `danger` ring and a
 `text-xs` `danger` message under its field that describes it (`aria-describedby`), and the app
-keeps the last valid value. Save theme (round `accent`) stores the copy as an imported theme and
-chooses it; with a field still invalid or the name or author empty, it says so in an `alert`
-instead. A theme the main process refuses, such as one named like a built-in theme, shows its
-reason in the same `alert`. Cancel (round `surface-raised`), or leaving the page, discards the
-changes and restores the saved theme.
+keeps the last valid value.
+
+A color pair below its contrast target (see Accessibility) gets a `text-xs` `danger` warning
+under the field of the color drawn on top: the text color, `on-accent`, or `focus`. It names the
+pair and its ratio ("color-muted on color-surface: 3.2:1, needs 4.5:1"), rounded down so it never
+reads as meeting the target. The warnings sit in an `output` live region, so a screen reader
+announces them as they appear, and they also describe the field. They follow every valid change
+and never block saving.
+
+Save theme (round `accent`) stores the copy as an imported theme and chooses it; with a field
+still invalid or the name or author empty, it says so in an `alert` instead. A theme the main
+process refuses, such as one named like a built-in theme, shows its reason in the same `alert`.
+Cancel (round `surface-raised`), or leaving the page, discards the changes and restores the
+saved theme.
 
 ### Home page
 

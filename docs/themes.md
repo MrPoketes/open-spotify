@@ -130,7 +130,11 @@ You can also build a theme without a text editor:
    theme, appears at the end of the theme list, and is put in use. **Cancel** discards the
    changes.
 
-The editor does not check contrast yet, so check the pairs under [Contrast](#contrast) yourself.
+While you edit, every pair under [Contrast](#contrast) that falls below its target shows a
+warning under the field of its text color (or `color-focus`, or `color-on-accent`), such as
+`color-muted on color-surface: 3.2:1, needs 4.5:1`. The warnings are advice: a theme with
+warnings still saves.
+
 To share the theme, choose **Export current theme…** after saving it.
 
 ## Importing a theme
