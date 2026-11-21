@@ -9,7 +9,7 @@ type PlaybackSettings = Pick<PlaybackState, "isPlaying" | "shuffle" | "repeat"> 
 // Where to show playback in an item, as of the moment the change was made.
 interface PendingPosition {
   readonly itemUri: string
-  readonly progressMs: number
+  readonly positionMs: number
 }
 
 // A change the user made that the polled playback state may not show yet.
@@ -41,7 +41,7 @@ const applyChanges = (timedPlayback: TimedPlayback, changes: ReadonlyArray<Pendi
   for (const { settings, position, madeAt } of changes) {
     playback = applySettings(playback, settings)
     if (position !== null && position.itemUri === playback.item?.uri) {
-      playback = { ...playback, progressMs: position.progressMs }
+      playback = { ...playback, progressMs: position.positionMs }
       progressReadAt = madeAt
     }
   }

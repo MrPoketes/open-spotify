@@ -5,12 +5,7 @@ import type { Device } from "../spotify/spotify-device"
 import type { RepeatMode } from "../spotify/spotify-playback-state"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { makePendingPlaybackChanges } from "./pending-playback-changes"
-import {
-  type PlaybackProgress,
-  type TimedPlayback,
-  positionAt,
-  progressAt,
-} from "./playback-progress"
+import { type PlaybackProgress, type TimedPlayback, progressAt } from "./playback-progress"
 import { type QueuedItem, positionInQueue } from "./queued-item"
 
 export type PlayerState =
@@ -135,25 +130,12 @@ const positionShownBy = (shownState: Effect.Effect<Option.Option<PlayerState>>) 
       return null
     }
     const { item } = shown.value.playback
-    const progressMs = positionAt(shown.value, now)
-    if (item === null || progressMs === null) {
+    const progress = progressAt(shown.value, now)
+    if (item === null || progress === null) {
       return null
     }
-    // While playing, the position worked out since the last poll can run
-    // past the end of the item.
-    return {
-      itemUri: item.uri,
-      progressMs: Math.min(progressMs, item.durationMs),
-      durationMs: item.durationMs,
-    }
+    return { itemUri: item.uri, ...progress }
   })
-
-const progressShownBy = (shownPosition: ReturnType<typeof positionShownBy>) =>
-  shownPosition.pipe(
-    Effect.map((shown): PlaybackProgress | null =>
-      shown === null ? null : { positionMs: shown.progressMs, durationMs: shown.durationMs },
-    ),
-  )
 
 // A seek shows at once at the position it goes to, which Spotify reports only
 // on the next poll.
@@ -166,7 +148,7 @@ const seekCommands = (
     pendingChanges.showWhileSending(
       {},
       sendSeek(positionMs),
-      itemUri === null ? null : { itemUri, progressMs: positionMs },
+      itemUri === null ? null : { itemUri, positionMs },
     )
   return {
     seek: (positionMs: number) =>
@@ -177,8 +159,8 @@ const seekCommands = (
         if (shown === null) {
           return
         }
-        const targetMs = clamp(shown.progressMs + offsetMs, 0, shown.durationMs)
-        if (targetMs !== shown.progressMs) {
+        const targetMs = clamp(shown.positionMs + offsetMs, 0, shown.durationMs)
+        if (targetMs !== shown.positionMs) {
           yield* seekInItem(shown.itemUri, targetMs)
         }
       }),
@@ -303,7 +285,7 @@ export class Player extends Context.Service<
         state,
         queueChanges: Stream.fromPubSub(queueChanges),
         progress: Stream.switchMap(state, progressOf),
-        position: progressShownBy(shownPosition),
+        position: shownPosition,
         listDevices: spotify.getAvailableDevices,
         transferPlayback: (deviceId) => sendThenRefresh(spotify.transferPlayback(deviceId)),
         play: showPlayingWhileSending(true, send(spotify.play)),

@@ -113,10 +113,9 @@ export function SeekBar({ unavailableReason, onSeek, onSeekBy }: SeekBarProps) {
   const { positionMs, durationMs } = progress ?? noProgress
   const shownPositionMs = heldPositionMs ?? positionMs
 
-  // The Player counts every seek it has sent, which the slider may not show
-  // yet: a progress worked out before a seek can arrive after it. So the
-  // shortcuts, and the first key press of a hold, step from the Player's
-  // position.
+  // The Player steps from the position of every seek it has sent, which the
+  // slider may not show yet: a progress worked out before a seek can arrive
+  // after it.
   const seekShortcut = (offsetMs: number) => ({
     unavailableReason: reason,
     run: () => onSeekBy(offsetMs),
@@ -133,11 +132,13 @@ export function SeekBar({ unavailableReason, onSeek, onSeekBy }: SeekBarProps) {
     if (reason !== null) {
       return
     }
-    const from = isHolding
+    // Like the shortcuts, a new hold starts from the Player's position, which
+    // counts the last seek even while the slider still shows an older one.
+    const stepStart = isHolding
       ? { positionMs: shownPositionMs, durationMs }
       : runtime.runSync(playbackPosition)
-    if (from !== null) {
-      hold(clamp(target(from), 0, from.durationMs))
+    if (stepStart !== null) {
+      hold(clamp(target(stepStart), 0, stepStart.durationMs))
     }
   }
 
