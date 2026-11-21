@@ -4,6 +4,7 @@ import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { formatCount } from "../../ui/format-count"
 import type { MenuAction } from "../../ui/menu-list"
+import { useReadFolderTreeAgain } from "./folder-tree"
 
 export interface FoldersFileOutcome {
   readonly kind: "success" | "failure"
@@ -27,36 +28,39 @@ const exportFolders = Effect.gen(function* () {
   ),
 )
 
-const importFolders = Effect.gen(function* () {
-  const bridge = yield* DesktopBridge
-  const reply = yield* bridge.importFolders
-  if (reply._tag === "FileDialogCanceled") return null
-  return success(`Imported ${formatCount(reply.folderCount, "folder", "folders")}.`)
-}).pipe(
-  Effect.catchTags({
-    FoldersFileNotJson: () => Effect.succeed(failure(`That file isn't JSON. ${nothingImported}`)),
-    FoldersFileUnsupportedVersion: (error) =>
-      Effect.succeed(
-        failure(
-          `That file uses folders format version ${error.version}, which this version of Open Spotify can't read. ${nothingImported}`,
+const importFolders = (readTreeAgain: Effect.Effect<void, never, DesktopBridge>) =>
+  Effect.gen(function* () {
+    const bridge = yield* DesktopBridge
+    const reply = yield* bridge.importFolders
+    if (reply._tag === "FileDialogCanceled") return null
+    yield* readTreeAgain
+    return success(`Imported ${formatCount(reply.folderCount, "folder", "folders")}.`)
+  }).pipe(
+    Effect.catchTags({
+      FoldersFileNotJson: () => Effect.succeed(failure(`That file isn't JSON. ${nothingImported}`)),
+      FoldersFileUnsupportedVersion: (error) =>
+        Effect.succeed(
+          failure(
+            `That file uses folders format version ${error.version}, which this version of Open Spotify can't read. ${nothingImported}`,
+          ),
         ),
-      ),
-    FoldersFileInvalid: () =>
-      Effect.succeed(failure(`That file isn't an Open Spotify folders file. ${nothingImported}`)),
-    FoldersFileDamaged: () =>
-      Effect.succeed(
-        failure(
-          `That folders file is damaged: a folder or item in it isn't valid. ${nothingImported}`,
+      FoldersFileInvalid: () =>
+        Effect.succeed(failure(`That file isn't an Open Spotify folders file. ${nothingImported}`)),
+      FoldersFileDamaged: () =>
+        Effect.succeed(
+          failure(
+            `That folders file is damaged: a folder or item in it isn't valid. ${nothingImported}`,
+          ),
         ),
-      ),
-    DesktopBridgeError: () =>
-      Effect.succeed(failure(`The file couldn't be imported. ${nothingImported}`)),
-  }),
-)
+      DesktopBridgeError: () =>
+        Effect.succeed(failure(`The file couldn't be imported. ${nothingImported}`)),
+    }),
+  )
 
 export function useFoldersFileActions() {
   const runtime = use(RendererRuntimeContext)
   const [outcome, setOutcome] = useState<FoldersFileOutcome | null>(null)
+  const readTreeAgain = useReadFolderTreeAgain()
 
   // Clearing the outcome first means a repeated outcome changes the page
   // again, so screen readers announce it again.
@@ -67,7 +71,7 @@ export function useFoldersFileActions() {
 
   const actions: ReadonlyArray<MenuAction> = [
     { label: "Export folders…", onSelect: () => runAction(exportFolders) },
-    { label: "Import folders…", onSelect: () => runAction(importFolders) },
+    { label: "Import folders…", onSelect: () => runAction(importFolders(readTreeAgain)) },
   ]
 
   return { actions, outcome }

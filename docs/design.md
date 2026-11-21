@@ -183,6 +183,15 @@ The sidebar library has a chip per kind (Playlists, Albums, Artists, Shows) and 
 under them. Pressing the active chip shows every kind again. The filters stay at the top of the
 pane while the list scrolls. When they match nothing, the list says so instead of going blank.
 
+### Text fields
+
+A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 4 px
+gap between them. The input is `surface-raised` and `rounded-small`, with 12 px across and 8 px
+down inside and `text-base` text. An invalid field gets a `danger` ring and a `text-xs`
+`danger` message in an `alert` under it, which also describes it (`aria-describedby`). The
+theme editor's Name and Author and the New folder dialog's Name use it
+(`src/renderer/ui/text-field.tsx`).
+
 ### Sidebar sections and pins
 
 The sidebar library is split into sections: Liked Songs, Playlists, Albums, Artists, and Shows,
@@ -477,11 +486,34 @@ window edge moves back inside it, and a menu taller than the window scrolls (unl
 submenus, which a scroll box would clip). A menu lists only the actions that lead somewhere, and an
 element with none opens no menu.
 
+An item that turns something on or off is a `menuitemcheckbox`: when it is on, it sets
+`aria-checked` and ends in a 16 px `Check` icon, so the state does not rely on color.
+
 Every row of a track list has a context menu: Add to playlist (a submenu of the playlists the user
-owns or collaborates on), Add to queue, Go to artist (a submenu of the artists when the track has
-several), Go to album, and Copy link, which copies `https://open.spotify.com/track/<id>`. Until
-the playlists load, or when there are none to add to, Add to playlist says why in the status
-message instead of opening an empty submenu.
+owns or collaborates on), Add to folder, Add to queue, Go to artist (a submenu of the artists when
+the track has several), Go to album, and Copy link, which copies
+`https://open.spotify.com/track/<id>`. Until the playlists load, or when there are none to add to,
+Add to playlist says why in the status message instead of opening an empty submenu.
+
+Every sidebar library entry except Liked Songs, which no folder can hold, has a context menu with
+Add to folder.
+
+### Add to folder
+
+Add to folder is a submenu of the folder tree, in the user's order, ending in "New folder…". Each
+folder is a checkbox item that is checked when the folder holds the item itself (not only a folder
+inside it). Choosing an unchecked folder adds the item; choosing a checked one removes it. A folder
+with folders inside opens a submenu instead, which starts with the folder itself, followed by the
+folders inside it. The status message says what happened: "Added to Running", "Removed from
+Running", or why it failed. Until the folders load, the item says so in the status message instead
+of opening a submenu, and after a failed load it loads them again.
+
+"New folder…" opens a modal dialog (`surface-overlay`, `shadow-overlay`, `rounded-large`, 320 px
+wide, over a `canvas` backdrop at 60 % opacity) with a Name field, then Cancel (round
+`surface-raised`) and Create folder (round `accent`). Create folder makes a top-level folder with
+the item in it. A blank name keeps the dialog open and marks the field invalid with "Enter a
+name for the folder.", until the name is no longer blank. Focus starts in the field, stays in the
+dialog, and returns to the menu's opener when the dialog closes; `Escape` closes it.
 
 The sidebar's folder menu sits beside the "Your library" heading. What an action did is said
 under the heading: a success in `muted` text inside an `output`, a failure in `danger` text

@@ -1,7 +1,5 @@
-import { Effect } from "effect"
 import { Folder as FolderIcon } from "lucide-react"
 import { type FolderView, defaultFolderView } from "../../../shared/folder-view"
-import { DesktopBridge } from "../../lib/desktop-bridge"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
 import { useSavedSettingState } from "../../lib/use-saved-setting-state"
@@ -11,31 +9,30 @@ import { FolderBreadcrumb } from "./folder-breadcrumb"
 import { FolderEntryGrid } from "./folder-entry-grid"
 import { FolderEntryList } from "./folder-entry-list"
 import { type FolderLocation, locateFolder } from "./folder-location"
+import { useFolderTree } from "./folder-tree"
 import { FolderViewToggle } from "./folder-view-toggle"
 import { formatCount } from "../../ui/format-count"
 
-const loadFolderPage = Effect.gen(function* () {
-  const bridge = yield* DesktopBridge
-  return yield* Effect.all({
-    tree: bridge.getFolderTree,
-    savedView: loadSavedSetting("folderView", defaultFolderView),
-  })
-})
-
+// The tree is the one every Add to folder menu shares, so the page shows an
+// item added from a menu at once.
 export function FolderPage({ folderId }: { readonly folderId: string }) {
-  const { state, retry } = useLoad(loadFolderPage, "The folder failed to load")
+  const folderTree = useFolderTree()
+  const savedView = useLoad(
+    loadSavedSetting("folderView", defaultFolderView),
+    "The folder view failed to load",
+  )
 
-  if (state.status === "loading") {
+  if (folderTree.state.status === "failed") {
+    return <ErrorWithRetry message="This folder didn't load." onRetry={folderTree.retry} />
+  }
+  if (folderTree.state.status === "loading" || savedView.state.status !== "loaded") {
     return <output className="text-muted">Loading folder…</output>
   }
-  if (state.status === "failed") {
-    return <ErrorWithRetry message="This folder didn't load." onRetry={retry} />
-  }
-  const location = locateFolder(state.value.tree, folderId)
+  const location = locateFolder(folderTree.state.value, folderId)
   if (location === undefined) {
     return <p className="text-muted">This folder doesn't exist. It may have been deleted.</p>
   }
-  return <LoadedFolder location={location} savedView={state.value.savedView} />
+  return <LoadedFolder location={location} savedView={savedView.state.value} />
 }
 
 interface LoadedFolderProps {

@@ -12,3 +12,19 @@ afterEach(cleanup)
 Object.defineProperty(window, "scrollTo", { value: () => undefined })
 
 Object.defineProperty(window, "ResizeObserver", { value: FakeResizeObserver })
+
+// jsdom has no modal dialogs. These do the part the app relies on: showing
+// the dialog, and firing close when it closes.
+Object.defineProperties(HTMLDialogElement.prototype, {
+  showModal: {
+    value(this: HTMLDialogElement) {
+      this.open = true
+    },
+  },
+  close: {
+    value(this: HTMLDialogElement) {
+      this.open = false
+      this.dispatchEvent(new Event("close"))
+    },
+  },
+})

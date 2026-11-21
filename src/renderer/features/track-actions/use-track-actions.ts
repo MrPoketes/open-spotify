@@ -1,9 +1,10 @@
 import { useNavigate } from "@tanstack/react-router"
 import { Effect } from "effect"
 import { use } from "react"
-import { RendererRuntimeContext, type RendererServices } from "../../lib/renderer-runtime"
+import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { writeClipboardText } from "../../lib/write-clipboard-text"
-import { type StatusMessage, useShowStatusMessage } from "../../ui/status-message-context"
+import { useShowStatusMessage } from "../../ui/status-message-context"
+import { useRunAnnounced } from "../../ui/use-run-announced"
 import { Player } from "../playback/player"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { useEditablePlaylists } from "./editable-playlists"
@@ -16,43 +17,13 @@ const trackLink = (trackId: string) => `https://open.spotify.com/track/${trackId
 const noActiveDeviceFailure =
   "No device is playing. Start playback in the Spotify app, then try again."
 
-interface Outcome<E> {
-  readonly success: string
-  readonly failure: (error: E) => string
-  readonly failureLog: string
-}
-
-// Runs the action and says in the status message whether it worked.
-const announcingOutcome = <E>(
-  action: Effect.Effect<unknown, E, RendererServices>,
-  outcome: Outcome<E>,
-  showStatusMessage: (message: StatusMessage) => void,
-) =>
-  action.pipe(
-    Effect.andThen(
-      Effect.sync(() => showStatusMessage({ text: outcome.success, isFailure: false })),
-    ),
-    Effect.catch((error) =>
-      Effect.logWarning(outcome.failureLog, error).pipe(
-        Effect.andThen(
-          Effect.sync(() => showStatusMessage({ text: outcome.failure(error), isFailure: true })),
-        ),
-      ),
-    ),
-  )
-
 export function useTrackActions(): TrackActions {
   const runtime = use(RendererRuntimeContext)
   const navigate = useNavigate()
   const showStatusMessage = useShowStatusMessage()
   const editablePlaylists = useEditablePlaylists()
 
-  const runAnnounced = <E>(
-    action: Effect.Effect<unknown, E, RendererServices>,
-    outcome: Outcome<E>,
-  ) => {
-    runtime.runFork(announcingOutcome(action, outcome, showStatusMessage))
-  }
+  const runAnnounced = useRunAnnounced()
 
   const explainMissingPlaylists = () => {
     if (editablePlaylists.state.status === "failed") {

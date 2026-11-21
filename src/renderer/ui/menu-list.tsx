@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react"
+import { Check, ChevronRight } from "lucide-react"
 import {
   type KeyboardEvent,
   type Ref,
@@ -15,9 +15,15 @@ export interface MenuAction {
   readonly id?: string
   readonly label: string
   readonly onSelect: () => void
+  // Set only for an action that turns something on or off, such as an item's
+  // place in a folder.
+  readonly checked?: boolean
 }
 
 interface MenuSubmenu {
+  // Tells apart submenus with the same label, such as two folders that share
+  // a name.
+  readonly id?: string
   readonly label: string
   readonly items: ReadonlyArray<MenuItem>
 }
@@ -31,7 +37,7 @@ const openFocusIndex: Record<MenuOpenFocus, number> = { first: 0, last: -1 }
 
 const isSubmenu = (item: MenuItem): item is MenuSubmenu => "items" in item
 
-const menuItemKey = (item: MenuItem) => (isSubmenu(item) ? item.label : (item.id ?? item.label))
+const menuItemKey = (item: MenuItem) => item.id ?? item.label
 
 // A menu opened near the right or bottom edge of the window moves back
 // inside it.
@@ -168,13 +174,17 @@ interface MenuItemButtonProps {
   readonly onClick: () => void
 }
 
+const checkedState = (item: MenuItem) => (isSubmenu(item) ? undefined : item.checked)
+
 function MenuItemButton({ ref, item, isSubmenuOpen, onClick }: MenuItemButtonProps) {
+  const checked = checkedState(item)
   return (
     <button
       ref={ref}
       type="button"
-      role="menuitem"
+      role={checked === undefined ? "menuitem" : "menuitemcheckbox"}
       tabIndex={-1}
+      aria-checked={checked}
       aria-haspopup={isSubmenu(item) ? "menu" : undefined}
       aria-expanded={isSubmenu(item) ? isSubmenuOpen : undefined}
       onClick={onClick}
@@ -182,6 +192,7 @@ function MenuItemButton({ ref, item, isSubmenuOpen, onClick }: MenuItemButtonPro
     >
       {item.label}
       {isSubmenu(item) ? <ChevronRight aria-hidden size={16} /> : null}
+      {checked === true ? <Check aria-hidden size={16} /> : null}
     </button>
   )
 }
