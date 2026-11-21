@@ -12,7 +12,8 @@ type QueueContents =
 
 // Spotify offers no way to watch the queue. It moves on when the playing item
 // changes, so it is read again whenever the playing item or the player's
-// status changes, and after the player moves through it.
+// status changes, and whenever the player reports that the queue changed
+// without either, such as after shuffle was turned on.
 const playingItemKey = (state: PlayerState) =>
   state.status === "active" ? `active ${state.playback.item?.uri ?? "nothing"}` : state.status
 

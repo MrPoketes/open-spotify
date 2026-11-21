@@ -202,6 +202,27 @@ describe("QueuePane", () => {
     expect(await nowPlaying(fakeTrack(1).name)).toBeInTheDocument()
   })
 
+  // Shuffle reorders the queue without changing the playing track.
+  it("shows the new order of what plays next after shuffle is turned on", async () => {
+    const runtime = renderQueuePane()
+    const [firstRowBefore] = await upNextRows()
+    expect(firstRowBefore).toHaveTextContent(fakePlayOrder(1).name)
+
+    await runtime.runPromise(
+      Effect.gen(function* () {
+        const player = yield* Player
+        yield* player.setShuffle(true)
+      }),
+    )
+    await transferToActiveDevice(runtime)
+
+    await waitFor(async () => {
+      const [firstRow, secondRow] = await upNextRows()
+      expect(firstRow).toHaveTextContent(fakePlayOrder(2).name)
+      expect(secondRow).toHaveTextContent(fakePlayOrder(1).name)
+    })
+  })
+
   // The playing track stays the same, so only the press itself can tell the
   // pane that the queue moved on.
   it("shows what plays next after a later copy of the playing track starts", async () => {

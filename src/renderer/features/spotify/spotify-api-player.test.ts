@@ -84,9 +84,10 @@ describe("SpotifyApi player", () => {
       const changed = yield* playback
 
       assert.isFalse(paused.isPlaying)
+      // Shuffle swaps the second and third items of the fake's order.
       assert.deepStrictEqual(
         [changed.isPlaying, changed.shuffle, changed.repeat, changed.item?.name],
-        [true, true, "track", fakeTrack(1).name],
+        [true, true, "track", fakeEpisode.name],
       )
     }).pipe(Effect.provide(spotifyApiFake)),
   )
@@ -103,6 +104,21 @@ describe("SpotifyApi player", () => {
       const playback = Option.getOrThrow(yield* spotify.getPlaybackState)
 
       assert.strictEqual(playback.context?.uri, playlistUri)
+      assert.strictEqual(playback.item?.name, fakeTrack(7).name)
+    }).pipe(Effect.provide(spotifyApiFake)),
+  )
+
+  // Shuffle reorders only what follows the item the user chose, so component
+  // tests that play a track with shuffle on still hear that track.
+  it.effect("starts at the chosen item while shuffle is on", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+      const playlistUri = "spotify:playlist:fake-playlist-late-night-drive"
+
+      yield* spotify.setShuffle(true)
+      yield* spotify.startPlayback({ contextUri: playlistUri, offset: { position: 7 } })
+      const playback = Option.getOrThrow(yield* spotify.getPlaybackState)
+
       assert.strictEqual(playback.item?.name, fakeTrack(7).name)
     }).pipe(Effect.provide(spotifyApiFake)),
   )

@@ -15,7 +15,8 @@ export const fakePlayOrder = (position: number) =>
 interface FakePlayerState {
   activeDevice: (typeof fakeDevices)[number]
   isPlaying: boolean
-  shuffle: boolean
+  // The play position where shuffle was turned on, or null while it is off.
+  shuffledAfter: number | null
   repeat: RepeatMode
   // The fake plays its own order until a client starts something else.
   context: { readonly uri: string } | null
@@ -32,6 +33,31 @@ const TransferPlaybackBody = Schema.fromJsonString(
 const ShuffleState = Schema.Literals(["true", "false"])
 
 const QueuedUri = Schema.TemplateLiteral(["spotify:track:", Schema.String])
+
+// Like Spotify, shuffling keeps the playing item and reorders the items after
+// it. The fake swaps each pair of them, so the shuffled order is predictable
+// and turning shuffle off can find the playing item in the original order.
+const shuffledPosition = (shuffledAfter: number, position: number) => {
+  if (position <= shuffledAfter) {
+    return position
+  }
+  return (position - shuffledAfter) % 2 === 1 ? position + 1 : position - 1
+}
+
+const itemAt = (player: FakePlayerState, position: number) =>
+  player.playOrder(
+    player.shuffledAfter === null ? position : shuffledPosition(player.shuffledAfter, position),
+  )
+
+const setShuffle = (player: FakePlayerState, isOn: boolean) => {
+  if (isOn && player.shuffledAfter === null) {
+    player.shuffledAfter = player.playPosition
+  }
+  if (!isOn && player.shuffledAfter !== null) {
+    player.playPosition = shuffledPosition(player.shuffledAfter, player.playPosition)
+    player.shuffledAfter = null
+  }
+}
 
 const accepted: FakeResponse = [204, undefined]
 
@@ -90,6 +116,9 @@ const startPlayback = (
   player.context = context
   player.playOrder = (playPosition) => items[playPosition]
   player.playPosition = position
+  if (player.shuffledAfter !== null) {
+    player.shuffledAfter = position
+  }
   player.isPlaying = true
   return accepted
 }
@@ -108,7 +137,7 @@ const playerCommands: Record<string, (player: FakePlayerState, url: URL) => Fake
     return accepted
   },
   "PUT /v1/me/player/shuffle": withState(ShuffleState, (player, state) => {
-    player.shuffle = state === "true"
+    setShuffle(player, state === "true")
   }),
   "PUT /v1/me/player/repeat": withState(RepeatMode, (player, state) => {
     player.repeat = state
@@ -124,18 +153,18 @@ const playerCommands: Record<string, (player: FakePlayerState, url: URL) => Fake
 const playbackState = (player: FakePlayerState) => ({
   ...fakePlaybackState(player.activeDevice),
   is_playing: player.isPlaying,
-  shuffle_state: player.shuffle,
+  shuffle_state: player.shuffledAfter !== null,
   repeat_state: player.repeat,
   context: player.context,
-  item: player.playOrder(player.playPosition) ?? null,
+  item: itemAt(player, player.playPosition) ?? null,
 })
 
 const upNextCount = 10
 
 const queue = (player: FakePlayerState) => ({
-  currently_playing: player.playOrder(player.playPosition) ?? null,
+  currently_playing: itemAt(player, player.playPosition) ?? null,
   queue: Array.from({ length: upNextCount }, (_, offset) =>
-    player.playOrder(player.playPosition + 1 + offset),
+    itemAt(player, player.playPosition + 1 + offset),
   ).filter((item) => item !== undefined),
 })
 
@@ -153,7 +182,7 @@ export const fakePlayer = () => {
   const player: FakePlayerState = {
     activeDevice: fakeDevices[0],
     isPlaying: true,
-    shuffle: false,
+    shuffledAfter: null,
     repeat: "off",
     context: null,
     playOrder: fakePlayOrder,

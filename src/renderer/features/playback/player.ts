@@ -44,13 +44,41 @@ const readState = (spotify: SpotifyApi["Service"]) =>
     ),
   )
 
+const skipToQueuedItem = Effect.fn("Player.skipToQueuedItem")(function* (
+  spotify: SpotifyApi["Service"],
+  queuedItem: QueuedItem,
+) {
+  // The queue on screen can be out of date, so the item is looked up in a
+  // fresh copy.
+  const { upNext } = yield* spotify.getQueue
+  const position = positionInQueue(upNext, queuedItem)
+  if (Option.isNone(position)) {
+    return yield* new QueuedItemGone()
+  }
+  // Spotify has no endpoint that plays an item from the queue, so the player
+  // skips past every item before it, one request each.
+  return yield* spotify.skipToNext.pipe(
+    Effect.replicateEffect(position.value + 1, { discard: true }),
+  )
+})
+
+// Shuffle reorders the queue without changing the playing item. Only the
+// polled state counts: the shown state flips as soon as the user presses
+// shuffle, before Spotify has reordered the queue.
+const isShuffleChange = (previous: Option.Option<PlayerState>, next: PlayerState) =>
+  Option.isSome(previous) &&
+  previous.value.status === "active" &&
+  next.status === "active" &&
+  previous.value.playback.shuffle !== next.playback.shuffle
+
 export class Player extends Context.Service<
   Player,
   {
     readonly state: Stream.Stream<PlayerState>
-    // Emits after each attempt to play a queued item and after each item
-    // added to the queue. Neither has to change the item that is playing, so
-    // a queue on screen cannot rely on the playback state alone.
+    // Emits after each attempt to play a queued item, after each item added
+    // to the queue, and when a poll shows that shuffle changed. None of them
+    // has to change the item that is playing, so a queue on screen cannot
+    // rely on the playback state alone.
     readonly queueChanges: Stream.Stream<void>
     readonly listDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => PlayerCommand
@@ -79,8 +107,12 @@ export class Player extends Context.Service<
 
       const poll = Effect.gen(function* () {
         const startedAt = yield* Clock.currentTimeMillis
-        yield* Ref.set(polledState, Option.some(yield* readState(spotify)))
+        const polled = yield* readState(spotify)
+        const previous = yield* Ref.getAndSet(polledState, Option.some(polled))
         yield* pendingChanges.forgetSettledBefore(startedAt)
+        if (isShuffleChange(previous, polled)) {
+          yield* PubSub.publish(queueChanges, undefined)
+        }
       })
 
       const latestState = Effect.gen(function* () {
@@ -141,20 +173,7 @@ export class Player extends Context.Service<
         skipToNext: sendThenRefresh(spotify.skipToNext),
         skipToPrevious: sendThenRefresh(spotify.skipToPrevious),
         playQueuedItem: (queuedItem) =>
-          Effect.gen(function* () {
-            // The queue on screen can be out of date, so the item is looked
-            // up in a fresh copy.
-            const { upNext } = yield* spotify.getQueue
-            const position = positionInQueue(upNext, queuedItem)
-            if (Option.isNone(position)) {
-              return yield* new QueuedItemGone()
-            }
-            // Spotify has no endpoint that plays an item from the queue, so
-            // the player skips past every item before it, one request each.
-            return yield* spotify.skipToNext.pipe(
-              Effect.replicateEffect(position.value + 1, { discard: true }),
-            )
-          }).pipe(
+          skipToQueuedItem(spotify, queuedItem).pipe(
             Effect.ensuring(refresh),
             Effect.ensuring(PubSub.publish(queueChanges, undefined)),
           ),

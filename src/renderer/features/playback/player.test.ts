@@ -297,4 +297,26 @@ describe("Player", () => {
       assert.isTrue(Option.isSome(yield* Fiber.join(firstChange)))
     }).pipe(Effect.scoped, Effect.provide(playerOver(spotifyApiFake))),
   )
+
+  // Shuffle reorders the queue without changing the playing item. Reading the
+  // queue when the bar shows the change would get the order from before it,
+  // so the queue waits for a poll in which Spotify reports the change.
+  it.effect("tells the queue it changed when a poll shows shuffle changed in another app", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const spotify = yield* SpotifyApi
+      const states = yield* subscribe
+      yield* Queue.take(states)
+      const firstChange = yield* player.queueChanges.pipe(
+        Stream.runHead,
+        Effect.forkScoped({ startImmediately: true }),
+      )
+
+      yield* spotify.setShuffle(true)
+      yield* TestClock.adjust("2 seconds")
+      yield* Queue.take(states)
+
+      assert.isTrue(Option.isSome(yield* Fiber.join(firstChange)))
+    }).pipe(Effect.scoped, Effect.provide(Player.layer.pipe(Layer.provideMerge(spotifyApiFake)))),
+  )
 })
