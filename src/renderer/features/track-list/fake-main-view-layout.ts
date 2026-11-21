@@ -15,8 +15,15 @@ export const giveMainViewALayout = (mainView: HTMLElement | null) => {
   Object.defineProperty(mainView, "scrollHeight", { value: 1_000_000, configurable: true })
   Object.defineProperty(mainView, "scrollTo", {
     configurable: true,
-    value: ({ top }: ScrollToOptions) => {
-      mainView.scrollTop = top ?? 0
+    value: ({ top = 0 }: ScrollToOptions) => {
+      // A browser fires no scroll event for a scroll that goes nowhere. The
+      // virtualiser scrolls to where it already is as it starts, and an event
+      // would make it re-render the list 150 ms later, when it stops counting
+      // the list as scrolling.
+      if (top === mainView.scrollTop) {
+        return
+      }
+      mainView.scrollTop = top
       mainView.dispatchEvent(new Event("scroll"))
     },
   })
