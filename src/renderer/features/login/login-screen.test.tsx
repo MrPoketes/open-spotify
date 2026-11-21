@@ -26,6 +26,19 @@ const mainProcessWaitingForBrowser = (logInReply = Deferred.makeUnsafe<unknown>(
   }
 }
 
+// The first login waits for the given reply and every later one waits
+// forever, so a test can end one login and keep the next one waiting.
+const mainProcessAwaitingEachLogIn = (firstLogInReply: Deferred.Deferred<unknown>): DesktopApi => {
+  let nextLogInReply = firstLogInReply
+  return {
+    invoke: () => {
+      const logInReply = nextLogInReply
+      nextLogInReply = Deferred.makeUnsafe<unknown>()
+      return Effect.runPromise(Deferred.await(logInReply))
+    },
+  }
+}
+
 describe("LoginScreen", () => {
   it("continues to the app after the login succeeds", async () => {
     const router = renderScreen(
@@ -92,6 +105,23 @@ describe("LoginScreen", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("could not cancel the login")
     expect(screen.getByRole("status")).toHaveTextContent("Finish logging in in your browser")
+  })
+
+  it("forgets a failed Cancel when the user logs in again", async () => {
+    const firstLogInReply = Deferred.makeUnsafe<unknown>()
+    renderScreen(
+      <LoginScreen sessionExpired={false} />,
+      mainProcessFailingOn(ipcChannels.cancelLogIn, mainProcessAwaitingEachLogIn(firstLogInReply)),
+    )
+
+    await userEvent.click(await screen.findByRole("button", { name: "Log in with Spotify" }))
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    await screen.findByText(/could not cancel the login/)
+    await Effect.runPromise(Deferred.succeed(firstLogInReply, { _tag: "LoginDenied" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Log in with Spotify" }))
+
+    expect(screen.getByRole("status")).toHaveTextContent("Finish logging in in your browser")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   // Otherwise the login could finish in the browser after the user saved a

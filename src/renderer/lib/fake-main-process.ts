@@ -10,6 +10,7 @@ import { ImportedThemeId, type LibraryTheme } from "../../shared/theme-library"
 // The theme file channels reply as if the user had answered their dialogs.
 // Both default to the user canceling.
 interface FakeMainProcessOptions {
+  readonly environmentClientId?: string
   readonly folderTree?: FolderTree
   readonly importedThemes?: ReadonlyArray<LibraryTheme>
   readonly importThemeReply?: typeof ImportThemeReply.Encoded
@@ -19,8 +20,9 @@ interface FakeMainProcessOptions {
 // Stands in for the main process in renderer tests. It decodes settings
 // and theme requests with the same Schemas as the real one, keeps settings and
 // imported and edited themes in memory, starting from the given imported
-// themes, and serves the given folder tree.
+// themes, and serves the given folder tree and OPEN_SPOTIFY_CLIENT_ID.
 export const fakeMainProcess = ({
+  environmentClientId,
   folderTree = [],
   importedThemes: storedImportedThemes = [],
   importThemeReply = { _tag: "ThemeImportCanceled" },
@@ -39,6 +41,7 @@ export const fakeMainProcess = ({
       const { key, value } = Schema.decodeUnknownSync(SetSettingRequest)(request)
       storedSettings.set(key, value)
     },
+    [ipcChannels.getEnvironmentClientId]: () => environmentClientId ?? null,
     [ipcChannels.getFolderTree]: () => folderTree,
     [ipcChannels.listImportedThemes]: () => [...importedThemes.values()],
     [ipcChannels.importThemeFile]: () => {

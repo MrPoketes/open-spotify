@@ -9,7 +9,7 @@ import { loginErrorText } from "./login-error-text"
 
 type LoginStatus =
   | { readonly _tag: "Ready" }
-  | { readonly _tag: "WaitingForBrowser" }
+  | { readonly _tag: "WaitingForBrowser"; readonly cancelFailed: boolean }
   | { readonly _tag: "Failed"; readonly explanation: string }
 
 const statusAfterFailure = (error: LogInError | DesktopBridgeError): LoginStatus =>
@@ -31,7 +31,6 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
   const runtime = use(RendererRuntimeContext)
   const navigate = useNavigate()
   const [status, setStatus] = useState<LoginStatus>({ _tag: "Ready" })
-  const [cancelFailed, setCancelFailed] = useState(false)
   const isLogInPending = useRef(false)
 
   // A login left waiting in the browser could finish after the user saved a
@@ -47,7 +46,7 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
 
   const logIn = () => {
     isLogInPending.current = true
-    setStatus({ _tag: "WaitingForBrowser" })
+    setStatus({ _tag: "WaitingForBrowser", cancelFailed: false })
     runtime.runFork(
       logInThroughBrowser.pipe(
         Effect.ensuring(Effect.sync(() => (isLogInPending.current = false))),
@@ -58,6 +57,12 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
       ),
     )
   }
+
+  // A Cancel that fails after the login has ended has nothing left to report.
+  const setCancelFailed = (cancelFailed: boolean) =>
+    setStatus((current) =>
+      current._tag === "WaitingForBrowser" ? { ...current, cancelFailed } : current,
+    )
 
   const cancel = () => {
     setCancelFailed(false)
@@ -85,7 +90,7 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
           onLogIn={logIn}
           onCancel={cancel}
         />
-        {status._tag === "WaitingForBrowser" && cancelFailed && (
+        {status._tag === "WaitingForBrowser" && status.cancelFailed && (
           <p role="alert" className="text-danger">
             Open Spotify could not cancel the login. Try again, or finish logging in in your
             browser.
