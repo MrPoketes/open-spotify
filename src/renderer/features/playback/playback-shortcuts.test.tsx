@@ -23,6 +23,7 @@ const renderNowPlayingBar = async ({ isMac = false, spotifyApi }: RenderOptions 
     <IsMacContext value={isMac}>
       <StatusMessageProvider>
         <input aria-label="Notes" />
+        <a href="#playlist">Late Night Drive</a>
         {nowPlayingBarAlone}
       </StatusMessageProvider>
     </IsMacContext>,
@@ -68,11 +69,13 @@ describe("playback shortcuts", () => {
   it("takes Cmd instead of Ctrl on macOS", async () => {
     await renderNowPlayingBar({ isMac: true })
 
-    await userEvent.keyboard("{Control>}{ArrowRight}{/Control}")
     await userEvent.keyboard("{Meta>}{ArrowRight}{/Meta}")
-
-    // Had Ctrl+→ skipped too, the third track would be playing.
     expect(await screen.findByText(fakeTrack(1).name)).toBeInTheDocument()
+    await userEvent.keyboard("{Control>}s{/Control}")
+    await userEvent.keyboard("{Meta>}l{/Meta}")
+
+    expect(await control("Repeat")).toHaveAttribute("aria-pressed", "true")
+    expect(await control("Shuffle")).toHaveAttribute("aria-pressed", "false")
   })
 
   it("leaves the keys to a text field the user types in", async () => {
@@ -87,6 +90,17 @@ describe("playback shortcuts", () => {
     expect(await control("Shuffle")).toHaveAttribute("aria-pressed", "false")
     expect(await control("Pause")).toBeInTheDocument()
     expect(screen.getByRole("textbox", { name: "Notes" })).toHaveValue(" ")
+  })
+
+  // Space does nothing to a link but scroll, and every library entry in the
+  // sidebar is one.
+  it("pauses with Space while a link has focus", async () => {
+    await renderNowPlayingBar()
+
+    screen.getByRole("link", { name: "Late Night Drive" }).focus()
+    await userEvent.keyboard(" ")
+
+    expect(await control("Play")).toBeInTheDocument()
   })
 
   it("presses the focused button with Space instead of pausing", async () => {

@@ -8,6 +8,10 @@ class SilentClipPlayError extends Schema.TaggedError<SilentClipPlayError>()("Sil
 
 const sampleRate = 8000
 const headerLength = 44
+const formatChunkLength = 16
+const pcmFormat = 1
+const channelCount = 1
+const bytesPerSample = 1
 
 const writeText = (view: DataView, offset: number, text: string) => {
   for (let index = 0; index < text.length; index += 1) {
@@ -16,24 +20,22 @@ const writeText = (view: DataView, offset: number, text: string) => {
 }
 
 // One second of 8-bit mono PCM in a WAV file, built here so the app ships no
-// audio file. After "RIFF" the header holds the file's remaining size, the
-// format chunk (its size, PCM, one channel, the sample rate, the byte rate,
-// the bytes per sample, and the bits per sample), and the data chunk's size.
+// audio file.
 const makeSilentClipUrl = () => {
   const bytes = new Uint8Array(headerLength + sampleRate)
   const view = new DataView(bytes.buffer)
   writeText(view, 0, "RIFF")
   view.setUint32(4, bytes.length - 8, true)
   writeText(view, 8, "WAVEfmt ")
-  view.setUint32(16, 16, true)
-  view.setUint16(20, 1, true)
-  view.setUint16(22, 1, true)
+  view.setUint32(16, formatChunkLength, true)
+  view.setUint16(20, pcmFormat, true)
+  view.setUint16(22, channelCount, true)
   view.setUint32(24, sampleRate, true)
-  view.setUint32(28, sampleRate, true)
-  view.setUint16(32, 1, true)
-  view.setUint16(34, 8, true)
+  view.setUint32(28, sampleRate * bytesPerSample, true)
+  view.setUint16(32, bytesPerSample, true)
+  view.setUint16(34, bytesPerSample * 8, true)
   writeText(view, 36, "data")
-  view.setUint32(40, sampleRate, true)
+  view.setUint32(40, sampleRate * bytesPerSample, true)
   // 8-bit samples are unsigned, so silence is the middle value.
   bytes.fill(128, headerLength)
   return `data:audio/wav;base64,${btoa(String.fromCharCode(...bytes))}`

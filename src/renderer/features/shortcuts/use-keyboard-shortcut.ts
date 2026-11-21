@@ -9,12 +9,12 @@ const isTextEntry = (target: EventTarget | null) =>
     target.matches("textarea, select, input:not([type='checkbox'], [type='radio'])"))
 
 const spacePressedControl =
-  "button, a[href], input, summary, [role='button'], [role='checkbox'], [role='radio'], " +
+  "button, input, summary, [role='button'], [role='checkbox'], [role='radio'], " +
   "[role='switch'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], " +
   "[role='option'], [role='tab']"
 
 // Space presses the focused button, checkbox, or menu item, so a shortcut on
-// Space gives way to it.
+// Space gives way to it. A link only scrolls the page on Space, so it does not.
 const isKeyForFocusedElement = (event: KeyboardEvent) =>
   isTextEntry(event.target) ||
   (event.key === " " &&

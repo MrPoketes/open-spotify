@@ -16,7 +16,7 @@ interface ShortcutGroupProps {
 function ShortcutGroup({ group, isMac }: ShortcutGroupProps) {
   const shortcuts = Object.values(keyboardShortcuts).filter((shortcut) => shortcut.group === group)
   return (
-    <section aria-label={group} className="flex flex-col gap-2">
+    <section className="flex flex-col gap-2">
       <h3 className="text-sm font-semibold text-muted">{group}</h3>
       <dl className="flex flex-col gap-2">
         {shortcuts.map((shortcut) => (

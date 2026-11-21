@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from "react"
-import { formatArtistNames } from "../spotify/format-artist-names"
 import type { PlayableItem } from "../spotify/spotify-playable-item"
+import { playableItemArtwork, playableItemByline } from "./playable-item-description"
 import type { PlaybackAction, PlaybackActions } from "./use-playback-actions"
 import type { PlayerStateOrLoading } from "./use-player-state"
 import { useSilentClip } from "./use-silent-clip"
@@ -9,18 +9,15 @@ const mediaKeyActions = ["play", "pause", "nexttrack", "previoustrack"] as const
 
 type MediaKeyAction = (typeof mediaKeyActions)[number]
 
-const mediaMetadata = (item: PlayableItem) => {
-  const isTrack = item.type === "track"
-  const images = isTrack ? item.album.images : item.images
-  return new MediaMetadata({
+const mediaMetadata = (item: PlayableItem) =>
+  new MediaMetadata({
     title: item.name,
-    artist: isTrack ? formatArtistNames(item.artists) : "Podcast episode",
-    album: isTrack ? item.album.name : "",
-    artwork: images.map(({ url, width, height }) =>
+    artist: playableItemByline(item),
+    album: item.type === "track" ? item.album.name : "",
+    artwork: playableItemArtwork(item).map(({ url, width, height }) =>
       width === null || height === null ? { src: url } : { src: url, sizes: `${width}x${height}` },
     ),
   })
-}
 
 const playbackState = (isActive: boolean, isPlaying: boolean): MediaSessionPlaybackState => {
   if (!isActive) {

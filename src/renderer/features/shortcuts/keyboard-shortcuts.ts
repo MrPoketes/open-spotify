@@ -9,8 +9,6 @@ interface KeyboardShortcut {
 }
 
 // Every app-wide shortcut, in the order the shortcuts dialog lists them.
-// Electron's default menu takes Cmd/Ctrl+R for Reload, so repeat uses L, for
-// loop.
 export const keyboardShortcuts = {
   playOrPause: { description: "Play or pause", group: "Playback", keys: { key: " " } },
   nextTrack: {
@@ -28,6 +26,8 @@ export const keyboardShortcuts = {
     group: "Playback",
     keys: { key: "s", primary: true },
   },
+  // Electron's default menu takes Cmd/Ctrl+R for Reload, so repeat uses L,
+  // for loop.
   cycleRepeat: {
     description: "Change repeat",
     group: "Playback",

@@ -565,8 +565,9 @@ changes. Where Windows and Linux use Ctrl and Alt, macOS uses Cmd and Option.
 
 Repeat takes `L`, for loop, because Electron's default menu keeps `Ctrl+R` (`Cmd+R`) for Reload.
 
-No shortcut fires while focus is in a text field, and `Space` leaves a focused button, link,
-checkbox, or menu item to press itself. A component that handles a key itself prevents its
+No shortcut fires while focus is in a text field, and `Space` leaves a focused button, checkbox,
+or menu item to press itself. On a focused link, which `Space` would only scroll past, it plays
+or pauses. A component that handles a key itself prevents its
 default, and the shortcut then leaves it alone. Holding the keys down runs a shortcut once. A
 playback shortcut whose control cannot be used says why in the status message, since the
 control's tooltip may never have been seen.

@@ -49,14 +49,13 @@ export function usePlaybackActions(playerState: PlayerStateOrLoading) {
     playerState.status === "active" ? playerState.playback : idlePlayback
   const disallows = actions.disallows ?? {}
   const playbackUnavailableReason = unavailableReason(playerState)
-  const action = (isDisallowed: boolean | undefined, run: () => void): PlaybackAction => ({
-    unavailableReason:
-      playbackUnavailableReason ?? (isDisallowed === true ? disallowedReason : null),
+  const action = (run: () => void, isDisallowed: boolean | undefined = false): PlaybackAction => ({
+    unavailableReason: playbackUnavailableReason ?? (isDisallowed ? disallowedReason : null),
     run,
   })
 
-  const play = action(undefined, () => send((player) => player.play, "Couldn't resume playback."))
-  const pause = action(undefined, () => send((player) => player.pause, "Couldn't pause playback."))
+  const play = action(() => send((player) => player.play, "Couldn't resume playback."))
+  const pause = action(() => send((player) => player.pause, "Couldn't pause playback."))
 
   return {
     failure,
@@ -66,20 +65,23 @@ export function usePlaybackActions(playerState: PlayerStateOrLoading) {
     play,
     pause,
     playOrPause: isPlaying ? pause : play,
-    previous: action(disallows.skippingPrev, () =>
-      send((player) => player.skipToPrevious, "Couldn't go back."),
+    previous: action(
+      () => send((player) => player.skipToPrevious, "Couldn't go back."),
+      disallows.skippingPrev,
     ),
-    next: action(disallows.skippingNext, () =>
-      send((player) => player.skipToNext, "Couldn't skip to the next track."),
+    next: action(
+      () => send((player) => player.skipToNext, "Couldn't skip to the next track."),
+      disallows.skippingNext,
     ),
-    toggleShuffle: action(disallows.togglingShuffle, () =>
-      send((player) => player.setShuffle(!shuffle), "Couldn't change shuffle."),
+    toggleShuffle: action(
+      () => send((player) => player.setShuffle(!shuffle), "Couldn't change shuffle."),
+      disallows.togglingShuffle,
     ),
     // From off, repeat turns on for the context. From the other modes, it
     // turns on or off for the track.
     cycleRepeat: action(
-      repeat === "off" ? disallows.togglingRepeatContext : disallows.togglingRepeatTrack,
       () => send((player) => player.setRepeat(nextRepeatMode[repeat]), "Couldn't change repeat."),
+      repeat === "off" ? disallows.togglingRepeatContext : disallows.togglingRepeatTrack,
     ),
   }
 }
