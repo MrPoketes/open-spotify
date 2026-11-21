@@ -70,7 +70,50 @@ describe("Player", () => {
     }).pipe(Effect.scoped, Effect.provide(spotify.layer))
   })
 
-  it.effect("stops polling while the window is hidden and polls again when it is shown", () => {
+  // The operating system's media overlay shows the playing track while the
+  // window is minimized, so a track that ends on its own must still show up.
+  it.effect("polls every fifteen seconds while the window is hidden", () => {
+    const spotify = countingSpotify()
+    return Effect.gen(function* () {
+      const states = yield* subscribe
+      yield* Queue.take(states)
+      yield* setWindowVisibility("hidden")
+      yield* TestClock.adjust("14 seconds")
+      const requestsBeforeInterval = spotify.requestCount()
+
+      yield* TestClock.adjust("1 second")
+      yield* Queue.take(states)
+      yield* TestClock.adjust("15 seconds")
+      yield* Queue.take(states)
+
+      assert.strictEqual(requestsBeforeInterval, 1)
+      assert.strictEqual(spotify.requestCount(), 3)
+    }).pipe(Effect.scoped, Effect.provide(spotify.layer))
+  })
+
+  it.effect("stops polling while the window is hidden once no device is active", () => {
+    let requestCount = 0
+    const spotify = spotifyApiFakeWith((fake) => ({
+      getPlaybackState: Effect.suspend(() => {
+        requestCount += 1
+        return requestCount === 1 ? fake.getPlaybackState : Effect.succeedNone
+      }),
+    }))
+    return Effect.gen(function* () {
+      const states = yield* subscribe
+      yield* Queue.take(states)
+      yield* setWindowVisibility("hidden")
+      yield* TestClock.adjust("15 seconds")
+      const stateAfterDeviceLeft = yield* Queue.take(states)
+
+      yield* TestClock.adjust("1 minute")
+
+      assert.deepStrictEqual(stateAfterDeviceLeft, { status: "noActiveDevice" })
+      assert.strictEqual(requestCount, 2)
+    }).pipe(Effect.scoped, Effect.provide(playerOver(spotify)))
+  })
+
+  it.effect("polls again as soon as the hidden window is shown", () => {
     const spotify = countingSpotify()
     return Effect.gen(function* () {
       const states = yield* subscribe

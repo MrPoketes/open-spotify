@@ -38,10 +38,32 @@ const windowVisibility = Stream.concat(
   ),
 ).pipe(Stream.changes)
 
-const pollRequests = (refreshRequests: PubSub.PubSub<void>) =>
+// While the window is hidden, polls only keep the operating system's media
+// overlay current, so a new track may show there a little late in exchange
+// for far fewer requests against the shared rate limit.
+const hiddenPollInterval = "15 seconds"
+
+const mayHaveActiveDevice = (polled: Option.Option<PlayerState>) =>
+  Option.isNone(polled) || polled.value.status !== "noActiveDevice"
+
+// The window polled until it was hidden, so the first hidden poll waits a
+// full interval. Nothing plays without an active device, so polling stops
+// until a command or showing the window reads the state again.
+const hiddenPollRequests = (polledState: Ref.Ref<Option.Option<PlayerState>>) =>
+  Stream.tick(hiddenPollInterval).pipe(
+    Stream.drop(1),
+    Stream.filterEffect(() => Ref.get(polledState).pipe(Effect.map(mayHaveActiveDevice))),
+  )
+
+const pollRequests = (
+  refreshRequests: PubSub.PubSub<void>,
+  polledState: Ref.Ref<Option.Option<PlayerState>>,
+) =>
   Stream.merge(
     windowVisibility.pipe(
-      Stream.switchMap((isVisible) => (isVisible ? Stream.tick(pollInterval) : Stream.empty)),
+      Stream.switchMap((isVisible) =>
+        isVisible ? Stream.tick(pollInterval) : hiddenPollRequests(polledState),
+      ),
     ),
     Stream.fromPubSub(refreshRequests),
   )
@@ -183,14 +205,15 @@ export class Player extends Context.Service<
       const latestState = shownStateOf(polledState, pendingChanges)
 
       // Every subscriber shares one poll, which runs only while someone is
-      // subscribed and the window is visible. A new subscriber gets the
-      // latest state at once instead of waiting for the next poll. A change
-      // the user makes shows at once, on top of the latest poll. A command
-      // reads the state again even while the window is hidden, because media
-      // keys send commands from the background and the operating system's
-      // media overlay shows what they changed.
+      // subscribed, and slows down while the window is hidden. A new
+      // subscriber gets the latest state at once instead of waiting for the
+      // next poll. A change the user makes shows at once, on top of the
+      // latest poll. A command reads the state again at once even while the
+      // window is hidden, because media keys send commands from the
+      // background and the operating system's media overlay shows what they
+      // changed.
       const state = yield* Stream.merge(
-        pollRequests(refreshRequests).pipe(Stream.mapEffect(() => poll)),
+        pollRequests(refreshRequests, polledState).pipe(Stream.mapEffect(() => poll)),
         pendingChanges.updates,
       ).pipe(
         Stream.mapEffect(() => latestState),
