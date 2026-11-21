@@ -1,6 +1,5 @@
 import { createHash, randomBytes } from "node:crypto"
 import { Effect } from "effect"
-import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
 
 const spotifyAuthorizeUrl = "https://accounts.spotify.com/authorize"
 
@@ -32,7 +31,7 @@ interface AuthorizationRequest {
 
 const randomUrlSafeString = (byteCount: number) => randomBytes(byteCount).toString("base64url")
 
-export const makeAuthorizationRequest = (clientId: string) =>
+export const makeAuthorizationRequest = (clientId: string, redirectUri: string) =>
   Effect.sync((): AuthorizationRequest => {
     const state = randomUrlSafeString(16)
     // 64 bytes encode to 86 characters, inside the 43 to 128 that PKCE allows.
@@ -42,7 +41,7 @@ export const makeAuthorizationRequest = (clientId: string) =>
     url.search = new URLSearchParams({
       client_id: clientId,
       response_type: "code",
-      redirect_uri: spotifyRedirectUri,
+      redirect_uri: redirectUri,
       scope: scopes.join(" "),
       state,
       code_challenge_method: "S256",

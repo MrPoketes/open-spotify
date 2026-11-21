@@ -1,9 +1,9 @@
 import { createServer } from "node:net"
 import { assert, describe, it } from "@effect/vitest"
-import { Deferred, Effect, Fiber } from "effect"
+import { Deferred, Effect, Fiber, Layer, Schema } from "effect"
 import { TestClock } from "effect/testing"
-import { spotifyRedirectPort } from "../../shared/spotify-redirect-uri"
 import {
+  type FakeSpotifyAccounts,
   approveLogin,
   approvingBrowser,
   callBack,
@@ -15,17 +15,37 @@ import {
   saveFakeClientId,
 } from "./spotify-session-fakes"
 import { SpotifySession } from "./spotify-session"
+import type { SystemBrowser } from "./system-browser"
 
-const occupyRedirectPort = Effect.acquireRelease(
+const ListeningAddress = Schema.Struct({ port: Schema.Number })
+
+// Another program listening on a port the OS picked. Returns that port.
+const occupyFreePort = Effect.acquireRelease(
   Effect.callback<ReturnType<typeof createServer>>((resume) => {
     const server = createServer()
-    server.listen(spotifyRedirectPort, "127.0.0.1", () => resume(Effect.succeed(server)))
+    server.listen(0, "127.0.0.1", () => resume(Effect.succeed(server)))
   }),
   (server) =>
     Effect.callback<void>((resume) => {
       server.close(() => resume(Effect.void))
     }),
+).pipe(
+  Effect.flatMap((server) => Schema.decodeUnknownEffect(ListeningAddress)(server.address())),
+  Effect.map((address) => address.port),
 )
+
+// Every login in the test listens on this one port, as every login in the app
+// listens on 43821. A login that keeps the port then makes the next one fail
+// with LoginPortInUse.
+const fakeSessionOnOnePort = (
+  spotifyAccounts: FakeSpotifyAccounts,
+  browser: Layer.Layer<SystemBrowser>,
+) =>
+  Layer.unwrap(
+    Effect.scoped(occupyFreePort).pipe(
+      Effect.map((freePort) => fakeSpotifySession(spotifyAccounts, browser, freePort)),
+    ),
+  )
 
 describe("SpotifySession.logIn", () => {
   it.effect("logs in through the browser and then provides an access token", () => {
@@ -71,18 +91,22 @@ describe("SpotifySession.logIn", () => {
 
   it.effect("fails with LoginPortInUse when another program holds the redirect port", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
-    return Effect.gen(function* () {
+    const logIn = Effect.gen(function* () {
       const session = yield* SpotifySession
       yield* saveFakeClientId
-      yield* occupyRedirectPort
+      return yield* session.logIn
+    })
+    return Effect.gen(function* () {
+      const occupiedPort = yield* occupyFreePort
 
-      const error = yield* Effect.flip(session.logIn)
+      const error = yield* Effect.flip(logIn).pipe(
+        Effect.provide(
+          fakeSpotifySession(spotifyAccounts, approvingBrowser(spotifyAccounts), occupiedPort),
+        ),
+      )
 
       assert.strictEqual(error._tag, "LoginPortInUse")
-    }).pipe(
-      Effect.scoped,
-      Effect.provide(fakeSpotifySession(spotifyAccounts, approvingBrowser(spotifyAccounts))),
-    )
+    }).pipe(Effect.scoped)
   })
 
   it.effect("fails with LoginDenied when the user denies access on Spotify's page", () => {
@@ -105,7 +129,10 @@ describe("SpotifySession.logIn", () => {
   it.effect("rejects a callback whose state does not match the login and stores nothing", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()
     const forgingBrowser = fakeBrowser((authorizeUrl) =>
-      callBack({ code: spotifyAccounts.approve(authorizeUrl), state: "forged-state" }),
+      callBack(authorizeUrl, {
+        code: spotifyAccounts.approve(authorizeUrl),
+        state: "forged-state",
+      }),
     )
     return Effect.gen(function* () {
       const session = yield* SpotifySession
@@ -194,7 +221,23 @@ describe("SpotifySession.logIn", () => {
 
       assert.strictEqual(firstLoginError._tag, "LoginCancelled")
       assert.strictEqual(yield* session.getAccessToken, "access-token-1")
-    }).pipe(Effect.provide(fakeSpotifySession(spotifyAccounts, browserIgnoringFirstLogin)))
+    }).pipe(Effect.provide(fakeSessionOnOnePort(spotifyAccounts, browserIgnoringFirstLogin)))
+  })
+
+  // The user logs in again after logging out or after the session expires.
+  it.effect("frees the redirect port when a login finishes, so the next login can use it", () => {
+    const spotifyAccounts = makeFakeSpotifyAccounts()
+    return Effect.gen(function* () {
+      const session = yield* SpotifySession
+      yield* saveFakeClientId
+
+      yield* session.logIn
+      yield* session.logIn
+
+      assert.strictEqual(yield* session.getAccessToken, "access-token-2")
+    }).pipe(
+      Effect.provide(fakeSessionOnOnePort(spotifyAccounts, approvingBrowser(spotifyAccounts))),
+    )
   })
 
   it.effect("provides access tokens again after logging in over an expired session", () => {

@@ -1,6 +1,5 @@
 import { Context, Duration, Effect, Layer, Schema } from "effect"
 import { FetchHttpClient, HttpClient, HttpClientRequest, type UrlParams } from "effect/http"
-import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
 
 class TokenRequestRejected extends Schema.TaggedError<TokenRequestRejected>()(
   "TokenRequestRejected",
@@ -41,6 +40,7 @@ export class SpotifyTokenEndpoint extends Context.Service<
       readonly clientId: string
       readonly code: string
       readonly codeVerifier: string
+      readonly redirectUri: string
     }) => Effect.Effect<typeof IssuedTokens.Type, TokenRequestError>
     readonly refresh: (request: {
       readonly clientId: string
@@ -90,12 +90,12 @@ export class SpotifyTokenEndpoint extends Context.Service<
       )
 
       return SpotifyTokenEndpoint.of({
-        exchangeCode: ({ clientId, code, codeVerifier }) =>
+        exchangeCode: ({ clientId, code, codeVerifier, redirectUri }) =>
           requestTokens(
             {
               grant_type: "authorization_code",
               code,
-              redirect_uri: spotifyRedirectUri,
+              redirect_uri: redirectUri,
               client_id: clientId,
               code_verifier: codeVerifier,
             },

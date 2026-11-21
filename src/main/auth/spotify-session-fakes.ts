@@ -3,9 +3,9 @@ import path from "node:path"
 import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
 import { Deferred, Effect, FileSystem, Layer } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
-import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
 import { Settings } from "../settings"
 import { freshSettings } from "../settings-fakes"
+import { LoginRedirectPort } from "./callback-server"
 import { SpotifySession } from "./spotify-session"
 import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
 import { SystemBrowser } from "./system-browser"
@@ -41,10 +41,11 @@ const codeChallengeFor = (codeVerifier: string) =>
   createHash("sha256").update(codeVerifier).digest("base64url")
 
 // A stand-in for accounts.spotify.com. Like Spotify, it exchanges a code only
-// for the verifier that matches the challenge sent with the authorize URL,
-// and it rotates the refresh token on every refresh unless told not to.
+// for the verifier that matches the challenge sent with the authorize URL and
+// for the same redirect URI, and it rotates the refresh token on every
+// refresh unless told not to.
 export const makeFakeSpotifyAccounts = () => {
-  const challengeByCode = new Map<string, string>()
+  const authorizeUrlByCode = new Map<string, URL>()
   const liveRefreshTokens = new Set<string>()
   const behaviour = { rotatesRefreshTokens: true, isRateLimiting: false, isStalled: false }
   let tokensIssued = 0
@@ -64,12 +65,13 @@ export const makeFakeSpotifyAccounts = () => {
 
   const exchangeCode = (form: URLSearchParams) => {
     const code = form.get("code") ?? ""
-    const challenge = challengeByCode.get(code)
-    challengeByCode.delete(code)
+    const authorizeQuery = authorizeUrlByCode.get(code)?.searchParams
+    authorizeUrlByCode.delete(code)
     const isValid =
-      challenge === codeChallengeFor(form.get("code_verifier") ?? "") &&
-      form.get("client_id") === fakeClientId &&
-      form.get("redirect_uri") === spotifyRedirectUri
+      authorizeQuery !== undefined &&
+      authorizeQuery.get("code_challenge") === codeChallengeFor(form.get("code_verifier") ?? "") &&
+      authorizeQuery.get("redirect_uri") === form.get("redirect_uri") &&
+      form.get("client_id") === fakeClientId
     return isValid ? ([200, issueTokens()] as const) : ([400, { error: "invalid_grant" }] as const)
   }
 
@@ -105,8 +107,8 @@ export const makeFakeSpotifyAccounts = () => {
 
   // What happens when the user approves the login on Spotify's page.
   const approve = (authorizeUrl: URL) => {
-    const code = `code-${challengeByCode.size + 1}`
-    challengeByCode.set(code, authorizeUrl.searchParams.get("code_challenge") ?? "")
+    const code = `code-${authorizeUrlByCode.size + 1}`
+    authorizeUrlByCode.set(code, authorizeUrl)
     return code
   }
 
@@ -122,11 +124,15 @@ export const makeFakeSpotifyAccounts = () => {
 
 export type FakeSpotifyAccounts = ReturnType<typeof makeFakeSpotifyAccounts>
 
-// Sends the browser to the loopback server the way Spotify redirects it, and
-// returns the text of the page the browser shows.
-export const callBack = (query: Record<string, string>) =>
+// Sends the browser to the redirect URI in the authorize URL the way Spotify
+// redirects it, and returns the text of the page the browser shows.
+export const callBack = (authorizeUrl: URL, query: Record<string, string>) =>
   Effect.promise(async () => {
-    const response = await fetch(`${spotifyRedirectUri}?${new URLSearchParams(query).toString()}`)
+    const callbackUrl = new URL(authorizeUrl.searchParams.get("redirect_uri") ?? "")
+    callbackUrl.search = new URLSearchParams(query).toString()
+    // Node's fetch would reuse its connection to an earlier login's server,
+    // which has closed it by now. A browser retries such a connection.
+    const response = await fetch(callbackUrl, { headers: { connection: "close" } })
     return response.text()
   })
 
@@ -137,7 +143,7 @@ export const fakeBrowser = (onOpen: (authorizeUrl: URL) => Effect.Effect<unknown
 
 // Like Spotify, sends back the state the login put in the authorize URL.
 export const callBackFrom = (authorizeUrl: URL, query: Record<string, string>) =>
-  callBack({ ...query, state: authorizeUrl.searchParams.get("state") ?? "" })
+  callBack(authorizeUrl, { ...query, state: authorizeUrl.searchParams.get("state") ?? "" })
 
 // What the browser does when the user approves the login on Spotify's page.
 export const approveLogin = (spotifyAccounts: FakeSpotifyAccounts, authorizeUrl: URL) =>
@@ -155,10 +161,12 @@ const temporaryTokenStore = Layer.unwrap(
 ).pipe(Layer.provide(NodeFileSystem.layer))
 
 // The real session with fakes at its edges. Settings stays accessible so a
-// test can store the Client ID first.
+// test can store the Client ID first. Login listens on port 0, which lets the
+// OS pick a free port, unless a test needs a particular one.
 export const fakeSpotifySession = (
   spotifyAccounts: FakeSpotifyAccounts,
   browser: Layer.Layer<SystemBrowser>,
+  loginRedirectPort = 0,
 ) =>
   SpotifySession.layer.pipe(
     Layer.provideMerge(
@@ -167,6 +175,7 @@ export const fakeSpotifySession = (
         SpotifyTokenEndpoint.layerWithoutHttpClient.pipe(Layer.provide(spotifyAccounts.httpClient)),
         temporaryTokenStore,
         browser,
+        Layer.succeed(LoginRedirectPort, loginRedirectPort),
       ),
     ),
   )
