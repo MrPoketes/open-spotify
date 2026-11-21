@@ -1,8 +1,10 @@
 import { Clock, Effect, PubSub, Ref, Stream } from "effect"
+import type { Device } from "../spotify/spotify-device"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
 import type { TimedPlayback } from "./playback-progress"
 
-type PlaybackSettings = Pick<PlaybackState, "isPlaying" | "shuffle" | "repeat">
+type PlaybackSettings = Pick<PlaybackState, "isPlaying" | "shuffle" | "repeat"> &
+  Pick<Device, "volumePercent">
 
 // Where to show playback in an item, as of the moment the change was made.
 interface PendingPosition {
@@ -19,12 +21,25 @@ interface PendingChange {
   readonly acceptedAt: number | null
 }
 
+// The volume belongs to the device, which Spotify reports inside the playback
+// state.
+const applySettings = (
+  playback: PlaybackState,
+  { volumePercent, ...playbackSettings }: Partial<PlaybackSettings>,
+): PlaybackState => {
+  const changedPlayback = { ...playback, ...playbackSettings }
+  if (volumePercent === undefined) {
+    return changedPlayback
+  }
+  return { ...changedPlayback, device: { ...playback.device, volumePercent } }
+}
+
 // A position shows only while its item plays. Once another item plays, such
 // as after a seek past the end, that item starts from Spotify's position.
 const applyChanges = (timedPlayback: TimedPlayback, changes: ReadonlyArray<PendingChange>) => {
   let { playback, progressReadAt } = timedPlayback
   for (const { settings, position, madeAt } of changes) {
-    playback = { ...playback, ...settings }
+    playback = applySettings(playback, settings)
     if (position !== null && position.itemUri === playback.item?.uri) {
       playback = { ...playback, progressMs: position.progressMs }
       progressReadAt = madeAt

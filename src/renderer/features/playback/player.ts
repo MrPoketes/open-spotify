@@ -180,6 +180,8 @@ export class Player extends Context.Service<
     ) => Effect.Effect<void, SpotifyApiError | QueuedItemGone>
     readonly setShuffle: (isOn: boolean) => PlayerCommand
     readonly setRepeat: (mode: RepeatMode) => PlayerCommand
+    // From 0 to 100.
+    readonly setVolume: (volumePercent: number) => PlayerCommand
     readonly addToQueue: (uri: string) => PlayerCommand
   }
 >()("open-spotify/Player") {
@@ -277,6 +279,11 @@ export class Player extends Context.Service<
           pendingChanges.showWhileSending({ shuffle: isOn }, send(spotify.setShuffle(isOn))),
         setRepeat: (mode) =>
           pendingChanges.showWhileSending({ repeat: mode }, send(spotify.setRepeat(mode))),
+        setVolume: (volumePercent) =>
+          pendingChanges.showWhileSending(
+            { volumePercent },
+            send(spotify.setVolume(volumePercent)),
+          ),
         addToQueue: (uri) =>
           send(spotify.addToQueue(uri)).pipe(
             Effect.andThen(PubSub.publish(queueChanges, undefined)),

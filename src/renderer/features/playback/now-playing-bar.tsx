@@ -6,6 +6,7 @@ import { NowPlayingItemSummary } from "./now-playing-item-summary"
 import { PlaybackControls } from "./playback-controls"
 import { PlayerControlButton } from "./player-control-button"
 import { type PlayerStateOrLoading, usePlayerState } from "./use-player-state"
+import { VolumeControl } from "./volume-control"
 
 const deviceLabel = (playerState: PlayerStateOrLoading) => {
   if (playerState.status === "active") {
@@ -62,6 +63,7 @@ export function NowPlayingBar({
           isOpen={isDevicePickerOpen}
           onOpenChange={onDevicePickerOpenChange}
         />
+        <VolumeControl playerState={playerState} />
       </div>
     </section>
   )

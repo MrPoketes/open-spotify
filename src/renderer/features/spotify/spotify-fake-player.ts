@@ -35,6 +35,11 @@ const ShuffleState = Schema.Literals(["true", "false"])
 
 const SeekPosition = Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0))
 
+const VolumePercent = Schema.NumberFromString.check(
+  Schema.isInt(),
+  Schema.isBetween({ minimum: 0, maximum: 100 }),
+)
+
 const QueuedUri = Schema.TemplateLiteral(["spotify:track:", Schema.String])
 
 // Like Spotify, shuffling keeps the playing item and reorders the items after
@@ -156,6 +161,9 @@ const playerCommands: Record<string, (player: FakePlayerState, url: URL) => Fake
   "PUT /v1/me/player/seek": withParameter("position_ms", SeekPosition, (player, position) => {
     player.progressMs = position
   }),
+  "PUT /v1/me/player/volume": withParameter("volume_percent", VolumePercent, (player, volume) => {
+    player.activeDevice = { ...player.activeDevice, volume_percent: volume }
+  }),
   // Like Spotify, refuses a uri that is not a playable item's. The fake plays
   // its tracks in order, so a queued track is accepted but never plays.
   "POST /v1/me/player/queue": (_player, url) =>
@@ -184,10 +192,9 @@ const queue = (player: FakePlayerState) => ({
 })
 
 const availableDevices = (player: FakePlayerState) => ({
-  devices: fakeDevices.map((device) => ({
-    ...device,
-    is_active: device.id === player.activeDevice.id,
-  })),
+  devices: fakeDevices.map((device) =>
+    device.id === player.activeDevice.id ? { ...player.activeDevice, is_active: true } : device,
+  ),
 })
 
 // Serves Spotify's player endpoints from state that lives as long as one fake

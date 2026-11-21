@@ -1,7 +1,7 @@
 import { Effect, Stream } from "effect"
 import { type KeyboardEvent, useEffect, useEffectEvent, useState } from "react"
 import { useStreamValue } from "../../lib/use-stream-value"
-import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
+import { RangeSlider } from "../../ui/range-slider"
 import { formatTrackDuration } from "../track-list/format-duration"
 import type { PlaybackProgress } from "./playback-progress"
 import { Player } from "./player"
@@ -100,10 +100,8 @@ export function SeekBar({ unavailableReason, onSeek }: SeekBarProps) {
     if (target === undefined) {
       return
     }
-    // Chromium steps a range input on these keys even with a modifier held,
-    // which would seek on Alt+Left. The app-wide shortcuts still see the key.
     event.preventDefault()
-    if (reason === null && !hasShortcutModifier(event)) {
+    if (reason === null) {
       hold(Math.min(Math.max(target({ positionMs: shownPositionMs, durationMs }), 0), durationMs))
     }
   }
@@ -115,38 +113,30 @@ export function SeekBar({ unavailableReason, onSeek }: SeekBarProps) {
       <span aria-hidden className="min-w-10 text-right">
         {progress === null ? "-:--" : formatTrackDuration(shownPositionMs)}
       </span>
-      {/* Chromium draws a native range track in its own colors, so the input
-          is transparent over a track drawn from theme tokens. */}
-      <div className="relative flex h-4 min-w-0 flex-1 items-center has-aria-disabled:opacity-50">
-        <div aria-hidden className="h-1 w-full overflow-hidden rounded-full bg-muted">
-          <div className="h-full bg-accent" style={{ width: `${elapsedFraction * 100}%` }} />
-        </div>
-        <input
-          ref={sliderRef}
-          type="range"
-          aria-label="Playback position"
-          title={reason ?? "Playback position"}
-          aria-disabled={reason !== null}
-          aria-valuetext={
-            progress === null
-              ? undefined
-              : `${formatTrackDuration(shownPositionMs)} of ${formatTrackDuration(durationMs)}`
+      <RangeSlider
+        ref={sliderRef}
+        filledFraction={elapsedFraction}
+        aria-label="Playback position"
+        title={reason ?? "Playback position"}
+        aria-disabled={reason !== null}
+        aria-valuetext={
+          progress === null
+            ? undefined
+            : `${formatTrackDuration(shownPositionMs)} of ${formatTrackDuration(durationMs)}`
+        }
+        min={0}
+        max={durationMs}
+        step={1000}
+        value={shownPositionMs}
+        onChange={(event) => {
+          if (reason === null) {
+            hold(event.target.valueAsNumber)
           }
-          min={0}
-          max={durationMs}
-          step={1000}
-          value={shownPositionMs}
-          onChange={(event) => {
-            if (reason === null) {
-              hold(event.target.valueAsNumber)
-            }
-          }}
-          onKeyDown={stepFromKeyboard}
-          onKeyUp={release}
-          onBlur={release}
-          className="absolute inset-0 cursor-pointer appearance-none bg-transparent aria-disabled:cursor-default [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent"
-        />
-      </div>
+        }}
+        onKeyDown={stepFromKeyboard}
+        onKeyUp={release}
+        onBlur={release}
+      />
       <span aria-hidden className="min-w-10">
         {progress === null ? "-:--" : formatTrackDuration(durationMs)}
       </span>
