@@ -8,7 +8,7 @@ export function ShowHeader({ show }: { readonly show: Show }) {
   const addToFolder = useAddToFolder()
   return (
     <PageHeader
-      kind="Podcast"
+      kind={spotifyItemKinds.show.label}
       title={show.name}
       cover={{ sources: show.images, placeholderIcon: spotifyItemKinds.show.icon }}
       menuItems={[addToFolder(show)]}

@@ -68,6 +68,7 @@ describe("ShowPage", () => {
     renderShowPage("fake-show-slow-science")
 
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Slow Science")
+    expect(screen.getByText("Show")).toBeInTheDocument()
     expect(screen.getByText(/how scientists actually find things out/)).toBeInTheDocument()
     expect(episodeRows()).toHaveLength(50)
     const latestEpisode = screen.getByRole("article", { name: "Tide Pools, part 1" })

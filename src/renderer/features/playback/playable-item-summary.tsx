@@ -17,7 +17,7 @@ export function PlayableItemSummary({ item }: PlayableItemSummaryProps) {
         round: false,
       }}
       title={item.name}
-      details={isTrack ? formatArtistNames(item.artists) : "Podcast episode"}
+      details={isTrack ? formatArtistNames(item.artists) : `${spotifyItemKinds.show.label} episode`}
     />
   )
 }

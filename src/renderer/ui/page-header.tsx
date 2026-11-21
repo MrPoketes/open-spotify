@@ -18,7 +18,7 @@ interface PageCover {
 }
 
 interface PageHeaderProps {
-  // What the page shows, such as "Playlist" or "Podcast".
+  // What the page shows, such as "Playlist" or "Show".
   readonly kind: string
   readonly title: string
   readonly cover: PageCover

@@ -94,7 +94,7 @@ describe("QueuePane", () => {
     expect(await section("Now playing")).toHaveTextContent(`${fakeTrack(0).name}Northbound Static`)
     const [firstRow, episodeRow, thirdRow] = await upNextRows()
     expect(firstRow).toHaveTextContent(`${fakeTrack(1).name}Lena Varga`)
-    expect(episodeRow).toHaveTextContent(`${fakeEpisode.name}Podcast episode`)
+    expect(episodeRow).toHaveTextContent(`${fakeEpisode.name}Show episode`)
     expect(thirdRow).toHaveTextContent(`${fakeTrack(2).name}The Paper Moons`)
   })
 
