@@ -22,7 +22,7 @@ export function TrackPage({ trackId }: { readonly trackId: string }) {
     return <LoadingMessage>Loading track…</LoadingMessage>
   }
   if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
-    return <SpotifyItemNotFound kind="Track" />
+    return <SpotifyItemNotFound kind="track" />
   }
   if (state.status === "failed") {
     return (
@@ -33,7 +33,7 @@ export function TrackPage({ trackId }: { readonly trackId: string }) {
   // link to either.
   const albumId = state.value.album.id
   if (albumId === null) {
-    return <SpotifyItemNotFound kind="Track" />
+    return <SpotifyItemNotFound kind="track" />
   }
   return <Navigate to="/album/$albumId" params={{ albumId }} search={{ track: trackId }} replace />
 }

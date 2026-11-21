@@ -15,8 +15,6 @@ interface NextPageFooterProps {
   readonly retryRef: Ref<HTMLButtonElement>
 }
 
-// Sits below a list whose later pages load as the end of the list scrolls
-// into view.
 export function NextPageFooter({
   kind,
   nextPage,

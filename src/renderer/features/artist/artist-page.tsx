@@ -43,7 +43,7 @@ export function ArtistPage({ artistId }: { readonly artistId: string }) {
     return <LoadingMessage>Loading artist…</LoadingMessage>
   }
   if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
-    return <SpotifyItemNotFound kind="Artist" />
+    return <SpotifyItemNotFound kind="artist" />
   }
   if (state.status === "failed") {
     return (

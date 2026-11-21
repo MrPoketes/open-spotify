@@ -33,7 +33,7 @@ export function AlbumPage({ albumId, highlightedTrackId }: AlbumPageProps) {
     return <LoadingMessage>Loading album…</LoadingMessage>
   }
   if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
-    return <SpotifyItemNotFound kind="Album" />
+    return <SpotifyItemNotFound kind="album" />
   }
   if (state.status === "failed") {
     return (
