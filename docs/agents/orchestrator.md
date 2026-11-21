@@ -70,14 +70,17 @@ choose the `workspaceStrategy` and `message` here. In the project root:
    `{ "type": "existing_worktree", "worktreePath": "<its path>" }` and go to step 4 of this list.
 2. If `git branch --list <gitBranchName>` prints the branch, its worktree is gone but the branch
    is left. Run `git push origin <gitBranchName>` so no commit of the earlier worker is lost.
-   Then delete the branch with `git branch -D <gitBranchName>`, but only if
-   `git branch -r --contains <gitBranchName>` lists `origin/<gitBranchName>`. Otherwise the
-   branch has commits that `origin` lacks: keep it, move the issue to `Backlog` with a comment
-   that quotes the push error, and pick the next issue.
+   If `git branch -r --contains <gitBranchName>` does not list `origin/<gitBranchName>`, the
+   push was rejected and the branch has commits that `origin` lacks. Save them with
+   `git push origin <gitBranchName>:refs/heads/backup/<gitBranchName>` and add to the end of
+   `message`:
+   `Commits that never reached origin are saved on backup/<gitBranchName>. Keep what you need.`
+   If that push fails too, launch nothing for this issue in this run. Otherwise delete the
+   local branch with `git branch -D <gitBranchName>`.
 3. If `git ls-remote --heads origin <gitBranchName>` prints the branch, use
    `{ "type": "worktree", "baseRef": "origin/<gitBranchName>", "startFromOrigin": true, "branch": "<gitBranchName>" }`.
    If it prints nothing, the branch does not exist: use the usual `workspaceStrategy` and
-   `message`.
+   `message`, and skip step 4.
 4. Add to the end of `message`: `An earlier worker left commits on this branch. Build on them.`
    If `gh pr list --head <gitBranchName> --state open --json number` lists a PR, also add:
    `Its PR #<number> is still open. Continue that PR; do not open a new one.`
