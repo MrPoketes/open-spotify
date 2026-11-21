@@ -262,9 +262,10 @@ same.
 A playlist, album, artist, or show can also be dragged from the library sections onto a folder,
 which adds it last there, as "Add to folder" does, and the status message says so ("Added to
 Running"). The folder shows the same `surface-raised` highlight and `accent` outline and opens
-after the same 600 ms, and the dragged library row is dimmed the same way. A library entry goes only inside a folder, so the lines between rows and
-the Spotify items in the tree show no indicator, and neither does a folder that already holds the
-entry. Liked Songs cannot be dragged, since no folder can hold it.
+after the same 600 ms, and the dragged library row is dimmed the same way. A library entry goes
+only inside a folder, so the lines between rows and the Spotify items in the tree show no
+indicator, and neither does a folder that already holds the entry. Liked Songs cannot be dragged,
+since no folder can hold it.
 
 Folders start collapsed. The ones the user expands are the `expandedFolders` setting, so they
 stay open after a restart.
