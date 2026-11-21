@@ -6,6 +6,7 @@ import { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { PlaybackProgress } from "./playback-progress"
 import { Player } from "./player"
+import { playerOver } from "./player-over"
 
 const subscribeToProgress = Effect.gen(function* () {
   const player = yield* Player
@@ -14,8 +15,6 @@ const subscribeToProgress = Effect.gen(function* () {
 
 const positionsOf = (progress: ReadonlyArray<PlaybackProgress | null>) =>
   progress.map((shown) => shown?.positionMs)
-
-const playerOver = (spotify: Layer.Layer<SpotifyApi>) => Player.layer.pipe(Layer.provide(spotify))
 
 describe("Player progress", () => {
   it.effect("moves the position on between polls while playback plays", () =>

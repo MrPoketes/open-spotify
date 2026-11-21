@@ -97,6 +97,15 @@ describe("NowPlayingBar volume", () => {
     expect(fireEvent.keyDown(slider, { key: "ArrowLeft", altKey: true })).toBe(false)
   })
 
+  it("unmutes to half volume when Spotify has reported no volume above zero", async () => {
+    const spotify = recordingVolumes((device) => ({ ...device, volumePercent: 0 }))
+    renderNowPlayingBarAlone(spotify.layer)
+
+    await userEvent.click(await muteButton("Unmute"))
+
+    await waitFor(() => expect(spotify.sentVolumes).toEqual([50]))
+  })
+
   it("puts the volume back and says so when Spotify rejects it", async () => {
     renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({

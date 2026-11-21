@@ -311,11 +311,11 @@ labelled "Volume" and read as "60%". The arrow keys step it by 1 %. Moving it sh
 volume at once and sends it once the slider has rested for 250 ms, so a drag or a held arrow key
 sends one request. The change then behaves like any other control's: it holds for a second after
 Spotify accepts it, and a rejected change goes back with a `text-xs` `danger` alert under the
-slider. Mute
-(`Volume2`) turns the volume down to zero and becomes Unmute (`VolumeX`), which restores the
-last volume above zero. Both are unavailable whenever the playback controls are, and also when
-the device does not let Spotify change its volume; like the controls, they stay focusable and
-their `title` says why.
+slider, which overlays the bar's bottom edge so the controls beside it stay put. Mute (`Volume2`)
+turns the volume down to zero and becomes Unmute (`VolumeX`), which restores the last volume
+above zero, or 50 % when Spotify has reported none since the app opened. Both are unavailable
+whenever the playback controls are, and also when the device does not let Spotify change its
+volume; like the controls, they stay focusable and their `title` says why.
 
 The picker is a non-modal popover above its button: `surface-overlay`, `shadow-overlay`,
 `rounded-large`, 320 px wide. Each device is a row with a 20 px Lucide icon for its type, the

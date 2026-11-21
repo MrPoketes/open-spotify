@@ -16,35 +16,38 @@ export function VolumeControl({ playerState }: VolumeControlProps) {
   const isUnavailable = unavailableReason !== null
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center gap-1">
-        <PlayerControlButton
-          label={isMuted ? "Unmute" : "Mute"}
-          icon={isMuted ? VolumeX : Volume2}
-          unavailableReason={unavailableReason}
-          onPress={volumeControl.toggleMute}
+    // The alert hangs below the controls, so it does not push the queue
+    // button and the device picker aside when it appears.
+    <div className="relative flex items-center gap-1">
+      <PlayerControlButton
+        label={isMuted ? "Unmute" : "Mute"}
+        icon={isMuted ? VolumeX : Volume2}
+        unavailableReason={unavailableReason}
+        onPress={volumeControl.toggleMute}
+      />
+      <div className="flex w-24">
+        <RangeSlider
+          filledFraction={volume / 100}
+          aria-label="Volume"
+          aria-valuetext={`${volume}%`}
+          aria-disabled={isUnavailable}
+          title={unavailableReason ?? "Volume"}
+          min={0}
+          max={100}
+          step={1}
+          value={volume}
+          onChange={(event) => {
+            if (!isUnavailable) {
+              volumeControl.changeVolume(event.target.valueAsNumber)
+            }
+          }}
         />
-        <div className="flex w-24">
-          <RangeSlider
-            filledFraction={volume / 100}
-            aria-label="Volume"
-            aria-valuetext={`${volume}%`}
-            aria-disabled={isUnavailable}
-            title={unavailableReason ?? "Volume"}
-            min={0}
-            max={100}
-            step={1}
-            value={volume}
-            onChange={(event) => {
-              if (!isUnavailable) {
-                volumeControl.changeVolume(event.target.valueAsNumber)
-              }
-            }}
-          />
-        </div>
       </div>
       {failure !== null && (
-        <p role="alert" className="text-xs text-danger">
+        <p
+          role="alert"
+          className="absolute top-full right-0 mt-1 text-xs whitespace-nowrap text-danger"
+        >
           {failure}
         </p>
       )}
