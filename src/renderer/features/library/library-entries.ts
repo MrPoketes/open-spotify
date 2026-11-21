@@ -8,6 +8,7 @@ import type { Artist } from "../spotify/spotify-artist"
 import type { Image } from "../spotify/spotify-image"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import type { SavedShow } from "../spotify/spotify-show"
+import type { LibraryPlaylistsLoad } from "./library-playlists"
 
 export interface LibraryEntry {
   readonly uri: string
@@ -68,12 +69,14 @@ const showEntry = ({ show }: SavedShow): LibraryEntry => ({
   page: { to: "/show/$showId", params: { showId: show.id } },
 })
 
-export const loadLibraryEntries = Effect.gen(function* () {
+export const loadLibraryEntries = Effect.fn("loadLibraryEntries")(function* (
+  loadPlaylists: LibraryPlaylistsLoad,
+) {
   const spotify = yield* SpotifyApi
   const library = yield* Effect.all(
     {
       likedSongsCount: spotify.likedSongsCount,
-      playlists: Stream.runCollect(spotify.currentUserPlaylists),
+      playlists: loadPlaylists,
       albums: Stream.runCollect(spotify.savedAlbums),
       artists: Stream.runCollect(spotify.followedArtists),
       shows: Stream.runCollect(spotify.savedShows),

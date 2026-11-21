@@ -9,9 +9,11 @@ import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { saveSetting } from "../../lib/saved-setting"
 import { PaneDivider } from "../../ui/pane-divider"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
+import { LibraryPlaylistsProvider } from "../library/library-playlists-provider"
 import { NowPlayingBar } from "../playback/now-playing-bar"
 import { QueuePane } from "../queue/queue-pane"
 import { useQueuePane } from "../queue/use-queue-pane"
+import { EditablePlaylistsProvider } from "../track-actions/editable-playlists-provider"
 import { TrackListDensityProvider } from "../track-list/track-list-density-provider"
 import { Sidebar } from "./sidebar"
 import { TopBar } from "./top-bar"
@@ -37,34 +39,36 @@ export function AppShell({
 
   return (
     <StatusMessageProvider>
-      <div className="flex h-screen flex-col gap-2 p-2">
-        <div className="flex min-h-0 flex-1">
-          <Sidebar width={sidebarWidth} />
-          <PaneDivider
-            label="Resize sidebar"
-            paneWidth={sidebarWidth}
-            minimumWidth={minimumSidebarWidth}
-            maximumWidth={maximumSidebarWidth}
-            defaultWidth={defaultSidebarWidth}
-            onResize={setSidebarWidth}
-            onResizeEnd={(width) => runtime.runFork(saveSetting("sidebarWidth", width))}
-          />
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
-            <TopBar />
-            <main className="min-h-0 flex-1 overflow-y-auto p-6">
-              <TrackListDensityProvider savedDensity={savedTrackListDensity}>
-                {children}
-              </TrackListDensityProvider>
-            </main>
+      <LibraryPlaylistsProvider>
+        <div className="flex h-screen flex-col gap-2 p-2">
+          <div className="flex min-h-0 flex-1">
+            <Sidebar width={sidebarWidth} />
+            <PaneDivider
+              label="Resize sidebar"
+              paneWidth={sidebarWidth}
+              minimumWidth={minimumSidebarWidth}
+              maximumWidth={maximumSidebarWidth}
+              defaultWidth={defaultSidebarWidth}
+              onResize={setSidebarWidth}
+              onResizeEnd={(width) => runtime.runFork(saveSetting("sidebarWidth", width))}
+            />
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
+              <TopBar />
+              <main className="min-h-0 flex-1 overflow-y-auto p-6">
+                <TrackListDensityProvider savedDensity={savedTrackListDensity}>
+                  <EditablePlaylistsProvider>{children}</EditablePlaylistsProvider>
+                </TrackListDensityProvider>
+              </main>
+            </div>
+            {isQueueOpen && <QueuePane ref={queuePaneRef} onClose={closeQueue} />}
           </div>
-          {isQueueOpen && <QueuePane ref={queuePaneRef} onClose={closeQueue} />}
+          <NowPlayingBar
+            isQueueOpen={isQueueOpen}
+            onQueueToggle={toggleQueue}
+            queueButtonRef={queueButtonRef}
+          />
         </div>
-        <NowPlayingBar
-          isQueueOpen={isQueueOpen}
-          onQueueToggle={toggleQueue}
-          queueButtonRef={queueButtonRef}
-        />
-      </div>
+      </LibraryPlaylistsProvider>
     </StatusMessageProvider>
   )
 }

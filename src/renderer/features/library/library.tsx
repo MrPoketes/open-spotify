@@ -7,23 +7,25 @@ import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { arrangeLibrary } from "./arrange-library"
 import { HiddenLibrarySections } from "./hidden-library-sections"
 import { type LibraryEntry, loadLibraryEntries } from "./library-entries"
+import { type LibraryPlaylistsLoad, useLibraryPlaylists } from "./library-playlists"
 import { LibraryFilterBar } from "./library-filter-bar"
 import { filterLibraryEntries, hasLibraryFilters, noLibraryFilters } from "./library-filters"
 import { LibrarySectionGroup, PinnedLibrarySection } from "./library-section-group"
 import { nameFilterFocusKey } from "./use-focus-after-change"
 import { type SavedLibraryLayout, useLibraryLayout } from "./use-library-layout"
 
-const loadLibrary = Effect.all(
-  {
-    entries: loadLibraryEntries,
-    pinnedUris: loadSavedSetting("pinnedLibraryEntries", []),
-    sections: loadSavedSetting("librarySections", defaultLibrarySections),
-  },
-  { concurrency: "unbounded" },
-)
+const loadLibrary = (loadPlaylists: LibraryPlaylistsLoad) =>
+  Effect.all(
+    {
+      entries: loadLibraryEntries(loadPlaylists),
+      pinnedUris: loadSavedSetting("pinnedLibraryEntries", []),
+      sections: loadSavedSetting("librarySections", defaultLibrarySections),
+    },
+    { concurrency: "unbounded" },
+  )
 
 export function Library() {
-  const { state, retry } = useLoad(loadLibrary, "The library failed to load")
+  const { state, retry } = useLoad(loadLibrary(useLibraryPlaylists()), "The library failed to load")
 
   if (state.status === "loading") {
     return <output className="px-2 text-sm text-muted">Loading your library…</output>

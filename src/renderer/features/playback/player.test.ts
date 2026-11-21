@@ -1,5 +1,5 @@
 import { afterEach, assert, describe, it } from "@effect/vitest"
-import { Deferred, Effect, Exit, Fiber, Layer, Queue, Stream } from "effect"
+import { Deferred, Effect, Exit, Fiber, Layer, Option, Queue, Stream } from "effect"
 import { TestClock } from "effect/testing"
 import {
   NoActiveDevice,
@@ -283,4 +283,20 @@ describe("Player", () => {
       assert.deepStrictEqual(stateAfterFailure, { status: "noActiveDevice" })
     }).pipe(Effect.scoped, Effect.provide(playerOver(spotify)))
   })
+
+  // The queue pane reads the queue again only when the playing item changes
+  // or queueChanges emits, and adding a track does not change the item.
+  it.effect("tells the queue it changed after adding a track to it", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const firstChange = yield* player.queueChanges.pipe(
+        Stream.runHead,
+        Effect.forkScoped({ startImmediately: true }),
+      )
+
+      yield* player.addToQueue("spotify:track:fake-track-5")
+
+      assert.isTrue(Option.isSome(yield* Fiber.join(firstChange)))
+    }).pipe(Effect.scoped, Effect.provide(playerOver(SpotifyApi.layerFake))),
+  )
 })

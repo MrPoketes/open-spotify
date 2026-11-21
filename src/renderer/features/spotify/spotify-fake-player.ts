@@ -26,6 +26,8 @@ const TransferPlaybackBody = Schema.fromJsonString(
 
 const ShuffleState = Schema.Literals(["true", "false"])
 
+const QueuedUri = Schema.TemplateLiteral(["spotify:track:", Schema.String])
+
 const accepted: FakeResponse = [204, undefined]
 
 const invalidState: FakeResponse = [400, { error: { status: 400, message: "Invalid state" } }]
@@ -89,6 +91,12 @@ const playerCommands: Record<string, (player: FakePlayerState, url: URL) => Fake
   "PUT /v1/me/player/repeat": withState(RepeatMode, (player, state) => {
     player.repeat = state
   }),
+  // Like Spotify, refuses a uri that is not a playable item's. The fake plays
+  // its tracks in order, so a queued track is accepted but never plays.
+  "POST /v1/me/player/queue": (_player, url) =>
+    Schema.is(QueuedUri)(url.searchParams.get("uri"))
+      ? accepted
+      : [400, { error: { status: 400, message: "Invalid uri" } }],
 }
 
 const playbackState = (player: FakePlayerState) => ({

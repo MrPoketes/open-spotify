@@ -24,12 +24,17 @@ export const loadOnce = <A, E>(
     ),
   )
 
+export interface RetryableLoad<A, E> {
+  readonly state: LoadState<A, E>
+  readonly retry: () => void
+}
+
 // Loads once when the component mounts. retry loads again from the start,
 // showing the loading state meanwhile.
 export function useLoad<A, E>(
   load: Effect.Effect<A, E, RendererServices>,
   failureMessage: string,
-): { readonly state: LoadState<A, E>; readonly retry: () => void } {
+): RetryableLoad<A, E> {
   const [loadStream, setLoadStream] = useState(() => loadOnce(load, failureMessage))
   const state = useStreamValue(loadStream, { status: "loading" } as const)
   return { state, retry: () => setLoadStream(loadOnce(load, failureMessage)) }

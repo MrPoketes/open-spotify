@@ -47,9 +47,9 @@ export class Player extends Context.Service<
   Player,
   {
     readonly state: Stream.Stream<PlayerState>
-    // Emits after each attempt to play a queued item. Playing a later copy of
-    // the item that is playing moves the queue on without changing the
-    // playback state, so a queue on screen cannot rely on the state alone.
+    // Emits after each attempt to play a queued item and after each item
+    // added to the queue. Neither has to change the item that is playing, so
+    // a queue on screen cannot rely on the playback state alone.
     readonly queueChanges: Stream.Stream<void>
     readonly listDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => PlayerCommand
@@ -62,6 +62,7 @@ export class Player extends Context.Service<
     ) => Effect.Effect<void, SpotifyApiError | QueuedItemGone>
     readonly setShuffle: (isOn: boolean) => PlayerCommand
     readonly setRepeat: (mode: RepeatMode) => PlayerCommand
+    readonly addToQueue: (uri: string) => PlayerCommand
   }
 >()("open-spotify/Player") {
   static readonly layer = Layer.effect(
@@ -153,6 +154,10 @@ export class Player extends Context.Service<
           pendingChanges.showWhileSending({ shuffle: isOn }, send(spotify.setShuffle(isOn))),
         setRepeat: (mode) =>
           pendingChanges.showWhileSending({ repeat: mode }, send(spotify.setRepeat(mode))),
+        addToQueue: (uri) =>
+          send(spotify.addToQueue(uri)).pipe(
+            Effect.andThen(PubSub.publish(queueChanges, undefined)),
+          ),
       })
     }),
   )
