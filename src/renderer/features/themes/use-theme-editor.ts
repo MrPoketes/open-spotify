@@ -1,6 +1,7 @@
 import { Effect, Option, Schema } from "effect"
 import { use, useEffect, useState } from "react"
 import { Theme, type ThemeToken } from "../../../shared/theme"
+import { findContrastShortfalls } from "../../../shared/theme-contrast"
 import type { LibraryTheme } from "../../../shared/theme-library"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
@@ -34,7 +35,8 @@ const saveAndChoose = (
 
 // The editor starts from a copy of the saved theme. Every valid change
 // previews across the app at once; an invalid one keeps the last valid value
-// applied. Leaving the editor without saving restores the saved theme.
+// applied. Contrast is checked on the applied colors, the ones the user sees.
+// Leaving the editor without saving restores the saved theme.
 export function useThemeEditor(savedTheme: Theme, onSave: (libraryTheme: LibraryTheme) => void) {
   const runtime = use(RendererRuntimeContext)
   const [name, setName] = useState(`${savedTheme.name} (copy)`)
@@ -81,6 +83,7 @@ export function useThemeEditor(savedTheme: Theme, onSave: (libraryTheme: Library
     setColorScheme,
     tokenValues,
     setTokenValue,
+    contrastShortfalls: findContrastShortfalls(previewedTokens),
     saveProblem,
     save,
   }

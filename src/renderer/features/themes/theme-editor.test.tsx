@@ -16,6 +16,16 @@ const darkAccent = builtInThemes.dark.tokens["color-accent"]
 const newAccent = builtInThemes.light.tokens["color-accent"]
 const pickedColor = builtInThemes.light.tokens["color-focus"]
 
+const darkMuted = builtInThemes.dark.tokens["color-muted"]
+const darkSurface = builtInThemes.dark.tokens["color-surface"]
+const mutedOnSurfaceWarning = /color-muted on color-surface: 1\.0:1, needs 4\.5:1/
+
+const announcedText = () =>
+  screen
+    .getAllByRole("status")
+    .map((liveRegion) => liveRegion.textContent)
+    .join("")
+
 const appliedToken = (token: string) =>
   document.documentElement.style.getPropertyValue(`--theme-${token}`)
 
@@ -128,6 +138,27 @@ describe("ThemeEditor", () => {
     expect(accentField).toHaveAttribute("aria-invalid", "true")
     expect(accentField).toHaveAccessibleDescription(/hex color/)
     expect(appliedToken("color-accent")).toBe(darkAccent)
+  })
+
+  it("warns next to a text color that falls below its contrast target", async () => {
+    await openEditor()
+    const mutedField = screen.getByLabelText("color-muted")
+
+    await replaceText(mutedField, darkSurface)
+
+    expect(announcedText()).toMatch(mutedOnSurfaceWarning)
+    expect(mutedField).toHaveAccessibleDescription(mutedOnSurfaceWarning)
+  })
+
+  it("drops the contrast warning once the pair is readable again", async () => {
+    await openEditor()
+    const mutedField = screen.getByLabelText("color-muted")
+    await replaceText(mutedField, darkSurface)
+
+    await replaceText(mutedField, darkMuted)
+
+    expect(announcedText()).toBe("")
+    expect(mutedField).not.toHaveAccessibleDescription()
   })
 
   it("saves the edited theme under the given name and lists and chooses it", async () => {

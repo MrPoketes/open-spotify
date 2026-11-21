@@ -1,5 +1,8 @@
-import { Option } from "effect"
+import { Option, Schema } from "effect"
 import { useId } from "react"
+import { HexColor, sixDigitHexColor } from "../../../shared/theme"
+import type { ContrastShortfall } from "../../../shared/theme-contrast"
+import { ContrastWarnings } from "./contrast-warnings"
 import { type TokenField, tokenValueProblem } from "./theme-token-fields"
 
 const fieldStyle =
@@ -12,19 +15,25 @@ const lengthPattern = new RegExp(`^(.*?)(${lengthUnits.join("|")})?$`)
 interface TokenInputProps {
   readonly field: TokenField
   readonly value: string
+  readonly contrastShortfalls: ReadonlyArray<ContrastShortfall>
   readonly onChange: (value: string) => void
 }
 
 // The problem sits under the field and describes it, so a screen reader reads
 // it when the field is focused rather than on every keystroke.
-export function TokenInput({ field, value, onChange }: TokenInputProps) {
+export function TokenInput({ field, value, contrastShortfalls, onChange }: TokenInputProps) {
   const inputId = useId()
   const problemId = useId()
+  const contrastWarningsId = useId()
   const problem = tokenValueProblem(field.token, value)
+  const descriptionIds = [
+    ...(Option.isSome(problem) ? [problemId] : []),
+    ...(contrastShortfalls.length > 0 ? [contrastWarningsId] : []),
+  ]
   const validity: FieldValidity = {
     id: inputId,
     "aria-invalid": Option.isSome(problem),
-    "aria-describedby": Option.isSome(problem) ? problemId : undefined,
+    "aria-describedby": descriptionIds.length > 0 ? descriptionIds.join(" ") : undefined,
   }
 
   return (
@@ -59,6 +68,9 @@ export function TokenInput({ field, value, onChange }: TokenInputProps) {
           {problem.value}
         </p>
       )}
+      {field.control === "color" && (
+        <ContrastWarnings id={contrastWarningsId} shortfalls={contrastShortfalls} />
+      )}
     </div>
   )
 }
@@ -78,13 +90,8 @@ interface ControlProps {
 
 // The native picker only takes the six-digit form. Given an empty value, it
 // shows black.
-const sixDigitHex = (value: string) => {
-  const shortHex = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(value)
-  if (shortHex !== null) {
-    return `#${shortHex[1]}${shortHex[1]}${shortHex[2]}${shortHex[2]}${shortHex[3]}${shortHex[3]}`
-  }
-  return /^#[0-9a-f]{6}$/i.test(value) ? value : ""
-}
+const pickerValue = (value: string) =>
+  Schema.is(HexColor)(value) ? sixDigitHexColor(value).toLowerCase() : ""
 
 function ColorControl({ token, value, validity, onChange }: ControlProps) {
   return (
@@ -92,7 +99,7 @@ function ColorControl({ token, value, validity, onChange }: ControlProps) {
       <input
         type="color"
         aria-label={`${token} picker`}
-        value={sixDigitHex(value).toLowerCase()}
+        value={pickerValue(value)}
         onChange={(event) => onChange(event.target.value)}
         className="h-9 w-12 shrink-0 cursor-pointer rounded-small bg-surface-raised"
       />

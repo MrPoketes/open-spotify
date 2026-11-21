@@ -6,6 +6,10 @@ export const HexColor = Schema.String.check(
   Schema.isPattern(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i, { expected: "a hex color like #1a2b3c" }),
 )
 
+// Turns the #rgb form of a hex color into #rrggbb, and returns #rrggbb as is.
+export const sixDigitHexColor = (hexColor: string) =>
+  hexColor.length === 4 ? hexColor.replaceAll(/[0-9a-f]/gi, "$&$&") : hexColor
+
 export const CssLength = Schema.String.check(
   Schema.isPattern(/^(0|\d+(\.\d+)?(px|rem|em))$/, { expected: "a length like 8px or 0.5rem" }),
 )
