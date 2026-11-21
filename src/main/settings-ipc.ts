@@ -8,7 +8,9 @@ import {
   type SettingValue,
   settingSchemas,
 } from "../shared/settings"
+import { MalformedIpcRequest } from "../shared/malformed-ipc-request"
 import { decodeIpcRequest } from "./decode-ipc-request"
+import { replyWithTaggedFailures } from "./reply-with-tagged-failures"
 import { Settings } from "./settings"
 
 export const getSettingFromIpc = Effect.fn("getSettingFromIpc")(function* (request: unknown) {
@@ -16,7 +18,7 @@ export const getSettingFromIpc = Effect.fn("getSettingFromIpc")(function* (reque
   const settings = yield* Settings
   const value = yield* settings.get(key)
   return yield* Schema.encodeEffect(SettingReply(key))(value)
-})
+}, replyWithTaggedFailures(MalformedIpcRequest))
 
 export const setSettingFromIpc = Effect.fn("setSettingFromIpc")(function* (request: unknown) {
   const { key, value } = yield* decodeIpcRequest(ipcChannels.setSetting, SetSettingRequest, request)
@@ -29,4 +31,4 @@ export const setSettingFromIpc = Effect.fn("setSettingFromIpc")(function* (reque
   )
   const settings = yield* Settings
   yield* settings.set(key, decodedValue)
-})
+}, replyWithTaggedFailures(MalformedIpcRequest))

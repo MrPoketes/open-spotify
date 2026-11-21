@@ -33,11 +33,12 @@ export const fakeMainProcess = ({
   const answerByChannel: Partial<Record<IpcChannel, (request: unknown) => unknown>> = {
     [ipcChannels.getSetting]: (request) => {
       const { key } = Schema.decodeUnknownSync(GetSettingRequest)(request)
-      return storedSettings.get(key) ?? null
+      return { _tag: "IpcSucceeded", value: storedSettings.get(key) ?? null }
     },
     [ipcChannels.setSetting]: (request) => {
       const { key, value } = Schema.decodeUnknownSync(SetSettingRequest)(request)
       storedSettings.set(key, value)
+      return { _tag: "IpcSucceeded", value: undefined }
     },
     [ipcChannels.getFolderTree]: () => folderTree,
     [ipcChannels.listImportedThemes]: () => [...importedThemes.values()],

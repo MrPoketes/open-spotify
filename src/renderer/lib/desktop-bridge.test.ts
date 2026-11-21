@@ -2,7 +2,7 @@ import { assert, describe, it } from "@effect/vitest"
 import { Effect, Option } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
 import { LoginFailed, SessionExpired } from "../../shared/spotify-auth-replies"
-import type { Folder, FolderTree } from "../../shared/folders"
+import { type Folder, FolderNotFound, type FolderTree } from "../../shared/folders"
 import { DesktopBridge } from "./desktop-bridge"
 import { fakeMainProcess } from "./fake-main-process"
 
@@ -114,6 +114,35 @@ describe("DesktopBridge", () => {
       const folderTree = yield* bridge.getFolderTree
 
       assert.deepStrictEqual(folderTree, reply)
+    }),
+  )
+
+  // The sidebar reloads the tree when a folder no longer exists, so the
+  // error must keep its tag and fields across IPC.
+  it.effect("fails with the tagged folder error the main process replies with", () =>
+    Effect.gen(function* () {
+      const folderId = "3f1c1b9e-6a51-4d3e-9a43-2f6f0f3d5c11"
+      const bridge = DesktopBridge.make(
+        desktopApiReplying({ _tag: "IpcFailed", error: { _tag: "FolderNotFound", folderId } }),
+      )
+
+      const error = yield* Effect.flip(bridge.renameFolder({ folderId, name: "Rock" }))
+
+      assert.deepStrictEqual(error, new FolderNotFound({ folderId }))
+    }),
+  )
+
+  it.effect("fails with DesktopBridgeError when a reply carries an error it does not know", () =>
+    Effect.gen(function* () {
+      const bridge = DesktopBridge.make(
+        desktopApiReplying({ _tag: "IpcFailed", error: { _tag: "DiskFull" } }),
+      )
+
+      const error = yield* Effect.flip(
+        bridge.deleteFolder({ folderId: "3f1c1b9e-6a51-4d3e-9a43-2f6f0f3d5c11" }),
+      )
+
+      assert.strictEqual(error._tag, "DesktopBridgeError")
     }),
   )
 })

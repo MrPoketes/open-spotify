@@ -12,7 +12,7 @@ export const loadSavedSetting = Effect.fn("loadSavedSetting")(function* <K exten
   const savedValue = yield* bridge
     .getSetting(key)
     .pipe(
-      Effect.catchTag("DesktopBridgeError", (error) =>
+      Effect.catch((error) =>
         Effect.logWarning(`Could not read the saved ${key} setting`, error).pipe(
           Effect.as(Option.none()),
         ),
@@ -30,9 +30,5 @@ export const saveSetting = Effect.fn("saveSetting")(function* <K extends Setting
   const bridge = yield* DesktopBridge
   yield* bridge
     .setSetting(key, value)
-    .pipe(
-      Effect.catchTag("DesktopBridgeError", (error) =>
-        Effect.logWarning(`Could not save the ${key} setting`, error),
-      ),
-    )
+    .pipe(Effect.catch((error) => Effect.logWarning(`Could not save the ${key} setting`, error)))
 })

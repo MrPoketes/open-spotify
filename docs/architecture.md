@@ -76,7 +76,7 @@ window loads the Vite dev server instead.
 2. Define request and reply Schemas in `src/shared`.
 3. Handle the channel in the main process, decoding the request with its Schema through
    `decodeIpcRequest` (`src/main/decode-ipc-request.ts`). A request that does not decode fails
-   with `MalformedIpcRequest`.
+   with `MalformedIpcRequest` (`src/shared/malformed-ipc-request.ts`).
 4. Add a method to `DesktopBridge` that encodes the request and decodes the reply.
 
 IPC messages are structured-cloned, so they carry only plain data: send the Schema-encoded form
@@ -85,9 +85,17 @@ IPC messages are structured-cloned, so they carry only plain data: send the Sche
 Each side decodes what it receives, so a mismatch shows up as a typed error at the boundary.
 
 A rejected `invoke` reaches the renderer as a plain `Error`, so a channel whose failures the
-renderer must act on replies with a tagged union of its success case and its
-`Schema.TaggedError` cases instead (see `src/shared/spotify-auth-replies.ts`). `DesktopBridge`
-decodes the reply and turns the error cases back into typed failures.
+renderer must act on carries its `Schema.TaggedError` cases inside the reply instead:
+
+- Settings and folder changes reply with the `IpcReply` envelope (`src/shared/ipc-reply.ts`).
+  The main process wraps the handler in `replyWithTaggedFailures` with the Schema of the
+  errors the renderer can act on, such as `MalformedIpcRequest` or `FolderNotFound`. Other
+  failures, such as a SQL error, still reject the `invoke`.
+- Login and theme files reply with a tagged union of their success cases and their error cases
+  (see `src/shared/spotify-auth-replies.ts`).
+
+`DesktopBridge` decodes the reply and turns the error cases back into typed failures. Anything
+else, including a rejected `invoke` or an error it does not know, becomes `DesktopBridgeError`.
 
 ## Build
 
