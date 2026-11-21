@@ -14,12 +14,13 @@ const unmuteFallbackVolume = 50
 
 const volumeUnavailableReason = (playerState: PlayerStateOrLoading) => {
   const playbackUnavailableReason = unavailableReason(playerState)
-  if (playbackUnavailableReason !== null || playerState.status !== "active") {
+  if (playbackUnavailableReason !== null) {
     return playbackUnavailableReason
   }
-  return playerState.playback.device.supportsVolume
-    ? null
-    : "This device doesn't let Spotify change its volume."
+  if (playerState.status === "active" && !playerState.playback.device.supportsVolume) {
+    return "This device doesn't let Spotify change its volume."
+  }
+  return null
 }
 
 // The volume of the active device, which the slider changes once it settles
@@ -32,7 +33,8 @@ export function useVolumeControl(playerState: PlayerStateOrLoading) {
   const lastAudibleVolume = useRef(unmuteFallbackVolume)
   const reportedVolume =
     playerState.status === "active" ? playerState.playback.device.volumePercent : null
-  const volume = draftVolume ?? reportedVolume
+  // Spotify can report no volume, which the slider shows as zero.
+  const volume = draftVolume ?? reportedVolume ?? 0
 
   useEffect(() => {
     if (reportedVolume !== null && reportedVolume > 0) {
@@ -63,10 +65,11 @@ export function useVolumeControl(playerState: PlayerStateOrLoading) {
     pendingSend.current = setTimeout(() => sendVolume(volumePercent), settlePauseMs)
   }
 
-  const isMuted = volume === 0
+  // With no device there is nothing to unmute, so the button offers Mute.
+  const isMuted = playerState.status === "active" && volume === 0
 
   return {
-    volume: volume ?? 0,
+    volume,
     isMuted,
     unavailableReason: volumeUnavailableReason(playerState),
     failure,

@@ -192,6 +192,29 @@ describe("Player", () => {
     ),
   )
 
+  // Spotify reports the volume on the device inside the playback state, not
+  // next to the other settings.
+  it.effect("shows a volume change on the active device at once, before Spotify confirms it", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+
+      yield* Effect.forkScoped(player.setVolume(20))
+      const stateAfterChange = yield* Queue.take(states)
+
+      assert.strictEqual(
+        stateAfterChange.status === "active"
+          ? stateAfterChange.playback.device.volumePercent
+          : null,
+        20,
+      )
+    }).pipe(
+      Effect.scoped,
+      Effect.provide(playerOver(spotifyApiFakeWith(() => ({ setVolume: () => Effect.never })))),
+    ),
+  )
+
   it.effect("puts a change back when Spotify rejects it", () =>
     Effect.gen(function* () {
       const player = yield* Player

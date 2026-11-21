@@ -282,8 +282,10 @@ track".
 
 Under the controls, a seek bar shows how far into the item playback is: the elapsed time, a
 slider, and the total time, in `text-xs` `muted` `tabular-nums` (`-:--` while nothing plays).
-The slider's track is a `rounded-full` bar in `muted`, filled with `accent` up to the position,
-with an `accent` thumb.
+Every slider in the app is the shared range slider (`src/renderer/ui/range-slider.tsx`): a
+16 px tall native range input over a 4 px `rounded-full` track in `muted`, filled with `accent` up
+to a 12 px `accent` thumb. Arrow, page, `Home`, and `End` keys held with Ctrl, Alt, or Cmd do not
+move it, since they belong to the app-wide shortcuts.
 Between polls the slider moves on by itself while playback plays, and stands still while it is
 paused. The slider is labelled "Playback position", and its value reads as "1:23 of 3:45".
 Left and right (or down and up) arrows step 5 seconds, `PageDown` and `PageUp` step a tenth of
@@ -304,12 +306,12 @@ the device picker button, labelled with the playing device ("Playing on Kitchen 
 "No active device". With no active device, the bar's left side says that audio plays in the
 Spotify app or on another device, next to a "Choose a device" button that opens the picker.
 
-After the device picker come a mute button and a 96 px volume slider for the active device. The
-slider is a native range input, 24 px tall as a pointer target, whose 4 px track fills with
-`accent` up to a 12 px `foreground` thumb. Moving it shows the new volume at once and sends it
-once the slider has rested for 250 ms, so a drag or a held arrow key sends one request. The
-change then behaves like any other control's: it holds for a second after Spotify accepts it,
-and a rejected change goes back with a `text-xs` `danger` alert under the slider. Mute
+After the device picker come a mute button and a 96 px volume slider for the active device,
+labelled "Volume" and read as "60%". The arrow keys step it by 1 %. Moving it shows the new
+volume at once and sends it once the slider has rested for 250 ms, so a drag or a held arrow key
+sends one request. The change then behaves like any other control's: it holds for a second after
+Spotify accepts it, and a rejected change goes back with a `text-xs` `danger` alert under the
+slider. Mute
 (`Volume2`) turns the volume down to zero and becomes Unmute (`VolumeX`), which restores the
 last volume above zero. Both are unavailable whenever the playback controls are, and also when
 the device does not let Spotify change its volume; like the controls, they stay focusable and

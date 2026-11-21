@@ -68,15 +68,33 @@ describe("NowPlayingBar volume", () => {
     expect(spotify.sentVolumes).toEqual([0, 60])
   })
 
-  it("shows the new volume at once, before Spotify confirms it", async () => {
-    renderNowPlayingBarAlone(spotifyApiFakeWith(() => ({ setVolume: () => Effect.never })))
+  // Mute must win over a slider change that has not been sent yet, or the
+  // slider would keep showing the dragged volume over the muted one.
+  it("mutes at once while the slider is still settling and drops the slider's change", async () => {
+    const spotify = recordingVolumes()
+    renderNowPlayingBarAlone(spotify.layer)
     const slider = await volumeSlider()
     await waitFor(() => expect(slider).toHaveValue(fakeVolume))
 
+    fireEvent.change(slider, { target: { value: "30" } })
     await userEvent.click(await muteButton("Mute"))
 
+    await waitFor(() => expect(spotify.sentVolumes).toEqual([0]))
     expect(slider).toHaveValue("0")
     expect(await muteButton("Unmute")).toBeInTheDocument()
+  })
+
+  // Alt+Left goes back in history and Ctrl+Right skips to the next track, and
+  // the slider must not take them. jsdom does not step a range input, so the
+  // test checks which key presses Chromium's own step is held back for.
+  it("steps with the arrow keys but leaves them alone when a shortcut modifier is held", async () => {
+    renderNowPlayingBarAlone()
+    const slider = await volumeSlider()
+    slider.focus()
+
+    expect(fireEvent.keyDown(slider, { key: "ArrowRight" })).toBe(true)
+    expect(fireEvent.keyDown(slider, { key: "ArrowRight", ctrlKey: true })).toBe(false)
+    expect(fireEvent.keyDown(slider, { key: "ArrowLeft", altKey: true })).toBe(false)
   })
 
   it("puts the volume back and says so when Spotify rejects it", async () => {
