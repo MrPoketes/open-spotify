@@ -572,6 +572,10 @@ no forward Delete key.
 
 Repeat takes `L`, for loop, because Electron's default menu keeps `Ctrl+R` (`Cmd+R`) for Reload.
 
+A letter shortcut follows the keyboard layout: on Dvorak, `P` is the key labelled P. Where a key
+types no Latin letter, as on a Cyrillic layout or with macOS Option, the key in the letter's US
+position works instead.
+
 No shortcut fires while focus is in a text field, and `Space` leaves a focused button (menu
 items included) to press itself. On a focused link, which `Space` would only scroll past, or a
 focused radio button, which is already checked, it plays or pauses. Holding the keys down runs a

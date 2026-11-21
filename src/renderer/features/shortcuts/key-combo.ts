@@ -11,11 +11,17 @@ const isLetter = (key: string) => /^[a-z]$/i.test(key)
 
 const isSymbol = (key: string) => key.length === 1 && key !== " " && !isLetter(key)
 
-// Matched by physical key, because event.key gives a different character on
-// a non-Latin layout, such as Cyrillic, and macOS turns Option+letter into a
-// symbol.
+// A letter matches the typed character, so it follows the user's layout, such
+// as Dvorak. A key that types no Latin letter, as on a Cyrillic layout or
+// with macOS Option, which turns letters into symbols, falls back to the
+// letter at its position on a US layout.
+const isLetterPressed = (event: KeyboardEvent, letter: string) =>
+  isLetter(event.key)
+    ? event.key.toLowerCase() === letter.toLowerCase()
+    : event.code === `Key${letter.toUpperCase()}`
+
 const isKeyPressed = (event: KeyboardEvent, key: string) =>
-  isLetter(key) ? event.code === `Key${key.toUpperCase()}` : event.key === key
+  isLetter(key) ? isLetterPressed(event, key) : event.key === key
 
 const areModifiersHeld = (event: KeyboardEvent, combo: KeyCombo, isMac: boolean) => {
   const primaryKey = isMac ? event.metaKey : event.ctrlKey
