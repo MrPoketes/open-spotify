@@ -49,6 +49,24 @@ const folderTree: FolderTree = [
         name: "Slow Science",
         imageUrl: null,
       },
+      {
+        _tag: "SpotifyItem",
+        uri: "spotify:album:2noRn2Aes5aoNVsU6iWThc",
+        name: "Low Orbit",
+        imageUrl: null,
+      },
+      {
+        _tag: "SpotifyItem",
+        uri: "spotify:artist:0OdUWJ0sBjDrqHygGUXeCF",
+        name: "Kite Theory",
+        imageUrl: null,
+      },
+      {
+        _tag: "SpotifyItem",
+        uri: "spotify:playlist:1h0CEZCm6IbFTbxThn6Xcs",
+        name: "Long Run",
+        imageUrl: null,
+      },
     ],
   },
 ]
@@ -86,7 +104,7 @@ describe("FolderPage", () => {
     renderFolderPage(runningId)
 
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Running")
-    expect(screen.getByText("4 items")).toBeInTheDocument()
+    expect(screen.getByText("7 items")).toBeInTheDocument()
   })
 
   it("shows the same entries in the grid and in the list", async () => {
@@ -101,6 +119,9 @@ describe("FolderPage", () => {
       "Warm-upFolder · 2 items",
       "Golden SignalsTrack",
       "Slow ScienceShow",
+      "Low OrbitAlbum",
+      "Kite TheoryArtist",
+      "Long RunPlaylist",
     ])
     expect(listEntries).toEqual(gridEntries)
   })
@@ -119,19 +140,23 @@ describe("FolderPage", () => {
     )
   })
 
-  it("links nested folders and shows to their own pages", async () => {
-    renderFolderPage(runningId)
-    await folderContents()
+  it.each(["Grid", "List"])(
+    "links every kind of entry to its page in the %s view",
+    async (view) => {
+      renderFolderPage(runningId)
+      await userEvent.click(await screen.findByRole("button", { name: view }))
+      const entries = await folderContents()
 
-    expect(screen.getByRole("link", { name: /Warm-up/ })).toHaveAttribute(
-      "href",
-      `/folder/${warmUpId}`,
-    )
-    expect(screen.getByRole("link", { name: /Slow Science/ })).toHaveAttribute(
-      "href",
-      "/show/5CfCWKI5pZ28U0uOzXkDHe",
-    )
-  })
+      const pageOf = (name: RegExp) =>
+        within(entries).getByRole("link", { name }).getAttribute("href")
+      expect(pageOf(/Warm-up/)).toBe(`/folder/${warmUpId}`)
+      expect(pageOf(/Slow Science/)).toBe("/show/5CfCWKI5pZ28U0uOzXkDHe")
+      expect(pageOf(/Low Orbit/)).toBe("/album/2noRn2Aes5aoNVsU6iWThc")
+      expect(pageOf(/Kite Theory/)).toBe("/artist/0OdUWJ0sBjDrqHygGUXeCF")
+      expect(pageOf(/Long Run/)).toBe("/playlist/1h0CEZCm6IbFTbxThn6Xcs")
+      expect(pageOf(/Quiet Rivers/)).toBe("/track/4uLU6hMCjMI75M1A2tKUQC")
+    },
+  )
 
   it("explains how to add items to an empty folder", async () => {
     renderFolderPage(stretchingId)

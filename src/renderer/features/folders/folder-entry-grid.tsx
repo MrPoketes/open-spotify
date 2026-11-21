@@ -1,8 +1,8 @@
+import { Link } from "@tanstack/react-router"
 import { useState } from "react"
 import type { FolderEntry } from "../../../shared/folders"
 import { useRovingFocus } from "../../ui/use-roving-focus"
 import { type FolderEntryDescription, describeFolderEntry } from "./folder-entry-description"
-import { FolderEntryTarget } from "./folder-entry-target"
 
 function FolderEntryArtwork({ description }: { readonly description: FolderEntryDescription }) {
   const [failedToLoad, setFailedToLoad] = useState(false)
@@ -42,16 +42,15 @@ export function FolderEntryGrid({ entries }: { readonly entries: ReadonlyArray<F
         const description = describeFolderEntry(entry)
         return (
           <li key={description.key}>
-            <FolderEntryTarget
-              page={description.page}
-              rovingProps={rowProps(index)}
-              className="flex flex-col gap-2 rounded-medium p-3"
-              hoverClassName="hover:bg-surface-raised hover:shadow-raised"
+            <Link
+              {...description.page}
+              {...rowProps(index)}
+              className="flex flex-col gap-2 rounded-medium p-3 transition duration-120 ease-out hover:bg-surface-raised hover:shadow-raised"
             >
               <FolderEntryArtwork description={description} />
               <span className="truncate text-sm font-semibold">{description.name}</span>
               <span className="truncate text-xs text-muted">{description.details}</span>
-            </FolderEntryTarget>
+            </Link>
           </li>
         )
       })}

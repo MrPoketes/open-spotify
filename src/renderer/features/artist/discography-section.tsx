@@ -6,7 +6,8 @@ import { useCardGridColumnCount } from "../../ui/use-card-grid-column-count"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
 import type { ArtistAlbum, ArtistAlbumsPage } from "../spotify/spotify-album"
-import { type AlbumGroup, SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyApi } from "../spotify/spotify-api"
+import type { AlbumGroup } from "../spotify/spotify-artist-requests"
 import { useNextPages } from "../spotify/use-next-pages"
 
 const albumCard = (album: ArtistAlbum): GridCard => ({

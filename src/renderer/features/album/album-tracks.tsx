@@ -28,11 +28,17 @@ const discsOf = (tracks: ReadonlyArray<AlbumTrack>) => {
   return Array.from(entriesByDisc, ([discNumber, entries]): Disc => ({ discNumber, entries }))
 }
 
-export function AlbumTracks({ tracks }: { readonly tracks: ReadonlyArray<AlbumTrack> }) {
+interface AlbumTracksProps {
+  readonly tracks: ReadonlyArray<AlbumTrack>
+  readonly highlightedTrackId: string | undefined
+}
+
+export function AlbumTracks({ tracks, highlightedTrackId }: AlbumTracksProps) {
   const discs = discsOf(tracks)
   const hasDiscHeadings = discs.length > 1
   return discs.map(({ discNumber, entries }) => {
     const label = hasDiscHeadings ? `Disc ${discNumber}` : "Tracks"
+    const highlightedIndex = entries.findIndex(({ trackId }) => trackId === highlightedTrackId)
     return (
       <div key={discNumber} className="flex flex-col gap-4">
         {hasDiscHeadings ? <h2 className="font-display text-xl font-bold">{label}</h2> : null}
@@ -41,6 +47,7 @@ export function AlbumTracks({ tracks }: { readonly tracks: ReadonlyArray<AlbumTr
           layout="album"
           trackCount={entries.length}
           trackAt={(index) => entries[index]}
+          highlightedIndex={highlightedIndex === -1 ? undefined : highlightedIndex}
         />
       </div>
     )

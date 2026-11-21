@@ -12,15 +12,47 @@ import { formatItemCount } from "./format-item-count"
 
 type SpotifyItemKind = "playlist" | "artist" | "album" | "show" | "track"
 
+type FolderEntryPage =
+  | { readonly to: "/folder/$folderId"; readonly params: { readonly folderId: string } }
+  | { readonly to: "/playlist/$playlistId"; readonly params: { readonly playlistId: string } }
+  | { readonly to: "/artist/$artistId"; readonly params: { readonly artistId: string } }
+  | { readonly to: "/album/$albumId"; readonly params: { readonly albumId: string } }
+  | { readonly to: "/show/$showId"; readonly params: { readonly showId: string } }
+  | { readonly to: "/track/$trackId"; readonly params: { readonly trackId: string } }
+
 const spotifyItemKinds: Record<
   SpotifyItemKind,
-  { readonly label: string; readonly icon: LucideIcon }
+  {
+    readonly label: string
+    readonly icon: LucideIcon
+    readonly page: (id: string) => FolderEntryPage
+  }
 > = {
-  playlist: { label: "Playlist", icon: ListMusic },
-  artist: { label: "Artist", icon: MicVocal },
-  album: { label: "Album", icon: Disc3 },
-  show: { label: "Show", icon: Radio },
-  track: { label: "Track", icon: Music },
+  playlist: {
+    label: "Playlist",
+    icon: ListMusic,
+    page: (playlistId) => ({ to: "/playlist/$playlistId", params: { playlistId } }),
+  },
+  artist: {
+    label: "Artist",
+    icon: MicVocal,
+    page: (artistId) => ({ to: "/artist/$artistId", params: { artistId } }),
+  },
+  album: {
+    label: "Album",
+    icon: Disc3,
+    page: (albumId) => ({ to: "/album/$albumId", params: { albumId } }),
+  },
+  show: {
+    label: "Show",
+    icon: Radio,
+    page: (showId) => ({ to: "/show/$showId", params: { showId } }),
+  },
+  track: {
+    label: "Track",
+    icon: Music,
+    page: (trackId) => ({ to: "/track/$trackId", params: { trackId } }),
+  },
 }
 
 const parseSpotifyUri = (uri: string) => {
@@ -29,10 +61,6 @@ const parseSpotifyUri = (uri: string) => {
   return { kind, id }
 }
 
-type FolderEntryPage =
-  | { readonly to: "/folder/$folderId"; readonly params: { readonly folderId: string } }
-  | { readonly to: "/show/$showId"; readonly params: { readonly showId: string } }
-
 export interface FolderEntryDescription {
   readonly key: string
   readonly name: string
@@ -40,8 +68,7 @@ export interface FolderEntryDescription {
   readonly imageUrl: string | null
   readonly icon: LucideIcon
   readonly isArtist: boolean
-  // Null for kinds whose page does not exist yet.
-  readonly page: FolderEntryPage | null
+  readonly page: FolderEntryPage
 }
 
 export const describeFolderEntry = (entry: FolderEntry): FolderEntryDescription => {
@@ -64,6 +91,6 @@ export const describeFolderEntry = (entry: FolderEntry): FolderEntryDescription 
     imageUrl: entry.imageUrl,
     icon: spotifyItemKinds[kind].icon,
     isArtist: kind === "artist",
-    page: kind === "show" ? { to: "/show/$showId", params: { showId: id } } : null,
+    page: spotifyItemKinds[kind].page(id),
   }
 }

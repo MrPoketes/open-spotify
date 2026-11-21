@@ -99,6 +99,23 @@ describe("AlbumPage", () => {
     expect(within(firstTrack).getAllByRole("cell")[0]).toHaveTextContent(/^1$/)
   })
 
+  // A track opened on its own, such as from a folder, lands on its album and
+  // can sit far below the screen on a long disc.
+  it("scrolls to, highlights, and focuses the track the page was opened for", async () => {
+    renderScreen(
+      <main ref={giveMainViewALayout}>
+        <AlbumPage albumId="fake-album-4" highlightedTrackId="fake-album-4-track-2-25" />
+      </main>,
+      fakeMainProcess(),
+    )
+
+    const highlightedTrack = await screen.findByRole("row", {
+      name: "Low Orbit, part 2.25 by Kite Theory",
+    })
+    expect(screen.getAllByRole("row", { current: true })).toEqual([highlightedTrack])
+    await waitFor(() => expect(highlightedTrack).toHaveFocus())
+  })
+
   it("says the album was not found when Spotify has no album with the id", async () => {
     renderAlbumPage("fake-album-missing")
 

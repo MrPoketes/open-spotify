@@ -47,9 +47,19 @@ interface TrackListProps {
   readonly trackAt: (index: number) => TrackListEntry | undefined
   // For lists that load their tracks as they scroll into view.
   readonly onRowsRendered?: (firstIndex: number, lastIndex: number) => void
+  // A track the list highlights and opens scrolled to and focused, such as a
+  // track opened on its album page.
+  readonly highlightedIndex?: number | undefined
 }
 
-export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }: TrackListProps) {
+export function TrackList({
+  label,
+  layout,
+  trackCount,
+  trackAt,
+  onRowsRendered,
+  highlightedIndex,
+}: TrackListProps) {
   const { density } = use(TrackListDensityContext)
   const rowsRef = useRef<HTMLTableSectionElement>(null)
   const rowsOffset = useRowsOffset(rowsRef)
@@ -70,8 +80,17 @@ export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }
   const rowFocus = useRowFocus({
     rowsRef,
     rowCount: trackCount,
+    initialFocusedIndex: highlightedIndex,
     scrollToIndex: (index) => virtualizer.scrollToIndex(index),
   })
+
+  // The highlighted row is not in the DOM until the list scrolls to it. The
+  // virtualiser keeps aiming at the row while the offset of the rows settles.
+  useLayoutEffect(() => {
+    if (highlightedIndex !== undefined) {
+      virtualizer.scrollToIndex(highlightedIndex, { align: "center" })
+    }
+  }, [virtualizer, highlightedIndex])
 
   useEffect(() => {
     if (firstIndex !== undefined && lastIndex !== undefined) {
@@ -102,6 +121,7 @@ export function TrackList({ label, layout, trackCount, trackAt, onRowsRendered }
             const slot = {
               index,
               tabIndex: index === tabStopIndex ? 0 : -1,
+              isHighlighted: index === highlightedIndex,
               offset: start - rowsOffset,
               onFocus: () => rowFocus.setFocusedIndex(index),
               onKeyDown: rowFocus.onKeyDown,
