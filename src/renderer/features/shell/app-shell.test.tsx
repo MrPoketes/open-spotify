@@ -9,7 +9,6 @@ import {
 import { render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
-import { defaultSidebarWidth } from "../../../shared/sidebar-width"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext, rendererRuntime } from "../../lib/renderer-runtime"
@@ -19,25 +18,26 @@ import { AppShell } from "./app-shell"
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 
 // The sidebar and the now-playing bar must load from the fake Spotify API,
-// and the sidebar width must be saved where rendererRuntime reads it back.
+// and pane widths must be saved where rendererRuntime reads them back.
 const runtimeWithFakeSpotify = fakeRendererRuntime({ mainProcess: window.desktop })
-
-const loadSavedSidebarWidth = loadSavedSetting("sidebarWidth", defaultSidebarWidth)
 
 interface ShellOptions {
   readonly savedSidebarWidth?: number
+  readonly savedRightPaneWidth?: number
   readonly platform?: string
 }
 
 // Starts on a second page so there is a page to go back to.
 const renderAppShell = async ({
   savedSidebarWidth = 280,
+  savedRightPaneWidth = 320,
   platform = "win32",
 }: ShellOptions = {}) => {
   const rootRoute = createRootRoute({
     component: () => (
       <AppShell
         savedSidebarWidth={savedSidebarWidth}
+        savedRightPaneWidth={savedRightPaneWidth}
         savedTrackListDensity="comfortable"
         platform={platform}
       >
@@ -75,48 +75,116 @@ const renderAppShell = async ({
 
 const sidebarDivider = () => screen.getByRole("separator", { name: "Resize sidebar" })
 
-const dragDivider = async (fromX: number, toX: number) => {
-  await userEvent.pointer([
-    { keys: "[MouseLeft>]", target: sidebarDivider(), coords: { clientX: fromX } },
-    { coords: { clientX: toX } },
-    { keys: "[/MouseLeft]" },
-  ])
+const openQueue = async () => {
+  await userEvent.click(await screen.findByRole("button", { name: "Queue" }))
 }
 
-describe("AppShell", () => {
-  it("resizes the sidebar to follow the dragged divider", async () => {
-    await renderAppShell({ savedSidebarWidth: 280 })
+// The sidebar sits left of its divider and the queue pane right of its own,
+// so `growDirection` is the way the pointer moves to widen the pane.
+const resizablePanes = [
+  {
+    name: "sidebar",
+    dividerLabel: "Resize sidebar",
+    settingKey: "sidebarWidth",
+    minimumWidth: 200,
+    maximumWidth: 420,
+    defaultWidth: 280,
+    growDirection: 1,
+    growKey: "{ArrowRight}",
+    shrinkKey: "{ArrowLeft}",
+    renderWithWidth: (width: number) => renderAppShell({ savedSidebarWidth: width }),
+    pane: () => screen.getByRole("navigation", { name: "Library" }),
+  },
+  {
+    name: "queue pane",
+    dividerLabel: "Resize queue",
+    settingKey: "rightPaneWidth",
+    minimumWidth: 280,
+    maximumWidth: 400,
+    defaultWidth: 320,
+    growDirection: -1,
+    growKey: "{ArrowLeft}",
+    shrinkKey: "{ArrowRight}",
+    renderWithWidth: async (width: number) => {
+      const view = await renderAppShell({ savedRightPaneWidth: width })
+      await openQueue()
+      return view
+    },
+    pane: () => screen.getByRole("complementary", { name: "Queue" }),
+  },
+] as const
 
-    await dragDivider(280, 330)
+describe.each(resizablePanes)("the $name divider", (resizablePane) => {
+  const divider = () => screen.getByRole("separator", { name: resizablePane.dividerLabel })
+  const dragDivider = async (distance: number) => {
+    await userEvent.pointer([
+      { keys: "[MouseLeft>]", target: divider(), coords: { clientX: 500 } },
+      { coords: { clientX: 500 + distance * resizablePane.growDirection } },
+      { keys: "[/MouseLeft]" },
+    ])
+  }
+  const loadSavedWidth = loadSavedSetting(resizablePane.settingKey, resizablePane.defaultWidth)
 
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "330")
-    expect(screen.getByRole("navigation", { name: "Library" })).toHaveStyle({ width: "330px" })
+  it("resizes the pane to follow the dragged divider", async () => {
+    await resizablePane.renderWithWidth(300)
+
+    await dragDivider(50)
+
+    expect(divider()).toHaveAttribute("aria-valuenow", "350")
+    expect(resizablePane.pane()).toHaveStyle({ width: "350px" })
   })
 
-  it("keeps the sidebar between 200 and 420 pixels wide", async () => {
-    await renderAppShell({ savedSidebarWidth: 280 })
+  it("keeps the pane between its narrowest and widest width while dragging", async () => {
+    await resizablePane.renderWithWidth(300)
 
-    await dragDivider(280, 2000)
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "420")
+    await dragDivider(2000)
+    expect(divider()).toHaveAttribute("aria-valuenow", String(resizablePane.maximumWidth))
 
-    await dragDivider(420, -2000)
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "200")
+    await dragDivider(-2000)
+    expect(divider()).toHaveAttribute("aria-valuenow", String(resizablePane.minimumWidth))
   })
 
-  it("resizes the sidebar with the keyboard", async () => {
-    await renderAppShell({ savedSidebarWidth: 280 })
+  it("resizes the pane with the arrow keys, Home, and End", async () => {
+    await resizablePane.renderWithWidth(300)
 
-    sidebarDivider().focus()
-    await userEvent.keyboard("{ArrowLeft}")
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "264")
+    divider().focus()
+    await userEvent.keyboard(resizablePane.growKey)
+    expect(divider()).toHaveAttribute("aria-valuenow", "316")
+
+    await userEvent.keyboard(resizablePane.shrinkKey)
+    await userEvent.keyboard(resizablePane.shrinkKey)
+    expect(divider()).toHaveAttribute("aria-valuenow", "284")
 
     await userEvent.keyboard("{End}")
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "420")
+    expect(divider()).toHaveAttribute("aria-valuenow", String(resizablePane.maximumWidth))
 
     await userEvent.keyboard("{Home}")
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "200")
+    expect(divider()).toHaveAttribute("aria-valuenow", String(resizablePane.minimumWidth))
   })
 
+  it("restores the default width when the divider is double-clicked", async () => {
+    await resizablePane.renderWithWidth(300)
+
+    await userEvent.dblClick(divider())
+
+    expect(divider()).toHaveAttribute("aria-valuenow", String(resizablePane.defaultWidth))
+  })
+
+  it("restores the width the user chose after a restart", async () => {
+    const firstLaunch = await resizablePane.renderWithWidth(300)
+    await dragDivider(50)
+    await waitFor(async () => {
+      expect(await rendererRuntime.runPromise(loadSavedWidth)).toBe(350)
+    })
+    firstLaunch.unmount()
+
+    await resizablePane.renderWithWidth(await rendererRuntime.runPromise(loadSavedWidth))
+
+    expect(divider()).toHaveAttribute("aria-valuenow", "350")
+  })
+})
+
+describe("AppShell", () => {
   // Alt+Left is the back shortcut on Windows and Linux, so with the divider
   // focused it must navigate without also shrinking the sidebar.
   it("leaves the sidebar width alone when a history shortcut is pressed on the divider", async () => {
@@ -127,28 +195,6 @@ describe("AppShell", () => {
 
     expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument()
     expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "280")
-  })
-
-  it("resets the sidebar width when the divider is double-clicked", async () => {
-    await renderAppShell({ savedSidebarWidth: 400 })
-
-    await userEvent.dblClick(sidebarDivider())
-
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "280")
-  })
-
-  it("restores the sidebar width the user chose after a restart", async () => {
-    const firstLaunch = await renderAppShell({ savedSidebarWidth: 280 })
-    await dragDivider(280, 350)
-    await waitFor(async () => {
-      expect(await rendererRuntime.runPromise(loadSavedSidebarWidth)).toBe(350)
-    })
-    firstLaunch.unmount()
-
-    const savedSidebarWidth = await rendererRuntime.runPromise(loadSavedSidebarWidth)
-    await renderAppShell({ savedSidebarWidth })
-
-    expect(sidebarDivider()).toHaveAttribute("aria-valuenow", "350")
   })
 
   it("opens settings from the top bar", async () => {
@@ -183,7 +229,7 @@ describe("AppShell", () => {
   it("opens the queue from the now-playing bar and moves focus into it", async () => {
     await renderAppShell()
 
-    await userEvent.click(await screen.findByRole("button", { name: "Queue" }))
+    await openQueue()
 
     const queuePane = screen.getByRole("complementary", { name: "Queue" })
     expect(queuePane).toHaveFocus()

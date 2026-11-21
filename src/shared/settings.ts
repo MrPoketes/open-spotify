@@ -1,6 +1,7 @@
 import { Schema } from "effect"
 import { FolderView } from "./folder-view"
 import { LibrarySections, PinnedLibraryEntries } from "./library-layout"
+import { RightPaneWidth } from "./right-pane-width"
 import { SidebarWidth } from "./sidebar-width"
 import { ThemeId } from "./theme-library"
 import { TrackListDensity } from "./track-list-density"
@@ -9,6 +10,7 @@ export const SettingKey = Schema.Literals([
   "spotifyClientId",
   "themeId",
   "sidebarWidth",
+  "rightPaneWidth",
   "folderView",
   "trackListDensity",
   "pinnedLibraryEntries",
@@ -23,6 +25,7 @@ export const settingSchemas = {
   spotifyClientId: Schema.NonEmptyString,
   themeId: ThemeId,
   sidebarWidth: SidebarWidth,
+  rightPaneWidth: RightPaneWidth,
   folderView: FolderView,
   trackListDensity: TrackListDensity,
   pinnedLibraryEntries: PinnedLibraryEntries,

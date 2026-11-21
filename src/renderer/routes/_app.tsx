@@ -1,5 +1,6 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router"
 import { Effect } from "effect"
+import { defaultRightPaneWidth } from "../../shared/right-pane-width"
 import { defaultSidebarWidth } from "../../shared/sidebar-width"
 import { defaultTrackListDensity } from "../../shared/track-list-density"
 import { redirectUnlessLoggedIn } from "../features/login/require-login"
@@ -22,16 +23,19 @@ const loadAppShell = Effect.gen(function* () {
   return yield* Effect.all({
     appInfo: bridge.getAppInfo,
     savedSidebarWidth: loadSavedSetting("sidebarWidth", defaultSidebarWidth),
+    savedRightPaneWidth: loadSavedSetting("rightPaneWidth", defaultRightPaneWidth),
     savedTrackListDensity: loadSavedSetting("trackListDensity", defaultTrackListDensity),
   })
 })
 
 function AppLayout() {
-  const { appInfo, savedSidebarWidth, savedTrackListDensity } = Route.useLoaderData()
+  const { appInfo, savedSidebarWidth, savedRightPaneWidth, savedTrackListDensity } =
+    Route.useLoaderData()
 
   return (
     <AppShell
       savedSidebarWidth={savedSidebarWidth}
+      savedRightPaneWidth={savedRightPaneWidth}
       savedTrackListDensity={savedTrackListDensity}
       platform={appInfo.platform}
     >
