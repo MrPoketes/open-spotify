@@ -1,13 +1,14 @@
 import { Link } from "@tanstack/react-router"
 import { Pin, PinOff } from "lucide-react"
 import type { KeyboardEvent } from "react"
+import { ArtworkSummary } from "../../ui/artwork-summary"
 import { ContextMenu } from "../../ui/context-menu"
 import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import { useContextMenu } from "../../ui/use-context-menu"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { useAddToFolder } from "../folders/use-add-to-folder"
 import type { LibraryEntry } from "./library-entries"
-import { LibraryEntryArtwork } from "./library-entry-artwork"
+import { libraryEntryArtwork } from "./library-entry-artwork"
 import type { FocusAfterChange } from "./use-focus-after-change"
 
 export interface LibraryEntryActions {
@@ -57,13 +58,13 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
         }}
         onContextMenu={opensMenu ? entryMenu.openAtPointer : undefined}
         aria-keyshortcuts="P"
-        className="flex min-w-0 flex-1 items-center gap-3 rounded-small px-2 py-1"
+        className="flex min-w-0 flex-1 rounded-small px-2 py-1"
       >
-        <LibraryEntryArtwork kind={entry.kind} images={entry.images} />
-        <div className="flex min-w-0 flex-col">
-          <span className="truncate text-sm">{entry.name}</span>
-          <span className="truncate text-xs text-muted">{entry.details}</span>
-        </div>
+        <ArtworkSummary
+          artwork={libraryEntryArtwork(entry)}
+          title={entry.name}
+          details={entry.details}
+        />
       </Link>
       <button
         type="button"
