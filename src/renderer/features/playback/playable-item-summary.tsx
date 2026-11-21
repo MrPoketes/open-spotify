@@ -1,7 +1,7 @@
-import { Disc3, Radio } from "lucide-react"
 import { ArtworkSummary } from "../../ui/artwork-summary"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { PlayableItem } from "../spotify/spotify-playable-item"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 
 interface PlayableItemSummaryProps {
   readonly item: PlayableItem
@@ -13,7 +13,7 @@ export function PlayableItemSummary({ item }: PlayableItemSummaryProps) {
     <ArtworkSummary
       artwork={{
         sources: isTrack ? item.album.images : item.images,
-        placeholderIcon: isTrack ? Disc3 : Radio,
+        placeholderIcon: isTrack ? spotifyItemKinds.album.icon : spotifyItemKinds.show.icon,
         round: false,
       }}
       title={item.name}

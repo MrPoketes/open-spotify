@@ -8,6 +8,7 @@ import type { Artist } from "../spotify/spotify-artist"
 import type { Image } from "../spotify/spotify-image"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import type { SavedShow } from "../spotify/spotify-show"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import type { LibraryPlaylistsLoad } from "./library-playlists"
 
 export interface LibraryEntry {
@@ -28,7 +29,7 @@ const likedSongsEntry = (songCount: number): LibraryEntry => ({
   uri: "spotify:collection:tracks",
   kind: "liked-songs",
   name: "Liked Songs",
-  details: `Playlist · ${formatCount(songCount, "song", "songs")}`,
+  details: `${spotifyItemKinds.playlist.label} · ${formatCount(songCount, "song", "songs")}`,
   images: [],
   page: { to: "/collection/tracks" },
 })
@@ -37,7 +38,7 @@ const playlistEntry = (playlist: SimplifiedPlaylist): LibraryEntry => ({
   uri: playlist.uri,
   kind: "playlist",
   name: playlist.name,
-  details: `Playlist · ${playlist.owner.displayName ?? playlist.owner.id}`,
+  details: `${spotifyItemKinds.playlist.label} · ${playlist.owner.displayName ?? playlist.owner.id}`,
   images: playlist.images ?? [],
   page: { to: "/playlist/$playlistId", params: { playlistId: playlist.id } },
 })
@@ -46,7 +47,7 @@ const albumEntry = ({ album }: SavedAlbum): LibraryEntry => ({
   uri: album.uri,
   kind: "album",
   name: album.name,
-  details: `Album · ${formatArtistNames(album.artists)}`,
+  details: `${spotifyItemKinds.album.label} · ${formatArtistNames(album.artists)}`,
   images: album.images,
   page: { to: "/album/$albumId", params: { albumId: album.id } },
 })
@@ -55,7 +56,7 @@ const artistEntry = (artist: Artist): LibraryEntry => ({
   uri: artist.uri,
   kind: "artist",
   name: artist.name,
-  details: "Artist",
+  details: spotifyItemKinds.artist.label,
   images: artist.images,
   page: { to: "/artist/$artistId", params: { artistId: artist.id } },
 })
@@ -64,7 +65,7 @@ const showEntry = ({ show }: SavedShow): LibraryEntry => ({
   uri: show.uri,
   kind: "show",
   name: show.name,
-  details: "Show",
+  details: spotifyItemKinds.show.label,
   images: show.images,
   page: { to: "/show/$showId", params: { showId: show.id } },
 })

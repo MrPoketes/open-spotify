@@ -1,19 +1,11 @@
-import { Disc3, Heart, ListMusic, type LucideIcon, MicVocal, Radio } from "lucide-react"
-import type { LibraryEntryKind } from "../../../shared/library-layout"
+import { Heart } from "lucide-react"
 import type { SummaryArtwork } from "../../ui/artwork-summary"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import type { LibraryEntry } from "./library-entries"
-
-const placeholderIcons: Record<LibraryEntryKind, LucideIcon> = {
-  "liked-songs": Heart,
-  playlist: ListMusic,
-  album: Disc3,
-  artist: MicVocal,
-  show: Radio,
-}
 
 export const libraryEntryArtwork = ({ kind, images }: LibraryEntry): SummaryArtwork => ({
   sources: images,
-  placeholderIcon: placeholderIcons[kind],
+  placeholderIcon: kind === "liked-songs" ? Heart : spotifyItemKinds[kind].icon,
   round: kind === "artist",
   ...(kind === "liked-songs" ? { placeholderColors: "bg-accent text-on-accent" } : {}),
 })

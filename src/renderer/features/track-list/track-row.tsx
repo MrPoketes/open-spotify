@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router"
-import { Clock, Music, Volume2 } from "lucide-react"
+import { Clock, Volume2 } from "lucide-react"
 import { type CSSProperties, type KeyboardEvent, useId } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
@@ -8,6 +8,7 @@ import { ArtistLinks } from "../artist/artist-links"
 import { useAddToFolder } from "../folders/use-add-to-folder"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SimplifiedArtist } from "../spotify/spotify-artist"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import { useEditablePlaylists } from "../track-actions/editable-playlists"
 import { trackMenuItems } from "../track-actions/track-menu-items"
 import { useTrackActions } from "../track-actions/use-track-actions"
@@ -209,7 +210,7 @@ function TrackCells({
             sources={entry.artwork}
             size={40}
             className="rounded-small"
-            placeholderIcon={Music}
+            placeholderIcon={spotifyItemKinds.track.icon}
           />
         ) : null}
         <span className={titleLinesByDensity[density]}>
@@ -241,7 +242,12 @@ function PlaceholderCells({ layout, density }: PlaceholderCellsProps) {
   return (
     <td className="flex items-center gap-3">
       {showsArtwork(layout, density) ? (
-        <Artwork sources={[]} size={40} className="rounded-small" placeholderIcon={Music} />
+        <Artwork
+          sources={[]}
+          size={40}
+          className="rounded-small"
+          placeholderIcon={spotifyItemKinds.track.icon}
+        />
       ) : null}
       <span className="h-3 w-2/5 rounded-small bg-surface-raised" />
     </td>

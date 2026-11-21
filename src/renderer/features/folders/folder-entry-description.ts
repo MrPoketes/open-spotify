@@ -1,17 +1,8 @@
-import {
-  Disc3,
-  Folder as FolderIcon,
-  ListMusic,
-  type LucideIcon,
-  MicVocal,
-  Music,
-  Radio,
-} from "lucide-react"
+import { Folder as FolderIcon, type LucideIcon } from "lucide-react"
 import type { FolderEntry } from "../../../shared/folders"
 import type { ArtworkSource } from "../../ui/artwork"
 import { formatCount } from "../../ui/format-count"
-
-type SpotifyItemKind = "playlist" | "artist" | "album" | "show" | "track"
+import { type SpotifyItemKind, spotifyItemKinds } from "../spotify/spotify-item-kinds"
 
 type FolderEntryPage =
   | { readonly to: "/folder/$folderId"; readonly params: { readonly folderId: string } }
@@ -21,39 +12,12 @@ type FolderEntryPage =
   | { readonly to: "/show/$showId"; readonly params: { readonly showId: string } }
   | { readonly to: "/track/$trackId"; readonly params: { readonly trackId: string } }
 
-const spotifyItemKinds: Record<
-  SpotifyItemKind,
-  {
-    readonly label: string
-    readonly icon: LucideIcon
-    readonly page: (id: string) => FolderEntryPage
-  }
-> = {
-  playlist: {
-    label: "Playlist",
-    icon: ListMusic,
-    page: (playlistId) => ({ to: "/playlist/$playlistId", params: { playlistId } }),
-  },
-  artist: {
-    label: "Artist",
-    icon: MicVocal,
-    page: (artistId) => ({ to: "/artist/$artistId", params: { artistId } }),
-  },
-  album: {
-    label: "Album",
-    icon: Disc3,
-    page: (albumId) => ({ to: "/album/$albumId", params: { albumId } }),
-  },
-  show: {
-    label: "Show",
-    icon: Radio,
-    page: (showId) => ({ to: "/show/$showId", params: { showId } }),
-  },
-  track: {
-    label: "Track",
-    icon: Music,
-    page: (trackId) => ({ to: "/track/$trackId", params: { trackId } }),
-  },
+const spotifyItemPages: Record<SpotifyItemKind, (id: string) => FolderEntryPage> = {
+  playlist: (playlistId) => ({ to: "/playlist/$playlistId", params: { playlistId } }),
+  artist: (artistId) => ({ to: "/artist/$artistId", params: { artistId } }),
+  album: (albumId) => ({ to: "/album/$albumId", params: { albumId } }),
+  show: (showId) => ({ to: "/show/$showId", params: { showId } }),
+  track: (trackId) => ({ to: "/track/$trackId", params: { trackId } }),
 }
 
 const parseSpotifyUri = (uri: string) => {
@@ -93,6 +57,6 @@ export const describeFolderEntry = (entry: FolderEntry): FolderEntryDescription 
     artwork: entry.imageUrl === null ? [] : [{ url: entry.imageUrl, width: null }],
     icon: spotifyItemKinds[kind].icon,
     isArtist: kind === "artist",
-    page: spotifyItemKinds[kind].page(id),
+    page: spotifyItemPages[kind](id),
   }
 }
