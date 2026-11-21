@@ -7,7 +7,7 @@ import {
   createRouter,
   useSearch,
 } from "@tanstack/react-router"
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Latch, Schema } from "effect"
 import { describe, expect, it } from "vitest"
@@ -16,7 +16,7 @@ import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
-import type { SearchType } from "../spotify/spotify-search"
+import type { SearchResults, SearchType } from "../spotify/spotify-search"
 import { FakeMainView } from "../track-list/fake-main-view"
 import { SearchField } from "./search-field"
 import { SearchPage } from "./search-page"
@@ -28,10 +28,20 @@ interface SearchRequest {
   readonly offset: number
 }
 
+const endTracks = (results: SearchResults): SearchResults => ({
+  ...results,
+  tracks: { ...results.tracks, next: null },
+})
+
 // The fake Spotify API, recording every search it runs. Searches for
-// slowQuery wait until the test releases them, and the first search at
-// failFirstAtOffset fails.
-const recordingSpotify = ({ slowQuery = "", failFirstAtOffset = -1 } = {}) => {
+// slowQuery wait until the test releases them, the first search at
+// failFirstAtOffset fails, and the page of tracks at lastTracksPageAt is the
+// last one.
+const recordingSpotify = ({
+  slowQuery = "",
+  failFirstAtOffset = -1,
+  lastTracksPageAt = -1,
+} = {}) => {
   const searches: Array<SearchRequest> = []
   const slowSearchLatch = Latch.makeUnsafe(false)
   const failFirst = failingFirstTime()
@@ -42,7 +52,8 @@ const recordingSpotify = ({ slowQuery = "", failFirstAtOffset = -1 } = {}) => {
         return spotify.search(query, types, offset)
       })
       const delayed = query === slowQuery ? slowSearchLatch.whenOpen(search) : search
-      return offset === failFirstAtOffset ? failFirst(delayed) : delayed
+      const answer = offset === lastTracksPageAt ? delayed.pipe(Effect.map(endTracks)) : delayed
+      return offset === failFirstAtOffset ? failFirst(answer) : answer
     },
   }))
   return { searches, releaseSlowSearch: () => Latch.openUnsafe(slowSearchLatch), layer }
@@ -110,6 +121,11 @@ const trackRows = () =>
     .getAllByRole("row")
     .slice(1)
 
+const pressWithKeyboard = async (button: HTMLElement) => {
+  act(() => button.focus())
+  await userEvent.keyboard("{Enter}")
+}
+
 const cardLinks = (sectionName: string) =>
   within(screen.getByRole("list", { name: sectionName }))
     .getAllByRole("link")
@@ -164,6 +180,40 @@ describe("Search", () => {
     await userEvent.click(within(alert).getByRole("button", { name: "Retry" }))
 
     await waitFor(() => expect(trackRows()).toHaveLength(20))
+  })
+
+  it("moves focus to Retry when the page Load more asked for fails", async () => {
+    await renderSearch(recordingSpotify({ failFirstAtOffset: 10 }))
+    await typeSearch("quiet")
+    const tracks = await screen.findByRole("region", { name: "Tracks" })
+
+    await pressWithKeyboard(within(tracks).getByRole("button", { name: "Load more tracks" }))
+
+    expect(await within(tracks).findByRole("button", { name: "Retry" })).toHaveFocus()
+  })
+
+  it("moves focus to Load more when Retry asks for the page again", async () => {
+    await renderSearch(recordingSpotify({ failFirstAtOffset: 10 }))
+    await typeSearch("quiet")
+    const tracks = await screen.findByRole("region", { name: "Tracks" })
+    await userEvent.click(within(tracks).getByRole("button", { name: "Load more tracks" }))
+
+    await pressWithKeyboard(await within(tracks).findByRole("button", { name: "Retry" }))
+
+    await waitFor(() => expect(trackRows()).toHaveLength(20))
+    expect(within(tracks).getByRole("button", { name: "Load more tracks" })).toHaveFocus()
+  })
+
+  it("moves focus to the first new result when the last page loads", async () => {
+    await renderSearch(recordingSpotify({ lastTracksPageAt: 10 }))
+    await typeSearch("quiet")
+    const tracks = await screen.findByRole("region", { name: "Tracks" })
+
+    await pressWithKeyboard(within(tracks).getByRole("button", { name: "Load more tracks" }))
+
+    await waitFor(() => expect(trackRows()).toHaveLength(20))
+    expect(within(tracks).queryByRole("button", { name: "Load more tracks" })).toBeNull()
+    expect(trackRows()[10]).toHaveFocus()
   })
 
   it("says so when nothing matches the query", async () => {

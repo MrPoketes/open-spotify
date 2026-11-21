@@ -41,7 +41,9 @@ export function SearchResultSections({ query, firstPages }: SearchResultSections
         firstPage={firstPages.tracks}
         pageOf={({ tracks }) => tracks}
       >
-        {(tracks) => <UndatedTrackList label="Tracks" tracks={tracks} />}
+        {(tracks, rowFocusRef) => (
+          <UndatedTrackList label="Tracks" tracks={tracks} rowFocusRef={rowFocusRef} />
+        )}
       </ResultSection>
       <ResultSection
         query={query}
@@ -50,7 +52,9 @@ export function SearchResultSections({ query, firstPages }: SearchResultSections
         firstPage={firstPages.artists}
         pageOf={({ artists }) => artists}
       >
-        {(artists) => <CardGrid label="Artists" cards={artists.map(artistCard)} />}
+        {(artists, rowFocusRef) => (
+          <CardGrid label="Artists" cards={artists.map(artistCard)} rowFocusRef={rowFocusRef} />
+        )}
       </ResultSection>
       <ResultSection
         query={query}
@@ -59,7 +63,9 @@ export function SearchResultSections({ query, firstPages }: SearchResultSections
         firstPage={firstPages.albums}
         pageOf={({ albums }) => albums}
       >
-        {(albums) => <CardGrid label="Albums" cards={albums.map(albumCard)} />}
+        {(albums, rowFocusRef) => (
+          <CardGrid label="Albums" cards={albums.map(albumCard)} rowFocusRef={rowFocusRef} />
+        )}
       </ResultSection>
       <ResultSection
         query={query}
@@ -68,7 +74,13 @@ export function SearchResultSections({ query, firstPages }: SearchResultSections
         firstPage={firstPages.playlists}
         pageOf={({ playlists }) => playlists}
       >
-        {(playlists) => <CardGrid label="Playlists" cards={playlists.map(playlistCard)} />}
+        {(playlists, rowFocusRef) => (
+          <CardGrid
+            label="Playlists"
+            cards={playlists.map(playlistCard)}
+            rowFocusRef={rowFocusRef}
+          />
+        )}
       </ResultSection>
     </>
   )

@@ -36,16 +36,22 @@ export function useRowFocus({
     row.focus()
   })
 
+  // Focuses the row at a position, or the last row if the list is shorter.
+  const focusRow = (index: number) => {
+    const targetRow = Math.min(index, rowCount - 1)
+    focusPending.current = true
+    setFocusedIndex(targetRow)
+    scrollToIndex(targetRow)
+  }
+
   const onKeyDown = (event: KeyboardEvent) => {
     const targetRow = targetRowForKey(event, focusedIndex, rowCount)
     if (targetRow === undefined) {
       return
     }
     event.preventDefault()
-    focusPending.current = true
-    setFocusedIndex(targetRow)
-    scrollToIndex(targetRow)
+    focusRow(targetRow)
   }
 
-  return { focusedIndex, setFocusedIndex, onKeyDown }
+  return { focusedIndex, setFocusedIndex, onKeyDown, focusRow }
 }

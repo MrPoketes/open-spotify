@@ -4,7 +4,7 @@ import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import type { SpotifyApi, SpotifyApiError } from "./spotify-api"
 import type { Page } from "./spotify-paging"
 
-type NextPageStatus = "idle" | "loading" | "failed"
+export type NextPageStatus = "idle" | "loading" | "failed"
 
 interface LoadedPages<A> {
   readonly items: ReadonlyArray<A>
