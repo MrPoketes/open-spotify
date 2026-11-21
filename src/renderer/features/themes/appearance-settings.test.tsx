@@ -9,6 +9,7 @@ import type { ImportThemeReply } from "../../../shared/theme-file-replies"
 import { type LibraryTheme, findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { fakeMainProcess } from "../../lib/fake-main-process"
+import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
 import { AppearanceSettings } from "./appearance-settings"
 
@@ -29,22 +30,6 @@ const renderWithImportReply = async (importThemeReply: typeof ImportThemeReply.E
   )
   await userEvent.click(await screen.findByRole("button", { name: "Import theme…" }))
 }
-
-// Writing the file can fail, for example in a folder the user cannot write to.
-const exportFailing = (mainProcess: DesktopApi): DesktopApi => ({
-  invoke: (channel, request) =>
-    channel === ipcChannels.exportCurrentTheme
-      ? Promise.reject(new Error("EACCES: permission denied"))
-      : mainProcess.invoke(channel, request),
-})
-
-// The database can be locked, for example by a backup tool.
-const deleteFailing = (mainProcess: DesktopApi): DesktopApi => ({
-  invoke: (channel, request) =>
-    channel === ipcChannels.deleteImportedTheme
-      ? Promise.reject(new Error("SQLITE_BUSY: database is locked"))
-      : mainProcess.invoke(channel, request),
-})
 
 const renderAndExport = async (mainProcess: DesktopApi) => {
   renderScreen(<AppearanceSettings library={builtInLibrary} />, mainProcess)
@@ -124,7 +109,8 @@ describe("AppearanceSettings", () => {
   })
 
   it("reports a failed export", async () => {
-    await renderAndExport(exportFailing(fakeMainProcess()))
+    // Writing the file can fail, for example in a folder the user cannot write to.
+    await renderAndExport(mainProcessFailingOn(ipcChannels.exportCurrentTheme, fakeMainProcess()))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not export the theme.")
   })
@@ -140,10 +126,14 @@ describe("AppearanceSettings", () => {
     expect(await importedThemeNames(mainProcess)).toEqual(["Sunset"])
   })
 
+  // The database can be locked, for example by a backup tool.
   it("keeps a theme the main process could not delete and says so", async () => {
     await renderWithImportedThemes(
       sunset,
-      deleteFailing(fakeMainProcess({ importedThemes: [sunset, ember] })),
+      mainProcessFailingOn(
+        ipcChannels.deleteImportedTheme,
+        fakeMainProcess({ importedThemes: [sunset, ember] }),
+      ),
     )
 
     await userEvent.click(screen.getByRole("button", { name: "Delete Ember" }))

@@ -17,22 +17,24 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
   const runtime = use(RendererRuntimeContext)
   const navigate = useNavigate()
   const clientIdInputId = useId()
+  const clientIdProblemId = useId()
   const [clientId, setClientId] = useState(initialClientId)
-  const [problem, setProblem] = useState<string | null>(null)
+  const [isClientIdInvalid, setClientIdInvalid] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
 
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setSaveFailed(false)
     const decodedClientId = decodeClientId(clientId.trim())
+    setClientIdInvalid(Option.isNone(decodedClientId))
     if (Option.isNone(decodedClientId)) {
-      setProblem("Paste the Client ID from your Spotify app.")
       return
     }
     runtime.runFork(
       saveClientId(decodedClientId.value).pipe(
         Effect.matchEffect({
           onSuccess: () => Effect.promise(() => navigate({ to: "/" })),
-          onFailure: () =>
-            Effect.sync(() => setProblem("Could not save the Client ID. Try again.")),
+          onFailure: () => Effect.sync(() => setSaveFailed(true)),
         }),
       ),
     )
@@ -59,12 +61,13 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
             onChange={(event) => setClientId(event.target.value)}
             autoComplete="off"
             spellCheck={false}
-            aria-invalid={problem !== null}
+            aria-invalid={isClientIdInvalid}
+            aria-describedby={isClientIdInvalid ? clientIdProblemId : undefined}
             className="rounded-small bg-surface-raised px-3 py-2"
           />
-          {problem !== null && (
-            <p role="alert" className="text-sm text-danger">
-              {problem}
+          {isClientIdInvalid && (
+            <p id={clientIdProblemId} role="alert" className="text-sm text-danger">
+              Paste the Client ID from your Spotify app.
             </p>
           )}
           <button
@@ -73,6 +76,11 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
           >
             Save and continue
           </button>
+          {saveFailed && (
+            <p role="alert" className="text-sm text-danger">
+              Could not save the Client ID. Try again.
+            </p>
+          )}
         </form>
         <p className="text-xs text-muted">
           Open Spotify is an unofficial client. It is not affiliated with, endorsed by, or sponsored
