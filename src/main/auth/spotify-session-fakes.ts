@@ -4,8 +4,8 @@ import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
 import { Deferred, Effect, FileSystem, Layer } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
 import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
-import { databaseLayer } from "../database"
 import { Settings } from "../settings"
+import { freshSettings } from "../settings-fakes"
 import { SpotifySession } from "./spotify-session"
 import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
 import { SystemBrowser } from "./system-browser"
@@ -135,13 +135,16 @@ export const fakeBrowser = (onOpen: (authorizeUrl: URL) => Effect.Effect<unknown
     open: (url) => Effect.asVoid(onOpen(new URL(url))),
   })
 
+// Like Spotify, sends back the state the login put in the authorize URL.
+export const callBackFrom = (authorizeUrl: URL, query: Record<string, string>) =>
+  callBack({ ...query, state: authorizeUrl.searchParams.get("state") ?? "" })
+
+// What the browser does when the user approves the login on Spotify's page.
+export const approveLogin = (spotifyAccounts: FakeSpotifyAccounts, authorizeUrl: URL) =>
+  callBackFrom(authorizeUrl, { code: spotifyAccounts.approve(authorizeUrl) })
+
 export const approvingBrowser = (spotifyAccounts: FakeSpotifyAccounts) =>
-  fakeBrowser((authorizeUrl) =>
-    callBack({
-      code: spotifyAccounts.approve(authorizeUrl),
-      state: authorizeUrl.searchParams.get("state") ?? "",
-    }),
-  )
+  fakeBrowser((authorizeUrl) => approveLogin(spotifyAccounts, authorizeUrl))
 
 const temporaryTokenStore = Layer.unwrap(
   Effect.gen(function* () {
@@ -160,7 +163,7 @@ export const fakeSpotifySession = (
   SpotifySession.layer.pipe(
     Layer.provideMerge(
       Layer.mergeAll(
-        Settings.layer.pipe(Layer.provide(databaseLayer(":memory:"))),
+        freshSettings(),
         SpotifyTokenEndpoint.layerWithoutHttpClient.pipe(Layer.provide(spotifyAccounts.httpClient)),
         temporaryTokenStore,
         browser,

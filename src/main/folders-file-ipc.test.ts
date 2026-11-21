@@ -2,13 +2,11 @@ import path from "node:path"
 import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
 import { assert, layer } from "@effect/vitest"
 import { Effect, FileSystem, Layer, Option } from "effect"
-import type { FolderEntry, SpotifyItem } from "../shared/folders"
-import { databaseLayer } from "./database"
+import type { FolderEntry } from "../shared/folders"
 import { FoldersFileDialogs } from "./folders-file-dialogs"
 import { Folders } from "./folders"
+import { album, freshFolders, playlist } from "./folders-fakes"
 import { exportFoldersFromIpc, importFoldersFromIpc } from "./folders-file-ipc"
-
-const freshFolders = () => Folders.layer.pipe(Layer.provide(databaseLayer(":memory:")))
 
 // Both dialogs answer as if the user had chosen this path, or cancelled.
 const fileDialogsChoosing = (filePath: Option.Option<string>) =>
@@ -37,19 +35,6 @@ const writeTempFile = Effect.fn("writeTempFile")(function* (fileText: string) {
   yield* fileSystem.writeFileString(filePath, fileText)
   return filePath
 })
-
-const album: SpotifyItem = {
-  _tag: "SpotifyItem",
-  uri: "spotify:album:4aawyAB9vmqN3uQ7FjRGTy",
-  name: "Global Warming",
-  imageUrl: "https://i.scdn.co/image/global-warming",
-}
-const playlist: SpotifyItem = {
-  _tag: "SpotifyItem",
-  uri: "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M",
-  name: "Today's Top Hits",
-  imageUrl: null,
-}
 
 const withoutIds = (entries: ReadonlyArray<FolderEntry>): ReadonlyArray<unknown> =>
   entries.map((entry) =>

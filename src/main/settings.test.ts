@@ -1,10 +1,8 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect, Layer, Option } from "effect"
+import { Effect, Option } from "effect"
 import { SqlClient } from "effect/sql"
-import { databaseLayer } from "./database"
 import { Settings } from "./settings"
-
-const freshSettings = () => Settings.layer.pipe(Layer.provideMerge(databaseLayer(":memory:")))
+import { freshSettings } from "./settings-fakes"
 
 describe("Settings", () => {
   // A user who pastes a new Client ID must not keep logging in with the old one.

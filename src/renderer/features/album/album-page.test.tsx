@@ -8,15 +8,14 @@ import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
-import { giveMainViewALayout } from "../track-list/fake-main-view-layout"
+import { FakeMainView } from "../track-list/fake-main-view"
 import { AlbumPage } from "./album-page"
 
 const renderAlbumPage = (albumId: string, spotifyApi?: Layer.Layer<SpotifyApi>) =>
   renderScreen(
-    // The layout is applied as <main> mounts, before the track list reads it.
-    <main ref={giveMainViewALayout}>
+    <FakeMainView>
       <AlbumPage albumId={albumId} />
-    </main>,
+    </FakeMainView>,
     fakeMainProcess(),
     spotifyApi,
   )
@@ -120,9 +119,9 @@ describe("AlbumPage", () => {
   // can sit far below the screen on a long disc.
   it("scrolls to, highlights, and focuses the track the page was opened for", async () => {
     renderScreen(
-      <main ref={giveMainViewALayout}>
+      <FakeMainView>
         <AlbumPage albumId="fake-album-4" highlightedTrackId="fake-album-4-track-2-25" />
-      </main>,
+      </FakeMainView>,
       fakeMainProcess(),
     )
 

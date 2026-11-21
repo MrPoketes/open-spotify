@@ -1,30 +1,9 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect, Layer, Schema } from "effect"
+import { Effect, Schema } from "effect"
 import { SqlClient } from "effect/sql"
-import type { FolderEntry, FolderTree, SpotifyItem } from "../shared/folders"
-import { databaseLayer } from "./database"
+import type { FolderEntry, FolderTree } from "../shared/folders"
 import { Folders } from "./folders"
-
-const freshFolders = () => Folders.layer.pipe(Layer.provideMerge(databaseLayer(":memory:")))
-
-const album: SpotifyItem = {
-  _tag: "SpotifyItem",
-  uri: "spotify:album:4aawyAB9vmqN3uQ7FjRGTy",
-  name: "Global Warming",
-  imageUrl: "https://i.scdn.co/image/global-warming",
-}
-const playlist: SpotifyItem = {
-  _tag: "SpotifyItem",
-  uri: "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M",
-  name: "Today's Top Hits",
-  imageUrl: null,
-}
-const artist: SpotifyItem = {
-  _tag: "SpotifyItem",
-  uri: "spotify:artist:0OdUWJ0sBjDrqHygGUXeCF",
-  name: "Band of Horses",
-  imageUrl: null,
-}
+import { album, artist, freshFolders, playlist } from "./folders-fakes"
 
 const unknownFolderId = "3f1c1b9e-6a51-4d3e-9a43-2f6f0f3d5c11"
 

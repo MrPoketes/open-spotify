@@ -3,7 +3,7 @@ import type { DesktopApi } from "../../preload/desktop-api"
 import { Player } from "../features/playback/player"
 import type { SpotifyApi } from "../features/spotify/spotify-api"
 import { spotifyApiFake } from "../features/spotify/spotify-api-fake"
-import { DesktopBridge } from "./desktop-bridge"
+import { desktopBridgeOver } from "./desktop-bridge-fakes"
 import { fakeMainProcess } from "./fake-main-process"
 
 interface FakeRendererRuntimeOptions {
@@ -20,6 +20,6 @@ export const fakeRendererRuntime = ({
   ManagedRuntime.make(
     Player.layer.pipe(
       Layer.provideMerge(spotifyApi),
-      Layer.provideMerge(Layer.succeed(DesktopBridge)(DesktopBridge.make(mainProcess))),
+      Layer.provideMerge(desktopBridgeOver(mainProcess)),
     ),
   )

@@ -1,5 +1,6 @@
 import { Option, Schema } from "effect"
 import type { HttpClientRequest } from "effect/http"
+import { spotifyErrorBody } from "./spotify-fake-error-body"
 import { fakePlaybackStart } from "./spotify-fake-playback-start"
 import { fakeDevices, fakeEpisode, fakePlaybackState, fakeTrack } from "./spotify-fixtures"
 import { RepeatMode } from "./spotify-playback-state"
@@ -34,7 +35,7 @@ const QueuedUri = Schema.TemplateLiteral(["spotify:track:", Schema.String])
 
 const accepted: FakeResponse = [204, undefined]
 
-const invalidState: FakeResponse = [400, { error: { status: 400, message: "Invalid state" } }]
+const invalidState: FakeResponse = [400, spotifyErrorBody(400, "Invalid state")]
 
 const findDevice = (deviceId: string) =>
   Option.fromNullishOr(fakeDevices.find(({ id }) => id === deviceId))
@@ -54,7 +55,7 @@ const transferPlayback = (
 ): FakeResponse => {
   const target = transferTarget(request)
   if (Option.isNone(target)) {
-    return [404, { error: { status: 404, message: "Device not found" } }]
+    return [404, spotifyErrorBody(404, "Device not found")]
   }
   player.activeDevice = target.value
   return accepted
@@ -83,7 +84,7 @@ const startPlayback = (
   }
   const start = fakePlaybackStart(request)
   if (Option.isNone(start)) {
-    return [400, { error: { status: 400, message: "Invalid request" } }]
+    return [400, spotifyErrorBody(400, "Invalid request")]
   }
   const { context, items, position } = start.value
   player.context = context
@@ -117,7 +118,7 @@ const playerCommands: Record<string, (player: FakePlayerState, url: URL) => Fake
   "POST /v1/me/player/queue": (_player, url) =>
     Schema.is(QueuedUri)(url.searchParams.get("uri"))
       ? accepted
-      : [400, { error: { status: 400, message: "Invalid uri" } }],
+      : [400, spotifyErrorBody(400, "Invalid uri")],
 }
 
 const playbackState = (player: FakePlayerState) => ({

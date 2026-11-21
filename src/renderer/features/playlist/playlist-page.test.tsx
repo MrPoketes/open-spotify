@@ -9,7 +9,8 @@ import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import { giveMainViewALayout, scrollMainView } from "../track-list/fake-main-view-layout"
+import { FakeMainView } from "../track-list/fake-main-view"
+import { scrollMainViewToRow } from "../track-list/fake-main-view-layout"
 import { PlaylistPage } from "./playlist-page"
 
 const spotifyFailingFirstPlaylistRequest = spotifyApiFakeWith((spotify) => {
@@ -27,10 +28,9 @@ const spotifyFailingFirstPageRequest = spotifyApiFakeWith((spotify) => {
 
 const renderPlaylistPage = async (playlistId: string, spotifyApi?: Layer.Layer<SpotifyApi>) => {
   const router = renderScreen(
-    // The layout is applied as <main> mounts, before the track list reads it.
-    <main ref={giveMainViewALayout}>
+    <FakeMainView>
       <PlaylistPage playlistId={playlistId} />
-    </main>,
+    </FakeMainView>,
     fakeMainProcess(),
     spotifyApi,
   )
@@ -73,7 +73,7 @@ describe("PlaylistPage", () => {
     await screen.findByRole("table", { name: "Tracks" })
     expect(screen.queryByRole("row", { name: "Quiet Echoes by Juniper Hollow" })).toBeNull()
 
-    scrollMainView(mainView, 120 * 48)
+    scrollMainViewToRow(mainView, 120)
 
     expect(
       await screen.findByRole("row", { name: "Quiet Echoes by Juniper Hollow" }),
@@ -84,7 +84,7 @@ describe("PlaylistPage", () => {
     const { mainView } = await renderPlaylistPage("fake-playlist-big-archive")
     await screen.findByRole("table", { name: "Tracks" })
 
-    scrollMainView(mainView, 500 * 48)
+    scrollMainViewToRow(mainView, 500)
     await waitFor(() => expect(renderedRowIndexes()).toContain("501"))
 
     // The header row, the rows on screen, and a few beyond each edge.
@@ -116,7 +116,7 @@ describe("PlaylistPage", () => {
     const { mainView } = await renderPlaylistPage("fake-playlist-big-archive")
     await screen.findByRole("table", { name: "Tracks" })
 
-    scrollMainView(mainView, 500 * 48)
+    scrollMainViewToRow(mainView, 500)
     await waitFor(() => expect(renderedRowIndexes()).toContain("502"))
 
     const tabStops = trackRows().filter((row) => row.tabIndex === 0)
@@ -186,9 +186,9 @@ describe("PlaylistPage", () => {
   it("says so when Spotify refuses to play a track", async () => {
     renderScreen(
       <StatusMessageProvider>
-        <main ref={giveMainViewALayout}>
+        <FakeMainView>
           <PlaylistPage playlistId="fake-playlist-late-night-drive" />
-        </main>
+        </FakeMainView>
       </StatusMessageProvider>,
       fakeMainProcess(),
       spotifyApiFakeWith(() => ({
@@ -300,7 +300,7 @@ describe("PlaylistPage", () => {
     )
     await screen.findByRole("table", { name: "Tracks" })
 
-    scrollMainView(mainView, 120 * 48)
+    scrollMainViewToRow(mainView, 120)
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent("Some tracks didn't load.")
     await userEvent.click(within(alert).getByRole("button", { name: "Retry" }))
@@ -315,12 +315,12 @@ describe("PlaylistPage", () => {
       spotifyFailingFirstPageRequest,
     )
     await screen.findByRole("table", { name: "Tracks" })
-    scrollMainView(mainView, 120 * 48)
+    scrollMainViewToRow(mainView, 120)
     await screen.findByRole("alert")
 
-    scrollMainView(mainView, 0)
+    scrollMainViewToRow(mainView, 0)
     await screen.findByRole("row", { name: "Quiet Rivers by Northbound Static" })
-    scrollMainView(mainView, 120 * 48)
+    scrollMainViewToRow(mainView, 120)
 
     expect(await screen.findByRole("row", { name: "Quiet Echoes by Juniper Hollow" })).toBeVisible()
     expect(screen.queryByRole("alert")).toBeNull()

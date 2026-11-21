@@ -1,11 +1,8 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect, Layer } from "effect"
-import { databaseLayer } from "./database"
-import { Settings } from "./settings"
+import { Effect } from "effect"
 import { MalformedIpcRequest } from "./decode-ipc-request"
+import { freshSettings } from "./settings-fakes"
 import { getSettingFromIpc, setSettingFromIpc } from "./settings-ipc"
-
-const freshSettings = () => Settings.layer.pipe(Layer.provide(databaseLayer(":memory:")))
 
 describe("settings IPC", () => {
   // IPC replies are structured-cloned, so a missing setting must cross as

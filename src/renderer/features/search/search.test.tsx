@@ -17,7 +17,7 @@ import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { SearchType } from "../spotify/spotify-search"
-import { giveMainViewALayout } from "../track-list/fake-main-view-layout"
+import { FakeMainView } from "../track-list/fake-main-view"
 import { SearchField } from "./search-field"
 import { SearchPage } from "./search-page"
 import { SearchParams } from "./search-params"
@@ -57,9 +57,9 @@ const rootRoute = createRootRoute({
   component: () => (
     <>
       <SearchField />
-      <main ref={giveMainViewALayout}>
+      <FakeMainView>
         <Outlet />
-      </main>
+      </FakeMainView>
     </>
   ),
 })

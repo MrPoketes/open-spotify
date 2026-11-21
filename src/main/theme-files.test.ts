@@ -4,8 +4,7 @@ import { assert, describe, it } from "@effect/vitest"
 import { Effect, FileSystem, Layer, Option, Ref } from "effect"
 import { builtInThemes } from "../shared/built-in-themes"
 import { decodeThemeFile } from "../shared/theme"
-import { databaseLayer } from "./database"
-import { ImportedThemes } from "./imported-themes"
+import { freshThemeStorage, storedThemes } from "./imported-themes-fakes"
 import { Settings } from "./settings"
 import { ThemeFileDialogs } from "./theme-file-dialogs"
 import { exportCurrentTheme, importThemeFile } from "./theme-files"
@@ -55,16 +54,7 @@ const setUp = ({ replacesTheme = true } = {}) =>
     return { importFile, importAndChoose, exportTo, suggestedFileNames }
   })
 
-const storedThemes = Effect.gen(function* () {
-  const importedThemes = yield* ImportedThemes
-  return yield* importedThemes.list
-})
-
-const freshStorage = () =>
-  Layer.mergeAll(Settings.layer, ImportedThemes.layer).pipe(
-    Layer.provideMerge(databaseLayer(":memory:")),
-    Layer.provideMerge(NodeFileSystem.layer),
-  )
+const freshStorage = () => freshThemeStorage().pipe(Layer.provideMerge(NodeFileSystem.layer))
 
 describe("importThemeFile", () => {
   it.effect("stores a valid theme, filling the tokens it leaves out with the defaults", () =>

@@ -1,16 +1,17 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Option } from "effect"
+import { Option } from "effect"
 import { beforeEach, describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { builtInThemes } from "../../../shared/built-in-themes"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { defaultThemeTokens } from "../../../shared/theme"
 import { findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
-import { DesktopBridge } from "../../lib/desktop-bridge"
+import { readImportedThemes, readSavedSetting } from "../../lib/desktop-bridge-fakes"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { AppearanceSettings } from "./appearance-settings"
+import { appliedToken } from "./applied-theme-token"
 
 const darkAccent = builtInThemes.dark.tokens["color-accent"]
 const newAccent = builtInThemes.light.tokens["color-accent"]
@@ -25,9 +26,6 @@ const announcedText = () =>
     .getAllByRole("status")
     .map((liveRegion) => liveRegion.textContent)
     .join("")
-
-const appliedToken = (token: string) =>
-  document.documentElement.style.getPropertyValue(`--theme-${token}`)
 
 const renderSettingsWithDarkSaved = (mainProcess: DesktopApi) => {
   const library = themeLibrary([])
@@ -172,14 +170,10 @@ describe("ThemeEditor", () => {
       await screen.findByRole("button", { name: "Lime by Open Spotify", pressed: true }),
     ).toBeInTheDocument()
     expect(appliedToken("color-accent")).toBe(newAccent)
-    const [storedTheme] = await Effect.runPromise(
-      DesktopBridge.make(mainProcess).listImportedThemes,
-    )
+    const [storedTheme] = await readImportedThemes(mainProcess)
     expect(storedTheme?.theme.tokens["color-accent"]).toBe(newAccent)
     await waitFor(async () => {
-      expect(
-        await Effect.runPromise(DesktopBridge.make(mainProcess).getSetting("themeId")),
-      ).toEqual(Option.some(storedTheme?.id))
+      expect(await readSavedSetting(mainProcess, "themeId")).toEqual(Option.some(storedTheme?.id))
     })
   })
 
@@ -191,7 +185,7 @@ describe("ThemeEditor", () => {
     await saveAs("Cramped")
 
     expect(screen.getByRole("alert")).toHaveTextContent("Fix the flagged fields")
-    expect(await Effect.runPromise(DesktopBridge.make(mainProcess).listImportedThemes)).toEqual([])
+    expect(await readImportedThemes(mainProcess)).toEqual([])
   })
 
   // The main process names the problem, such as a built-in theme's name.
@@ -213,7 +207,7 @@ describe("ThemeEditor", () => {
 
     expect(appliedToken("color-accent")).toBe(darkAccent)
     expect(screen.getByRole("button", { name: "Edit a copy" })).toHaveFocus()
-    expect(await Effect.runPromise(DesktopBridge.make(mainProcess).listImportedThemes)).toEqual([])
+    expect(await readImportedThemes(mainProcess)).toEqual([])
   })
 
   // A history shortcut can leave the settings page while the editor is open.

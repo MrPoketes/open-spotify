@@ -3,6 +3,7 @@ import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/h
 import { SpotifyAccessToken } from "./spotify-access-token"
 import type { AlbumGroup } from "./spotify-artist-requests"
 import { fakeDiscography } from "./spotify-discography-fixtures"
+import { spotifyErrorBody } from "./spotify-fake-error-body"
 import { fakePlayer } from "./spotify-fake-player"
 import { fakeTracks } from "./spotify-fake-tracks"
 import { searchPageSize } from "./spotify-search"
@@ -54,8 +55,6 @@ const jsonResponse = (
       headers: { "content-type": "application/json" },
     }),
   )
-
-const errorBody = (status: number, message: string) => ({ error: { status, message } })
 
 const pageOf = <A>(items: ReadonlyArray<A>, url: URL, defaultLimit: number) => {
   const limit = Number(url.searchParams.get("limit") ?? defaultLimit)
@@ -144,7 +143,7 @@ const fullPlaylist = (playlist: FakePlaylist, url: URL) => {
   }
 }
 
-const notFound = [404, errorBody(404, "Resource not found")] as const
+const notFound = [404, spotifyErrorBody(404, "Resource not found")] as const
 
 const respondToShow = (url: URL): readonly [number, unknown] => {
   const [, showId, episodesPath] = /^\/v1\/shows\/([^/]+)(\/episodes)?$/.exec(url.pathname) ?? []
@@ -221,7 +220,7 @@ const searchableResults = (
 
 const respondToSearch = (url: URL): readonly [number, unknown] => {
   if (Number(url.searchParams.get("limit") ?? defaultSearchLimit) > searchPageSize) {
-    return [400, errorBody(400, "Invalid limit")]
+    return [400, spotifyErrorBody(400, "Invalid limit")]
   }
   const requestedTypes = (url.searchParams.get("type") ?? "").split(",")
   const results = Object.entries(searchableResults(url.searchParams.get("q") ?? ""))
@@ -282,7 +281,7 @@ const respondTo = (url: URL): readonly [number, unknown] => {
     return [200, fullPlaylist(playlist, url)]
   }
   if (!isOwnedOrCollaborative(playlist)) {
-    return [403, errorBody(403, "Forbidden")]
+    return [403, spotifyErrorBody(403, "Forbidden")]
   }
   return [200, pageOf(entriesServed(playlist, url), url, defaultPageLimit)]
 }
@@ -315,10 +314,10 @@ const respondToPlaylistAddition = (
     return notFound
   }
   if (!isOwnedOrCollaborative(playlist)) {
-    return [403, errorBody(403, "Forbidden")]
+    return [403, spotifyErrorBody(403, "Forbidden")]
   }
   if (!isPlaylistAdditionBody(request)) {
-    return [400, errorBody(400, "Invalid request body")]
+    return [400, spotifyErrorBody(400, "Invalid request body")]
   }
   return [201, { snapshot_id: `fake-snapshot-${playlist.id}` }]
 }
@@ -329,7 +328,7 @@ export const spotifyFakeServer = Layer.sync(HttpClient.HttpClient, () => {
   const respondToPlayer = fakePlayer()
   return HttpClient.make((request, url) => {
     if (request.headers["authorization"] !== `Bearer ${fakeAccessToken}`) {
-      return Effect.succeed(jsonResponse(request, 401, errorBody(401, "No token provided")))
+      return Effect.succeed(jsonResponse(request, 401, spotifyErrorBody(401, "No token provided")))
     }
     const [status, body] =
       respondToPlayer(request, url) ?? respondToPlaylistAddition(request, url) ?? respondTo(url)
