@@ -4,8 +4,8 @@ import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
 import { Deferred, Effect, FileSystem, Layer } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
 import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
-import { databaseLayer } from "../database"
 import { Settings } from "../settings"
+import { freshSettings } from "../settings-fakes"
 import { SpotifySession } from "./spotify-session"
 import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
 import { SystemBrowser } from "./system-browser"
@@ -163,7 +163,7 @@ export const fakeSpotifySession = (
   SpotifySession.layer.pipe(
     Layer.provideMerge(
       Layer.mergeAll(
-        Settings.layer.pipe(Layer.provide(databaseLayer(":memory:"))),
+        freshSettings(),
         SpotifyTokenEndpoint.layerWithoutHttpClient.pipe(Layer.provide(spotifyAccounts.httpClient)),
         temporaryTokenStore,
         browser,

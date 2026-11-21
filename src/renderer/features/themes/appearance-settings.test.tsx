@@ -12,6 +12,7 @@ import { fakeMainProcess } from "../../lib/fake-main-process"
 import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
 import { AppearanceSettings } from "./appearance-settings"
+import { appliedToken } from "./applied-theme-token"
 
 const builtInLibrary = {
   themes: themeLibrary([]),
@@ -156,9 +157,7 @@ describe("AppearanceSettings", () => {
     expect(
       screen.getByRole("button", { name: "Open Spotify Dark by Open Spotify", pressed: true }),
     ).toBeInTheDocument()
-    expect(document.documentElement.style.getPropertyValue("--theme-color-accent")).toBe(
-      builtInThemes.dark.tokens["color-accent"],
-    )
+    expect(appliedToken("color-accent")).toBe(builtInThemes.dark.tokens["color-accent"])
   })
 
   // Deleting must not drop keyboard focus to the page, or the user has to
@@ -195,7 +194,7 @@ describe("AppearanceSettings", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Import theme…" }))
 
     await screen.findByText("Imported Sunset.", { exact: false })
-    expect(document.documentElement.style.getPropertyValue("--theme-radius-medium")).toBe("13px")
+    expect(appliedToken("radius-medium")).toBe("13px")
     expect(screen.getAllByRole("button", { name: "Sunset by A theme author" })).toHaveLength(1)
   })
 })
