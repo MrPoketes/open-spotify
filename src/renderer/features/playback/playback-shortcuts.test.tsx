@@ -24,6 +24,7 @@ const renderNowPlayingBar = async ({ isMac = false, spotifyApi }: RenderOptions 
       <StatusMessageProvider>
         <input aria-label="Notes" />
         <a href="#playlist">Late Night Drive</a>
+        <input type="radio" aria-label="Dark" defaultChecked />
         {nowPlayingBarAlone}
       </StatusMessageProvider>
     </IsMacContext>,
@@ -92,6 +93,16 @@ describe("playback shortcuts", () => {
     expect(screen.getByRole("textbox", { name: "Notes" })).toHaveValue(" ")
   })
 
+  // Shift+Space scrolls up in a list, so it must not also pause the music.
+  it("leaves Shift+Space to the page", async () => {
+    await renderNowPlayingBar()
+
+    await userEvent.keyboard("{Shift>} {/Shift}{Control>}l{/Control}")
+
+    expect(await control("Repeat")).toHaveAttribute("aria-pressed", "true")
+    expect(await control("Pause")).toBeInTheDocument()
+  })
+
   // A held key repeats, and each repeat would send Spotify another command.
   it("toggles once while Space is held down", async () => {
     await renderNowPlayingBar()
@@ -107,6 +118,17 @@ describe("playback shortcuts", () => {
     await renderNowPlayingBar()
 
     screen.getByRole("link", { name: "Late Night Drive" }).focus()
+    await userEvent.keyboard(" ")
+
+    expect(await control("Play")).toBeInTheDocument()
+  })
+
+  // A focused radio button is always the checked one, so Space has nothing
+  // to press. The theme editor's color scheme is one.
+  it("pauses with Space while a radio button has focus", async () => {
+    await renderNowPlayingBar()
+
+    screen.getByRole("radio", { name: "Dark" }).focus()
     await userEvent.keyboard(" ")
 
     expect(await control("Play")).toBeInTheDocument()

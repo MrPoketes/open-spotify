@@ -43,7 +43,7 @@ const makeSilentClipUrl = () => {
   return `data:audio/wav;base64,${btoa(String.fromCharCode(...bytes))}`
 }
 
-const playThenFollow = (clip: HTMLAudioElement, isPlaying: boolean) =>
+const playThenMatchSpotify = (clip: HTMLAudioElement, isPlaying: boolean) =>
   Effect.tryPromise({
     try: () => clip.play(),
     catch: (cause) => new SilentClipPlayError({ cause }),
@@ -95,7 +95,7 @@ export function useSilentClip(isActive: boolean, isPlaying: boolean) {
     if (!isActive) {
       return undefined
     }
-    const following = runtime.runFork(playThenFollow(clip, isPlaying))
+    const following = runtime.runFork(playThenMatchSpotify(clip, isPlaying))
     return () => {
       runtime.runFork(Fiber.interrupt(following))
     }

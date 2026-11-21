@@ -9,7 +9,7 @@ export interface KeyCombo {
 
 const isLetter = (key: string) => /^[a-z]$/i.test(key)
 
-const isSymbol = (key: string) => key.length === 1 && !isLetter(key)
+const isSymbol = (key: string) => key.length === 1 && key !== " " && !isLetter(key)
 
 // Matched by physical key, because event.key gives a different character on
 // a non-Latin layout, such as Cyrillic, and macOS turns Option+letter into a
@@ -26,7 +26,8 @@ const areModifiersHeld = (event: KeyboardEvent, combo: KeyCombo, isMac: boolean)
 }
 
 // Typing a symbol takes Shift on some layouts and not on others (`?` is
-// Shift+/ on a US layout), so Shift only counts for letters and named keys.
+// Shift+/ on a US layout), so Shift only counts for letters, Space, and named
+// keys.
 const isShiftAsRequired = (event: KeyboardEvent, combo: KeyCombo) =>
   isSymbol(combo.key) || event.shiftKey === (combo.shift ?? false)
 

@@ -565,11 +565,11 @@ changes. Where Windows and Linux use Ctrl and Alt, macOS uses Cmd and Option.
 
 Repeat takes `L`, for loop, because Electron's default menu keeps `Ctrl+R` (`Cmd+R`) for Reload.
 
-No shortcut fires while focus is in a text field, and `Space` leaves a focused button, radio
-button, or menu item to press itself. On a focused link, which `Space` would only scroll past, it
-plays or pauses. Holding the keys down runs a shortcut once. A playback shortcut whose control
-cannot be used says why in the status message, since the control's tooltip may never have been
-seen.
+No shortcut fires while focus is in a text field, and `Space` leaves a focused button (menu
+items included) to press itself. On a focused link, which `Space` would only scroll past, or a
+focused radio button, which is already checked, it plays or pauses. Holding the keys down runs a
+shortcut once. A playback shortcut whose control cannot be used says why in the status message,
+since the control's tooltip may never have been seen.
 
 `?` opens the shortcuts dialog: a modal Overlay (`surface-overlay`, `shadow-overlay`,
 `rounded-large`) at most 448 px wide with 24 px of padding, a `text-xl` "Keyboard shortcuts"

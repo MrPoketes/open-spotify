@@ -8,16 +8,11 @@ const isTextEntry = (target: EventTarget | null) =>
   (target.isContentEditable ||
     target.matches("textarea, select, input:not([type='checkbox'], [type='radio'])"))
 
-const spacePressedControl = "button, input, [role='menuitem']"
-
-// Space presses the focused button, radio button, or menu item, so a shortcut
-// on Space gives way to it. A link only scrolls the page on Space, so it does
-// not.
+// Space presses a focused button, so a shortcut on Space gives way to it. On
+// a link Space only scrolls, and a focused radio button is already checked, so
+// there the shortcut runs.
 const isKeyForFocusedElement = (event: KeyboardEvent) =>
-  isTextEntry(event.target) ||
-  (event.key === " " &&
-    event.target instanceof Element &&
-    event.target.matches(spacePressedControl))
+  isTextEntry(event.target) || (event.key === " " && event.target instanceof HTMLButtonElement)
 
 // Runs the action when the user presses the shortcut's keys anywhere in the
 // window, except while typing. Holding the keys down runs the action once.
