@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react"
+import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { menuItemTargetForKey } from "./menu-item-target"
 
 export interface MenuAction {
@@ -104,9 +105,8 @@ export function MenuList({
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
-    // Modified keys belong to app-wide shortcuts such as Alt+Left, which
-    // listen on the window, so they must get past the menu.
-    if (event.ctrlKey || event.metaKey || event.altKey) return
+    // App-wide shortcuts listen on the window, so they must get past the menu.
+    if (hasShortcutModifier(event)) return
     // A submenu sits inside its parent menu, and the whole menu sits inside
     // the element that opened it in the React tree. Neither may act on a key
     // meant for this menu.

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router"
 import { Pin, PinOff } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import { ContextMenu } from "../../ui/context-menu"
+import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import { useContextMenu } from "../../ui/use-context-menu"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { useAddToFolder } from "../folders/use-add-to-folder"
@@ -34,7 +35,7 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
 
   const togglePinWithKey = (event: KeyboardEvent) => {
     // Lowercased so the shortcut also works with Caps Lock on.
-    if (event.key.toLowerCase() !== "p" || event.ctrlKey || event.metaKey || event.altKey) return
+    if (event.key.toLowerCase() !== "p" || hasShortcutModifier(event)) return
     event.preventDefault()
     actions.togglePin(entry)
   }

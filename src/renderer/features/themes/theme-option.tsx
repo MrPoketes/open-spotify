@@ -1,6 +1,7 @@
 import { Check, Trash2 } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import type { Theme } from "../../../shared/theme"
+import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { ThemeSwatch } from "./theme-swatch"
 
@@ -22,10 +23,7 @@ interface ThemeOptionProps {
 
 // Mac keyboards label Backspace "delete" and have no forward Delete key.
 const isDeleteKey = (event: KeyboardEvent) =>
-  (event.key === "Delete" || event.key === "Backspace") &&
-  !event.ctrlKey &&
-  !event.metaKey &&
-  !event.altKey
+  (event.key === "Delete" || event.key === "Backspace") && !hasShortcutModifier(event)
 
 // The delete button stays out of the tab order, so the list remains one tab
 // stop (docs/design.md); keyboard users press Delete on the focused row.

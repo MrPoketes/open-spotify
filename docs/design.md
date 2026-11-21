@@ -471,21 +471,22 @@ from a fresh page, so an earlier query's results can never show up after a later
 A menu opens from a 32 px icon button (`MenuButton` in `src/renderer/ui`) and follows the
 WAI-ARIA menu button pattern: `Enter`, `Space`, or `↓` opens it on the first item, `↑` on the
 last, the arrow keys wrap, `Home` and `End` jump to the ends, `Escape` or `Shift+Tab` closes it
-and returns focus to the button, and `Tab` closes it and moves on to the next control. It is an Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`)
-with 4 px of padding, aligned to the button's right edge. Items are `text-sm` rows with
-`rounded-small` corners that turn `surface-raised` on hover or focus. An item that opens a
-dialog ends its label with an ellipsis ("Import folders…").
+and returns focus to the button, and `Tab` closes it and moves on to the next control. It is an
+Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`) with 4 px of padding, aligned to
+the button's right edge. Items are `text-sm` rows with `rounded-small` corners that turn
+`surface-raised` on hover or focus. An item that opens a dialog ends its label with an ellipsis
+("Import folders…").
 
 A context menu (`ContextMenu` in `src/renderer/ui`) opens on right-click, `Shift+F10`, or the
 context-menu key, at the pointer or, from the keyboard, under the element. It looks like any other
 menu and follows the WAI-ARIA menu pattern: focus starts on the first item, the arrow keys wrap,
-`Enter` or `Space` activates, and `Escape`, `Tab`, or `Shift+Tab` closes it and returns focus to the
-element it opened from. An item with a submenu ends in a 16 px `ChevronRight`; `→`, `Enter`, or a click opens
-the submenu beside it, and `←` or `Escape` goes back to its item. A menu that would spill over the
-window edge moves back inside it, and a menu taller than the window scrolls (unless it holds
-submenus, which a scroll box would clip). Every menu ignores keys held with `Ctrl`, `Alt`, or `Cmd`,
-so app-wide shortcuts such as `Alt+←` still work while it is open. A menu lists only the actions that lead somewhere, and an
-element with none opens no menu.
+`Enter` or `Space` activates, and `Escape`, `Tab`, or `Shift+Tab` closes it and returns focus to
+the element it opened from. An item with a submenu ends in a 16 px `ChevronRight`; `→`, `Enter`,
+or a click opens the submenu beside it, and `←` or `Escape` goes back to its item. A menu that
+would spill over the window edge moves back inside it, and a menu taller than the window scrolls
+(unless it holds submenus, which a scroll box would clip). Every menu ignores keys held with
+`Ctrl`, `Alt`, or `Cmd`, so app-wide shortcuts such as `Alt+←` still work while it is open. A menu
+lists only the actions that lead somewhere, and an element with none opens no menu.
 
 An item that turns something on or off is a `menuitemcheckbox`: when it is on, it sets
 `aria-checked` and ends in a 16 px `Check` icon, so the state does not rely on color.

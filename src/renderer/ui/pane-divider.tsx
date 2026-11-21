@@ -1,4 +1,5 @@
 import type { KeyboardEvent, PointerEvent } from "react"
+import { hasShortcutModifier } from "./has-shortcut-modifier"
 
 const keyboardStep = 16
 
@@ -74,10 +75,9 @@ export function PaneDivider({
     End: maximumWidth,
   }
 
-  // Modified arrows belong to other shortcuts, such as Alt+Left for back.
   const resizeWithKeyboard = (event: KeyboardEvent) => {
     const width = widthForKey[event.key]
-    if (width === undefined || event.altKey || event.metaKey || event.ctrlKey) {
+    if (width === undefined || hasShortcutModifier(event)) {
       return
     }
     event.preventDefault()

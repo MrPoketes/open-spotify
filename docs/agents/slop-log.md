@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                     | Fix                                                 |
 | ---------- | --------------------------------------------------------------------------- | --------------------------------------------------- |
+| 2026-11-21 | Six inline copies of the Ctrl/Alt/Cmd check that key handlers use           | Shared `hasShortcutModifier`; lint rule in ARM-122  |
 | 2026-11-21 | Exports that no module imports (21 found, mostly error classes and types)   | Check `lint/unused-exports.test.ts`                 |
 | 2026-11-21 | A second copy of a helper, test fake, or class string that already existed  | New `AGENTS.md` rule 9, "Reuse before you write"    |
 | 2026-11-21 | Comments naming a file that was moved or deleted                            | Custom rule `open-spotify/no-stale-file-references` |

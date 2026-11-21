@@ -1,4 +1,5 @@
 import { type KeyboardEvent, useCallback, useRef, useState } from "react"
+import { hasShortcutModifier } from "./has-shortcut-modifier"
 
 type Move = (activeIndex: number, rowCount: number) => number
 
@@ -17,8 +18,7 @@ const movesByKey: Partial<Record<string, Move>> = {
 // The row a key moves focus to, or undefined for keys a list ignores.
 export const targetRowForKey = (event: KeyboardEvent, activeIndex: number, rowCount: number) => {
   const move = movesByKey[event.key]
-  // Modified keys belong to app-wide shortcuts such as Ctrl+K.
-  if (move === undefined || event.ctrlKey || event.metaKey || event.altKey) {
+  if (move === undefined || hasShortcutModifier(event)) {
     return undefined
   }
   return move(activeIndex, rowCount)
