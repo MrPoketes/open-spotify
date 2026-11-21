@@ -29,20 +29,22 @@ Work through the steps in order. Be brief: most runs change little.
 An issue's worker is the newest thread titled `ARM-<n>: …`. Classify it by its T3 status:
 
 - **Active** (holds a slot): `preparing`, `queued`, `starting`, `running`, or `waiting`; or
-  `idle` or `completed` while it watches an open PR, meaning one of its `pullRequests` has
-  `state: "open"` and `watching: true`. A worker waiting on CI ends its turn this way.
+  `idle` or `completed` while it still has work in flight. That means its
+  `pendingBackgroundTasks` is not empty (a test run it is waiting for), or one of its
+  `pullRequests` has `state: "open"` and `watching: true` (a worker waiting on CI).
 - **Paused** (holds no slot): `interrupted`, `failed`, `cancelled`, or `rolled_back`; or `idle`
-  or `completed` without a watched open PR, meaning it stopped before finishing.
+  or `completed` with no background task and no watched open PR, meaning it stopped before
+  finishing.
 
 For each issue in `In Progress` or `In Review`:
 
-| Situation                                                                                                                             | Action                                                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Its PR is merged                                                                                                                      | Move it to `Done` and comment with the PR link (the worker may have died before doing it).                       |
-| No thread exists for it                                                                                                               | Move it to `Todo`.                                                                                               |
-| Its worker is paused and has been resumed twice already (two `Resumed by the orchestrator` comments since the last `Parked:` comment) | Comment on the issue with what went wrong, from the thread, and move it to `Todo`.                               |
-| Its worker is paused otherwise                                                                                                        | Leave it. Step 3 resumes it when a slot is free.                                                                 |
-| Its worker is active, watching a PR whose checks failed or that conflicts, and the thread has not run for an hour since               | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.` |
+| Situation                                                                                                                           | Action                                                                                                           |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Its PR is merged                                                                                                                    | Move it to `Done` and comment with the PR link (the worker may have died before doing it).                       |
+| No thread exists for it                                                                                                             | Move it to `Todo`.                                                                                               |
+| Its worker is paused and has been resumed twice already (two `Resumed by the orchestrator` comments that link this worker's thread) | Comment on the issue with what went wrong, from the thread, and move it to `Todo`.                               |
+| Its worker is paused otherwise                                                                                                      | Leave it. Step 3 resumes it when a slot is free.                                                                 |
+| Its worker is active, watching a PR whose checks failed or that conflicts, and the thread's `updatedAt` is more than an hour old    | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.` |
 
 Then delete the backups (see 3.1) that nobody needs any more. For each branch that
 `git ls-remote --heads origin "refs/heads/backup/*"` lists, find its issue from the `arm-<n>`
@@ -63,7 +65,7 @@ When no paused worker is left and a slot is still free:
 
 1. Pick the next `Todo` issue: highest priority first (Urgent, High, Medium, Low, None), then
    oldest. Skip issues with an unfinished `blocked by` issue. Skip issues whose files are likely
-   to collide with an active worker's issue (same feature folder) unless nothing else is ready.
+   to collide with an active or paused worker's issue (same feature folder) unless nothing else is ready.
 2. Count its earlier workers (see 3.2). If it has had 3 or more since it was last parked, park it
    (see 3.3) and go back to item 1.
 3. Choose its `workspaceStrategy` and `message` (see 3.1). If 3.1 parks the issue, go back to
