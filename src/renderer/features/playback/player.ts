@@ -127,16 +127,17 @@ export class Player extends Context.Service<
       // Every subscriber shares one poll, which runs only while someone is
       // subscribed and the window is visible. A new subscriber gets the
       // latest state at once instead of waiting for the next poll. A change
-      // the user makes shows at once, on top of the latest poll.
+      // the user makes shows at once, on top of the latest poll. A command
+      // reads the state again even while the window is hidden, because media
+      // keys send commands from the background and the operating system's
+      // media overlay shows what they changed.
       const state = yield* Stream.merge(
-        windowVisibility.pipe(
-          Stream.switchMap((isVisible) =>
-            isVisible
-              ? Stream.merge(Stream.tick(pollInterval), Stream.fromPubSub(refreshRequests))
-              : Stream.empty,
+        Stream.merge(
+          windowVisibility.pipe(
+            Stream.switchMap((isVisible) => (isVisible ? Stream.tick(pollInterval) : Stream.empty)),
           ),
-          Stream.mapEffect(() => poll),
-        ),
+          Stream.fromPubSub(refreshRequests),
+        ).pipe(Stream.mapEffect(() => poll)),
         pendingChanges.updates,
       ).pipe(
         Stream.mapEffect(() => latestState),

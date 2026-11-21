@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-
-// Matched by physical key, because macOS turns Option+Shift+Q into a symbol
-// in event.key.
-const isQueueShortcut = (event: KeyboardEvent) =>
-  event.altKey && event.shiftKey && !event.ctrlKey && !event.metaKey && event.code === "KeyQ"
+import { useKeyboardShortcut } from "../shortcuts/use-keyboard-shortcut"
 
 export function useQueuePane() {
   const [isQueueOpen, setQueueOpen] = useState(false)
@@ -33,16 +29,7 @@ export function useQueuePane() {
     }
   }, [isQueueOpen])
 
-  useEffect(() => {
-    const toggleOnShortcut = (event: KeyboardEvent) => {
-      if (isQueueShortcut(event)) {
-        event.preventDefault()
-        toggleQueue()
-      }
-    }
-    window.addEventListener("keydown", toggleOnShortcut)
-    return () => window.removeEventListener("keydown", toggleOnShortcut)
-  }, [toggleQueue])
+  useKeyboardShortcut("toggleQueue", toggleQueue)
 
   return { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef }
 }

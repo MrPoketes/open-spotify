@@ -6,7 +6,7 @@ export const scriptNoncePlaceholder = "open-spotify-script-nonce"
 
 export function contentSecurityPolicy(scriptNonce: string): string {
   return [
-    // Anything not allowed below is blocked: plugins, frames, workers, media.
+    // Anything not allowed below is blocked: plugins, frames, workers.
     "default-src 'none'",
     `script-src 'self' 'nonce-${scriptNonce}'`,
     "style-src 'self'",
@@ -14,6 +14,8 @@ export function contentSecurityPolicy(scriptNonce: string): string {
     // Spotify serves cover art from many hosts under these two domains, for
     // example i.scdn.co, mosaic.scdn.co and image-cdn-ak.spotifycdn.com.
     "img-src 'self' https://*.scdn.co https://*.spotifycdn.com",
+    // The silent clip that lets media keys reach the app is a data: URL.
+    "media-src data:",
     // 'self' also covers the dev server's hot reload websocket.
     "connect-src 'self' https://api.spotify.com https://accounts.spotify.com",
     // An injected <base> tag would redirect every relative script URL.

@@ -1,45 +1,26 @@
 import { useRouter } from "@tanstack/react-router"
 import { useEffect } from "react"
-
-type HistoryDirection = "back" | "forward"
-
-// The shortcuts each platform's browsers use, so they work from muscle memory.
-const macShortcuts: Partial<Record<string, HistoryDirection>> = { "[": "back", "]": "forward" }
-const otherShortcuts: Partial<Record<string, HistoryDirection>> = {
-  ArrowLeft: "back",
-  ArrowRight: "forward",
-}
+import { useKeyboardShortcut } from "../shortcuts/use-keyboard-shortcut"
 
 // Chromium reports a mouse's side buttons as buttons 3 and 4.
-const mouseSideButtons: Partial<Record<number, HistoryDirection>> = { 3: "back", 4: "forward" }
+const backButton = 3
+const forwardButton = 4
 
-function shortcutDirection(event: KeyboardEvent, platform: string) {
-  if (platform === "darwin") {
-    return event.metaKey ? macShortcuts[event.key] : undefined
-  }
-  return event.altKey ? otherShortcuts[event.key] : undefined
-}
-
-export function useHistoryShortcuts(platform: string) {
+export function useHistoryShortcuts() {
   const router = useRouter()
+  useKeyboardShortcut("goBack", () => router.history.back())
+  useKeyboardShortcut("goForward", () => router.history.forward())
 
   useEffect(() => {
-    const go = (direction: HistoryDirection | undefined) => {
-      if (direction === "back") {
+    const goWithMouse = (event: MouseEvent) => {
+      if (event.button === backButton) {
         router.history.back()
       }
-      if (direction === "forward") {
+      if (event.button === forwardButton) {
         router.history.forward()
       }
     }
-    const goWithKeyboard = (event: KeyboardEvent) => go(shortcutDirection(event, platform))
-    const goWithMouse = (event: MouseEvent) => go(mouseSideButtons[event.button])
-
-    window.addEventListener("keydown", goWithKeyboard)
     window.addEventListener("mouseup", goWithMouse)
-    return () => {
-      window.removeEventListener("keydown", goWithKeyboard)
-      window.removeEventListener("mouseup", goWithMouse)
-    }
-  }, [router, platform])
+    return () => window.removeEventListener("mouseup", goWithMouse)
+  }, [router])
 }

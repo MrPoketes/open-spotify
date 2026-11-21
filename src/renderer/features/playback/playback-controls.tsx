@@ -1,54 +1,19 @@
 import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from "lucide-react"
-import type { PlaybackState, RepeatMode } from "../spotify/spotify-playback-state"
 import { PlayerControlButton } from "./player-control-button"
-import { usePlayerCommand } from "./use-player-command"
+import { useMediaSession } from "./use-media-session"
+import { usePlaybackActions } from "./use-playback-actions"
+import { usePlaybackShortcuts } from "./use-playback-shortcuts"
 import type { PlayerStateOrLoading } from "./use-player-state"
-
-const nextRepeatMode: Record<RepeatMode, RepeatMode> = {
-  off: "context",
-  context: "track",
-  track: "off",
-}
-
-const disallowedReason = "Spotify doesn't allow this right now."
-
-const unavailableReasons = {
-  loading: "Checking what's playing…",
-  unreachable: "Can't reach Spotify right now.",
-  noActiveDevice: "Choose a device to control playback.",
-} as const
-
-const unavailableReason = (playerState: PlayerStateOrLoading): string | null => {
-  if (playerState.status !== "active") {
-    return unavailableReasons[playerState.status]
-  }
-  if (playerState.playback.device.isRestricted) {
-    return "Spotify doesn't allow controlling this device from other apps."
-  }
-  return null
-}
-
-// Stands in while there is no playback to control, so the controls keep
-// their place and shape.
-const idlePlayback: Pick<PlaybackState, "isPlaying" | "shuffle" | "repeat" | "actions"> = {
-  isPlaying: false,
-  shuffle: false,
-  repeat: "off",
-  actions: {},
-}
 
 interface PlaybackControlsProps {
   readonly playerState: PlayerStateOrLoading
 }
 
 export function PlaybackControls({ playerState }: PlaybackControlsProps) {
-  const { failure, send } = usePlayerCommand()
-  const { isPlaying, shuffle, repeat, actions } =
-    playerState.status === "active" ? playerState.playback : idlePlayback
-  const disallows = actions.disallows ?? {}
-  const controlsUnavailableReason = unavailableReason(playerState)
-  const unavailableReasonFor = (isDisallowed: boolean | undefined) =>
-    controlsUnavailableReason ?? (isDisallowed === true ? disallowedReason : null)
+  const playback = usePlaybackActions(playerState)
+  usePlaybackShortcuts(playback)
+  useMediaSession(playerState, playback)
+  const { isPlaying, shuffle, repeat, failure } = playback
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -57,44 +22,34 @@ export function PlaybackControls({ playerState }: PlaybackControlsProps) {
           label="Shuffle"
           icon={Shuffle}
           isOn={shuffle}
-          unavailableReason={unavailableReasonFor(disallows.togglingShuffle)}
-          onPress={() => send((player) => player.setShuffle(!shuffle), "Couldn't change shuffle.")}
+          unavailableReason={playback.toggleShuffle.unavailableReason}
+          onPress={playback.toggleShuffle.run}
         />
         <PlayerControlButton
           label="Previous"
           icon={SkipBack}
-          unavailableReason={unavailableReasonFor(disallows.skippingPrev)}
-          onPress={() => send((player) => player.skipToPrevious, "Couldn't go back.")}
+          unavailableReason={playback.previous.unavailableReason}
+          onPress={playback.previous.run}
         />
         <PlayerControlButton
           label={isPlaying ? "Pause" : "Play"}
           icon={isPlaying ? Pause : Play}
           isPrimary
-          unavailableReason={controlsUnavailableReason}
-          onPress={() =>
-            isPlaying
-              ? send((player) => player.pause, "Couldn't pause playback.")
-              : send((player) => player.play, "Couldn't resume playback.")
-          }
+          unavailableReason={playback.playOrPause.unavailableReason}
+          onPress={playback.playOrPause.run}
         />
         <PlayerControlButton
           label="Next"
           icon={SkipForward}
-          unavailableReason={unavailableReasonFor(disallows.skippingNext)}
-          onPress={() => send((player) => player.skipToNext, "Couldn't skip to the next track.")}
+          unavailableReason={playback.next.unavailableReason}
+          onPress={playback.next.run}
         />
         <PlayerControlButton
           label={repeat === "track" ? "Repeat one track" : "Repeat"}
           icon={repeat === "track" ? Repeat1 : Repeat}
           isOn={repeat !== "off"}
-          // From off, a press turns on repeat for the context. From the other
-          // modes, it turns repeat for the track on or off.
-          unavailableReason={unavailableReasonFor(
-            repeat === "off" ? disallows.togglingRepeatContext : disallows.togglingRepeatTrack,
-          )}
-          onPress={() =>
-            send((player) => player.setRepeat(nextRepeatMode[repeat]), "Couldn't change repeat.")
-          }
+          unavailableReason={playback.cycleRepeat.unavailableReason}
+          onPress={playback.cycleRepeat.run}
         />
       </div>
       {failure !== null && (

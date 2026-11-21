@@ -1,35 +1,13 @@
 import { type ParsedLocation, useRouter } from "@tanstack/react-router"
 import { Option, Schema } from "effect"
 import { Search } from "lucide-react"
-import { type KeyboardEvent, type RefObject, useEffect, useRef, useState } from "react"
-import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
+import { type KeyboardEvent, useEffect, useRef, useState } from "react"
+import { useKeyboardShortcut } from "../shortcuts/use-keyboard-shortcut"
 import { SearchParams } from "./search-params"
 
 // Long enough that a word typed at a normal pace sends one search, short
 // enough that results seem to follow the typing.
 const typingPauseMs = 300
-
-const isTextEntry = (target: EventTarget | null) =>
-  target instanceof HTMLElement &&
-  (target.isContentEditable ||
-    target.matches("textarea, select, input:not([type='checkbox'], [type='radio'])"))
-
-function useSlashToFocus(input: RefObject<HTMLInputElement | null>) {
-  useEffect(() => {
-    const focusSearch = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "/" || hasShortcutModifier(event)) {
-        return
-      }
-      if (isTextEntry(event.target)) {
-        return
-      }
-      event.preventDefault()
-      input.current?.focus()
-    }
-    window.addEventListener("keydown", focusSearch)
-    return () => window.removeEventListener("keydown", focusSearch)
-  }, [input])
-}
 
 const decodeSearchParams = Schema.decodeUnknownOption(SearchParams)
 
@@ -50,7 +28,7 @@ export function SearchField() {
   const input = useRef<HTMLInputElement>(null)
   const sentQuery = useRef(queryShownAt(router.state.location))
   const pendingSearch = useRef<ReturnType<typeof setTimeout>>(undefined)
-  useSlashToFocus(input)
+  useKeyboardShortcut("focusSearch", () => input.current?.focus())
 
   // The search the field sent may arrive while the user types on, so it
   // changes nothing. Any other page means the user went elsewhere: a search

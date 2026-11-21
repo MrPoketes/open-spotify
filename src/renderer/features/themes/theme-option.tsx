@@ -1,8 +1,8 @@
 import { Check, Trash2 } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import type { Theme } from "../../../shared/theme"
-import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
+import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import { ThemeSwatch } from "./theme-swatch"
 
 export type DeleteTrigger = "keyboard" | "pointer"
@@ -21,20 +21,17 @@ interface ThemeOptionProps {
   readonly onDelete: ((trigger: DeleteTrigger) => void) | null
 }
 
-// Mac keyboards label Backspace "delete" and have no forward Delete key.
-const isDeleteKey = (event: KeyboardEvent) =>
-  (event.key === "Delete" || event.key === "Backspace") && !hasShortcutModifier(event)
-
 // The delete button stays out of the tab order, so the list remains one tab
-// stop (docs/design.md); keyboard users press Delete on the focused row.
+// stop (docs/design.md); keyboard users delete the focused row with a shortcut.
 export function ThemeOption(props: ThemeOptionProps) {
   const { theme, isChosen, rovingProps, onKeyDown, onHover, onUnhover, onFocus, onBlur } = props
   const { onChoose, onDelete } = props
   const chosenStyle = isChosen ? "bg-accent/15 font-semibold" : "hover:bg-surface-raised"
   const deleteLabel = `Delete ${theme.name}`
+  const deleteShortcut = useRowShortcut("deleteTheme")
 
   const deleteWithKey = (event: KeyboardEvent) => {
-    if (onDelete === null || !isDeleteKey(event)) {
+    if (onDelete === null || !deleteShortcut.isPressed(event)) {
       onKeyDown(event)
       return
     }
@@ -55,7 +52,7 @@ export function ThemeOption(props: ThemeOptionProps) {
         {...rovingProps}
         aria-pressed={isChosen}
         aria-label={`${theme.name} by ${theme.author}`}
-        aria-keyshortcuts={onDelete === null ? undefined : "Delete Backspace"}
+        aria-keyshortcuts={onDelete === null ? undefined : deleteShortcut.ariaKeyShortcuts}
         onKeyDown={deleteWithKey}
         onFocus={() => {
           rovingProps.onFocus()
@@ -77,7 +74,7 @@ export function ThemeOption(props: ThemeOptionProps) {
           type="button"
           tabIndex={-1}
           aria-label={deleteLabel}
-          title={`${deleteLabel} (Delete)`}
+          title={`${deleteLabel} (${deleteShortcut.label})`}
           onClick={() => onDelete("pointer")}
           className="mr-3 flex size-8 shrink-0 items-center justify-center rounded-full text-muted opacity-0 transition-opacity duration-120 ease-out group-focus-within:opacity-100 group-hover:opacity-100 hover:text-foreground"
         >

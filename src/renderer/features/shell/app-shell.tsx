@@ -20,6 +20,8 @@ import { NowPlayingBar } from "../playback/now-playing-bar"
 import { OpenDevicePickerContext } from "../playback/open-device-picker-context"
 import { QueuePane } from "../queue/queue-pane"
 import { useQueuePane } from "../queue/use-queue-pane"
+import { IsMacContext } from "../shortcuts/is-mac-context"
+import { ShortcutsDialog } from "../shortcuts/shortcuts-dialog"
 import { EditablePlaylistsProvider } from "../track-actions/editable-playlists-provider"
 import { TrackListDensityProvider } from "../track-list/track-list-density-provider"
 import { Sidebar } from "./sidebar"
@@ -34,20 +36,29 @@ interface AppShellProps {
   readonly children: ReactNode
 }
 
-export function AppShell({
+// The layout's own hooks register shortcuts, so the platform has to be
+// provided above them.
+export function AppShell({ platform, ...layoutProps }: AppShellProps) {
+  return (
+    <IsMacContext value={platform === "darwin"}>
+      <AppShellLayout {...layoutProps} />
+    </IsMacContext>
+  )
+}
+
+function AppShellLayout({
   savedSidebarWidth,
   savedRightPaneWidth,
   savedTrackListDensity,
-  platform,
   children,
-}: AppShellProps) {
+}: Omit<AppShellProps, "platform">) {
   const runtime = use(RendererRuntimeContext)
   const [sidebarWidth, setSidebarWidth] = useState(savedSidebarWidth)
   const [rightPaneWidth, setRightPaneWidth] = useState(savedRightPaneWidth)
   const { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef } = useQueuePane()
   const [isDevicePickerOpen, setDevicePickerOpen] = useState(false)
   const openDevicePicker = useCallback(() => setDevicePickerOpen(true), [])
-  useHistoryShortcuts(platform)
+  useHistoryShortcuts()
 
   return (
     <StatusMessageProvider>
@@ -103,6 +114,7 @@ export function AppShell({
             />
           </div>
         </FoldersProvider>
+        <ShortcutsDialog />
       </LibraryPlaylistsProvider>
     </StatusMessageProvider>
   )

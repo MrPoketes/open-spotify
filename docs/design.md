@@ -206,16 +206,16 @@ neighbouring section on screen, so hidden and empty sections never make a move l
 nothing. Hidden sections are listed under the library as round `surface-raised` "Show Albums"
 buttons. A section with no entries left after the filters is not shown.
 
-Any entry can be pinned. Pinned entries leave their section for a "Pinned" section that always
-sits at the top, in the order they were pinned. Each row has a pin button that shows on hover
-or while the row has focus. It stays out of the tab order so each section's list is still one
-tab stop; keyboard users press `P` on a focused row instead, which the button's tooltip and the
-row's `aria-keyshortcuts` announce. When a change moves or removes the focused control, focus
-follows: a pinned row keeps focus in its new place, a moved section's heading keeps it, hiding a
-section moves it to that section's Show button, and showing one moves it to its heading. An
-unpinned row goes back to its section and keeps focus there, or the section's heading takes it
-when the section is collapsed. When the control that should take focus is not on screen (its
-section is hidden, or the filters leave it empty), the name filter takes it.
+Any entry can be pinned. Pinned entries leave their section for a "Pinned" section that always sits
+at the top, in the order they were pinned. Each row has a pin button that shows on hover or while
+the row has focus. It stays out of the tab order so each section's list is still one tab stop;
+keyboard users press `P` on a focused row instead, which the button's tooltip, the row's
+`aria-keyshortcuts`, and the shortcuts dialog announce. When a change moves or removes the focused
+control, focus follows: a pinned row keeps focus in its new place, a moved section's heading keeps
+it, hiding a section moves it to that section's Show button, and showing one moves it to its
+heading. An unpinned row goes back to its section and keeps focus there, or the section's heading
+takes it when the section is collapsed. When the control that should take focus is not on screen
+(its section is hidden, or the filters leave it empty), the name filter takes it.
 
 When the filters match nothing, the library says so. When everything that matches is in a
 hidden section, it says that instead, so a hidden section never looks like a missing entry.
@@ -339,13 +339,13 @@ that starts on the chosen row, and moves like any other list (see Keyboard).
 
 An imported theme's row ends in a 32 px `Trash2` icon button named "Delete <theme>" that shows on
 hover or while the row has focus. Like the sidebar's pin button, it stays out of the tab order;
-keyboard users press `Delete` or `Backspace` on a focused row, which the button's tooltip and
-the row's `aria-keyshortcuts` announce. A theme is deleted at once, without a confirmation, and
-leaves the list only after the main process has deleted it; a failure is reported in `danger`
-text inside an `alert` under the list. Deleting the chosen theme applies and saves the default
-theme. A row deleted from the keyboard hands focus to the row that takes its place; a row
-deleted with the pointer leaves focus alone, so no other row is left previewing. Built-in themes
-have no delete button.
+keyboard users press `Delete` on a focused row (`Backspace`, labelled delete, on a Mac), which the
+button's tooltip, the row's `aria-keyshortcuts`, and the shortcuts dialog announce. A theme is
+deleted at once, without a confirmation, and leaves the list only after the main process has deleted
+it; a failure is reported in `danger` text inside an `alert` under the list. Deleting the chosen
+theme applies and saves the default theme. A row deleted from the keyboard hands focus to the row
+that takes its place; a row deleted with the pointer leaves focus alone, so no other row is left
+previewing. Built-in themes have no delete button.
 
 Below the list, "Edit a copy" opens the theme editor on a copy of the chosen theme, and
 "Import theme…" and "Export current theme…" are round `surface-raised` buttons
@@ -545,6 +545,57 @@ dialog, and returns to the menu's opener when the dialog closes; `Escape` closes
 The sidebar's folder menu sits beside the "Your library" heading. What an action did is said
 under the heading: a success in `muted` text inside an `output`, a failure in `danger` text
 inside an `alert`.
+
+### Keyboard shortcuts and media keys
+
+Every shortcut lives in one registry (`src/renderer/features/shortcuts/keyboard-shortcuts.ts`),
+and the shortcuts dialog is built from it, so a shortcut added there is listed without other
+changes. Window shortcuts work anywhere in the window; row shortcuts act on the focused row of a
+list, which matches its keys through the same registry. Where Windows and Linux use Ctrl and
+Alt, macOS uses Cmd and Option.
+
+| Windows and Linux   | macOS             | Action                                  |
+| ------------------- | ----------------- | --------------------------------------- |
+| `Space`             | `Space`           | Play or pause                           |
+| `Ctrl+→` / `Ctrl+←` | `Cmd+→` / `Cmd+←` | Next / previous track                   |
+| `Ctrl+S`            | `Cmd+S`           | Turn shuffle on or off                  |
+| `Ctrl+L`            | `Cmd+L`           | Change repeat (off, the context, track) |
+| `/`                 | `/`               | Search                                  |
+| `Alt+←` / `Alt+→`   | `Cmd+[` / `Cmd+]` | Go back / forward                       |
+| `Alt+Shift+Q`       | `Option+Shift+Q`  | Show or hide the queue                  |
+| `?`                 | `?`               | Show the shortcuts dialog               |
+| `P` on a row        | `P` on a row      | Pin or unpin a library entry            |
+| `Delete` on a row   | `Delete` on a row | Delete an imported theme                |
+
+The Mac `Delete` key is the one other keyboards label `Backspace`, since most Mac keyboards have
+no forward Delete key.
+
+Repeat takes `L`, for loop, because Electron's default menu keeps `Ctrl+R` (`Cmd+R`) for Reload.
+
+A letter shortcut follows the keyboard layout: on Dvorak, `P` is the key labelled P. Where a key
+types no Latin letter, as on a Cyrillic layout or with macOS Option, the key in the letter's US
+position works instead.
+
+No shortcut fires while focus is in a text field, and `Space` leaves a focused button (menu
+items included) to press itself. On a focused link, which `Space` would only scroll past, or a
+focused radio button, which is already checked, it plays or pauses. Holding the keys down runs a
+shortcut once. A playback shortcut whose control cannot be used says why in the status message,
+since the control's tooltip may never have been seen.
+
+`?` opens the shortcuts dialog: a modal Overlay (`surface-overlay`, `shadow-overlay`,
+`rounded-large`) at most 448 px wide with 24 px of padding, over a `canvas` backdrop at 60 %
+opacity, with a `font-display` `text-xl` "Keyboard shortcuts" heading and a Close icon button.
+Below them come a Playback, a General, and a Focused row section, each with a `text-sm` 600
+`muted` heading and one row per shortcut: the action in `text-sm` and its keys as `kbd` chips
+(`surface-raised`, `rounded-small`, `text-xs` 600). `Escape` closes it and focus returns to where
+it was.
+
+The keyboard's play/pause, next, and previous keys control playback while a device is active,
+even with the window in the background, and the operating system's media overlay shows the
+title, the artists ("Show episode" for an episode), the album, and the artwork. Chromium hands
+a page the media keys only while it plays media, so a silent clip at volume 0 loops while a
+device is active (`src/renderer/features/playback/use-silent-clip.ts`). With no active device, the
+app leaves the overlay.
 
 ### Status message
 
