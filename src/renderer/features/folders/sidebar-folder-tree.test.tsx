@@ -149,6 +149,20 @@ describe("SidebarFolderTree", () => {
     expect(screen.getByRole("button", { name: "New folder" })).toHaveFocus()
   })
 
+  // A click on the row's icon or padding focuses the row being renamed, which
+  // the end of the rename replaces, so focus must land on the row that follows.
+  it("saves a rename and focuses the folder's row when the user clicks that row outside the field", async () => {
+    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await focusTreeItem("Running")
+
+    await userEvent.keyboard("{F2}")
+    await userEvent.clear(await renameField())
+    await userEvent.keyboard("Long runs")
+    await userEvent.click(await treeItem("Running"))
+
+    expect(await treeItem("Long runs")).toHaveFocus()
+  })
+
   // App-wide shortcuts, such as Alt+Left to go back, listen on the window and
   // must still work while a folder name is edited.
   it("leaves keys held with Ctrl, Alt, or Cmd in the rename field to app-wide shortcuts", async () => {

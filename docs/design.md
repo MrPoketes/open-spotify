@@ -252,7 +252,8 @@ too, as in a file manager, but switching to another app does not end the rename.
 `Ctrl`, `Alt`, or `Cmd` still reach app-wide shortcuts. A blank name is refused like the New
 folder dialog's: a `danger` ring and "Enter a name for the folder." under the field. While the
 name is edited, the field is the row's tab stop. Focus returns to the row when `Enter` or
-`Escape` ends the rename, and stays on the control the user moved to when they leave the field.
+`Escape` ends the rename, or when a click on the row outside the field does. It stays on the
+control the user moved to when they leave the field for another one.
 
 Delete… opens a confirmation dialog, styled like the New folder dialog, that says how many items
 go with the folder, counting everything inside the folders in it, and that nothing leaves the

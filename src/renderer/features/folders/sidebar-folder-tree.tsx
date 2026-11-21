@@ -70,21 +70,24 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
   const { expandedKeys, toggleExpanded } = useExpandedFolders(savedExpandedFolderIds)
   const nodes = folderTreeNodes(tree)
   const rows = visibleTreeRows(nodes, expandedKeys)
-  const { rowFocusRef, newFolderButtonRef, ...changes } = useFolderTreeChanges(tree, (folderId) =>
-    rows.findIndex((row) => row.node.key === folderId),
-  )
+  const {
+    rowFocusRef,
+    newFolderButtonRef,
+    renamingFolderId,
+    createFolder,
+    deleteFolder,
+    ...renaming
+  } = useFolderTreeChanges(tree, (folderId) => rows.findIndex((row) => row.node.key === folderId))
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null)
   const headingId = useId()
 
   const actions: SidebarFolderActions = {
+    ...renaming,
     // The new folder must be on screen to be named, so its parent opens.
     createFolderInside: (folder) => {
       if (!expandedKeys.has(folder.id)) toggleExpanded(folder.id)
-      changes.createFolder(folder.id)
+      createFolder(folder.id)
     },
-    startRenaming: changes.startRenaming,
-    rename: changes.renameFolder,
-    cancelRenaming: changes.cancelRenaming,
     askToDelete: setFolderToDelete,
   }
 
@@ -98,7 +101,7 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
           ref={newFolderButtonRef}
           label="New folder"
           icon={FolderPlus}
-          onClick={() => changes.createFolder(null)}
+          onClick={() => createFolder(null)}
         />
       </div>
       {tree.length === 0 ? null : (
@@ -112,7 +115,7 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
             entry._tag === "Folder" ? (
               <SidebarFolderRow
                 folder={entry}
-                isRenaming={entry.id === changes.renamingFolderId}
+                isRenaming={entry.id === renamingFolderId}
                 itemProps={itemProps}
                 actions={actions}
               />
@@ -125,7 +128,7 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
       {folderToDelete === null ? null : (
         <DeleteFolderDialog
           folder={folderToDelete}
-          onDelete={() => changes.deleteFolder(folderToDelete)}
+          onDelete={() => deleteFolder(folderToDelete)}
           onClose={() => setFolderToDelete(null)}
         />
       )}

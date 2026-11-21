@@ -7,15 +7,15 @@ import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import type { TreeItemProps } from "../../ui/tree-view"
 import { useContextMenu } from "../../ui/use-context-menu"
 import { describeFolderEntry } from "./folder-entry-description"
-import { FolderRenameField, type RenameEnd } from "./folder-rename-field"
+import { type FocusAfterRename, FolderRenameField } from "./folder-rename-field"
 
 const rowClassName = "flex min-w-0 flex-1 rounded-small py-1 pr-2"
 
 export interface SidebarFolderActions {
   readonly createFolderInside: (folder: Folder) => void
   readonly startRenaming: (folder: Folder) => void
-  readonly rename: (folder: Folder, name: string, end: RenameEnd) => void
-  readonly cancelRenaming: (folder: Folder, end: RenameEnd) => void
+  readonly rename: (folder: Folder, name: string, focusAfter: FocusAfterRename) => void
+  readonly cancelRenaming: (folder: Folder, focusAfter: FocusAfterRename) => void
   readonly askToDelete: (folder: Folder) => void
 }
 
@@ -55,8 +55,8 @@ export function SidebarFolderRow({
         <Artwork sources={[]} placeholderIcon={icon} size={40} className="rounded-small" />
         <FolderRenameField
           folderName={name}
-          onRename={(newName, end) => actions.rename(folder, newName, end)}
-          onCancel={(end) => actions.cancelRenaming(folder, end)}
+          onRename={(newName, focusAfter) => actions.rename(folder, newName, focusAfter)}
+          onCancel={(focusAfter) => actions.cancelRenaming(folder, focusAfter)}
         />
       </div>
     )

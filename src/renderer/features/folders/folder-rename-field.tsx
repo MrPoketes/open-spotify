@@ -1,15 +1,16 @@
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react"
+import { type FocusEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from "react"
 import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import { blankFolderNameMessage } from "./blank-folder-name-message"
 
-// How a rename ended. Ended with Enter or Escape, focus goes back to the row;
-// ended by leaving the field, it stays on the control the user moved to.
-export type RenameEnd = "key" | "leave"
+// Where focus goes once the rename ends and the row replaces the field. After
+// Enter or Escape, or a click on the row itself, the row takes focus. After
+// the user moves to another control, focus stays there.
+export type FocusAfterRename = "focusRow" | "keepFocus"
 
 interface FolderRenameFieldProps {
   readonly folderName: string
-  readonly onRename: (name: string, end: RenameEnd) => void
-  readonly onCancel: (end: RenameEnd) => void
+  readonly onRename: (name: string, focusAfter: FocusAfterRename) => void
+  readonly onCancel: (focusAfter: FocusAfterRename) => void
 }
 
 // Edits a folder's name in place of its row. Enter saves and Escape cancels.
@@ -35,12 +36,12 @@ export function FolderRenameField({ folderName, onRename, onCancel }: FolderRena
     end()
   }
 
-  const save = (end: RenameEnd) => {
+  const save = (focusAfter: FocusAfterRename) => {
     if (isNameBlank) {
       setTriedBlankName(true)
       return
     }
-    finish(() => onRename(name.trim(), end))
+    finish(() => onRename(name.trim(), focusAfter))
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -51,20 +52,25 @@ export function FolderRenameField({ folderName, onRename, onCancel }: FolderRena
     event.stopPropagation()
     if (event.key === "Enter") {
       event.preventDefault()
-      save("key")
+      save("focusRow")
     }
     if (event.key === "Escape") {
       event.preventDefault()
-      finish(() => onCancel("key"))
+      finish(() => onCancel("focusRow"))
     }
   }
 
   // Switching to another app also takes focus from the field, and the browser
   // gives it back on return, so the rename carries on instead.
-  const saveOnLeave = () => {
+  const saveOnLeave = (event: FocusEvent) => {
     if (isDone.current || !document.hasFocus()) return
-    if (isNameBlank) finish(() => onCancel("leave"))
-    else save("leave")
+    // A click on the row's icon, padding, or chevron focuses the row around
+    // the field, which disappears with the field.
+    const isFocusMovingToRow =
+      event.relatedTarget instanceof Node && event.relatedTarget.contains(event.currentTarget)
+    const focusAfter = isFocusMovingToRow ? "focusRow" : "keepFocus"
+    if (isNameBlank) finish(() => onCancel(focusAfter))
+    else save(focusAfter)
   }
 
   return (
