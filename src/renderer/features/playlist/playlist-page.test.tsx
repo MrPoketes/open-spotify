@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest"
 import { NotLoggedIn, SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
-import type { SpotifyApi } from "../spotify/spotify-api"
+import { StatusMessageProvider } from "../../ui/status-message-provider"
+import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { giveMainViewALayout, scrollMainView } from "../track-list/fake-main-view-layout"
@@ -178,6 +179,29 @@ describe("PlaylistPage", () => {
 
     const secondRow = screen.getByRole("row", { name: "Electric Rivers by Lena Varga" })
     await waitFor(() => expect(secondRow).toHaveAccessibleDescription("Playing"))
+  })
+
+  // A play Spotify refuses, such as a list of tracks too long for it, must
+  // not fail silently.
+  it("says so when Spotify refuses to play a track", async () => {
+    renderScreen(
+      <StatusMessageProvider>
+        <main ref={giveMainViewALayout}>
+          <PlaylistPage playlistId="fake-playlist-late-night-drive" />
+        </main>
+      </StatusMessageProvider>,
+      fakeMainProcess(),
+      spotifyApiFakeWith(() => ({
+        startPlayback: () =>
+          Effect.fail(new SpotifyResponseError({ status: 400, message: "Invalid request" })),
+      })),
+    )
+
+    await userEvent.dblClick(
+      await screen.findByRole("row", { name: "Restless Rivers by Kite Theory" }),
+    )
+
+    expect(await screen.findByText("Couldn't play this track.")).toBeInTheDocument()
   })
 
   it("starts the playlist from its play button, and pauses it from the same button", async () => {

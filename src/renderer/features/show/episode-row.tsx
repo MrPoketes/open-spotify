@@ -25,7 +25,13 @@ export function EpisodeRow({ episode, isCurrentItem, rovingProps, onPlay }: Epis
       {...rovingProps}
       aria-labelledby={titleId}
       aria-describedby={isCurrentItem ? playingTextId : undefined}
-      onDoubleClick={onPlay}
+      onDoubleClick={(event) => {
+        // A quick second press on Show more is not a request to play.
+        if (event.target instanceof Element && event.target.closest("button") !== null) {
+          return
+        }
+        onPlay()
+      }}
       onKeyDown={(event) => {
         // Enter on the Show more button expands the description instead.
         if (event.key === "Enter" && event.target === event.currentTarget) {

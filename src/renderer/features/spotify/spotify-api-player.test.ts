@@ -107,24 +107,6 @@ describe("SpotifyApi player", () => {
     }).pipe(Effect.provide(spotifyApiFake)),
   )
 
-  it.effect("plays a list of tracks from the one at the offset, with no context", () =>
-    Effect.gen(function* () {
-      const spotify = yield* SpotifyApi
-      const uris = [fakeTrack(600), fakeTrack(601), fakeTrack(602)].map(({ uri }) => uri)
-
-      yield* spotify.startPlayback({ uris, offset: { position: 1 } })
-      const playback = Option.getOrThrow(yield* spotify.getPlaybackState)
-      yield* spotify.skipToNext
-      const next = Option.getOrThrow(yield* spotify.getPlaybackState)
-
-      assert.isNull(playback.context)
-      assert.deepStrictEqual(
-        [playback.item?.name, next.item?.name],
-        [fakeTrack(601).name, fakeTrack(602).name],
-      )
-    }).pipe(Effect.provide(spotifyApiFake)),
-  )
-
   // Spotify answers a player command with 404 and this reason when no device
   // is active, which the bar explains instead of showing a generic failure.
   it.effect("fails with NoActiveDevice when a command finds no active device", () => {

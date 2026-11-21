@@ -126,7 +126,8 @@ const rowAttributes = (
     transform: `translateY(${offset}px)`,
   } satisfies CSSProperties,
   // The highlight is also bold, so it does not rest on color alone.
-  className: `${trackColumns(layout)} rounded-small text-sm transition-colors duration-120 ease-out hover:bg-surface-raised focus-visible:bg-surface-raised ${isHighlighted ? "bg-surface-raised font-semibold" : ""}`,
+  // A double-click plays the row, so it must not select its text as well.
+  className: `${trackColumns(layout)} rounded-small text-sm select-none transition-colors duration-120 ease-out hover:bg-surface-raised focus-visible:bg-surface-raised ${isHighlighted ? "bg-surface-raised font-semibold" : ""}`,
 })
 
 const accessibleName = (index: number, entry: TrackListEntry | undefined) => {
