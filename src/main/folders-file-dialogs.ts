@@ -1,15 +1,6 @@
 import type { BaseWindow, Dialog, FileFilter } from "electron"
-import { Context, Effect, Layer, Option, Schema } from "effect"
-import { showModalOpenDialog, showModalSaveDialog } from "./modal-dialogs"
-
-class FoldersFileDialogError extends Schema.TaggedError<FoldersFileDialogError>()(
-  "FoldersFileDialogError",
-  {
-    cause: Schema.Defect(),
-  },
-) {}
-
-type DialogModule = Pick<Dialog, "showSaveDialog" | "showOpenDialog">
+import { Context, type Effect, Layer, type Option } from "effect"
+import { choosePathToOpen, choosePathToSave, type ModalDialogError } from "./modal-dialogs"
 
 const foldersFileFilters: Array<FileFilter> = [
   { name: "Open Spotify folders", extensions: ["json"] },
@@ -22,44 +13,27 @@ export class FoldersFileDialogs extends Context.Service<
   {
     readonly chooseExportPath: (
       parentWindow: BaseWindow | null,
-    ) => Effect.Effect<Option.Option<string>, FoldersFileDialogError>
+    ) => Effect.Effect<Option.Option<string>, ModalDialogError>
     readonly chooseImportPath: (
       parentWindow: BaseWindow | null,
-    ) => Effect.Effect<Option.Option<string>, FoldersFileDialogError>
+    ) => Effect.Effect<Option.Option<string>, ModalDialogError>
   }
 >()("open-spotify/FoldersFileDialogs") {
-  static readonly layer = (dialog: DialogModule) =>
+  static readonly layer = (dialog: Pick<Dialog, "showSaveDialog" | "showOpenDialog">) =>
     Layer.succeed(
       FoldersFileDialogs,
       FoldersFileDialogs.of({
         chooseExportPath: (parentWindow) =>
-          Effect.tryPromise({
-            try: () =>
-              showModalSaveDialog(dialog, parentWindow, {
-                title: "Export folders",
-                defaultPath: "open-spotify-folders.json",
-                filters: foldersFileFilters,
-              }),
-            catch: (cause) => new FoldersFileDialogError({ cause }),
-          }).pipe(
-            Effect.map((choice) =>
-              choice.canceled ? Option.none() : Option.some(choice.filePath),
-            ),
-          ),
+          choosePathToSave(dialog, parentWindow, {
+            title: "Export folders",
+            defaultPath: "open-spotify-folders.json",
+            filters: foldersFileFilters,
+          }),
         chooseImportPath: (parentWindow) =>
-          Effect.tryPromise({
-            try: () =>
-              showModalOpenDialog(dialog, parentWindow, {
-                title: "Import folders",
-                properties: ["openFile"],
-                filters: foldersFileFilters,
-              }),
-            catch: (cause) => new FoldersFileDialogError({ cause }),
-          }).pipe(
-            Effect.map((choice) =>
-              choice.canceled ? Option.none() : Option.fromNullishOr(choice.filePaths[0]),
-            ),
-          ),
+          choosePathToOpen(dialog, parentWindow, {
+            title: "Import folders",
+            filters: foldersFileFilters,
+          }),
       }),
     )
 }

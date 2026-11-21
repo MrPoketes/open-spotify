@@ -1,14 +1,12 @@
 import type { BaseWindow, Dialog } from "electron"
-import { Context, Effect, Layer, Option, Schema } from "effect"
+import { Context, Effect, Layer, type Option } from "effect"
 import type { Theme } from "../shared/theme"
-import { showModalMessageBox, showModalOpenDialog, showModalSaveDialog } from "./modal-dialogs"
-
-class ThemeFileDialogError extends Schema.TaggedError<ThemeFileDialogError>()(
-  "ThemeFileDialogError",
-  {
-    cause: Schema.Defect(),
-  },
-) {}
+import {
+  chooseMessageBoxButton,
+  choosePathToOpen,
+  choosePathToSave,
+  type ModalDialogError,
+} from "./modal-dialogs"
 
 const themeFileFilters = [{ name: "Theme", extensions: ["json"] }]
 
@@ -19,15 +17,15 @@ export class ThemeFileDialogs extends Context.Service<
   {
     readonly chooseFileToImport: (
       parentWindow: BaseWindow | null,
-    ) => Effect.Effect<Option.Option<string>, ThemeFileDialogError>
+    ) => Effect.Effect<Option.Option<string>, ModalDialogError>
     readonly chooseExportFile: (
       parentWindow: BaseWindow | null,
       suggestedFileName: string,
-    ) => Effect.Effect<Option.Option<string>, ThemeFileDialogError>
+    ) => Effect.Effect<Option.Option<string>, ModalDialogError>
     readonly confirmReplace: (
       parentWindow: BaseWindow | null,
       theme: Theme,
-    ) => Effect.Effect<boolean, ThemeFileDialogError>
+    ) => Effect.Effect<boolean, ModalDialogError>
   }
 >()("open-spotify/ThemeFileDialogs") {
   static readonly layer = (
@@ -37,42 +35,25 @@ export class ThemeFileDialogs extends Context.Service<
       ThemeFileDialogs,
       ThemeFileDialogs.of({
         chooseFileToImport: (parentWindow) =>
-          Effect.tryPromise({
-            try: () =>
-              showModalOpenDialog(dialog, parentWindow, {
-                title: "Import theme",
-                properties: ["openFile"],
-                filters: themeFileFilters,
-              }),
-            catch: (cause) => new ThemeFileDialogError({ cause }),
-          }).pipe(Effect.map(({ filePaths }) => Option.fromUndefinedOr(filePaths[0]))),
+          choosePathToOpen(dialog, parentWindow, {
+            title: "Import theme",
+            filters: themeFileFilters,
+          }),
         chooseExportFile: (parentWindow, suggestedFileName) =>
-          Effect.tryPromise({
-            try: () =>
-              showModalSaveDialog(dialog, parentWindow, {
-                title: "Export current theme",
-                defaultPath: suggestedFileName,
-                filters: themeFileFilters,
-              }),
-            catch: (cause) => new ThemeFileDialogError({ cause }),
-          }).pipe(
-            Effect.map(({ canceled, filePath }) =>
-              canceled ? Option.none() : Option.some(filePath),
-            ),
-          ),
+          choosePathToSave(dialog, parentWindow, {
+            title: "Export current theme",
+            defaultPath: suggestedFileName,
+            filters: themeFileFilters,
+          }),
         confirmReplace: (parentWindow, theme) =>
-          Effect.tryPromise({
-            try: () =>
-              showModalMessageBox(dialog, parentWindow, {
-                type: "question",
-                message: `Replace “${theme.name}” by ${theme.author}?`,
-                detail: "You already imported a theme with this name and author.",
-                buttons: ["Replace", "Cancel"],
-                defaultId: 1,
-                cancelId: 1,
-              }),
-            catch: (cause) => new ThemeFileDialogError({ cause }),
-          }).pipe(Effect.map(({ response }) => response === 0)),
+          chooseMessageBoxButton(dialog, parentWindow, {
+            type: "question",
+            message: `Replace “${theme.name}” by ${theme.author}?`,
+            detail: "You already imported a theme with this name and author.",
+            buttons: ["Replace", "Cancel"],
+            defaultId: 1,
+            cancelId: 1,
+          }).pipe(Effect.map((pressedButton) => pressedButton === 0)),
       }),
     )
 }
