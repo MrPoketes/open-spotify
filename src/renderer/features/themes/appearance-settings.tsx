@@ -58,7 +58,14 @@ export function AppearanceSettings({ library }: { readonly library: SavedThemeLi
 
   return (
     <div className="flex flex-col gap-4">
-      <ThemePicker themes={themes} chosenThemeId={chosenThemeId} onChoose={setChosenThemeId} />
+      <ThemePicker
+        themes={themes}
+        chosenThemeId={chosenThemeId}
+        onChoose={setChosenThemeId}
+        onDelete={(themeId) =>
+          setThemes((currentThemes) => currentThemes.filter(({ id }) => id !== themeId))
+        }
+      />
       <button
         ref={editButton}
         type="button"

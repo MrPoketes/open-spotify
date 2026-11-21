@@ -287,6 +287,16 @@ theme returns when the pointer and focus both leave the picker, or the page clos
 row or pressing `Enter` or `Space` on it chooses and saves its theme. The list is one tab stop
 that starts on the chosen row, and moves like any other list (see Keyboard).
 
+An imported theme's row ends in a 32 px `Trash2` icon button named "Delete <theme>" that shows on
+hover or while the row has focus. Like the sidebar's pin button, it stays out of the tab order;
+keyboard users press `Delete` or `Backspace` on a focused row, which the button's tooltip and
+the row's `aria-keyshortcuts` announce. A theme is deleted at once, without a confirmation, and
+leaves the list only after the main process has deleted it; a failure is reported in `danger`
+text inside an `alert` under the list. Deleting the chosen theme applies and saves the default
+theme. A row deleted from the keyboard hands focus to the row that takes its place; a row
+deleted with the pointer leaves focus alone, so no other row is left previewing. Built-in themes
+have no delete button.
+
 Below the list, "Edit a copy" opens the theme editor on a copy of the chosen theme, and
 "Import theme…" and "Export current theme…" are round `surface-raised` buttons
 that open the operating system's file dialogs. A result is reported in `muted` text inside an

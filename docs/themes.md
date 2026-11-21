@@ -150,6 +150,11 @@ A theme is identified by its `name` and `author`. Importing a theme with the sam
 author as one you imported before asks whether to replace it. If that theme is in use, the
 new version applies at once. A theme cannot take the name and author of a built-in theme.
 
+To delete an imported theme, point at it in the theme list and choose the bin icon at the end of
+its row, or focus its row and press **Delete** (**Backspace** on a Mac). The theme is removed
+from the app at once; a theme file you imported it from is not touched. If you delete the theme
+in use, the app switches to the default theme. Built-in themes cannot be deleted.
+
 ## Exporting a theme
 
 Choose **Export current theme…** under **Appearance** and pick where to save the file. The app

@@ -3,7 +3,7 @@ import { Effect, Option, Schema } from "effect"
 import { ipcChannels } from "../shared/ipc-channels"
 import { Theme } from "../shared/theme"
 import { ExportThemeReply, ImportThemeReply } from "../shared/theme-file-replies"
-import type { LibraryTheme } from "../shared/theme-library"
+import { ImportedThemeId, type LibraryTheme } from "../shared/theme-library"
 import { decodeIpcRequest } from "./decode-ipc-request"
 import { ImportedThemes } from "./imported-themes"
 import { exportCurrentTheme, importThemeFile, saveTheme } from "./theme-files"
@@ -11,6 +11,14 @@ import { exportCurrentTheme, importThemeFile, saveTheme } from "./theme-files"
 export const listImportedThemesFromIpc = Effect.gen(function* () {
   const importedThemes = yield* ImportedThemes
   return yield* importedThemes.list
+})
+
+export const deleteImportedThemeFromIpc = Effect.fn("deleteImportedThemeFromIpc")(function* (
+  request: unknown,
+) {
+  const themeId = yield* decodeIpcRequest(ipcChannels.deleteImportedTheme, ImportedThemeId, request)
+  const importedThemes = yield* ImportedThemes
+  yield* importedThemes.delete(themeId)
 })
 
 const importReply = Option.match({

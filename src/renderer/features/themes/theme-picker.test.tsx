@@ -27,6 +27,7 @@ function PickerWithSavedTheme({ initialThemeId }: { readonly initialThemeId: The
       themes={themeLibrary([])}
       chosenThemeId={chosenThemeId}
       onChoose={setChosenThemeId}
+      onDelete={() => {}}
     />
   )
 }

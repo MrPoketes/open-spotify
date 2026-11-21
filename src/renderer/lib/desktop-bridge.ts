@@ -36,7 +36,7 @@ import {
   type ThemeImportFailed,
 } from "../../shared/theme-file-replies"
 import { Theme } from "../../shared/theme"
-import { LibraryTheme } from "../../shared/theme-library"
+import { LibraryTheme, type ThemeId } from "../../shared/theme-library"
 import type { DesktopApi } from "../../preload/desktop-api"
 
 export class DesktopBridgeError extends Schema.TaggedError<DesktopBridgeError>()(
@@ -98,6 +98,7 @@ export class DesktopBridge extends Context.Service<
     readonly saveEditedTheme: (
       theme: Theme,
     ) => Effect.Effect<Option.Option<LibraryTheme>, ThemeImportFailed | DesktopBridgeError>
+    readonly deleteImportedTheme: (themeId: ThemeId) => Effect.Effect<void, DesktopBridgeError>
     // The file written, or none when the user cancels.
     readonly exportCurrentTheme: Effect.Effect<Option.Option<string>, DesktopBridgeError>
     readonly exportFolders: Effect.Effect<ExportFoldersReply, DesktopBridgeError>
@@ -165,6 +166,8 @@ export class DesktopBridge extends Context.Service<
         const reply = yield* send(ipcChannels.saveEditedTheme, ImportThemeReply, encodedTheme)
         return yield* importedThemeFromReply(reply)
       }),
+      deleteImportedTheme: (themeId) =>
+        send(ipcChannels.deleteImportedTheme, Schema.Undefined, themeId),
       exportCurrentTheme: send(ipcChannels.exportCurrentTheme, ExportThemeReply),
       exportFolders: send(ipcChannels.exportFolders, ExportFoldersReply),
       importFolders: send(ipcChannels.importFolders, ImportFoldersReply).pipe(

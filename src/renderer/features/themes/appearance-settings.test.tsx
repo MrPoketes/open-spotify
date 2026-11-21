@@ -1,11 +1,13 @@
-import { screen, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
+import { Effect, Option } from "effect"
 import { beforeEach, describe, expect, it } from "vitest"
 import { builtInThemes } from "../../../shared/built-in-themes"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import type { ImportThemeReply } from "../../../shared/theme-file-replies"
-import { findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
+import { type LibraryTheme, findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
+import { DesktopBridge } from "../../lib/desktop-bridge"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { AppearanceSettings } from "./appearance-settings"
@@ -16,7 +18,7 @@ const builtInLibrary = {
 }
 
 const sunset = {
-  id: "0b7f3c2e-sunset",
+  id: "0b7f3c2e-9a41-4d6e-8f5b-2c7d1e9a3b60",
   theme: { ...builtInThemes.dark, name: "Sunset", author: "A theme author" },
 }
 
@@ -36,13 +38,48 @@ const exportFailing = (mainProcess: DesktopApi): DesktopApi => ({
       : mainProcess.invoke(channel, request),
 })
 
+// The database can be locked, for example by a backup tool.
+const deleteFailing = (mainProcess: DesktopApi): DesktopApi => ({
+  invoke: (channel, request) =>
+    channel === ipcChannels.deleteImportedTheme
+      ? Promise.reject(new Error("SQLITE_BUSY: database is locked"))
+      : mainProcess.invoke(channel, request),
+})
+
 const renderAndExport = async (mainProcess: DesktopApi) => {
   renderScreen(<AppearanceSettings library={builtInLibrary} />, mainProcess)
   await userEvent.click(await screen.findByRole("button", { name: "Export current theme…" }))
 }
 
+const ember = {
+  id: "5e1d9c47-3b2a-4f80-9e6d-7a8b4c2f1d05",
+  theme: { ...builtInThemes.light, name: "Ember", author: "A theme author" },
+}
+
+const importedThemeNames = async (mainProcess: DesktopApi) => {
+  const importedThemes = await Effect.runPromise(DesktopBridge.make(mainProcess).listImportedThemes)
+  return importedThemes.map((libraryTheme) => libraryTheme.theme.name)
+}
+
+const savedThemeId = (mainProcess: DesktopApi) =>
+  Effect.runPromise(DesktopBridge.make(mainProcess).getSetting("themeId"))
+
+// The fake main process starts with the imported themes stored, as after a
+// restart.
+const renderWithImportedThemes = async (
+  savedTheme: LibraryTheme,
+  mainProcess = fakeMainProcess({ importedThemes: [sunset, ember] }),
+) => {
+  renderScreen(
+    <AppearanceSettings library={{ themes: themeLibrary([sunset, ember]), savedTheme }} />,
+    mainProcess,
+  )
+  await screen.findByRole("list", { name: "Theme" })
+  return mainProcess
+}
+
 const themeOptions = () =>
-  within(screen.getByRole("list", { name: "Theme" })).getAllByRole("button")
+  within(screen.getByRole("list", { name: "Theme" })).getAllByRole("button", { name: / by / })
 
 describe("AppearanceSettings", () => {
   beforeEach(() => {
@@ -90,6 +127,70 @@ describe("AppearanceSettings", () => {
     await renderAndExport(exportFailing(fakeMainProcess()))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not export the theme.")
+  })
+
+  it("deletes an imported theme from the picker and from storage", async () => {
+    const mainProcess = await renderWithImportedThemes(sunset)
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete Ember" }))
+
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Ember by A theme author" })).toBeNull(),
+    )
+    expect(await importedThemeNames(mainProcess)).toEqual(["Sunset"])
+  })
+
+  it("keeps a theme the main process could not delete and says so", async () => {
+    await renderWithImportedThemes(
+      sunset,
+      deleteFailing(fakeMainProcess({ importedThemes: [sunset, ember] })),
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete Ember" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not delete Ember.")
+    expect(screen.getByRole("button", { name: "Ember by A theme author" })).toBeInTheDocument()
+  })
+
+  it("offers no delete control for the built-in themes", async () => {
+    await renderWithImportedThemes(sunset)
+
+    expect(screen.queryByRole("button", { name: /^Delete Open Spotify/ })).toBeNull()
+  })
+
+  it("applies and saves the default theme when the chosen theme is deleted", async () => {
+    const mainProcess = await renderWithImportedThemes(ember)
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete Ember" }))
+
+    await waitFor(async () => {
+      expect(await savedThemeId(mainProcess)).toEqual(Option.some("dark"))
+    })
+    expect(
+      screen.getByRole("button", { name: "Open Spotify Dark by Open Spotify", pressed: true }),
+    ).toBeInTheDocument()
+    expect(document.documentElement.style.getPropertyValue("--theme-color-accent")).toBe(
+      builtInThemes.dark.tokens["color-accent"],
+    )
+  })
+
+  // Deleting must not drop keyboard focus to the page, or the user has to
+  // tab back into the list to carry on.
+  it("deletes the focused theme with the Delete key and focuses the row that takes its place", async () => {
+    const mainProcess = await renderWithImportedThemes(sunset)
+
+    await userEvent.tab()
+    await userEvent.keyboard("{Delete}")
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Ember by A theme author" })).toHaveFocus(),
+    )
+    expect(themeOptions().map((option) => option.getAttribute("aria-label"))).toEqual([
+      "Open Spotify Dark by Open Spotify",
+      "Open Spotify Light by Open Spotify",
+      "Ember by A theme author",
+    ])
+    expect(await importedThemeNames(mainProcess)).toEqual(["Ember"])
   })
 
   // docs/themes.md promises that a new version of the theme in use applies at

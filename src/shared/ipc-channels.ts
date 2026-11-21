@@ -22,6 +22,7 @@ export const ipcChannels = {
   importThemeFile: "themes:import-file",
   exportCurrentTheme: "themes:export-current",
   saveEditedTheme: "themes:save-edited",
+  deleteImportedTheme: "themes:delete-imported",
   exportFolders: "folders:export",
   importFolders: "folders:import",
 } as const
