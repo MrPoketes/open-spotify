@@ -546,6 +546,45 @@ The sidebar's folder menu sits beside the "Your library" heading. What an action
 under the heading: a success in `muted` text inside an `output`, a failure in `danger` text
 inside an `alert`.
 
+### Keyboard shortcuts and media keys
+
+App-wide shortcuts live in one registry (`src/renderer/features/shortcuts/keyboard-shortcuts.ts`),
+and the shortcuts dialog is built from it, so a shortcut added there is listed without other
+changes. Where Windows and Linux use Ctrl and Alt, macOS uses Cmd and Option.
+
+| Windows and Linux   | macOS             | Action                                  |
+| ------------------- | ----------------- | --------------------------------------- |
+| `Space`             | `Space`           | Play or pause                           |
+| `Ctrl+→` / `Ctrl+←` | `Cmd+→` / `Cmd+←` | Next / previous track                   |
+| `Ctrl+S`            | `Cmd+S`           | Turn shuffle on or off                  |
+| `Ctrl+L`            | `Cmd+L`           | Change repeat (off, the context, track) |
+| `/`                 | `/`               | Search                                  |
+| `Alt+←` / `Alt+→`   | `Cmd+[` / `Cmd+]` | Go back / forward                       |
+| `Alt+Shift+Q`       | `Option+Shift+Q`  | Show or hide the queue                  |
+| `?`                 | `?`               | Show the shortcuts dialog               |
+
+Repeat takes `L`, for loop, because Electron's default menu keeps `Ctrl+R` (`Cmd+R`) for Reload.
+
+No shortcut fires while focus is in a text field, and `Space` leaves a focused button, link,
+checkbox, or menu item to press itself. A component that handles a key itself prevents its
+default, and the shortcut then leaves it alone. Holding the keys down runs a shortcut once. A
+playback shortcut whose control cannot be used says why in the status message, since the
+control's tooltip may never have been seen.
+
+`?` opens the shortcuts dialog: a modal Overlay (`surface-overlay`, `shadow-overlay`,
+`rounded-large`) at most 448 px wide with 24 px of padding, a `text-xl` "Keyboard shortcuts"
+heading, and a Close icon button. Below them come a Playback and a General section, each with a
+`text-sm` 600 `muted` heading and one row per shortcut: the action in `text-sm` and its keys as
+`kbd` chips (`surface-raised`, `rounded-small`, `text-xs` 600). `Escape` closes it and focus
+returns to where it was.
+
+The keyboard's play/pause, next, and previous keys control playback while a device is active,
+even with the window in the background, and the operating system's media overlay shows the
+title, the artists ("Podcast episode" for an episode), the album, and the artwork. Chromium hands
+a page the media keys only while it plays media, so a silent clip at volume 0 loops while a
+device is active (`src/renderer/features/playback/use-silent-clip.ts`). With no active device, the
+app leaves the overlay.
+
 ### Status message
 
 What an action from a context menu or a page's play controls did is said in a small Overlay

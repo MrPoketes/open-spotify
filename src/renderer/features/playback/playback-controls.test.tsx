@@ -8,20 +8,10 @@ import { NoActiveDevice, type SpotifyApi, SpotifyResponseError } from "../spotif
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
-import { NowPlayingBar } from "./now-playing-bar"
+import { nowPlayingBarAlone } from "./now-playing-bar-alone"
 
 const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
-  renderScreen(
-    <NowPlayingBar
-      isQueueOpen={false}
-      onQueueToggle={() => undefined}
-      queueButtonRef={{ current: null }}
-      isDevicePickerOpen={false}
-      onDevicePickerOpenChange={() => undefined}
-    />,
-    fakeMainProcess(),
-    spotifyApi,
-  )
+  renderScreen(nowPlayingBarAlone, fakeMainProcess(), spotifyApi)
 
 const withPlayback = (change: (playback: PlaybackState) => PlaybackState) =>
   spotifyApiFakeWith((spotify) => ({

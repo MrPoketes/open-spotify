@@ -8,7 +8,7 @@ import {
 import { fakeSpotifyAccounts, logInThroughOnboarding, serveFakeWebApi } from "./fake-spotify"
 import { packagedAppExecutable } from "./packaged-app"
 
-// The history shortcuts each platform's browsers use (use-history-shortcuts.ts).
+// The history shortcuts each platform's browsers use (keyboard-shortcuts.ts).
 const goBackShortcut = process.platform === "darwin" ? "Meta+BracketLeft" : "Alt+ArrowLeft"
 
 // The fixtures' cover art lives on a made-up host that the content security

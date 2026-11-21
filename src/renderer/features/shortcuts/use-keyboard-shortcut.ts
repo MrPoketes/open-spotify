@@ -1,0 +1,47 @@
+import { use, useEffect, useEffectEvent } from "react"
+import { IsMacContext } from "./is-mac-context"
+import { matchesKeyCombo } from "./key-combo"
+import { type KeyboardShortcutName, keyboardShortcuts, shortcutKeys } from "./keyboard-shortcuts"
+
+const isTextEntry = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable ||
+    target.matches("textarea, select, input:not([type='checkbox'], [type='radio'])"))
+
+const spacePressedControl =
+  "button, a[href], input, summary, [role='button'], [role='checkbox'], [role='radio'], " +
+  "[role='switch'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], " +
+  "[role='option'], [role='tab']"
+
+// Space presses the focused button, checkbox, or menu item, so a shortcut on
+// Space gives way to it.
+const isKeyForFocusedElement = (event: KeyboardEvent) =>
+  isTextEntry(event.target) ||
+  (event.key === " " &&
+    event.target instanceof Element &&
+    event.target.matches(spacePressedControl))
+
+// Runs the action when the user presses the shortcut's keys anywhere in the
+// window, except while typing. A component that handles the key itself
+// prevents its default, and the shortcut leaves it alone. Holding the keys
+// down runs the action once.
+export function useKeyboardShortcut(name: KeyboardShortcutName, action: () => void) {
+  const isMac = use(IsMacContext)
+  const runAction = useEffectEvent(action)
+
+  useEffect(() => {
+    const keys = shortcutKeys(keyboardShortcuts[name], isMac)
+    const runOnShortcut = (event: KeyboardEvent) => {
+      if (event.repeat || event.defaultPrevented || !matchesKeyCombo(event, keys, isMac)) {
+        return
+      }
+      if (isKeyForFocusedElement(event)) {
+        return
+      }
+      event.preventDefault()
+      runAction()
+    }
+    window.addEventListener("keydown", runOnShortcut)
+    return () => window.removeEventListener("keydown", runOnShortcut)
+  }, [name, isMac])
+}

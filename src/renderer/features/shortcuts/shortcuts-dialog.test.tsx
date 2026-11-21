@@ -1,0 +1,59 @@
+import { render, screen, within } from "@testing-library/react"
+import { userEvent } from "@testing-library/user-event"
+import { describe, expect, it } from "vitest"
+import { IsMacContext } from "./is-mac-context"
+import { keyboardShortcuts } from "./keyboard-shortcuts"
+import { ShortcutsDialog } from "./shortcuts-dialog"
+
+const openShortcutsDialog = async (isMac: boolean) => {
+  render(
+    <IsMacContext value={isMac}>
+      <ShortcutsDialog />
+    </IsMacContext>,
+  )
+  await userEvent.keyboard("?")
+  return screen.getByRole("dialog", { name: "Keyboard shortcuts" })
+}
+
+// The keys listed beside a shortcut's description.
+const keysFor = (dialog: HTMLElement, description: string) =>
+  within(dialog).getByText(description).nextElementSibling
+
+describe("ShortcutsDialog", () => {
+  it("lists every shortcut when ? is pressed", async () => {
+    const dialog = await openShortcutsDialog(false)
+
+    for (const { description } of Object.values(keyboardShortcuts)) {
+      expect(within(dialog).getByText(description)).toBeInTheDocument()
+    }
+    expect(keysFor(dialog, "Play or pause")).toHaveTextContent("Space")
+    expect(keysFor(dialog, "Next track")).toHaveTextContent("Ctrl→")
+    expect(keysFor(dialog, "Go back")).toHaveTextContent("Alt←")
+    expect(keysFor(dialog, "Show or hide the queue")).toHaveTextContent("AltShiftQ")
+  })
+
+  it("lists the macOS keys on macOS", async () => {
+    const dialog = await openShortcutsDialog(true)
+
+    expect(keysFor(dialog, "Next track")).toHaveTextContent("Cmd→")
+    expect(keysFor(dialog, "Go back")).toHaveTextContent("Cmd[")
+    expect(keysFor(dialog, "Show or hide the queue")).toHaveTextContent("OptionShiftQ")
+  })
+
+  it("closes with the Close button", async () => {
+    const dialog = await openShortcutsDialog(false)
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Close" }))
+
+    expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument()
+  })
+
+  it("stays closed when ? is typed in a text field", async () => {
+    render(<ShortcutsDialog />)
+    render(<input aria-label="Notes" />)
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Notes" }), "?")
+
+    expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument()
+  })
+})

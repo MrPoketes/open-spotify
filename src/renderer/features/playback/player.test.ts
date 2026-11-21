@@ -259,6 +259,22 @@ describe("Player", () => {
     }).pipe(Effect.scoped, Effect.provide(playerOver(spotifyApiFake))),
   )
 
+  // Media keys work while the window is minimized, and the operating system's
+  // media overlay should show the track they skipped to.
+  it.effect("reads the playback state again after a skip while the window is hidden", () =>
+    Effect.gen(function* () {
+      const player = yield* Player
+      const states = yield* subscribe
+      yield* Queue.take(states)
+      yield* setWindowVisibility("hidden")
+
+      yield* player.skipToNext
+      const stateAfterSkip = yield* Queue.take(states)
+
+      assert.strictEqual(playingName(stateAfterSkip), fakeTrack(1).name)
+    }).pipe(Effect.scoped, Effect.provide(playerOver(spotifyApiFake))),
+  )
+
   it.effect("reads the playback state again when a command finds no active device", () => {
     let hasLostDevice = false
     const spotify = spotifyApiFakeWith((fake) => ({
