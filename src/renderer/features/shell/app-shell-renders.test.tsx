@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Profiler } from "react"
 import { afterEach, describe, expect, it } from "vitest"
+import { setWindowVisibility } from "../../lib/fake-window-visibility"
 import { useFolderTree } from "../folders/folder-tree"
 import { useEditablePlaylists } from "../track-actions/editable-playlists"
 import { FakeMainView } from "../track-list/fake-main-view"
@@ -29,11 +30,6 @@ function TrackMenuLoadStatus() {
       Folders {folderTree.state.status}, editable playlists {editablePlaylists.state.status}
     </p>
   )
-}
-
-const setWindowVisibility = (visibility: DocumentVisibilityState) => {
-  Object.defineProperty(document, "visibilityState", { configurable: true, value: visibility })
-  document.dispatchEvent(new Event("visibilitychange"))
 }
 
 afterEach(() => setWindowVisibility("visible"))
