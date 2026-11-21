@@ -164,6 +164,8 @@ const seekCommands = (
         if (shown === null) {
           return
         }
+        // While playing, the position worked out since the last poll can run
+        // past the end of the item.
         const fromMs = Math.min(shown.progressMs, shown.durationMs)
         const targetMs = clamp(fromMs + offsetMs, 0, shown.durationMs)
         if (targetMs !== fromMs) {

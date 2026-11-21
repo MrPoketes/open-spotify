@@ -199,10 +199,10 @@ describe("playback shortcuts", () => {
     await showsPosition(await seekBar(), "0:07 of 0:07")
 
     await userEvent.keyboard(
-      "{Control>}{Shift>}{ArrowRight}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowRight}{/Shift}{/Control}",
+      "{Control>}{Shift>}{ArrowRight}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
     )
 
-    await waitFor(() => expect(seekPositions).toEqual([2_000, 0, 5_000]))
+    await waitFor(() => expect(seekPositions).toEqual([2_000, 0, 5_000, 7_000]))
   })
 
   it("says why and sends nothing when Spotify does not allow seeking", async () => {
