@@ -1,5 +1,10 @@
 import { type ReactNode, use, useState } from "react"
 import {
+  defaultRightPaneWidth,
+  maximumRightPaneWidth,
+  minimumRightPaneWidth,
+} from "../../../shared/right-pane-width"
+import {
   defaultSidebarWidth,
   maximumSidebarWidth,
   minimumSidebarWidth,
@@ -21,6 +26,7 @@ import { useHistoryShortcuts } from "./use-history-shortcuts"
 
 interface AppShellProps {
   readonly savedSidebarWidth: number
+  readonly savedRightPaneWidth: number
   readonly savedTrackListDensity: TrackListDensity
   readonly platform: string
   readonly children: ReactNode
@@ -28,12 +34,14 @@ interface AppShellProps {
 
 export function AppShell({
   savedSidebarWidth,
+  savedRightPaneWidth,
   savedTrackListDensity,
   platform,
   children,
 }: AppShellProps) {
   const runtime = use(RendererRuntimeContext)
   const [sidebarWidth, setSidebarWidth] = useState(savedSidebarWidth)
+  const [rightPaneWidth, setRightPaneWidth] = useState(savedRightPaneWidth)
   const { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef } = useQueuePane()
   useHistoryShortcuts(platform)
 
@@ -45,6 +53,7 @@ export function AppShell({
             <Sidebar width={sidebarWidth} />
             <PaneDivider
               label="Resize sidebar"
+              paneSide="left"
               paneWidth={sidebarWidth}
               minimumWidth={minimumSidebarWidth}
               maximumWidth={maximumSidebarWidth}
@@ -60,7 +69,21 @@ export function AppShell({
                 </TrackListDensityProvider>
               </main>
             </div>
-            {isQueueOpen && <QueuePane ref={queuePaneRef} onClose={closeQueue} />}
+            {isQueueOpen && (
+              <>
+                <PaneDivider
+                  label="Resize queue"
+                  paneSide="right"
+                  paneWidth={rightPaneWidth}
+                  minimumWidth={minimumRightPaneWidth}
+                  maximumWidth={maximumRightPaneWidth}
+                  defaultWidth={defaultRightPaneWidth}
+                  onResize={setRightPaneWidth}
+                  onResizeEnd={(width) => runtime.runFork(saveSetting("rightPaneWidth", width))}
+                />
+                <QueuePane ref={queuePaneRef} width={rightPaneWidth} onClose={closeQueue} />
+              </>
+            )}
           </div>
           <NowPlayingBar
             isQueueOpen={isQueueOpen}

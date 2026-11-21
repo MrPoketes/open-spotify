@@ -4,6 +4,7 @@ const keyboardStep = 16
 
 interface PaneDividerProps {
   readonly label: string
+  readonly paneSide: "left" | "right"
   readonly paneWidth: number
   readonly minimumWidth: number
   readonly maximumWidth: number
@@ -12,11 +13,12 @@ interface PaneDividerProps {
   readonly onResizeEnd: (width: number) => void
 }
 
-// Resizes the pane on its left. `onResize` fires on every change so the
+// Resizes the pane on its `paneSide`. `onResize` fires on every change so the
 // layout follows the pointer; `onResizeEnd` fires once the user lets go, so
 // callers can save the width without writing on every pointer move.
 export function PaneDivider({
   label,
+  paneSide,
   paneWidth,
   minimumWidth,
   maximumWidth,
@@ -24,6 +26,8 @@ export function PaneDivider({
   onResize,
   onResizeEnd,
 }: PaneDividerProps) {
+  const growDirection = paneSide === "left" ? 1 : -1
+
   // Whole pixels, because high-DPI screens report fractional pointer positions.
   const clampWidth = (width: number) =>
     Math.round(Math.min(maximumWidth, Math.max(minimumWidth, width)))
@@ -47,7 +51,7 @@ export function PaneDivider({
     const startX = pointerDown.clientX
     let draggedWidth = paneWidth
     const followPointer = (pointerMove: globalThis.PointerEvent) => {
-      draggedWidth = clampWidth(paneWidth + pointerMove.clientX - startX)
+      draggedWidth = clampWidth(paneWidth + (pointerMove.clientX - startX) * growDirection)
       onResize(draggedWidth)
     }
     const stopDrag = () => {
@@ -64,8 +68,8 @@ export function PaneDivider({
   }
 
   const widthForKey: Partial<Record<string, number>> = {
-    ArrowLeft: paneWidth - keyboardStep,
-    ArrowRight: paneWidth + keyboardStep,
+    ArrowLeft: paneWidth - keyboardStep * growDirection,
+    ArrowRight: paneWidth + keyboardStep * growDirection,
     Home: minimumWidth,
     End: maximumWidth,
   }

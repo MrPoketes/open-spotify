@@ -10,17 +10,19 @@ import { UpNextList } from "./up-next-list"
 
 interface QueuePaneProps {
   readonly ref: RefObject<HTMLElement | null>
+  readonly width: number
   readonly onClose: () => void
 }
 
-export function QueuePane({ ref, onClose }: QueuePaneProps) {
+export function QueuePane({ ref, width, onClose }: QueuePaneProps) {
   const headingId = useId()
   return (
     <aside
       ref={ref}
       aria-labelledby={headingId}
       tabIndex={-1}
-      className="ml-2 flex w-80 shrink-0 flex-col overflow-hidden rounded-medium bg-surface"
+      style={{ width }}
+      className="flex shrink-0 flex-col overflow-hidden rounded-medium bg-surface"
     >
       <div className="flex h-14 shrink-0 items-center justify-between px-4">
         <h2 id={headingId} className="text-xl font-bold">

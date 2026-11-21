@@ -250,9 +250,10 @@ tabbing outside closes it.
 ### Queue pane
 
 The queue opens in the right pane from the bar's queue button or `Alt+Shift+Q` (`Option+Shift+Q`
-on macOS), and either one closes it again. The pane is 320 px wide; resizing it is not built
-yet. Its header holds the "Queue" heading and a close button. Opening the pane moves focus into
-it, and closing it while focus is inside returns focus to the queue button.
+on macOS), and either one closes it again. The pane divider on its left resizes it like the
+sidebar's (see Accessibility), and the width is remembered. Its header holds the "Queue" heading
+and a close button. Opening the pane moves focus into it, and closing it while focus is inside
+returns focus to the queue button.
 
 The pane shows a "Now playing" section with the playing item and a "Next up" list, both in the
 now-playing bar's layout: 40 px artwork, the title, and the artists or "Podcast episode". Each
@@ -561,9 +562,9 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
   if a component needs a different shape, change the outline, not its visibility.
 - **Keyboard.** Every action works from the keyboard. Lists use one tab stop and arrow keys
   inside (roving focus, `src/renderer/ui/use-roving-focus.ts`). Dialogs and the command
-  palette trap focus and return it on close. Pane dividers are focusable: the arrow keys resize
-  by 16 px, `Home` and `End` jump to the narrowest and widest size, and a double-click restores
-  the default size.
+  palette trap focus and return it on close. Pane dividers are focusable: the arrow keys move
+  the divider 16 px, `Home` and `End` jump to the narrowest and widest size, and a double-click
+  restores the default size.
 - **Targets.** Interactive elements are at least 24 × 24 px. Dense rows are 32 px tall.
 - **Not color alone.** State is never shown by color only. The playing track also shows an
   icon, and errors carry text.

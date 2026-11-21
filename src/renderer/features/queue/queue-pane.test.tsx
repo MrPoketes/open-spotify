@@ -17,7 +17,7 @@ const renderQueuePane = (spotifyApi: Layer.Layer<SpotifyApi> = spotifyApiFake) =
   const runtime = fakeRendererRuntime({ spotifyApi })
   render(
     <RendererRuntimeContext value={runtime}>
-      <QueuePane ref={{ current: null }} onClose={() => undefined} />
+      <QueuePane ref={{ current: null }} width={320} onClose={() => undefined} />
     </RendererRuntimeContext>,
   )
   return runtime
