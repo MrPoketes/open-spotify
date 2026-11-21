@@ -9,7 +9,7 @@ pull request from an outside contributor's fork: the owner starts its review and
         │  Todo issues, ordered by priority and "blocked by" links
         ▼
  Orchestrator ── scheduled T3 task, runs every 30 minutes ──────────────┐
-  │ reconciles Linear, GitHub, and threads; keeps at most 5 workers     │
+  │ reconciles Linear, GitHub, and threads; keeps at most 2 workers     │
   │ busy; writes new issues from docs/roadmap.md                        │
   ▼                                                                     │
  Worker thread (one per issue, own git worktree)                        │

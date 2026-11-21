@@ -1,7 +1,7 @@
 # Orchestrator playbook
 
 You run on a schedule, with a fresh session each time. You do not write product code. You keep
-the pipeline moving: at most **5** workers busy, every issue in the right state, and enough
+the pipeline moving: at most **2** workers busy, every issue in the right state, and enough
 well-defined work queued.
 
 Work through the steps in order. Be brief: most runs change little.
@@ -24,15 +24,29 @@ Work through the steps in order. Be brief: most runs change little.
 
 ## 2. Reconcile
 
+### Worker states
+
+An issue's worker is the newest thread titled `ARM-<n>: …`. Find it with `t3_thread_list` and
+`titleContains: "ARM-<n>:"`, because the full list comes back in pages. Classify it by its T3
+status:
+
+- **Active** (holds a slot): `preparing`, `queued`, `starting`, `running`, or `waiting`; or
+  `idle` or `completed` while it still has work in flight. That means its
+  `pendingBackgroundTasks` is not empty (a test run it is waiting for), or one of its
+  `pullRequests` has `state: "open"` and `watching: true` (a worker waiting on CI).
+- **Paused** (holds no slot): `interrupted`, `failed`, `cancelled`, or `rolled_back`; or `idle`
+  or `completed` with no background task and no watched open PR, meaning it stopped before
+  finishing.
+
 For each issue in `In Progress` or `In Review`:
 
-| Situation                                                                     | Action                                                                                                                                                                                                                                                                |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Its PR is merged                                                              | Move it to `Done` and comment with the PR link (the worker may have died before doing it).                                                                                                                                                                            |
-| Its thread is `failed`, `interrupted`, or `cancelled`                         | `t3_thread_read` it to see where it stopped. Then send the thread a message (`t3_thread_send`) telling it to continue from there, following `docs/agents/worker.md`. If it has already failed twice, comment on the issue with what went wrong and move it to `Todo`. |
-| Its thread is idle, it has an open PR, and checks are red or the PR conflicts | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.`                                                                                                                                                      |
-| Its thread is idle with no PR and no progress for 2 hours                     | Send the thread a nudge to continue. On the second time, move the issue to `Todo` with a comment.                                                                                                                                                                     |
-| No thread exists for it                                                       | Move it to `Todo`.                                                                                                                                                                                                                                                    |
+| Situation                                                                                                                                                              | Action                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Its PR is merged                                                                                                                                                       | Move it to `Done` and comment with the PR link (the worker may have died before doing it).                       |
+| No thread exists for it                                                                                                                                                | Move it to `Todo`.                                                                                               |
+| Its worker is paused and has been resumed twice already (two `Resumed by the orchestrator` comments that link this worker's thread; read every comment page as in 3.2) | Comment on the issue with what went wrong, from the thread, and move it to `Todo`.                               |
+| Its worker is paused otherwise                                                                                                                                         | Leave it. Step 3 resumes it when a slot is free.                                                                 |
+| Its worker is active, watching a PR whose checks failed or that conflicts, and the thread's `updatedAt` is more than an hour old                                       | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.` |
 
 Then delete the backups (see 3.1) that nobody needs any more. For each branch that
 `git ls-remote --heads origin "refs/heads/backup/*"` lists, find its issue from the `arm-<n>`
@@ -40,12 +54,21 @@ in its name. If that issue is `Done` or `Canceled`, run `git push origin --delet
 
 ## 3. Fill free slots
 
-Active workers are issues in `In Progress` or `In Review` with a live thread. While there are
-fewer than 5:
+Count the issues in `In Progress` or `In Review` whose worker is active (see the worker states
+in step 2). A worker you resume or launch in this run counts as active from that moment. While
+there are fewer than 2, first resume paused workers: `In Review` issues before `In Progress`, oldest thread first. For
+each one:
+
+1. `t3_thread_read` the thread to see where it stopped.
+2. Comment on the issue: `Resumed by the orchestrator: <thread link>`.
+3. `t3_thread_send` it a message telling it to continue from there, following
+   `docs/agents/worker.md`. If its open PR has failed checks or conflicts, say so.
+
+When no paused worker is left and a slot is still free:
 
 1. Pick the next `Todo` issue: highest priority first (Urgent, High, Medium, Low, None), then
    oldest. Skip issues with an unfinished `blocked by` issue. Skip issues whose files are likely
-   to collide with an active worker's issue (same feature folder) unless nothing else is ready.
+   to collide with an active or paused worker's issue (same feature folder) unless nothing else is ready.
 2. Count its earlier workers (see 3.2). If it has had 3 or more since it was last parked, park it
    (see 3.3) and go back to item 1.
 3. Choose its `workspaceStrategy` and `message` (see 3.1). If 3.1 parks the issue, go back to
@@ -136,7 +159,7 @@ fresh workers, because the count starts after its last `Parked:` comment.
 
 ## 4. Keep the queue full
 
-If fewer than 5 unblocked issues are in `Todo`, create more from
+If fewer than 3 unblocked issues are in `Todo`, create more from
 [docs/roadmap.md](../roadmap.md):
 
 - Take the earliest milestone whose items are not all in Linear yet (Linear milestones match the
@@ -301,7 +324,7 @@ since the last one: issues finished, workers started, problems found. Keep it to
 
 - Never write product code yourself and never merge a PR you did not open. The only commit you
   make is a release's version bump (step 5).
-- Never launch more than 5 workers.
+- Never launch more than 2 workers.
 - Never ask the owner for input. If something needs a human (for example, a Spotify account
   change), create an Urgent issue titled `Needs owner: …` (team `Armintas`, project
   `Open Spotify`, label `Open-Spotify`) and keep working on everything else.

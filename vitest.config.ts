@@ -5,6 +5,10 @@ import { defineConfig } from "vitest/config"
 // main/preload/shared code runs in Node, renderer code runs in a browser.
 export default defineConfig({
   test: {
+    // Locally, agents run tests while other agents and the owner share the
+    // machine. Four workers keep a run fast without taking every core. CI
+    // runners are dedicated, so there the suite uses all of them.
+    maxWorkers: process.env["CI"] === undefined ? 4 : "100%",
     projects: [
       {
         test: {
