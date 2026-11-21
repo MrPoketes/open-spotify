@@ -1,5 +1,6 @@
 import { CardGrid, type GridCard } from "../../ui/card-grid"
 import { artistCard } from "../artist/artist-card"
+import { useWithFolderMenu } from "../folders/use-with-folder-menu"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import type { SearchAlbum } from "../spotify/spotify-album"
@@ -32,6 +33,7 @@ interface SearchResultSectionsProps {
 }
 
 export function SearchResultSections({ query, firstPages }: SearchResultSectionsProps) {
+  const withFolderMenu = useWithFolderMenu()
   return (
     <>
       <ResultSection
@@ -53,7 +55,11 @@ export function SearchResultSections({ query, firstPages }: SearchResultSections
         pageOf={({ artists }) => artists}
       >
         {(artists, rowFocusRef) => (
-          <CardGrid label="Artists" cards={artists.map(artistCard)} rowFocusRef={rowFocusRef} />
+          <CardGrid
+            label="Artists"
+            cards={artists.map((artist) => withFolderMenu(artistCard(artist), artist.uri))}
+            rowFocusRef={rowFocusRef}
+          />
         )}
       </ResultSection>
       <ResultSection
@@ -64,7 +70,11 @@ export function SearchResultSections({ query, firstPages }: SearchResultSections
         pageOf={({ albums }) => albums}
       >
         {(albums, rowFocusRef) => (
-          <CardGrid label="Albums" cards={albums.map(albumCard)} rowFocusRef={rowFocusRef} />
+          <CardGrid
+            label="Albums"
+            cards={albums.map((album) => withFolderMenu(albumCard(album), album.uri))}
+            rowFocusRef={rowFocusRef}
+          />
         )}
       </ResultSection>
       <ResultSection
@@ -77,7 +87,9 @@ export function SearchResultSections({ query, firstPages }: SearchResultSections
         {(playlists, rowFocusRef) => (
           <CardGrid
             label="Playlists"
-            cards={playlists.map(playlistCard)}
+            cards={playlists.map((playlist) =>
+              withFolderMenu(playlistCard(playlist), playlist.uri),
+            )}
             rowFocusRef={rowFocusRef}
           />
         )}

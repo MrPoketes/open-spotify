@@ -2,6 +2,7 @@ import { Effect } from "effect"
 import { useId, useState } from "react"
 import { CardGrid, type GridCard } from "../../ui/card-grid"
 import { useCardGridColumnCount } from "../../ui/use-card-grid-column-count"
+import { useWithFolderMenu } from "../folders/use-with-folder-menu"
 import { NextPageFooter } from "../spotify/next-page-footer"
 import type { ArtistAlbum, ArtistAlbumsPage } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
@@ -39,6 +40,7 @@ export function DiscographySection({
   const gridId = useId()
   const [isExpanded, setIsExpanded] = useState(false)
   const { gridRef, columnCount } = useCardGridColumnCount()
+  const withFolderMenu = useWithFolderMenu()
   const loadPage = (offset: number) =>
     Effect.gen(function* () {
       const spotify = yield* SpotifyApi
@@ -82,7 +84,7 @@ export function DiscographySection({
         id={gridId}
         ref={gridRef}
         label={title}
-        cards={shownAlbums.map(albumCard)}
+        cards={shownAlbums.map((album) => withFolderMenu(albumCard(album), album.uri))}
         rowFocusRef={resultRowsRef}
       />
       <NextPageFooter

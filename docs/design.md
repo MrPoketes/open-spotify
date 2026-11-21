@@ -543,6 +543,11 @@ Add to playlist says why in the status message instead of opening an empty subme
 Every sidebar library entry except Liked Songs, which no folder can hold, has a context menu with
 Add to folder.
 
+Every playlist, artist, album, or show card has a context menu with Add to folder: on the home
+page, in an artist's discography, in search results, and on a folder page, where each entry's
+menu, in the grid or the list, has it too. A folder inside a folder is not a Spotify item, so its
+entry has no menu.
+
 The header of an album, playlist, artist, or show page has a context menu with Add to folder, and
 the same menu opens from a 32 px `Ellipsis` "More options" button right of the page's play button
 (alone, for an empty playlist). The header is a tab stop, so `Shift+F10` and the context-menu key

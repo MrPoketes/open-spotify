@@ -28,6 +28,7 @@ export const SearchAlbum = Schema.Struct({
   name: Schema.String,
   images: Schema.Array(Image),
   artists: Schema.Array(SimplifiedArtist),
+  uri: Schema.String,
 })
 
 export type SearchAlbum = typeof SearchAlbum.Type
@@ -39,6 +40,7 @@ export const ArtistAlbum = Schema.Struct({
   images: Schema.Array(Image),
   // A year, a year and month, or a full date, depending on what Spotify knows.
   releaseDate: Schema.String,
+  uri: Schema.String,
 }).pipe(Schema.encodeKeys({ releaseDate: "release_date" }))
 
 export type ArtistAlbum = typeof ArtistAlbum.Type

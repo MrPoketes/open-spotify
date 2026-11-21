@@ -229,6 +229,46 @@ describe("FolderPage", () => {
     ).toBeInTheDocument()
   })
 
+  it.each(["Grid", "List"])(
+    "removes an entry from the folder through its own menu in the %s view",
+    async (view) => {
+      renderFolderPage(runningId)
+      await userEvent.click(await screen.findByRole("button", { name: view }))
+      const entries = await folderContents()
+
+      await userEvent.pointer({
+        keys: "[MouseRight]",
+        target: within(entries).getByRole("link", { name: /Low Orbit/ }),
+      })
+      await userEvent.click(screen.getByRole("menuitem", { name: "Add to folder" }))
+      const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
+      await userEvent.click(within(folderSubmenu).getByRole("menuitem", { name: "Running" }))
+      await userEvent.click(
+        within(screen.getByRole("menu", { name: "Running" })).getByRole("menuitemcheckbox", {
+          name: "Running",
+          checked: true,
+        }),
+      )
+
+      expect(await screen.findByText("Removed from Running")).toBeInTheDocument()
+      expect(within(entries).queryByRole("link", { name: /Low Orbit/ })).not.toBeInTheDocument()
+      expect(screen.getByText("6 items")).toBeInTheDocument()
+    },
+  )
+
+  // A folder is not a Spotify item, so Add to folder cannot hold it.
+  it("opens no menu for a folder inside the folder", async () => {
+    renderFolderPage(runningId)
+    const entries = await folderContents()
+
+    await userEvent.pointer({
+      keys: "[MouseRight]",
+      target: within(entries).getByRole("link", { name: /Warm-up/ }),
+    })
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+  })
+
   it("explains how to add items to an empty folder", async () => {
     renderFolderPage(stretchingId)
 

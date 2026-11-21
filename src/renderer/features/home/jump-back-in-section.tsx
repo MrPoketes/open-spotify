@@ -4,6 +4,7 @@ import { LoadingMessage } from "../../ui/loading-message"
 import type { SpotifyApiError } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { PlayHistory } from "../spotify/spotify-play-history"
+import { useWithFolderMenu } from "../folders/use-with-folder-menu"
 import { HomeSection } from "./home-section"
 import { type PageContext, loadJumpBackInCards, recentPageContexts } from "./jump-back-in"
 import { LoadedContent } from "./loaded-content"
@@ -14,6 +15,7 @@ const failureMessage = "Jump back in didn't load."
 
 function JumpBackInCards({ contexts }: { readonly contexts: ReadonlyArray<PageContext> }) {
   const { state, retry } = useLoad(loadJumpBackInCards(contexts), "Jump back in failed to load")
+  const withFolderMenu = useWithFolderMenu()
   if (state.status === "loaded" && state.value.length === 0) {
     return null
   }
@@ -25,7 +27,9 @@ function JumpBackInCards({ contexts }: { readonly contexts: ReadonlyArray<PageCo
         failureMessage={failureMessage}
         onRetry={retry}
       >
-        {(cards) => <CardGrid label={title} cards={cards} />}
+        {(cards) => (
+          <CardGrid label={title} cards={cards.map(({ uri, card }) => withFolderMenu(card, uri))} />
+        )}
       </LoadedContent>
     </HomeSection>
   )
