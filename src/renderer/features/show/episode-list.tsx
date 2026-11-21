@@ -1,7 +1,6 @@
 import { Effect } from "effect"
 import { useId } from "react"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
-import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
+import { NextPageFooter } from "../spotify/next-page-footer"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { ShowEpisodePage } from "../spotify/spotify-show"
 import { scrollLoadedListControls, useLoadControlFocus } from "../spotify/use-load-control-focus"
@@ -29,7 +28,6 @@ export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
     scrollLoadedListControls[nextPage],
     episodes.length,
   )
-  const scrollEndRef = useScrolledIntoView(loadNextPage, hasMoreEpisodes && nextPage === "idle")
 
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-4">
@@ -42,17 +40,13 @@ export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
       {episodes.length > 0 && (
         <EpisodeRows showUri={showUri} episodes={episodes} rowFocusRef={resultRowsRef} />
       )}
-      {nextPage === "loading" && (
-        <output className="text-sm text-muted">Loading more episodes…</output>
-      )}
-      {nextPage === "failed" && (
-        <ErrorWithRetry
-          message="More episodes didn't load."
-          onRetry={loadNextPage}
-          retryRef={retryRef}
-        />
-      )}
-      <div ref={scrollEndRef} />
+      <NextPageFooter
+        kind="episodes"
+        nextPage={nextPage}
+        loadNextPage={loadNextPage}
+        wantsNextPage={hasMoreEpisodes}
+        retryRef={retryRef}
+      />
     </section>
   )
 }

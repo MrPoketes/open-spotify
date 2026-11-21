@@ -1,7 +1,9 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
 import { SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyItemNotFound } from "../spotify/spotify-item-not-found"
 import type { AlbumGroup } from "../spotify/spotify-artist-requests"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { ArtistHeader } from "./artist-header"
@@ -34,23 +36,14 @@ const loadArtist = Effect.fn("loadArtist")(function* (artistId: string) {
   )
 })
 
-function ArtistNotFound() {
-  return (
-    <section className="flex flex-col gap-2">
-      <h1 className="font-display text-3xl font-bold">Artist not found</h1>
-      <p className="text-muted">Spotify has no artist at this address. It may have been removed.</p>
-    </section>
-  )
-}
-
 export function ArtistPage({ artistId }: { readonly artistId: string }) {
   const { state, retry } = useLoad(loadArtist(artistId), "The artist failed to load")
 
   if (state.status === "loading") {
-    return <output className="text-sm text-muted">Loading artist…</output>
+    return <LoadingMessage>Loading artist…</LoadingMessage>
   }
   if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
-    return <ArtistNotFound />
+    return <SpotifyItemNotFound kind="Artist" />
   }
   if (state.status === "failed") {
     return (

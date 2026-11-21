@@ -1,7 +1,9 @@
 import { Effect, Stream } from "effect"
 import { useLoad } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
 import { SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyItemNotFound } from "../spotify/spotify-item-not-found"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { AlbumHeader } from "./album-header"
 import { AlbumTracks } from "./album-tracks"
@@ -18,15 +20,6 @@ const loadAlbum = Effect.fn("loadAlbum")(function* (albumId: string) {
   return { album, tracks: [...album.tracks.items, ...laterTracks] }
 })
 
-function AlbumNotFound() {
-  return (
-    <section className="flex flex-col gap-2">
-      <h1 className="font-display text-3xl font-bold">Album not found</h1>
-      <p className="text-muted">Spotify has no album at this address. It may have been removed.</p>
-    </section>
-  )
-}
-
 interface AlbumPageProps {
   readonly albumId: string
   // A track to highlight, for links that open a track on its album.
@@ -37,10 +30,10 @@ export function AlbumPage({ albumId, highlightedTrackId }: AlbumPageProps) {
   const { state, retry } = useLoad(loadAlbum(albumId), "The album failed to load")
 
   if (state.status === "loading") {
-    return <output className="text-sm text-muted">Loading album…</output>
+    return <LoadingMessage>Loading album…</LoadingMessage>
   }
   if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
-    return <AlbumNotFound />
+    return <SpotifyItemNotFound kind="Album" />
   }
   if (state.status === "failed") {
     return (

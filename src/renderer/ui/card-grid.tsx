@@ -1,8 +1,9 @@
 import { Link, type LinkProps } from "@tanstack/react-router"
 import type { LucideIcon } from "lucide-react"
-import { type Ref, useImperativeHandle } from "react"
+import type { Ref } from "react"
 import { Artwork, type ArtworkSource } from "./artwork"
-import { type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
+import { RovingList } from "./roving-list"
+import type { RowFocusHandle } from "./use-roving-focus"
 
 export interface GridCard {
   readonly key: string
@@ -26,35 +27,31 @@ interface CardGridProps {
 
 // Its columns must match useCardGridColumnCount.
 export function CardGrid({ id, label, cards, ref, rowFocusRef }: CardGridProps) {
-  const { onKeyDown, rowProps, focusRow } = useRovingFocus(cards.length)
-  useImperativeHandle(rowFocusRef, () => ({ focusRow }), [focusRow])
   return (
-    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- key presses bubble up from the focused card, and the grid moves focus between its cards: the roving focus docs/design.md requires for lists
-    <ul
+    <RovingList
       id={id}
       ref={ref}
-      onKeyDown={onKeyDown}
-      aria-label={label}
+      rowFocusRef={rowFocusRef}
+      label={label}
+      rows={cards}
+      rowKey={(card) => card.key}
       className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-6"
-    >
-      {cards.map((card, index) => (
-        <li key={card.key}>
-          <Link
-            {...card.link}
-            {...rowProps(index)}
-            className="flex flex-col gap-2 rounded-medium p-3 transition duration-120 ease-out hover:bg-surface-raised hover:shadow-raised"
-          >
-            <Artwork
-              sources={card.artwork}
-              size="fill"
-              className={card.roundArtwork ? "rounded-full" : "rounded-medium"}
-              placeholderIcon={card.placeholderIcon}
-            />
-            <span className="truncate text-sm font-semibold">{card.title}</span>
-            <span className="truncate text-xs text-muted">{card.details}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+      renderRow={(card, rovingProps) => (
+        <Link
+          {...card.link}
+          {...rovingProps}
+          className="flex flex-col gap-2 rounded-medium p-3 transition duration-120 ease-out hover:bg-surface-raised hover:shadow-raised"
+        >
+          <Artwork
+            sources={card.artwork}
+            size="fill"
+            className={card.roundArtwork ? "rounded-full" : "rounded-medium"}
+            placeholderIcon={card.placeholderIcon}
+          />
+          <span className="truncate text-sm font-semibold">{card.title}</span>
+          <span className="truncate text-xs text-muted">{card.details}</span>
+        </Link>
+      )}
+    />
   )
 }

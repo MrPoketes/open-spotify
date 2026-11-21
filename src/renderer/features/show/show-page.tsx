@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { EpisodeList } from "./episode-list"
@@ -17,7 +18,7 @@ export function ShowPage({ showId }: { readonly showId: string }) {
   const { state, retry } = useLoad(loadShow(showId), "The show failed to load")
 
   if (state.status === "loading") {
-    return <output className="text-sm text-muted">Loading show…</output>
+    return <LoadingMessage>Loading show…</LoadingMessage>
   }
   if (state.status === "failed") {
     return (

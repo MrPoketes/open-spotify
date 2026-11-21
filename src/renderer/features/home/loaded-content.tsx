@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import type { LoadState } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import type { SpotifyApiError } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 
@@ -20,7 +21,7 @@ export function LoadedContent<A>({
   children,
 }: LoadedContentProps<A>) {
   if (state.status === "loading") {
-    return <output className="text-sm text-muted">{loadingMessage}</output>
+    return <LoadingMessage>{loadingMessage}</LoadingMessage>
   }
   if (state.status === "failed") {
     return <SpotifyLoadFailure error={state.error} message={failureMessage} onRetry={onRetry} />

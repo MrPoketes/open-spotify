@@ -1,23 +1,16 @@
 import { Navigate } from "@tanstack/react-router"
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
+import { LoadingMessage } from "../../ui/loading-message"
 import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
 import { SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyItemNotFound } from "../spotify/spotify-item-not-found"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 
 const loadTrack = Effect.fn("loadTrack")(function* (trackId: string) {
   const spotify = yield* SpotifyApi
   return yield* spotify.getTrack(trackId)
 })
-
-function TrackNotFound() {
-  return (
-    <section className="flex flex-col gap-2">
-      <h1 className="font-display text-3xl font-bold">Track not found</h1>
-      <p className="text-muted">Spotify has no track at this address. It may have been removed.</p>
-    </section>
-  )
-}
 
 // A track has no page of its own, so it opens on its album page, highlighted.
 // This page finds the album for links that know only the track, such as a
@@ -26,10 +19,10 @@ export function TrackPage({ trackId }: { readonly trackId: string }) {
   const { state, retry } = useLoad(loadTrack(trackId), "The track failed to load")
 
   if (state.status === "loading") {
-    return <output className="text-sm text-muted">Loading track…</output>
+    return <LoadingMessage>Loading track…</LoadingMessage>
   }
   if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
-    return <TrackNotFound />
+    return <SpotifyItemNotFound kind="Track" />
   }
   if (state.status === "failed") {
     return (
@@ -40,7 +33,7 @@ export function TrackPage({ trackId }: { readonly trackId: string }) {
   // link to either.
   const albumId = state.value.album.id
   if (albumId === null) {
-    return <TrackNotFound />
+    return <SpotifyItemNotFound kind="Track" />
   }
   return <Navigate to="/album/$albumId" params={{ albumId }} search={{ track: trackId }} replace />
 }
