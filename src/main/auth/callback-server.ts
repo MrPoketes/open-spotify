@@ -80,7 +80,6 @@ export const listenOnRedirectPort = Effect.gen(function* () {
   const server = yield* listen(yield* LoginRedirectPort)
   const redirectUri = `${HttpServer.formatAddress(server.address)}${callbackPath}`
 
-  // Returns an effect that waits for Spotify's callback.
   const serveAuthorizationCallback = Effect.fn("serveAuthorizationCallback")(function* (
     expectedState: string,
   ) {

@@ -1,8 +1,9 @@
 import { createServer } from "node:net"
 import { assert, describe, it } from "@effect/vitest"
-import { Deferred, Effect, Fiber, Schema } from "effect"
+import { Deferred, Effect, Fiber, Layer, Schema } from "effect"
 import { TestClock } from "effect/testing"
 import {
+  type FakeSpotifyAccounts,
   approveLogin,
   approvingBrowser,
   callBack,
@@ -14,6 +15,7 @@ import {
   saveFakeClientId,
 } from "./spotify-session-fakes"
 import { SpotifySession } from "./spotify-session"
+import type { SystemBrowser } from "./system-browser"
 
 const ListeningAddress = Schema.Struct({ port: Schema.Number })
 
@@ -31,6 +33,19 @@ const occupyFreePort = Effect.acquireRelease(
   Effect.flatMap((server) => Schema.decodeUnknownEffect(ListeningAddress)(server.address())),
   Effect.map((address) => address.port),
 )
+
+// Every login in the test listens on this one port, as every login in the app
+// listens on 43821. A login that keeps the port then makes the next one fail
+// with LoginPortInUse.
+const fakeSessionOnOnePort = (
+  spotifyAccounts: FakeSpotifyAccounts,
+  browser: Layer.Layer<SystemBrowser>,
+) =>
+  Layer.unwrap(
+    Effect.scoped(occupyFreePort).pipe(
+      Effect.map((freePort) => fakeSpotifySession(spotifyAccounts, browser, freePort)),
+    ),
+  )
 
 describe("SpotifySession.logIn", () => {
   it.effect("logs in through the browser and then provides an access token", () => {
@@ -206,7 +221,23 @@ describe("SpotifySession.logIn", () => {
 
       assert.strictEqual(firstLoginError._tag, "LoginCancelled")
       assert.strictEqual(yield* session.getAccessToken, "access-token-1")
-    }).pipe(Effect.provide(fakeSpotifySession(spotifyAccounts, browserIgnoringFirstLogin)))
+    }).pipe(Effect.provide(fakeSessionOnOnePort(spotifyAccounts, browserIgnoringFirstLogin)))
+  })
+
+  // The user logs in again after logging out or after the session expires.
+  it.effect("frees the redirect port when a login finishes, so the next login can use it", () => {
+    const spotifyAccounts = makeFakeSpotifyAccounts()
+    return Effect.gen(function* () {
+      const session = yield* SpotifySession
+      yield* saveFakeClientId
+
+      yield* session.logIn
+      yield* session.logIn
+
+      assert.strictEqual(yield* session.getAccessToken, "access-token-2")
+    }).pipe(
+      Effect.provide(fakeSessionOnOnePort(spotifyAccounts, approvingBrowser(spotifyAccounts))),
+    )
   })
 
   it.effect("provides access tokens again after logging in over an expired session", () => {

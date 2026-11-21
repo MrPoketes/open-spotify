@@ -130,7 +130,9 @@ export const callBack = (authorizeUrl: URL, query: Record<string, string>) =>
   Effect.promise(async () => {
     const callbackUrl = new URL(authorizeUrl.searchParams.get("redirect_uri") ?? "")
     callbackUrl.search = new URLSearchParams(query).toString()
-    const response = await fetch(callbackUrl)
+    // Node's fetch would reuse its connection to an earlier login's server,
+    // which has closed it by now. A browser retries such a connection.
+    const response = await fetch(callbackUrl, { headers: { connection: "close" } })
     return response.text()
   })
 
