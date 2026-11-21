@@ -1,22 +1,31 @@
+import { Effect } from "effect"
 import { useId } from "react"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { useRovingFocus } from "../../ui/use-roving-focus"
 import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
-import type { Episode } from "../spotify/spotify-episode"
+import { SpotifyApi } from "../spotify/spotify-api"
+import type { ShowEpisodePage } from "../spotify/spotify-show"
+import { useNextPages } from "../spotify/use-next-pages"
 import { EpisodeRow } from "./episode-row"
-import type { NextPageStatus } from "./show-page-state"
 
 interface EpisodeListProps {
-  readonly episodes: ReadonlyArray<Episode>
-  readonly hasMoreEpisodes: boolean
-  readonly nextPage: NextPageStatus
-  readonly onLoadMore: () => void
+  readonly showId: string
+  readonly firstPage: ShowEpisodePage
 }
 
-export function EpisodeList({ episodes, hasMoreEpisodes, nextPage, onLoadMore }: EpisodeListProps) {
+// Later pages load as the end of the list scrolls into view.
+export function EpisodeList({ showId, firstPage }: EpisodeListProps) {
   const headingId = useId()
+  const loadPage = (offset: number) =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+      return yield* spotify.getShowEpisodePage(showId, offset)
+    })
+  const { items, nextOffset, nextPage, loadNextPage } = useNextPages({ firstPage, loadPage })
+  const episodes = items.filter((episode) => episode !== null)
+  const hasMoreEpisodes = nextOffset !== null
   const { onKeyDown, rowProps } = useRovingFocus(episodes.length)
-  const scrollEndRef = useScrolledIntoView(onLoadMore, hasMoreEpisodes && nextPage === "idle")
+  const scrollEndRef = useScrolledIntoView(loadNextPage, hasMoreEpisodes && nextPage === "idle")
 
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-4">
@@ -40,7 +49,7 @@ export function EpisodeList({ episodes, hasMoreEpisodes, nextPage, onLoadMore }:
         <output className="text-sm text-muted">Loading more episodes…</output>
       )}
       {nextPage === "failed" && (
-        <ErrorWithRetry message="More episodes didn't load." onRetry={onLoadMore} />
+        <ErrorWithRetry message="More episodes didn't load." onRetry={loadNextPage} />
       )}
       <div ref={scrollEndRef} />
     </section>

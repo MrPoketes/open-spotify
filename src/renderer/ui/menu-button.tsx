@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import { type FocusEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from "react"
+import { iconControlClassName } from "./icon-control-class-name"
 import { menuItemTargetForKey } from "./menu-item-target"
 
 export interface MenuAction {
@@ -64,7 +65,7 @@ export function MenuButton({ label, icon: Icon, actions }: MenuButtonProps) {
         aria-controls={openMenu === null ? undefined : menuId}
         onClick={() => setOpenMenu(openMenu === null ? { focusIndex: 0 } : null)}
         onKeyDown={openWithKeyboard}
-        className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-120 ease-out hover:bg-surface-raised hover:text-foreground"
+        className={iconControlClassName}
       >
         <Icon aria-hidden size={20} />
       </button>

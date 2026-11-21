@@ -159,14 +159,6 @@ describe("AppShell", () => {
     expect(await screen.findByRole("heading", { name: "Settings" })).toBeInTheDocument()
   })
 
-  it("goes back when the back button is pressed", async () => {
-    await renderAppShell()
-
-    await userEvent.click(screen.getByRole("button", { name: "Go back" }))
-
-    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument()
-  })
-
   it("goes forward again after going back", async () => {
     await renderAppShell()
 

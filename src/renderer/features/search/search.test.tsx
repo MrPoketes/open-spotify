@@ -15,7 +15,7 @@ import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import { SpotifyApi } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { SearchType } from "../spotify/spotify-search"
 import { giveMainViewALayout } from "../track-list/fake-main-view-layout"
 import { SearchField } from "./search-field"
@@ -35,7 +35,7 @@ const recordingSpotify = ({ slowQuery = "", failFirstAtOffset = -1 } = {}) => {
   const searches: Array<SearchRequest> = []
   const slowSearchLatch = Latch.makeUnsafe(false)
   const failFirst = failingFirstTime()
-  const layer = SpotifyApi.layerFakeWith((spotify) => ({
+  const layer = spotifyApiFakeWith((spotify) => ({
     search: (query, types, offset) => {
       const search = Effect.suspend(() => {
         searches.push({ query, types, offset })

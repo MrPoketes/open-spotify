@@ -1,6 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router"
 import { ChevronLeft, ChevronRight, Settings } from "lucide-react"
 import { IconButton } from "../../ui/icon-button"
+import { iconControlClassName } from "../../ui/icon-control-class-name"
 import { SearchField } from "../search/search-field"
 
 export function TopBar() {
@@ -15,7 +16,7 @@ export function TopBar() {
         to="/settings"
         aria-label="Settings"
         title="Settings"
-        className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-120 ease-out hover:bg-surface-raised hover:text-foreground"
+        className={`ml-auto ${iconControlClassName}`}
       >
         <Settings aria-hidden size={20} />
       </Link>

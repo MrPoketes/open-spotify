@@ -9,8 +9,8 @@ import { encodeIcoFile } from "./ico-file.ts"
 
 // Run with `pnpm icons` after editing build/icon.svg, and commit the output,
 // so packaging needs no image tooling.
-const buildDir = path.join(import.meta.dirname, "../build")
-const linuxIconsDir = path.join(buildDir, "icons")
+const buildDirectory = path.join(import.meta.dirname, "../build")
+const linuxIconsDirectory = path.join(buildDirectory, "icons")
 const linuxIconSizes = [16, 32, 48, 64, 128, 256, 512]
 
 class IconRenderError extends Schema.TaggedError<IconRenderError>()("IconRenderError", {
@@ -25,7 +25,7 @@ const loadRenderer = Effect.fn("loadRenderer")(function* (fileSystem: FileSystem
     try: () => initWasm(wasm),
     catch: (cause) => new IconRenderError({ cause }),
   })
-  const svg = yield* fileSystem.readFileString(path.join(buildDir, "icon.svg"))
+  const svg = yield* fileSystem.readFileString(path.join(buildDirectory, "icon.svg"))
   // Parsing is the only step that can fail, so once the SVG parses here,
   // rendering it at each size below cannot fail.
   yield* Effect.try({
@@ -40,11 +40,14 @@ const generateAppIcons = Effect.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem
   const renderPng = yield* loadRenderer(fileSystem)
 
-  yield* fileSystem.writeFile(path.join(buildDir, "icon.ico"), encodeIcoFile(renderPng))
-  yield* fileSystem.writeFile(path.join(buildDir, "icon.icns"), encodeIcnsFile(renderPng))
-  yield* fileSystem.makeDirectory(linuxIconsDir, { recursive: true })
+  yield* fileSystem.writeFile(path.join(buildDirectory, "icon.ico"), encodeIcoFile(renderPng))
+  yield* fileSystem.writeFile(path.join(buildDirectory, "icon.icns"), encodeIcnsFile(renderPng))
+  yield* fileSystem.makeDirectory(linuxIconsDirectory, { recursive: true })
   for (const size of linuxIconSizes) {
-    yield* fileSystem.writeFile(path.join(linuxIconsDir, `${size}x${size}.png`), renderPng(size))
+    yield* fileSystem.writeFile(
+      path.join(linuxIconsDirectory, `${size}x${size}.png`),
+      renderPng(size),
+    )
   }
 })
 

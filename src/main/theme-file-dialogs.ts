@@ -3,7 +3,7 @@ import { Context, Effect, Layer, Option, Schema } from "effect"
 import type { Theme } from "../shared/theme"
 import { showModalMessageBox, showModalOpenDialog, showModalSaveDialog } from "./modal-dialogs"
 
-export class ThemeFileDialogError extends Schema.TaggedError<ThemeFileDialogError>()(
+class ThemeFileDialogError extends Schema.TaggedError<ThemeFileDialogError>()(
   "ThemeFileDialogError",
   {
     cause: Schema.Defect(),

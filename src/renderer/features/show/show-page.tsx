@@ -1,25 +1,34 @@
-import { Match } from "effect"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
+import { Effect } from "effect"
+import { useLoad } from "../../lib/use-load"
+import { SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { EpisodeList } from "./episode-list"
 import { ShowHeader } from "./show-header"
-import { useShowPage } from "./use-show-page"
+
+const loadShow = Effect.fn("loadShow")(function* (showId: string) {
+  const spotify = yield* SpotifyApi
+  return yield* Effect.all(
+    { show: spotify.getShow(showId), firstPage: spotify.getShowEpisodePage(showId, 0) },
+    { concurrency: "unbounded" },
+  )
+})
 
 export function ShowPage({ showId }: { readonly showId: string }) {
-  const { state, retryShow, loadMoreEpisodes } = useShowPage(showId)
+  const { state, retry } = useLoad(loadShow(showId), "The show failed to load")
 
-  return Match.valueTags(state, {
-    Loading: () => <output className="text-muted">Loading show…</output>,
-    Failed: () => <ErrorWithRetry message="This show didn't load." onRetry={retryShow} />,
-    Loaded: ({ show, episodes, nextOffset, nextPage }) => (
-      <div className="flex flex-col gap-8">
-        <ShowHeader show={show} />
-        <EpisodeList
-          episodes={episodes}
-          hasMoreEpisodes={nextOffset !== null}
-          nextPage={nextPage}
-          onLoadMore={loadMoreEpisodes}
-        />
-      </div>
-    ),
-  })
+  if (state.status === "loading") {
+    return <output className="text-sm text-muted">Loading show…</output>
+  }
+  if (state.status === "failed") {
+    return (
+      <SpotifyLoadFailure error={state.error} message="This show didn't load." onRetry={retry} />
+    )
+  }
+  const { show, firstPage } = state.value
+  return (
+    <div className="flex flex-col gap-8">
+      <ShowHeader show={show} />
+      <EpisodeList showId={showId} firstPage={firstPage} />
+    </div>
+  )
 }

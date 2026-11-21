@@ -1,7 +1,6 @@
 import { act, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import type { Layer } from "effect"
-import { Effect, Stream } from "effect"
+import { Effect, type Layer, Stream } from "effect"
 import { describe, expect, it } from "vitest"
 import {
   AccessTokenUnavailable,
@@ -10,7 +9,9 @@ import {
 } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
-import { SpotifyApi, type SpotifyApiError, SpotifyResponseError } from "../spotify/spotify-api"
+import { failingFirstTime } from "../spotify/failing-first-time"
+import type { SpotifyApi, SpotifyApiError } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import {
   fakeFollowedArtists,
   fakePlaylists,
@@ -19,23 +20,11 @@ import {
 } from "../spotify/spotify-fixtures"
 import { Library } from "./library"
 
-// Fails the first time it runs, like a request that hit a brief outage.
-const failingOnce = <A,>(stream: Stream.Stream<A, SpotifyApiError>) => {
-  let hasFailed = false
-  return Stream.suspend(() => {
-    if (hasFailed) {
-      return stream
-    }
-    hasFailed = true
-    return Stream.fail(new SpotifyResponseError({ status: 503, message: "Service unavailable" }))
-  })
-}
-
 const renderLibrary = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
   renderScreen(<Library />, fakeMainProcess(), spotifyApi)
 
 const failingWith = (error: SpotifyApiError) =>
-  SpotifyApi.layerFakeWith(() => ({ savedShows: Stream.fail(error) }))
+  spotifyApiFakeWith(() => ({ savedShows: Stream.fail(error) }))
 
 const libraryEntries = async () =>
   (await screen.findAllByRole("list")).flatMap((list) => within(list).getAllByRole("listitem"))
@@ -159,7 +148,7 @@ describe("Library", () => {
 
   it("explains where entries come from when the library is empty", async () => {
     renderLibrary(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         likedSongsCount: Effect.succeed(0),
         currentUserPlaylists: Stream.empty,
         savedAlbums: Stream.empty,
@@ -175,8 +164,13 @@ describe("Library", () => {
   })
 
   it("loads the library again when Retry is pressed after a failed request", async () => {
+    const failFirstRequest = failingFirstTime()
     renderLibrary(
-      SpotifyApi.layerFakeWith((spotify) => ({ savedShows: failingOnce(spotify.savedShows) })),
+      spotifyApiFakeWith((spotify) => ({
+        // The stream starts from an effect, so the first run fails before it
+        // reads any shows.
+        savedShows: Stream.unwrap(failFirstRequest(Effect.succeed(spotify.savedShows))),
+      })),
     )
 
     const failure = await screen.findByRole("alert")

@@ -9,7 +9,8 @@ import {
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import { SpotifyApi } from "../spotify/spotify-api"
+import type { SpotifyApi } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { ArtistPage } from "./artist-page"
 
 // jsdom does no layout. At this width the card grid fits four cards on a row.
@@ -29,12 +30,12 @@ const albumLinks = (sectionName: string) =>
     .getAllByRole("link")
     .map((card) => card.getAttribute("href"))
 
-const spotifyFailingFirstArtistRequest = SpotifyApi.layerFakeWith((spotify) => {
+const spotifyFailingFirstArtistRequest = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return { getArtist: (artistId) => failFirst(spotify.getArtist(artistId)) }
 })
 
-const spotifyFailingFirstLaterAlbumsPage = SpotifyApi.layerFakeWith((spotify) => {
+const spotifyFailingFirstLaterAlbumsPage = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return {
     getArtistAlbumsPage: (artistId, albumGroup, offset) => {

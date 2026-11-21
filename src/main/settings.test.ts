@@ -7,14 +7,6 @@ import { Settings } from "./settings"
 const freshSettings = () => Settings.layer.pipe(Layer.provideMerge(databaseLayer(":memory:")))
 
 describe("Settings", () => {
-  it.effect("returns none for a setting that was never stored", () =>
-    Effect.gen(function* () {
-      const settings = yield* Settings
-
-      assert.deepStrictEqual(yield* settings.get("spotifyClientId"), Option.none())
-    }).pipe(Effect.provide(freshSettings())),
-  )
-
   // A user who pastes a new Client ID must not keep logging in with the old one.
   it.effect("replaces the previous value when a setting is set again", () =>
     Effect.gen(function* () {

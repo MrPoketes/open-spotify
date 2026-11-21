@@ -14,7 +14,7 @@ Closes
 
 ## Tests
 
-<!-- For each test added: the behaviour it protects. -->
+<!-- For each test added: the behaviour it protects, and a bug that only this test would catch. -->
 
 ## Checklist
 

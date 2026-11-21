@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react"
+import { iconControlClassName } from "./icon-control-class-name"
 
 interface IconButtonProps {
   readonly label: string
@@ -13,7 +14,7 @@ export function IconButton({ label, icon: Icon, onClick }: IconButtonProps) {
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-120 ease-out hover:bg-surface-raised hover:text-foreground"
+      className={iconControlClassName}
     >
       <Icon aria-hidden size={20} />
     </button>

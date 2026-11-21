@@ -6,17 +6,14 @@ import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { Player } from "../playback/player"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import {
-  NoActiveDevice,
-  SpotifyApi,
-  SpotifyRequestError,
-  SpotifyResponseError,
-} from "../spotify/spotify-api"
+import type { SpotifyApi } from "../spotify/spotify-api"
+import { NoActiveDevice, SpotifyRequestError, SpotifyResponseError } from "../spotify/spotify-api"
+import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakePlayOrder } from "../spotify/spotify-fake-player"
 import { fakeDevices, fakeEpisode, fakeTrack } from "../spotify/spotify-fixtures"
 import { QueuePane } from "./queue-pane"
 
-const renderQueuePane = (spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake) => {
+const renderQueuePane = (spotifyApi: Layer.Layer<SpotifyApi> = spotifyApiFake) => {
   const runtime = fakeRendererRuntime({ spotifyApi })
   render(
     <RendererRuntimeContext value={runtime}>
@@ -37,7 +34,7 @@ const upNextRow = async (itemName: string) =>
 // cleared in another app while the pane showed it.
 const queueEmptiedAfterFirstRead = () => {
   let queueReads = 0
-  return SpotifyApi.layerFakeWith((spotify) => ({
+  return spotifyApiFakeWith((spotify) => ({
     getQueue: Effect.suspend(() => {
       queueReads += 1
       return queueReads === 1
@@ -133,7 +130,7 @@ describe("QueuePane", () => {
   it("ignores presses on a list that arrives while an item is still being played", async () => {
     const skips = gateAfter(1)
     const runtime = renderQueuePane(
-      SpotifyApi.layerFakeWith((spotify) => ({ skipToNext: skips.pass(spotify.skipToNext) })),
+      spotifyApiFakeWith((spotify) => ({ skipToNext: skips.pass(spotify.skipToNext) })),
     )
 
     await userEvent.click(await upNextRow(fakeTrack(2).name))
@@ -168,7 +165,7 @@ describe("QueuePane", () => {
     // The pane's first read and the press's lookup.
     const queueReads = gateAfter(2)
     renderQueuePane(
-      SpotifyApi.layerFakeWith((spotify) => ({ getQueue: queueReads.pass(spotify.getQueue) })),
+      spotifyApiFakeWith((spotify) => ({ getQueue: queueReads.pass(spotify.getQueue) })),
     )
     const closeButton = screen.getByRole("button", { name: "Close queue" })
 
@@ -228,7 +225,7 @@ describe("QueuePane", () => {
     // The pane's first read, its read after the skip, and the press's lookup.
     const queueReads = gateAfter(3)
     const runtime = renderQueuePane(
-      SpotifyApi.layerFakeWith((spotify) => ({ getQueue: queueReads.pass(spotify.getQueue) })),
+      spotifyApiFakeWith((spotify) => ({ getQueue: queueReads.pass(spotify.getQueue) })),
     )
     await section("Now playing")
     await skipToNext(runtime)
@@ -249,7 +246,7 @@ describe("QueuePane", () => {
 
   it("says so when an item could not be played", async () => {
     renderQueuePane(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         skipToNext: Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" })),
       })),
     )
@@ -261,7 +258,7 @@ describe("QueuePane", () => {
 
   it("explains that the queue is empty when nothing is playing or queued", async () => {
     renderQueuePane(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         getQueue: Effect.succeed({ currentlyPlaying: null, upNext: [] }),
       })),
     )
@@ -270,7 +267,7 @@ describe("QueuePane", () => {
   })
 
   it("asks for a device when no device is active", async () => {
-    renderQueuePane(SpotifyApi.layerFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
+    renderQueuePane(spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
 
     expect(await screen.findByText("No device is playing")).toBeInTheDocument()
     expect(
@@ -279,16 +276,14 @@ describe("QueuePane", () => {
   })
 
   it("asks for a device when the queue request finds no active device", async () => {
-    renderQueuePane(
-      SpotifyApi.layerFakeWith(() => ({ getQueue: Effect.fail(new NoActiveDevice()) })),
-    )
+    renderQueuePane(spotifyApiFakeWith(() => ({ getQueue: Effect.fail(new NoActiveDevice()) })))
 
     expect(await screen.findByText("No device is playing")).toBeInTheDocument()
   })
 
   it("says Spotify cannot be reached when the playback state fails to load", async () => {
     renderQueuePane(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         getPlaybackState: Effect.fail(new SpotifyRequestError({ cause: "offline" })),
       })),
     )
@@ -298,9 +293,7 @@ describe("QueuePane", () => {
 
   it("loads the queue again when Retry is pressed after it failed to load", async () => {
     const failFirst = failingFirstTime()
-    renderQueuePane(
-      SpotifyApi.layerFakeWith((spotify) => ({ getQueue: failFirst(spotify.getQueue) })),
-    )
+    renderQueuePane(spotifyApiFakeWith((spotify) => ({ getQueue: failFirst(spotify.getQueue) })))
 
     const failure = await screen.findByRole("alert")
     expect(failure).toHaveTextContent("The queue didn't load.")

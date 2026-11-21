@@ -1,39 +1,27 @@
-import { render, screen, within } from "@testing-library/react"
+import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import type { Layer } from "effect"
-import { Effect } from "effect"
+import { Effect, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
-import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
-import { RendererRuntimeContext } from "../../lib/renderer-runtime"
-import { SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { fakeMainProcess } from "../../lib/fake-main-process"
+import { renderScreen } from "../../lib/render-screen"
+import { failingFirstTime } from "../spotify/failing-first-time"
+import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakePlayingTrack } from "../spotify/spotify-fixtures"
 import { NowPlayingBar } from "./now-playing-bar"
 
-// Fails the first time it runs, like a request that hit a brief outage.
-const failingOnce = <A,>(effect: Effect.Effect<A, SpotifyResponseError>) => {
-  let hasFailed = false
-  return Effect.suspend(() => {
-    if (hasFailed) {
-      return effect
-    }
-    hasFailed = true
-    return Effect.fail(new SpotifyResponseError({ status: 503, message: "Service unavailable" }))
-  })
-}
-
 const noActiveDevice = { getPlaybackState: Effect.succeedNone }
 
-const renderNowPlayingBar = (spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake) => {
-  render(
-    <RendererRuntimeContext value={fakeRendererRuntime({ spotifyApi })}>
-      <NowPlayingBar
-        isQueueOpen={false}
-        onQueueToggle={() => undefined}
-        queueButtonRef={{ current: null }}
-      />
-    </RendererRuntimeContext>,
+const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
+  renderScreen(
+    <NowPlayingBar
+      isQueueOpen={false}
+      onQueueToggle={() => undefined}
+      queueButtonRef={{ current: null }}
+    />,
+    fakeMainProcess(),
+    spotifyApi,
   )
-}
 
 const pickerButton = (deviceLabel: string) =>
   screen.findByRole("button", { name: `Choose a device. ${deviceLabel}` })
@@ -58,7 +46,7 @@ describe("NowPlayingBar", () => {
   // Playback is remote control, so without an active device pressing play
   // would do nothing. The bar has to say why and offer the fix.
   it("explains where audio plays when no device is active and opens the picker", async () => {
-    renderNowPlayingBar(SpotifyApi.layerFakeWith(() => noActiveDevice))
+    renderNowPlayingBar(spotifyApiFakeWith(() => noActiveDevice))
 
     expect(
       await screen.findByText("Audio plays in the Spotify app or on another device."),
@@ -72,7 +60,7 @@ describe("NowPlayingBar", () => {
 
   it("says Spotify cannot be reached when the playback state fails to load", async () => {
     renderNowPlayingBar(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         getPlaybackState: Effect.fail(
           new SpotifyResponseError({ status: 503, message: "Service unavailable" }),
         ),
@@ -109,7 +97,7 @@ describe("NowPlayingBar", () => {
 
   it("says so and stays open when playback could not be transferred", async () => {
     renderNowPlayingBar(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         transferPlayback: () =>
           Effect.fail(new SpotifyResponseError({ status: 404, message: "Device not found" })),
       })),
@@ -126,7 +114,7 @@ describe("NowPlayingBar", () => {
 
   it("lists the devices again when Retry is pressed after they failed to load", async () => {
     renderNowPlayingBar(
-      SpotifyApi.layerFakeWith(() => ({ getAvailableDevices: failingOnce(Effect.succeed([])) })),
+      spotifyApiFakeWith(() => ({ getAvailableDevices: failingFirstTime()(Effect.succeed([])) })),
     )
     const picker = await openPicker()
 
@@ -139,7 +127,7 @@ describe("NowPlayingBar", () => {
 
   it("explains how to start the Spotify app when there are no devices", async () => {
     renderNowPlayingBar(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         ...noActiveDevice,
         getAvailableDevices: Effect.succeed([]),
       })),
@@ -184,7 +172,7 @@ describe("NowPlayingBar", () => {
       isRestricted: false,
     }
     renderNowPlayingBar(
-      SpotifyApi.layerFakeWith((spotify) => ({
+      spotifyApiFakeWith((spotify) => ({
         getPlaybackState: Effect.succeedNone,
         getAvailableDevices: spotify.getAvailableDevices.pipe(
           Effect.map((devices) => [

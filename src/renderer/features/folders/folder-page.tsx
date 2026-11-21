@@ -12,7 +12,7 @@ import { FolderEntryGrid } from "./folder-entry-grid"
 import { FolderEntryList } from "./folder-entry-list"
 import { type FolderLocation, locateFolder } from "./folder-location"
 import { FolderViewToggle } from "./folder-view-toggle"
-import { formatItemCount } from "./format-item-count"
+import { formatCount } from "../../ui/format-count"
 
 const loadFolderPage = Effect.gen(function* () {
   const bridge = yield* DesktopBridge
@@ -57,7 +57,7 @@ function LoadedFolder({ location, savedView }: LoadedFolderProps) {
           cover={{ sources: [], placeholderIcon: FolderIcon }}
         >
           <p className="text-xs text-muted tabular-nums">
-            {formatItemCount(folder.entries.length)}
+            {formatCount(folder.entries.length, "item", "items")}
           </p>
         </PageHeader>
       </div>

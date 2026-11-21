@@ -8,7 +8,7 @@ import {
   Radio,
 } from "lucide-react"
 import type { FolderEntry } from "../../../shared/folders"
-import { formatItemCount } from "./format-item-count"
+import { formatCount } from "../../ui/format-count"
 
 type SpotifyItemKind = "playlist" | "artist" | "album" | "show" | "track"
 
@@ -76,7 +76,7 @@ export const describeFolderEntry = (entry: FolderEntry): FolderEntryDescription 
     return {
       key: entry.id,
       name: entry.name,
-      details: `Folder · ${formatItemCount(entry.entries.length)}`,
+      details: `Folder · ${formatCount(entry.entries.length, "item", "items")}`,
       imageUrl: null,
       icon: FolderIcon,
       isArtist: false,

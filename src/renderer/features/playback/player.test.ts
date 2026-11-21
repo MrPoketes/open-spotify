@@ -7,6 +7,7 @@ import {
   SpotifyRequestError,
   SpotifyResponseError,
 } from "../spotify/spotify-api"
+import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeDevices, fakeTrack } from "../spotify/spotify-fixtures"
 import { Player, type PlayerState } from "./player"
 
@@ -14,7 +15,7 @@ import { Player, type PlayerState } from "./player"
 // (numbered from 1), like a connection that drops for a moment.
 const countingSpotify = (failingRequests: ReadonlyArray<number> = []) => {
   let requestCount = 0
-  const layer = SpotifyApi.layerFakeWith((spotify) => ({
+  const layer = spotifyApiFakeWith((spotify) => ({
     getPlaybackState: Effect.suspend(() => {
       requestCount += 1
       if (failingRequests.includes(requestCount)) {
@@ -150,7 +151,7 @@ describe("Player", () => {
       assert.isFalse(isPlaying(stateAfterPause))
     }).pipe(
       Effect.scoped,
-      Effect.provide(playerOver(SpotifyApi.layerFakeWith(() => ({ pause: Effect.never })))),
+      Effect.provide(playerOver(spotifyApiFakeWith(() => ({ pause: Effect.never })))),
     ),
   )
 
@@ -169,7 +170,7 @@ describe("Player", () => {
       assert.isTrue(isPlaying(shownAfterRejection))
     }).pipe(
       Effect.scoped,
-      Effect.provide(playerOver(SpotifyApi.layerFakeWith(() => ({ pause: rejected })))),
+      Effect.provide(playerOver(spotifyApiFakeWith(() => ({ pause: rejected })))),
     ),
   )
 
@@ -177,7 +178,7 @@ describe("Player", () => {
   // control must not flip back to the old state when it does.
   it.effect("keeps a change that Spotify has not accepted yet through a poll", () => {
     const pauseAccepted = Deferred.makeUnsafe<void>()
-    const spotify = SpotifyApi.layerFakeWith((fake) => ({
+    const spotify = spotifyApiFakeWith((fake) => ({
       pause: Deferred.await(pauseAccepted).pipe(Effect.andThen(fake.pause)),
     }))
     return Effect.gen(function* () {
@@ -218,7 +219,7 @@ describe("Player", () => {
     }).pipe(
       Effect.scoped,
       // Spotify accepts the pause but its playback state still says playing.
-      Effect.provide(playerOver(SpotifyApi.layerFakeWith(() => ({ pause: Effect.void })))),
+      Effect.provide(playerOver(spotifyApiFakeWith(() => ({ pause: Effect.void })))),
     ),
   )
 
@@ -242,10 +243,7 @@ describe("Player", () => {
 
       assert.isFalse(isPlaying(shownAfterPause))
       assert.isTrue(isPlaying(shownAfterPlayElsewhere))
-    }).pipe(
-      Effect.scoped,
-      Effect.provide(Player.layer.pipe(Layer.provideMerge(SpotifyApi.layerFake))),
-    ),
+    }).pipe(Effect.scoped, Effect.provide(Player.layer.pipe(Layer.provideMerge(spotifyApiFake)))),
   )
 
   it.effect("reads the playback state again as soon as it skips to the next track", () =>
@@ -258,12 +256,12 @@ describe("Player", () => {
       const stateAfterSkip = yield* Queue.take(states)
 
       assert.strictEqual(playingName(stateAfterSkip), fakeTrack(1).name)
-    }).pipe(Effect.scoped, Effect.provide(playerOver(SpotifyApi.layerFake))),
+    }).pipe(Effect.scoped, Effect.provide(playerOver(spotifyApiFake))),
   )
 
   it.effect("reads the playback state again when a command finds no active device", () => {
     let hasLostDevice = false
-    const spotify = SpotifyApi.layerFakeWith((fake) => ({
+    const spotify = spotifyApiFakeWith((fake) => ({
       getPlaybackState: Effect.suspend(() =>
         hasLostDevice ? Effect.succeedNone : fake.getPlaybackState,
       ),
@@ -297,6 +295,6 @@ describe("Player", () => {
       yield* player.addToQueue("spotify:track:fake-track-5")
 
       assert.isTrue(Option.isSome(yield* Fiber.join(firstChange)))
-    }).pipe(Effect.scoped, Effect.provide(playerOver(SpotifyApi.layerFake))),
+    }).pipe(Effect.scoped, Effect.provide(playerOver(spotifyApiFake))),
   )
 })

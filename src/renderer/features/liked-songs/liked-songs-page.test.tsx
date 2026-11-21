@@ -4,7 +4,8 @@ import { Effect, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
-import { SpotifyApi } from "../spotify/spotify-api"
+import type { SpotifyApi } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { fakeLikedSongs } from "../spotify/spotify-fixtures"
 import { giveMainViewALayout, scrollMainView } from "../track-list/fake-main-view-layout"
@@ -15,7 +16,7 @@ import { LikedSongsPage } from "./liked-songs-page"
 // requested, in order.
 const spotifyRecordingPageRequests = () => {
   const requestedOffsets: Array<number> = []
-  const spotifyApi = SpotifyApi.layerFakeWith((spotify) => ({
+  const spotifyApi = spotifyApiFakeWith((spotify) => ({
     getLikedSongsPage: (offset) =>
       Effect.sync(() => requestedOffsets.push(offset)).pipe(
         Effect.andThen(spotify.getLikedSongsPage(offset)),
@@ -99,7 +100,7 @@ describe("LikedSongsPage", () => {
 
   it("says where songs will appear when the user has liked none", async () => {
     await renderLikedSongsPage(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         getLikedSongsPage: () => Effect.succeed({ items: [], next: null, total: 0 }),
       })),
     )
@@ -111,7 +112,7 @@ describe("LikedSongsPage", () => {
 
   it("shows the songs after Retry when the first page failed to load", async () => {
     await renderLikedSongsPage(
-      SpotifyApi.layerFakeWith((spotify) => {
+      spotifyApiFakeWith((spotify) => {
         const failFirst = failingFirstTime()
         return { getLikedSongsPage: (offset) => failFirst(spotify.getLikedSongsPage(offset)) }
       }),

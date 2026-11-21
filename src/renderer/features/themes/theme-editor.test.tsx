@@ -54,8 +54,6 @@ const refusingToSave = (mainProcess: DesktopApi): DesktopApi => ({
       : mainProcess.invoke(channel, request),
 })
 
-const bridgeTo = (mainProcess: DesktopApi) => DesktopBridge.make(mainProcess)
-
 describe("ThemeEditor", () => {
   beforeEach(() => {
     document.documentElement.removeAttribute("style")
@@ -143,12 +141,14 @@ describe("ThemeEditor", () => {
       await screen.findByRole("button", { name: "Lime by Open Spotify", pressed: true }),
     ).toBeInTheDocument()
     expect(appliedToken("color-accent")).toBe(newAccent)
-    const [storedTheme] = await Effect.runPromise(bridgeTo(mainProcess).listImportedThemes)
+    const [storedTheme] = await Effect.runPromise(
+      DesktopBridge.make(mainProcess).listImportedThemes,
+    )
     expect(storedTheme?.theme.tokens["color-accent"]).toBe(newAccent)
     await waitFor(async () => {
-      expect(await Effect.runPromise(bridgeTo(mainProcess).getSetting("themeId"))).toEqual(
-        Option.some(storedTheme?.id),
-      )
+      expect(
+        await Effect.runPromise(DesktopBridge.make(mainProcess).getSetting("themeId")),
+      ).toEqual(Option.some(storedTheme?.id))
     })
   })
 
@@ -160,7 +160,7 @@ describe("ThemeEditor", () => {
     await saveAs("Cramped")
 
     expect(screen.getByRole("alert")).toHaveTextContent("Fix the flagged fields")
-    expect(await Effect.runPromise(bridgeTo(mainProcess).listImportedThemes)).toEqual([])
+    expect(await Effect.runPromise(DesktopBridge.make(mainProcess).listImportedThemes)).toEqual([])
   })
 
   // The main process names the problem, such as a built-in theme's name.
@@ -182,7 +182,7 @@ describe("ThemeEditor", () => {
 
     expect(appliedToken("color-accent")).toBe(darkAccent)
     expect(screen.getByRole("button", { name: "Edit a copy" })).toHaveFocus()
-    expect(await Effect.runPromise(bridgeTo(mainProcess).listImportedThemes)).toEqual([])
+    expect(await Effect.runPromise(DesktopBridge.make(mainProcess).listImportedThemes)).toEqual([])
   })
 
   // A history shortcut can leave the settings page while the editor is open.

@@ -37,7 +37,7 @@ src/renderer/   The React UI, built by TanStack Start in SPA mode.
   lib/          Renderer-wide infrastructure (runtime, bridge).
 e2e/            Playwright tests that launch the packaged Electron app, and the README
                 screenshot script.
-lint/           Project-specific oxlint rules.
+lint/           Project-specific oxlint rules and the unused-export check.
 scripts/        Developer scripts run by hand, such as icon generation.
 build/          Packaging resources: the app icon source and its generated files.
 docs/           Architecture, decisions, agent playbooks.
@@ -83,9 +83,15 @@ technically correct but hard to read gets rejected. These rules are not suggesti
    be undefined.
 6. **Flat control flow.** Return early. No nested ternaries. No deeply nested callbacks.
 7. **Delete what you replace.** No compatibility shims, no unused exports, no dead branches.
-   The app has no users yet, so there is nothing to stay compatible with.
+   The app has no users yet, so there is nothing to stay compatible with. A test
+   (`lint/unused-exports.test.ts`) fails on any export that no other module imports. An error
+   class that callers only catch by its tag stays private to its module.
 8. **Small units.** Lint caps functions at 80 lines, files at 300, nesting depth at 3, and
    parameters at 3. If you hit a limit, split the code by concept; do not disable the rule.
+9. **Reuse before you write.** Before writing a helper, hook, component, test fake, or long
+   class string, search the codebase for one that does the job (`grep` for the logic, not
+   just the name you would give it) and use or extend it. Copies drift apart: one count
+   formatter gained thousands separators while its copy did not.
 
 A lint rule may be disabled only with a written reason
 (`// oxlint-disable-next-line rule-name -- reason`), and the reviewer will check the reason.

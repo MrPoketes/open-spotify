@@ -6,7 +6,8 @@ import { SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import { SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { giveMainViewALayout } from "../track-list/fake-main-view-layout"
 import { AlbumPage } from "./album-page"
 
@@ -26,7 +27,7 @@ const albumHeader = async (albumName: string) => {
   return title.parentElement ?? title
 }
 
-const spotifyFailingFirstAlbumRequest = SpotifyApi.layerFakeWith((spotify) => {
+const spotifyFailingFirstAlbumRequest = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return { getAlbum: (albumId) => failFirst(spotify.getAlbum(albumId)) }
 })
@@ -127,7 +128,7 @@ describe("AlbumPage", () => {
   it("says the album was not found when Spotify rejects the id as malformed", async () => {
     renderAlbumPage(
       "not-an-album-id",
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         getAlbum: () =>
           Effect.fail(new SpotifyResponseError({ status: 400, message: "Invalid base62 id" })),
       })),
@@ -150,7 +151,7 @@ describe("AlbumPage", () => {
   it("goes to the login screen, saying why, when the session has expired", async () => {
     const router = renderAlbumPage(
       "fake-album-0",
-      SpotifyApi.layerFakeWith(() => ({ getAlbum: () => Effect.fail(new SessionExpired()) })),
+      spotifyApiFakeWith(() => ({ getAlbum: () => Effect.fail(new SessionExpired()) })),
     )
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"))

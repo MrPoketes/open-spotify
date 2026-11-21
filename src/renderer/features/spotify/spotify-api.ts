@@ -20,7 +20,6 @@ import { type AlbumGroup, artistRequests } from "./spotify-artist-requests"
 import { SpotifyAccessToken } from "./spotify-access-token"
 import { spotifyApiBaseUrl } from "./spotify-api-url"
 import type { Device } from "./spotify-device"
-import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
 import { type TimeRange, listeningHistoryRequests } from "./spotify-listening-history"
 import { Paging, streamPages } from "./spotify-paging"
 import type { PlayHistory } from "./spotify-play-history"
@@ -43,10 +42,10 @@ export class SpotifyRequestError extends Schema.TaggedError<SpotifyRequestError>
   { cause: Schema.Defect() },
 ) {}
 
-export class SpotifyDecodeError extends Schema.TaggedError<SpotifyDecodeError>()(
-  "SpotifyDecodeError",
-  { url: Schema.String, cause: Schema.Defect() },
-) {}
+class SpotifyDecodeError extends Schema.TaggedError<SpotifyDecodeError>()("SpotifyDecodeError", {
+  url: Schema.String,
+  cause: Schema.Defect(),
+}) {}
 
 // Player commands fail with this when no Spotify Connect device is active.
 export class NoActiveDevice extends Schema.TaggedError<NoActiveDevice>()("NoActiveDevice", {}) {}
@@ -312,21 +311,4 @@ export class SpotifyApi extends Context.Service<
   static readonly layer = SpotifyApi.layerWithoutHttpClient.pipe(
     Layer.provide(FetchHttpClient.layer),
   )
-
-  static readonly layerFake = SpotifyApi.layerWithoutHttpClient.pipe(
-    Layer.provide([spotifyFakeServer, spotifyFakeAccessToken]),
-  )
-
-  // The fake with some operations replaced, for tests of states the fixtures
-  // do not cover, such as failures and empty results.
-  static readonly layerFakeWith = (
-    overrides: (spotify: SpotifyApi["Service"]) => Partial<SpotifyApi["Service"]>,
-  ) =>
-    Layer.effect(
-      SpotifyApi,
-      Effect.gen(function* () {
-        const spotify = yield* SpotifyApi
-        return SpotifyApi.of({ ...spotify, ...overrides(spotify) })
-      }),
-    ).pipe(Layer.provide(SpotifyApi.layerFake))
 }

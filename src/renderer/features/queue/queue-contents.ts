@@ -3,7 +3,7 @@ import { Player, type PlayerState } from "../playback/player"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { PlayerQueue } from "../spotify/spotify-player-queue"
 
-export type QueueContents =
+type QueueContents =
   | { readonly status: "loading" }
   | { readonly status: "loaded"; readonly queue: PlayerQueue }
   | { readonly status: "failed" }

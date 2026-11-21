@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import { SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import type { SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyResponseError } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { TimeRange } from "../spotify/spotify-listening-history"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import { fakeTopArtists, fakeTopTracks } from "../spotify/spotify-listening-history-fixtures"
@@ -39,7 +41,7 @@ const trackRowName = ({ name, artists }: ReturnType<typeof fakeTrack>) =>
 
 const spotifyRecordingTopArtistRanges = () => {
   const requestedRanges: Array<TimeRange> = []
-  const spotifyApi = SpotifyApi.layerFakeWith((spotify) => ({
+  const spotifyApi = spotifyApiFakeWith((spotify) => ({
     getTopArtists: (timeRange) =>
       Effect.sync(() => requestedRanges.push(timeRange)).pipe(
         Effect.andThen(spotify.getTopArtists(timeRange)),
@@ -48,35 +50,35 @@ const spotifyRecordingTopArtistRanges = () => {
   return { requestedRanges, spotifyApi }
 }
 
-const spotifyWithoutLateNightDrive = SpotifyApi.layerFakeWith((spotify) => ({
+const spotifyWithoutLateNightDrive = spotifyApiFakeWith((spotify) => ({
   getPlaylist: (playlistId) =>
     playlistId === "fake-playlist-late-night-drive"
       ? Effect.fail(new SpotifyResponseError({ status: 404, message: "Resource not found" }))
       : spotify.getPlaylist(playlistId),
 }))
 
-const spotifyWithoutRecentTopArtists = SpotifyApi.layerFakeWith((spotify) => ({
+const spotifyWithoutRecentTopArtists = spotifyApiFakeWith((spotify) => ({
   getTopArtists: (timeRange) =>
     timeRange === "short_term" ? Effect.succeed([]) : spotify.getTopArtists(timeRange),
 }))
 
-const spotifyForNewAccount = SpotifyApi.layerFakeWith(() => ({
+const spotifyForNewAccount = spotifyApiFakeWith(() => ({
   getRecentlyPlayed: Effect.succeed([]),
   getTopArtists: () => Effect.succeed([]),
   getTopTracks: () => Effect.succeed([]),
 }))
 
-const spotifyFailingFirstPlayHistoryRequest = SpotifyApi.layerFakeWith((spotify) => {
+const spotifyFailingFirstPlayHistoryRequest = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return { getRecentlyPlayed: failFirst(spotify.getRecentlyPlayed) }
 })
 
-const spotifyFailingFirstAlbumRequest = SpotifyApi.layerFakeWith((spotify) => {
+const spotifyFailingFirstAlbumRequest = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return { getAlbum: (albumId) => failFirst(spotify.getAlbum(albumId)) }
 })
 
-const spotifyFailingFirstTopTracksRequest = SpotifyApi.layerFakeWith((spotify) => {
+const spotifyFailingFirstTopTracksRequest = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return { getTopTracks: (timeRange) => failFirst(spotify.getTopTracks(timeRange)) }
 })

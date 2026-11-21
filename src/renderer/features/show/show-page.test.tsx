@@ -3,6 +3,7 @@ import { userEvent } from "@testing-library/user-event"
 import { Effect, Layer } from "effect"
 import { HttpClient, HttpClientError } from "effect/http"
 import { beforeEach, describe, expect, it } from "vitest"
+import { SessionExpired } from "../../../shared/spotify-auth-replies"
 import {
   installFakeIntersectionObserver,
   scrollObservedElementsIntoView,
@@ -10,6 +11,7 @@ import {
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { SpotifyApi } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "../spotify/spotify-fake-server"
 import { ShowPage } from "./show-page"
 
@@ -161,5 +163,15 @@ describe("ShowPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Retry" }))
 
     await waitFor(() => expect(episodeRows()).toHaveLength(59))
+  })
+
+  it("goes to the login screen, saying why, when the session has expired", async () => {
+    const router = renderShowPage(
+      "fake-show-slow-science",
+      spotifyApiFakeWith(() => ({ getShow: () => Effect.fail(new SessionExpired()) })),
+    )
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
   })
 })

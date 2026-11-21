@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
-import { NoActiveDevice, SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { NoActiveDevice, type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import { FakeMainView } from "../track-list/fake-main-view"
 import { TrackList } from "../track-list/track-list"
@@ -84,7 +85,7 @@ function PlaylistsFailingUntilRetried({ children }: { readonly children: ReactNo
 }
 
 const renderTracks = async (
-  spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake,
+  spotifyApi: Layer.Layer<SpotifyApi> = spotifyApiFake,
   Playlists: PlaylistsProvider = EditablePlaylistsProvider,
 ) => {
   const user = userEvent.setup()
@@ -190,7 +191,7 @@ describe("Track menu changes in Spotify", () => {
   it("adds the track to the chosen playlist and says so", async () => {
     const additions: Array<readonly [string, string]> = []
     const { user, row } = await renderTracks(
-      SpotifyApi.layerFakeWith((spotify) => ({
+      spotifyApiFakeWith((spotify) => ({
         addToPlaylist: (playlistId, uri) =>
           Effect.sync(() => additions.push([playlistId, uri])).pipe(
             Effect.andThen(spotify.addToPlaylist(playlistId, uri)),
@@ -226,7 +227,7 @@ describe("Track menu changes in Spotify", () => {
 
   it("says when the track could not be added to a playlist", async () => {
     const { user, row } = await renderTracks(
-      SpotifyApi.layerFakeWith(() => ({
+      spotifyApiFakeWith(() => ({
         addToPlaylist: () =>
           Effect.fail(new SpotifyResponseError({ status: 500, message: "Server error" })),
       })),
@@ -239,7 +240,7 @@ describe("Track menu changes in Spotify", () => {
   })
 
   it("says the playlists are still loading when they have not arrived yet", async () => {
-    const { user, row } = await renderTracks(SpotifyApi.layerFake, PlaylistsStillLoading)
+    const { user, row } = await renderTracks(spotifyApiFake, PlaylistsStillLoading)
 
     await chooseFromMenu(user, row, "Add to playlist")
 
@@ -247,7 +248,7 @@ describe("Track menu changes in Spotify", () => {
   })
 
   it("says there is no playlist to add to when the user can edit none", async () => {
-    const { user, row } = await renderTracks(SpotifyApi.layerFake, NoEditablePlaylists)
+    const { user, row } = await renderTracks(spotifyApiFake, NoEditablePlaylists)
 
     await chooseFromMenu(user, row, "Add to playlist")
 
@@ -255,7 +256,7 @@ describe("Track menu changes in Spotify", () => {
   })
 
   it("loads the playlists again after they failed to load", async () => {
-    const { user, row } = await renderTracks(SpotifyApi.layerFake, PlaylistsFailingUntilRetried)
+    const { user, row } = await renderTracks(spotifyApiFake, PlaylistsFailingUntilRetried)
 
     await chooseFromMenu(user, row, "Add to playlist")
     expect(await findStatusMessage("Your playlists didn't load. Trying again.")).toBeInTheDocument()
@@ -276,7 +277,7 @@ describe("Track menu changes in Spotify", () => {
   // queue (decision 0002).
   it("tells the user to start playback in the Spotify app when no device is playing", async () => {
     const { user, row } = await renderTracks(
-      SpotifyApi.layerFakeWith(() => ({ addToQueue: () => Effect.fail(new NoActiveDevice()) })),
+      spotifyApiFakeWith(() => ({ addToQueue: () => Effect.fail(new NoActiveDevice()) })),
     )
 
     await chooseFromMenu(user, row, "Add to queue")
