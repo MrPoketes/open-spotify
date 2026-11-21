@@ -6,6 +6,8 @@ interface TextFieldProps {
   readonly onChange: (value: string) => void
   readonly focusOnMount?: boolean
   readonly errorMessage?: string | undefined
+  readonly autoComplete?: "off"
+  readonly spellCheck?: boolean
 }
 
 // The error sits under the field and describes it, so a screen reader reads
@@ -16,6 +18,8 @@ export function TextField({
   onChange,
   focusOnMount = false,
   errorMessage,
+  autoComplete,
+  spellCheck,
 }: TextFieldProps) {
   const inputId = useId()
   const errorId = useId()
@@ -37,6 +41,8 @@ export function TextField({
         id={inputId}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        autoComplete={autoComplete}
+        spellCheck={spellCheck}
         aria-invalid={errorMessage !== undefined}
         aria-describedby={errorMessage === undefined ? undefined : errorId}
         className="rounded-small bg-surface-raised px-3 py-2 text-base aria-invalid:ring-2 aria-invalid:ring-danger"

@@ -92,7 +92,8 @@ panel's one primary action is a round `accent` button with `on-accent` text; sec
 are round `surface-raised` buttons or muted links. An action that waits, such as logging in in
 the browser, says what it waits for, disables the button that started it, and offers Cancel
 beside it. Focus moves to Cancel and back when the wait ends, and a double-click cannot cancel
-what its first click started.
+what its first click started. Onboarding's Client ID uses the shared text field (see Text
+fields).
 
 ### Spacing
 
@@ -189,8 +190,9 @@ A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor
 gap between them. The input is `surface-raised` and `rounded-small`, with 12 px across and 8 px
 down inside and `text-base` text. An invalid field gets a `danger` ring and a `text-xs`
 `danger` message in an `alert` under it, which also describes it (`aria-describedby`). The
-theme editor's Name and Author and the New folder dialog's Name use it
-(`src/renderer/ui/text-field.tsx`).
+onboarding Client ID, the theme editor's Name and Author, and the New folder dialog's Name use
+it (`src/renderer/ui/text-field.tsx`). The Client ID turns off autocomplete and spell check,
+since it is not a word.
 
 ### Sidebar sections and pins
 

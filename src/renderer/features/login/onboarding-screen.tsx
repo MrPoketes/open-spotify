@@ -1,10 +1,11 @@
 import { useNavigate } from "@tanstack/react-router"
 import { Effect, Option, Schema } from "effect"
-import { type FormEvent, use, useId, useState } from "react"
+import { type FormEvent, use, useState } from "react"
 import { settingSchemas } from "../../../shared/settings"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { AccentButton } from "../../ui/pill-button"
+import { TextField } from "../../ui/text-field"
 import { SpotifyAppSteps } from "./spotify-app-steps"
 
 const saveClientId = Effect.fn("saveClientId")(function* (clientId: string) {
@@ -17,8 +18,6 @@ const decodeClientId = Schema.decodeUnknownOption(settingSchemas.spotifyClientId
 export function OnboardingScreen({ initialClientId }: { readonly initialClientId: string }) {
   const runtime = use(RendererRuntimeContext)
   const navigate = useNavigate()
-  const clientIdInputId = useId()
-  const clientIdProblemId = useId()
   const [clientId, setClientId] = useState(initialClientId)
   const [isClientIdInvalid, setClientIdInvalid] = useState(false)
   const [saveFailed, setSaveFailed] = useState(false)
@@ -53,24 +52,16 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
         </div>
         <SpotifyAppSteps />
         <form onSubmit={save} noValidate className="flex flex-col gap-2">
-          <label htmlFor={clientIdInputId} className="text-sm font-semibold">
-            Client ID
-          </label>
-          <input
-            id={clientIdInputId}
+          <TextField
+            label="Client ID"
             value={clientId}
-            onChange={(event) => setClientId(event.target.value)}
+            onChange={setClientId}
             autoComplete="off"
             spellCheck={false}
-            aria-invalid={isClientIdInvalid}
-            aria-describedby={isClientIdInvalid ? clientIdProblemId : undefined}
-            className="rounded-small bg-surface-raised px-3 py-2"
+            errorMessage={
+              isClientIdInvalid ? "Paste the Client ID from your Spotify app." : undefined
+            }
           />
-          {isClientIdInvalid && (
-            <p id={clientIdProblemId} role="alert" className="text-sm text-danger">
-              Paste the Client ID from your Spotify app.
-            </p>
-          )}
           <div className="mt-2">
             <AccentButton type="submit" label="Save and continue" />
           </div>
