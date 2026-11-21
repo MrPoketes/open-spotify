@@ -253,10 +253,19 @@ indented to the row's level shows. Letting go on the middle of a folder puts the
 it, which the folder shows with `surface-raised` and a 2 px `accent` outline. The line below an
 expanded folder is the line above its first child. A drop that is not allowed shows no indicator
 and does nothing: a folder inside itself or a folder within it, a Spotify item at the top level, or
-a drop that leaves the entry where it is. Resting on a collapsed folder for 600 ms while dragging
-opens it. The dragged row is dimmed to 50 % opacity, and the status message reports the drop like a
-keyboard move ("Moved Warm-up up", "Moved Warm-up to Focus"). Dragging is for the mouse only, since
-the keyboard moves above do the same.
+a drop that leaves the entry where it is. Resting for 600 ms on the middle half of a collapsed
+folder while dragging, where a drop inside it is on offer, opens it. The dragged row is dimmed to
+50 % opacity, and the status message reports the drop like a keyboard move ("Moved Warm-up up",
+"Moved Warm-up to Focus"). Dragging is for the mouse only, since the keyboard moves above do the
+same.
+
+A playlist, album, artist, or show can also be dragged from the library sections onto a folder,
+which adds it last there, as "Add to folder" does, and the status message says so ("Added to
+Running"). The folder shows the same `surface-raised` highlight and `accent` outline and opens
+after the same 600 ms, and the dragged library row is dimmed the same way. A library entry goes
+only inside a folder, so the lines between rows and the Spotify items in the tree show no
+indicator, and neither does a folder that already holds the entry. Liked Songs cannot be dragged,
+since no folder can hold it.
 
 Folders start collapsed. The ones the user expands are the `expandedFolders` setting, so they
 stay open after a restart.

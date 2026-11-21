@@ -6,6 +6,7 @@ import { ipcChannels } from "../../../shared/ipc-channels"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
+import { RowDragArea } from "../../ui/row-drag-area"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { FoldersProvider } from "./folders-provider"
 import { SidebarFolderTree } from "./sidebar-folder-tree"
@@ -48,7 +49,9 @@ const folderTree: FolderTree = [
 const sidebarFolderTree = (
   <StatusMessageProvider>
     <FoldersProvider>
-      <SidebarFolderTree />
+      <RowDragArea>
+        <SidebarFolderTree />
+      </RowDragArea>
     </FoldersProvider>
   </StatusMessageProvider>
 )

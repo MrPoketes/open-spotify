@@ -1,10 +1,11 @@
+import { useDraggable } from "@dnd-kit/core"
 import { Link } from "@tanstack/react-router"
 import { Pin, PinOff } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import { ArtworkSummary } from "../../ui/artwork-summary"
 import { useContextMenu } from "../../ui/use-context-menu"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
-import { useAddToFolder } from "../folders/use-add-to-folder"
+import { toSpotifyItem, useAddToFolder } from "../folders/use-add-to-folder"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import type { LibraryEntry } from "./library-entries"
 import { libraryEntryArtwork } from "./library-entry-artwork"
@@ -31,11 +32,17 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
   const pinShortcut = useRowShortcut("togglePin")
   // Liked Songs is not an item Spotify can link to, so no folder can hold it,
   // and it has no other action for a menu.
+  const canGoInFolder = entry.kind !== "liked-songs"
   const entryMenu = useContextMenu(
-    entry.kind === "liked-songs"
-      ? null
-      : { label: `Actions for ${entry.name}`, items: [addToFolder(entry)] },
+    canGoInFolder ? { label: `Actions for ${entry.name}`, items: [addToFolder(entry)] } : null,
   )
+  // The folder tree decodes the item from the drag data when the row is
+  // dropped on a folder.
+  const { setNodeRef, listeners, isDragging } = useDraggable({
+    id: entry.uri,
+    data: toSpotifyItem(entry),
+    disabled: !canGoInFolder,
+  })
 
   const togglePinWithKey = (event: KeyboardEvent) => {
     if (!pinShortcut.isPressed(event)) return
@@ -44,7 +51,11 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
   }
 
   return (
-    <div className="group flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised">
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      className={`group flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised ${isDragging ? "opacity-50" : ""}`}
+    >
       <Link
         {...entry.page}
         {...rovingProps}

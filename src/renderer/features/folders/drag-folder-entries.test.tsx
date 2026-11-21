@@ -2,9 +2,11 @@ import { act, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { beforeEach, describe, expect, it } from "vitest"
 import type { FolderTree } from "../../../shared/folders"
-import { dragTreeItemOnto, dragTreeItemOver, layOutTreeRows } from "../../lib/drag-tree-item"
+import { dragOntoTreeItem, dragOverTreeItem, layOutTreeRows } from "../../lib/drag-tree-item"
 import { fakeMainProcess } from "../../lib/fake-main-process"
+import { findStatusMessage } from "../../lib/find-status-message"
 import {
+  dropPositionOn,
   expandRunning,
   focusId,
   focusTreeItem,
@@ -12,8 +14,6 @@ import {
   renderTree,
   treeItem,
 } from "./sidebar-folder-tree-screen"
-
-const statusMessage = (text: string) => screen.findByText(text, { selector: "output > p" })
 
 const sleepId = "8a2d4c6e-1b3f-4d5a-9c7e-0f1a2b3c4d05"
 
@@ -44,9 +44,9 @@ describe("Dragging folder entries", () => {
   it("reorders a folder dropped on the line above another one", async () => {
     await renderTree()
 
-    await dragTreeItemOnto(await treeItem("Focus"), await treeItem("Running"), 0.1)
+    await dragOntoTreeItem(await treeItem("Focus"), await treeItem("Running"), 0.1)
 
-    expect(await statusMessage("Moved Focus up")).toBeInTheDocument()
+    expect(await findStatusMessage("Moved Focus up")).toBeInTheDocument()
     expect(await treeItem("Focus")).toHaveAttribute("aria-posinset", "1")
     expect(await treeItem("Running")).toHaveAttribute("aria-posinset", "2")
   })
@@ -60,18 +60,28 @@ describe("Dragging folder entries", () => {
     ]
     await renderTree(fakeMainProcess({ folderTree: withSleep }))
 
-    await dragTreeItemOnto(await treeItem("Running"), await treeItem("Focus"), 0.9)
+    await dragOntoTreeItem(await treeItem("Running"), await treeItem("Focus"), 0.9)
 
-    expect(await statusMessage("Moved Running down")).toBeInTheDocument()
+    expect(await findStatusMessage("Moved Running down")).toBeInTheDocument()
     expect(await treeItem("Running")).toHaveAttribute("aria-posinset", "2")
     expect(await treeItem("Sleep")).toHaveAttribute("aria-posinset", "3")
+  })
+
+  it("moves a nested folder dropped beside a top-level folder to the top level", async () => {
+    await renderTree()
+    await expandRunning()
+
+    await dragOntoTreeItem(await treeItem("Warm-up"), await treeItem("Focus"), 0.9)
+
+    expect(await findStatusMessage("Moved Warm-up to the top level")).toBeInTheDocument()
+    expect(await treeItem("Warm-up")).toHaveAttribute("aria-level", "1")
   })
 
   it("refuses a drop that would leave the entry where it is, and shows no drop indicator", async () => {
     await renderTree()
 
-    const drag = await dragTreeItemOver(await treeItem("Focus"), await treeItem("Running"), 0.9)
-    expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
+    const drag = await dragOverTreeItem(await treeItem("Focus"), await treeItem("Running"), 0.9)
+    expect(await dropPositionOn("Running")).toBeNull()
     await drag.release()
 
     await act(() => Promise.resolve())
@@ -85,9 +95,9 @@ describe("Dragging folder entries", () => {
     await userEvent.keyboard("{F2}")
 
     const nameField = screen.getByRole("textbox", { name: "Folder name" })
-    await dragTreeItemOver(nameField, await treeItem("Running"), 0.5)
+    await dragOverTreeItem(nameField, await treeItem("Running"), 0.5)
 
-    expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
+    expect(await dropPositionOn("Running")).toBeNull()
   })
 
   // The menu is drawn outside the row, but React still hands the row its presses.
@@ -96,9 +106,9 @@ describe("Dragging folder entries", () => {
     await userEvent.pointer({ keys: "[MouseRight]", target: await treeItem("Focus") })
 
     const renameItem = await screen.findByRole("menuitem", { name: "Rename" })
-    await dragTreeItemOver(renameItem, await treeItem("Running"), 0.5)
+    await dragOverTreeItem(renameItem, await treeItem("Running"), 0.5)
 
-    expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
+    expect(await dropPositionOn("Running")).toBeNull()
   })
 
   // The rows below a folder that opens move down, the dragged row with them,
@@ -106,12 +116,12 @@ describe("Dragging folder entries", () => {
   it("drops inside a folder that opened above the dragged row", async () => {
     await renderTree()
 
-    const drag = await dragTreeItemOver(await treeItem("Focus"), await treeItem("Running"), 0.5)
+    const drag = await dragOverTreeItem(await treeItem("Focus"), await treeItem("Running"), 0.5)
     await treeItem("Easy Start")
     await drag.moveOver(await treeItem("Running"), 0.5)
     await drag.release()
 
-    expect(await statusMessage("Moved Focus to Running")).toBeInTheDocument()
+    expect(await findStatusMessage("Moved Focus to Running")).toBeInTheDocument()
   })
 
   // A folder keeps one copy of each item, so the copy already in the target
@@ -122,9 +132,9 @@ describe("Dragging folder entries", () => {
     await focusTreeItem("Focus")
     await userEvent.keyboard("{ArrowRight}")
 
-    await dragTreeItemOnto(await treeItem("Easy Start"), await treeItem("Deep Work"), 0.1)
+    await dragOntoTreeItem(await treeItem("Easy Start"), await treeItem("Deep Work"), 0.1)
 
-    expect(await statusMessage("Moved Easy Start to Focus")).toBeInTheDocument()
+    expect(await findStatusMessage("Moved Easy Start to Focus")).toBeInTheDocument()
     expect(screen.queryByRole("treeitem", { name: /^Morning Start/ })).not.toBeInTheDocument()
     expect(await treeItem("Easy Start")).toHaveAttribute("aria-posinset", "2")
     expect(await treeItem("Deep Work")).toHaveAttribute("aria-posinset", "3")
@@ -134,11 +144,11 @@ describe("Dragging folder entries", () => {
     await renderTree()
     await expandRunning()
 
-    const drag = await dragTreeItemOver(await treeItem("Easy Start"), await treeItem("Focus"), 0.5)
-    expect((await treeItem("Focus")).parentElement).toHaveAttribute("data-drop-position", "inside")
+    const drag = await dragOverTreeItem(await treeItem("Easy Start"), await treeItem("Focus"), 0.5)
+    expect(await dropPositionOn("Focus")).toBe("inside")
     await drag.release()
 
-    expect(await statusMessage("Moved Easy Start to Focus")).toBeInTheDocument()
+    expect(await findStatusMessage("Moved Easy Start to Focus")).toBeInTheDocument()
     expect(screen.queryByRole("treeitem", { name: /^Easy Start/ })).not.toBeInTheDocument()
   })
 
@@ -148,8 +158,8 @@ describe("Dragging folder entries", () => {
     await focusTreeItem("Warm-up")
     await userEvent.keyboard("{ArrowRight}")
 
-    const drag = await dragTreeItemOver(await treeItem("Warm-up"), await treeItem("Stretch"), 0.5)
-    expect((await treeItem("Stretch")).parentElement).not.toHaveAttribute("data-drop-position")
+    const drag = await dragOverTreeItem(await treeItem("Warm-up"), await treeItem("Stretch"), 0.5)
+    expect(await dropPositionOn("Stretch")).toBeNull()
     await drag.release()
 
     await act(() => Promise.resolve())
@@ -162,12 +172,12 @@ describe("Dragging folder entries", () => {
     await renderTree()
     await expandRunning()
 
-    const drag = await dragTreeItemOver(
+    const drag = await dragOverTreeItem(
       await treeItem("Easy Start"),
       await treeItem("Running"),
       0.1,
     )
-    expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
+    expect(await dropPositionOn("Running")).toBeNull()
     await drag.release()
 
     await act(() => Promise.resolve())

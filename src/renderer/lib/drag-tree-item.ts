@@ -39,11 +39,18 @@ const pointOnRow = (item: HTMLElement, fraction: number) => ({
   clientY: rowTop(item) + fraction * rowHeight,
 })
 
-// The pointer moves that drag a tree item over a point on another item's row.
-const dragMoves = (item: HTMLElement, target: HTMLElement, fraction: number) => {
-  const start = pointOnRow(item, 0.5)
+// A row outside the tree, such as a library row, starts its drag in the
+// middle of the space below the tree.
+const dragStart = (dragged: HTMLElement) =>
+  treeRows().some((row) => row.contains(dragged))
+    ? pointOnRow(dragged, 0.5)
+    : { clientX: 100, clientY: (treeRows().length + 0.5) * rowHeight }
+
+// The pointer moves that drag a row over a point on a tree item's row.
+const dragMoves = (dragged: HTMLElement, target: HTMLElement, fraction: number) => {
+  const start = dragStart(dragged)
   return [
-    { keys: "[MouseLeft>]", target: item, coords: start },
+    { keys: "[MouseLeft>]", target: dragged, coords: start },
     // The first move only starts the drag, so the second one finds the row
     // under the pointer.
     { coords: { ...start, clientX: start.clientX + 10 } },
@@ -53,13 +60,13 @@ const dragMoves = (item: HTMLElement, target: HTMLElement, fraction: number) => 
 
 // Keeps the button down, as when a drag rests on a row, until the test lets
 // go with the returned release. The drag can move on to other rows first.
-export const dragTreeItemOver = async (
-  item: HTMLElement,
+export const dragOverTreeItem = async (
+  dragged: HTMLElement,
   target: HTMLElement,
   fraction: number,
 ) => {
   const user = userEvent.setup()
-  await user.pointer(dragMoves(item, target, fraction))
+  await user.pointer(dragMoves(dragged, target, fraction))
   return {
     moveOver: (nextTarget: HTMLElement, nextFraction: number) =>
       user.pointer({ coords: pointOnRow(nextTarget, nextFraction) }),
@@ -67,11 +74,11 @@ export const dragTreeItemOver = async (
   }
 }
 
-export const dragTreeItemOnto = async (
-  item: HTMLElement,
+export const dragOntoTreeItem = async (
+  dragged: HTMLElement,
   target: HTMLElement,
   fraction: number,
 ) => {
-  const drag = await dragTreeItemOver(item, target, fraction)
+  const drag = await dragOverTreeItem(dragged, target, fraction)
   await drag.release()
 }

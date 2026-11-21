@@ -79,7 +79,7 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
     deleteFolder,
     ...renaming
   } = useFolderTreeChanges(tree, (folderId) => rows.findIndex((row) => row.node.key === folderId))
-  const { canDrop, onDrop } = useDropFolderEntry()
+  const dropRules = useDropFolderEntry()
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null)
   const headingId = useId()
 
@@ -113,8 +113,7 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
           expandedKeys={expandedKeys}
           onToggleExpanded={toggleExpanded}
           rowFocusRef={rowFocusRef}
-          canDrop={canDrop}
-          onDrop={onDrop}
+          {...dropRules}
           renderItem={(placed, itemProps) =>
             placed._tag === "PlacedFolder" ? (
               <SidebarFolderRow

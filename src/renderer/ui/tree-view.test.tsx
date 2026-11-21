@@ -2,7 +2,8 @@ import { act, render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { useState } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { dragTreeItemOnto, dragTreeItemOver, layOutTreeRows } from "../lib/drag-tree-item"
+import { dragOntoTreeItem, dragOverTreeItem, layOutTreeRows } from "../lib/drag-tree-item"
+import { RowDragArea } from "./row-drag-area"
 import type { TreeDrop } from "./tree-drop"
 import { TreeView } from "./tree-view"
 import type { TreeNode } from "./visible-tree-rows"
@@ -35,7 +36,7 @@ function Tree({ initiallyExpanded, nodes = library, onDrop = () => undefined }: 
     setExpandedKeys(next)
   }
   return (
-    <>
+    <RowDragArea>
       <h3 id="folders-heading">Folders</h3>
       <TreeView
         labelledBy="folders-heading"
@@ -45,8 +46,10 @@ function Tree({ initiallyExpanded, nodes = library, onDrop = () => undefined }: 
         renderItem={(name, itemProps) => <span {...itemProps}>{name}</span>}
         canDrop={({ dragged, target }) => dragged !== target}
         onDrop={onDrop}
+        canDropFromOutside={() => false}
+        onDropFromOutside={() => undefined}
       />
-    </>
+    </RowDragArea>
   )
 }
 
@@ -177,7 +180,7 @@ describe("Dragging in a TreeView", () => {
   it("expands a collapsed branch that a drag rests on", async () => {
     render(<Tree initiallyExpanded={[]} />)
 
-    await dragTreeItemOver(item("Loose track"), item("Running"), 0.5)
+    await dragOverTreeItem(item("Loose track"), item("Running"), 0.5)
 
     expect(
       await screen.findByRole("treeitem", { name: "Quiet Rivers" }, { timeout: 2000 }),
@@ -190,7 +193,7 @@ describe("Dragging in a TreeView", () => {
   it("leaves a collapsed branch closed while a drag rests on its edge", async () => {
     render(<Tree initiallyExpanded={[]} />)
 
-    await dragTreeItemOver(item("Loose track"), item("Running"), 0.1)
+    await dragOverTreeItem(item("Loose track"), item("Running"), 0.1)
     await act(() => new Promise((resolve) => setTimeout(resolve, 1000)))
 
     expect(item("Running")).toHaveAttribute("aria-expanded", "false")
@@ -202,7 +205,7 @@ describe("Dragging in a TreeView", () => {
     const onDrop = vi.fn<(drop: TreeDrop<string>) => void>()
     render(<Tree initiallyExpanded={["Running"]} onDrop={onDrop} />)
 
-    await dragTreeItemOnto(item("Loose track"), item("Running"), 0.9)
+    await dragOntoTreeItem(item("Loose track"), item("Running"), 0.9)
 
     expect(onDrop).toHaveBeenCalledWith({
       dragged: "Loose track",
@@ -219,7 +222,7 @@ describe("Dragging in a TreeView", () => {
     const recordClick = (event: MouseEvent) => clicks.push(event)
     window.addEventListener("click", recordClick, { capture: true })
 
-    await dragTreeItemOnto(item("Focus"), item("Focus"), 0.9)
+    await dragOntoTreeItem(item("Focus"), item("Focus"), 0.9)
 
     window.removeEventListener("click", recordClick, { capture: true })
     expect(clicks.map((click) => click.defaultPrevented)).toEqual([true])

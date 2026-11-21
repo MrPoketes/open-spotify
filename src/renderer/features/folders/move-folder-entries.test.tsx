@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { fakeMainProcess } from "../../lib/fake-main-process"
+import { findStatusMessage } from "../../lib/find-status-message"
 import {
   expandRunning,
   focusId,
@@ -145,9 +146,7 @@ describe("Moving folder entries", () => {
     await userEvent.click(within(moveSubmenu).getByRole("menuitem", { name: "Focus" }))
 
     expect(
-      await screen.findByText("Couldn't move Warm-up. A folder can't go inside itself.", {
-        selector: "output > p",
-      }),
+      await findStatusMessage("Couldn't move Warm-up. A folder can't go inside itself."),
     ).toBeInTheDocument()
     expect(await treeItem("Warm-up")).toHaveAttribute("aria-level", "2")
     expect(await treeItem("Warm-up")).toHaveAttribute("aria-posinset", "2")
