@@ -1,10 +1,15 @@
 import { cleanup, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
+import { Effect, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import type { FolderTree } from "../../../shared/folders"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
+import { StatusMessageProvider } from "../../ui/status-message-provider"
+import { NoActiveDevice, type SpotifyApi } from "../spotify/spotify-api"
+import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { FolderPage } from "./folder-page"
 import { FoldersProvider } from "./folders-provider"
 
@@ -75,13 +80,24 @@ const folderTree: FolderTree = [
 const renderFolderPage = (
   folderId: string,
   mainProcess: DesktopApi = fakeMainProcess({ folderTree }),
+  spotifyApi: Layer.Layer<SpotifyApi> = spotifyApiFake,
 ) =>
   renderScreen(
-    <FoldersProvider>
-      <FolderPage folderId={folderId} />
-    </FoldersProvider>,
+    <StatusMessageProvider>
+      <FoldersProvider>
+        <FolderPage folderId={folderId} />
+      </FoldersProvider>
+    </StatusMessageProvider>,
     mainProcess,
+    spotifyApi,
   )
+
+// The fake server only plays its own fixture tracks, whose made-up ids the
+// folder tree's Schema rejects, so the playback start is recorded instead.
+const spotifyRecordingPlaybackStarts = (playbackStarts: Array<PlaybackStart>) =>
+  spotifyApiFakeWith(() => ({
+    startPlayback: (start) => Effect.sync(() => playbackStarts.push(start)),
+  }))
 
 // Serves the folder tree while reachable and fails like a main process that
 // does not reply while unreachable.
@@ -164,6 +180,54 @@ describe("FolderPage", () => {
       expect(pageOf(/Quiet Rivers/)).toBe("/track/4uLU6hMCjMI75M1A2tKUQC")
     },
   )
+
+  it("plays the folder's tracks in folder order from the play button", async () => {
+    const playbackStarts: Array<PlaybackStart> = []
+    renderFolderPage(
+      runningId,
+      fakeMainProcess({ folderTree }),
+      spotifyRecordingPlaybackStarts(playbackStarts),
+    )
+
+    await userEvent.click(await screen.findByRole("button", { name: "Play Running" }))
+
+    await waitFor(() =>
+      expect(playbackStarts).toEqual([
+        { uris: ["spotify:track:4uLU6hMCjMI75M1A2tKUQC", "spotify:track:7ouMYWpwJ422jRcDASZB7P"] },
+      ]),
+    )
+  })
+
+  // Spotify queues only tracks, so the user must learn why the folder's
+  // playlists, albums, artists, and shows do not play.
+  it("describes the play button with how many tracks play and why the rest do not", async () => {
+    renderFolderPage(runningId)
+
+    expect(await screen.findByRole("button", { name: "Play Running" })).toHaveAccessibleDescription(
+      "Plays the folder's 2 tracks. Spotify can't queue the other items.",
+    )
+  })
+
+  it("hides the play button in a folder without tracks", async () => {
+    renderFolderPage(warmUpId)
+
+    expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Warm-up")
+    expect(screen.queryByRole("button", { name: "Play Warm-up" })).not.toBeInTheDocument()
+  })
+
+  it("says to choose a device when playing the folder finds no device", async () => {
+    renderFolderPage(
+      runningId,
+      fakeMainProcess({ folderTree }),
+      spotifyApiFakeWith(() => ({ startPlayback: () => Effect.fail(new NoActiveDevice()) })),
+    )
+
+    await userEvent.click(await screen.findByRole("button", { name: "Play Running" }))
+
+    expect(
+      await screen.findByText("No device is playing. Choose a device, then try again."),
+    ).toBeInTheDocument()
+  })
 
   it("explains how to add items to an empty folder", async () => {
     renderFolderPage(stretchingId)

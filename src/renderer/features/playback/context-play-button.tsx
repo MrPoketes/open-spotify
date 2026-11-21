@@ -1,4 +1,5 @@
 import { Pause, Play } from "lucide-react"
+import { PagePlayButton } from "./page-play-button"
 import { useNowPlaying } from "./use-now-playing"
 import { usePlayerCommandFromPage } from "./use-player-command-from-page"
 
@@ -29,15 +30,11 @@ export function ContextPlayButton({ contextUri, contextName }: ContextPlayButton
     sendCommand((player) => player.startPlayback({ contextUri }), `Couldn't play ${contextName}.`)
   }
 
-  const Icon = isPlaying ? Pause : Play
   return (
-    <button
-      type="button"
-      aria-label={`${isPlaying ? "Pause" : "Play"} ${contextName}`}
+    <PagePlayButton
+      label={`${isPlaying ? "Pause" : "Play"} ${contextName}`}
+      icon={isPlaying ? Pause : Play}
       onClick={press}
-      className="flex size-14 items-center justify-center self-start rounded-full bg-accent text-on-accent transition-opacity duration-120 ease-out hover:opacity-90 active:opacity-75"
-    >
-      <Icon aria-hidden size={24} fill="currentColor" />
-    </button>
+    />
   )
 }

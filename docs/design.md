@@ -453,7 +453,19 @@ so the page does not show them.
 
 The header shows a breadcrumb of the parent folders (only for a nested folder) above the page
 header every page shares: a `Folder` placeholder tile as the cover, a `text-xs` "Folder" label,
-the name in `text-5xl`, and the item count. Below it, at the right end, a Grid / List toggle:
+the name in `text-5xl`, and the item count.
+
+Under the header sits the round play button every page shares (see Playing from a page), named
+after the folder ("Play Running"). It plays the folder's own tracks as a list, in folder order.
+Spotify cannot queue a playlist, album, artist, or show after them, and nested folders are not
+expanded. So when the folder holds anything besides tracks, a `text-sm` `muted` line beside the
+button says what plays ("Plays the folder's 2 tracks. Spotify can't queue the other items.") and
+describes the button (`aria-describedby`). A folder without tracks has no play button. The
+button always plays from the first track. Spotify reports no context for a list of tracks, so it
+cannot tell that the folder is playing and switch to `Pause`. A failed play behaves as on every
+other page: the status message says why, and with no active device the device picker opens.
+
+Below the play button, at the right end, a Grid / List toggle:
 two filter chips in a `fieldset`, so the chosen view has the chip's check mark and 600 weight as
 well as its `accent` fill. The choice is the `folderView` setting and applies to every folder.
 
