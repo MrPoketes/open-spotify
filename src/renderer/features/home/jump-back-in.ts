@@ -60,6 +60,11 @@ const loadCard = Effect.fn("loadJumpBackInCard")(function* ({ uri, kind, id }: P
   return artistCard(yield* spotify.getArtist(id))
 })
 
+interface JumpBackInCard {
+  readonly uri: string
+  readonly card: GridCard
+}
+
 // Spotify answers 404 to development-mode apps for its own algorithmic and
 // editorial playlists, such as Discover Weekly and Daily Mix, which are among
 // the most played-from contexts. A playlist may also have been deleted since.
@@ -69,7 +74,7 @@ export const loadJumpBackInCards = (contexts: ReadonlyArray<PageContext>) =>
     contexts,
     (context) =>
       loadCard(context).pipe(
-        Effect.map((card): ReadonlyArray<GridCard> => [card]),
+        Effect.map((card): ReadonlyArray<JumpBackInCard> => [{ uri: context.uri, card }]),
         Effect.catchIf(isUnknownSpotifyId, () => Effect.succeed([])),
       ),
     { concurrency: "unbounded" },

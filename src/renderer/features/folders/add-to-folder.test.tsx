@@ -11,6 +11,7 @@ import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { AlbumPage } from "../album/album-page"
+import { DiscographySection } from "../artist/discography-section"
 import { Library } from "../library/library"
 import { PlaylistPage } from "../playlist/playlist-page"
 import type { SavedAlbum } from "../spotify/spotify-album"
@@ -236,6 +237,31 @@ describe("Add to folder", () => {
 
     expect(await findStatusMessage("Added to Focus")).toBeInTheDocument()
     const reopenedSubmenu = await openFolderSubmenu(user, header)
+    expect(
+      within(reopenedSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }),
+    ).toHaveAttribute("aria-checked", "true")
+  })
+
+  it("adds an album to a folder from its card's context menu", async () => {
+    const user = renderWithFolders(
+      <DiscographySection
+        title="Albums"
+        artistId="0OdUWJ0sBjDrqHygGUXeCF"
+        albumGroup="album"
+        firstPage={{ items: [{ ...lowOrbit.album, releaseDate: "2024" }], next: null, total: 1 }}
+      />,
+    )
+    const albums = await screen.findByRole("list", { name: "Albums" })
+    const card = within(albums).getByRole("link", { name: /Low Orbit/ })
+
+    card.focus()
+    await user.keyboard("{Shift>}{F10}{/Shift}")
+    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
+    const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
+    await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
+
+    expect(await findStatusMessage("Added to Focus")).toBeInTheDocument()
+    const reopenedSubmenu = await openFolderSubmenu(user, card)
     expect(
       within(reopenedSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }),
     ).toHaveAttribute("aria-checked", "true")
