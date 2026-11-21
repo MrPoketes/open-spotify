@@ -1,14 +1,31 @@
-import { screen } from "@testing-library/react"
+import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
+import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
+import { FoldersProvider } from "../folders/folders-provider"
 import { Sidebar } from "./sidebar"
 
 const mainProcessReplying = (replies: Partial<Record<string, unknown>>): DesktopApi => ({
   invoke: (channel) => Promise.resolve(replies[channel]),
 })
+
+// Imports one folder into the fake main process's tree, as the real one adds
+// the file's folders to the stored tree.
+const mainProcessImportingOneFolder = (): DesktopApi => {
+  const mainProcess = fakeMainProcess()
+  return {
+    invoke: async (channel, request) => {
+      if (channel !== ipcChannels.importFolders) {
+        return mainProcess.invoke(channel, request)
+      }
+      await mainProcess.invoke(ipcChannels.createFolder, { name: "Imported", parentFolderId: null })
+      return { _tag: "FoldersImported", folderCount: 1 }
+    },
+  }
+}
 
 const mainProcessFailing = (): DesktopApi => ({
   invoke: () => Promise.reject(new Error("EACCES: permission denied")),
@@ -32,6 +49,28 @@ describe("Sidebar folder menu", () => {
     expect(await screen.findByText("Imported 3 folders.")).toBeInTheDocument()
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
     expect(menuButton).toHaveFocus()
+  })
+
+  it("offers imported folders in Add to folder menus", async () => {
+    const user = userEvent.setup()
+    renderScreen(
+      <FoldersProvider>
+        <Sidebar width={280} />
+      </FoldersProvider>,
+      mainProcessImportingOneFolder(),
+    )
+
+    await user.click(await screen.findByRole("button", { name: "Folder options" }))
+    await user.click(screen.getByRole("menuitem", { name: "Import folders…" }))
+    await screen.findByText("Imported 1 folder.")
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: await screen.findByRole("link", { name: /^Small Hours/ }),
+    })
+    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
+
+    const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
+    expect(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Imported" })).toBeVisible()
   })
 
   it("confirms that the folders were exported", async () => {

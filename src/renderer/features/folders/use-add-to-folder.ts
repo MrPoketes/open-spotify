@@ -7,7 +7,7 @@ import { useShowStatusMessage } from "../../ui/status-message-context"
 import { type AnnouncedOutcome, useRunAnnounced } from "../../ui/use-run-announced"
 import { type AddToFolderActions, addToFolderItem, holdsItem } from "./add-to-folder-item"
 import { AskForFolderNameContext } from "./ask-for-folder-name"
-import { loadFolderTree, useFolderTree } from "./folder-tree"
+import { useFolderTree, useReadFolderTreeAgain } from "./folder-tree"
 
 // What a menu knows about the playlist, artist, album, show, or track it
 // belongs to. Images are widest first, as Spotify lists them.
@@ -37,19 +37,13 @@ const removeOutcome = (folderName: string): AnnouncedOutcome<DesktopBridgeError>
   failureLog: "Could not remove an item from a folder",
 })
 
-// Returns the Add to folder item for a menu, given what the menu belongs to.
 export function useAddToFolder() {
   const folderTree = useFolderTree()
   const askForFolderName = use(AskForFolderNameContext)
   const runAnnounced = useRunAnnounced()
   const showStatusMessage = useShowStatusMessage()
 
-  const readTreeAgain = loadFolderTree.pipe(
-    Effect.andThen((tree) => Effect.sync(() => folderTree.replace(tree))),
-    Effect.catch((error) =>
-      Effect.logWarning("Could not read the folders again after a change", error),
-    ),
-  )
+  const readTreeAgain = useReadFolderTreeAgain()
 
   // Reads the tree again even after a failure, because part of the change,
   // such as a new folder, may have happened. The message is about the change

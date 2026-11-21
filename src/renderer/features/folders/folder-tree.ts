@@ -21,3 +21,15 @@ export const FolderTreeContext = createContext<SharedFolderTree>({
 })
 
 export const useFolderTree = () => use(FolderTreeContext)
+
+// Reads the tree again after a change, so every menu and the open folder page
+// show it. A failed read leaves the tree as it was.
+export function useReadFolderTreeAgain() {
+  const { replace } = useFolderTree()
+  return loadFolderTree.pipe(
+    Effect.andThen((tree) => Effect.sync(() => replace(tree))),
+    Effect.catch((error) =>
+      Effect.logWarning("Could not read the folders again after a change", error),
+    ),
+  )
+}

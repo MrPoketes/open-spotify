@@ -202,27 +202,17 @@ describe("Add to folder", () => {
     expect(screen.getByRole("dialog", { name: "New folder" })).toBeInTheDocument()
   })
 
-  it("shows an item added from the sidebar on the open folder's page", async () => {
-    const user = renderWithFolders(<FolderPage folderId={focusId} />)
-    await screen.findByText(/This folder is empty/)
-
-    const folderSubmenu = await openFolderSubmenu(user, await sidebarAlbum())
-    await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
-
-    const contents = await screen.findByRole("list", { name: "Folder contents" })
-    expect(within(contents).getByRole("link", { name: /Low Orbit/ })).toBeInTheDocument()
-  })
-
-  // A page that went back to its loading state would lose the user's place
-  // in a long folder.
-  it("keeps the open folder's page on screen while it shows a change", async () => {
+  // A page that went back to its loading state to show the item would lose
+  // the user's place in a long folder.
+  it("shows an item added from the sidebar on the open folder's page, in place", async () => {
     const user = renderWithFolders(<FolderPage folderId={focusId} />)
     const heading = await screen.findByRole("heading", { level: 1, name: "Focus" })
 
     const folderSubmenu = await openFolderSubmenu(user, await sidebarAlbum())
     await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
 
-    await screen.findByRole("list", { name: "Folder contents" })
+    const contents = await screen.findByRole("list", { name: "Folder contents" })
+    expect(within(contents).getByRole("link", { name: /Low Orbit/ })).toBeInTheDocument()
     expect(heading).toBeInTheDocument()
   })
 

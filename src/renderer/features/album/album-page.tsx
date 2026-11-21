@@ -54,7 +54,7 @@ export function AlbumPage({ albumId, highlightedTrackId }: AlbumPageProps) {
     <div className="flex flex-col gap-8">
       <AlbumHeader album={album} totalDurationMs={totalDurationMs} />
       <ContextPlayButton contextUri={album.uri} contextName={album.name} />
-      <AlbumTracks albumUri={album.uri} tracks={tracks} highlightedTrackId={highlightedTrackId} />
+      <AlbumTracks album={album} tracks={tracks} highlightedTrackId={highlightedTrackId} />
     </div>
   )
 }

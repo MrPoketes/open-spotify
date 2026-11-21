@@ -1,4 +1,5 @@
 import type { AlbumTrack } from "../spotify/spotify-album"
+import type { Image } from "../spotify/spotify-image"
 import { TrackList } from "../track-list/track-list"
 import type { TrackListEntry } from "../track-list/track-row"
 
@@ -9,22 +10,23 @@ interface Disc {
   readonly firstPosition: number
 }
 
-const albumTrackEntry = (track: AlbumTrack): TrackListEntry => ({
+// The rows leave the cover out, but a track added to a folder keeps it.
+const albumTrackEntry = (track: AlbumTrack, cover: ReadonlyArray<Image>): TrackListEntry => ({
   trackId: track.id,
   title: track.name,
   artists: track.artists,
   album: null,
-  artwork: [],
+  artwork: cover,
   addedAt: null,
   durationMs: track.durationMs,
 })
 
 // Spotify lists an album's tracks in order, disc by disc.
-const discsOf = (tracks: ReadonlyArray<AlbumTrack>) => {
+const discsOf = (tracks: ReadonlyArray<AlbumTrack>, cover: ReadonlyArray<Image>) => {
   const entriesByDisc = new Map<number, Array<TrackListEntry>>()
   for (const track of tracks) {
     const discEntries = entriesByDisc.get(track.discNumber) ?? []
-    discEntries.push(albumTrackEntry(track))
+    discEntries.push(albumTrackEntry(track, cover))
     entriesByDisc.set(track.discNumber, discEntries)
   }
   let firstPosition = 0
@@ -36,13 +38,13 @@ const discsOf = (tracks: ReadonlyArray<AlbumTrack>) => {
 }
 
 interface AlbumTracksProps {
-  readonly albumUri: string
+  readonly album: { readonly uri: string; readonly images: ReadonlyArray<Image> }
   readonly tracks: ReadonlyArray<AlbumTrack>
   readonly highlightedTrackId: string | undefined
 }
 
-export function AlbumTracks({ albumUri, tracks, highlightedTrackId }: AlbumTracksProps) {
-  const discs = discsOf(tracks)
+export function AlbumTracks({ album, tracks, highlightedTrackId }: AlbumTracksProps) {
+  const discs = discsOf(tracks, album.images)
   const hasDiscHeadings = discs.length > 1
   return discs.map(({ discNumber, entries, firstPosition }) => {
     const label = hasDiscHeadings ? `Disc ${discNumber}` : "Tracks"
@@ -56,7 +58,7 @@ export function AlbumTracks({ albumUri, tracks, highlightedTrackId }: AlbumTrack
           trackCount={entries.length}
           trackAt={(index) => entries[index]}
           playbackStartAt={(index) => ({
-            contextUri: albumUri,
+            contextUri: album.uri,
             offset: { position: firstPosition + index },
           })}
           highlightedIndex={highlightedIndex === -1 ? undefined : highlightedIndex}
