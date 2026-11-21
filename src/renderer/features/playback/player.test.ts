@@ -5,6 +5,7 @@ import { NoActiveDevice, SpotifyApi, SpotifyRequestError } from "../spotify/spot
 import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeDevices, fakeTrack } from "../spotify/spotify-fixtures"
 import { collectStream } from "../../lib/collect-stream"
+import { setWindowVisibility } from "../../lib/fake-window-visibility"
 import { Player, type PlayerState } from "./player"
 import { playerOver } from "./player-over"
 
@@ -24,12 +25,6 @@ const countingSpotify = (failingRequests: ReadonlyArray<number> = []) => {
   return { requestCount: () => requestCount, layer: Player.layer.pipe(Layer.provide(layer)) }
 }
 
-const setWindowVisibility = (visibility: DocumentVisibilityState) =>
-  Effect.sync(() => {
-    Object.defineProperty(document, "visibilityState", { configurable: true, value: visibility })
-    document.dispatchEvent(new Event("visibilitychange"))
-  })
-
 const subscribe = Effect.gen(function* () {
   const player = yield* Player
   return yield* collectStream(player.state)
@@ -41,9 +36,7 @@ const activeDeviceId = (state: PlayerState) =>
 const playingName = (state: PlayerState) =>
   state.status === "active" ? state.playback.item?.name : undefined
 
-afterEach(() => {
-  Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" })
-})
+afterEach(() => setWindowVisibility("visible"))
 
 describe("Player", () => {
   it.effect("polls the playback state every two seconds while the window is visible", () => {
@@ -67,7 +60,7 @@ describe("Player", () => {
     return Effect.gen(function* () {
       const states = yield* subscribe
       yield* Queue.take(states)
-      yield* setWindowVisibility("hidden")
+      setWindowVisibility("hidden")
       yield* TestClock.adjust("14 seconds")
       const requestsBeforeInterval = spotify.requestCount()
 
@@ -92,7 +85,7 @@ describe("Player", () => {
     return Effect.gen(function* () {
       const states = yield* subscribe
       yield* Queue.take(states)
-      yield* setWindowVisibility("hidden")
+      setWindowVisibility("hidden")
       yield* TestClock.adjust("15 seconds")
       const stateAfterDeviceLeft = yield* Queue.take(states)
 
@@ -108,11 +101,11 @@ describe("Player", () => {
     return Effect.gen(function* () {
       const states = yield* subscribe
       yield* Queue.take(states)
-      yield* setWindowVisibility("hidden")
+      setWindowVisibility("hidden")
       yield* TestClock.adjust("10 seconds")
       const requestsWhileHidden = spotify.requestCount()
 
-      yield* setWindowVisibility("visible")
+      setWindowVisibility("visible")
       yield* Queue.take(states)
 
       assert.strictEqual(requestsWhileHidden, 1)
@@ -186,7 +179,7 @@ describe("Player", () => {
       const player = yield* Player
       const states = yield* subscribe
       yield* Queue.take(states)
-      yield* setWindowVisibility("hidden")
+      setWindowVisibility("hidden")
 
       yield* player.skipToNext
       const stateAfterSkip = yield* Queue.take(states)

@@ -83,6 +83,7 @@ export default defineConfig({
     "vitest/valid-title": "error",
 
     "open-spotify/descriptive-test-names": "error",
+    "open-spotify/no-constructed-context-values": "error",
     "open-spotify/no-junk-drawer-modules": "error",
     "open-spotify/no-stale-file-references": "error",
     "open-spotify/no-try-catch": "error",
@@ -101,9 +102,14 @@ export default defineConfig({
       rules: { "unicorn/filename-case": "off", "react/only-export-components": "off" },
     },
     {
-      // Test tables and fixtures are naturally long.
+      // Test tables and fixtures are naturally long. A test's provider wraps
+      // one screen and does not re-render with an app shell around it.
       files: ["**/*.test.ts", "**/*.test.tsx"],
-      rules: { "max-lines-per-function": "off", "max-nested-callbacks": "off" },
+      rules: {
+        "max-lines-per-function": "off",
+        "max-nested-callbacks": "off",
+        "open-spotify/no-constructed-context-values": "off",
+      },
     },
     {
       // The renderer is sandboxed: it reaches the main process only through

@@ -1,4 +1,4 @@
-import { type ReactNode, use, useState } from "react"
+import { type ReactNode, use, useMemo, useState } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { saveSetting } from "../../lib/saved-setting"
@@ -18,12 +18,18 @@ export function TrackListDensityProvider({
   const runtime = use(RendererRuntimeContext)
   const [density, setDensity] = useState(savedDensity)
 
-  const chooseDensity = (nextDensity: TrackListDensity) => {
-    setDensity(nextDensity)
-    runtime.runFork(saveSetting("trackListDensity", nextDensity))
-  }
-
-  return (
-    <TrackListDensityContext value={{ density, chooseDensity }}>{children}</TrackListDensityContext>
+  // Every track list reads this context, and a new value would re-render all
+  // their rows whenever the app shell renders.
+  const densityChoice = useMemo(
+    () => ({
+      density,
+      chooseDensity: (nextDensity: TrackListDensity) => {
+        setDensity(nextDensity)
+        runtime.runFork(saveSetting("trackListDensity", nextDensity))
+      },
+    }),
+    [density, runtime],
   )
+
+  return <TrackListDensityContext value={densityChoice}>{children}</TrackListDensityContext>
 }
