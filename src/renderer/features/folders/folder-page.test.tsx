@@ -124,14 +124,14 @@ const entryTexts = (list: HTMLElement) =>
 
 describe("FolderPage", () => {
   it("shows the folder's name and item count", async () => {
-    renderFolderPage(runningId)
+    await renderFolderPage(runningId)
 
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Running")
     expect(screen.getByText("7 items")).toBeInTheDocument()
   })
 
   it("shows the same entries in the grid and in the list", async () => {
-    renderFolderPage(runningId)
+    await renderFolderPage(runningId)
     const gridEntries = entryTexts(await folderContents())
 
     await userEvent.click(screen.getByRole("button", { name: "List" }))
@@ -151,11 +151,11 @@ describe("FolderPage", () => {
 
   it("remembers the chosen view the next time a folder opens", async () => {
     const mainProcess = fakeMainProcess({ folderTree })
-    renderFolderPage(runningId, mainProcess)
+    await renderFolderPage(runningId, mainProcess)
     await userEvent.click(await screen.findByRole("button", { name: "List" }))
     cleanup()
 
-    renderFolderPage(warmUpId, mainProcess)
+    await renderFolderPage(warmUpId, mainProcess)
 
     expect(await screen.findByRole("button", { name: "List" })).toHaveAttribute(
       "aria-pressed",
@@ -166,7 +166,7 @@ describe("FolderPage", () => {
   it.each(["Grid", "List"])(
     "links every kind of entry to its page in the %s view",
     async (view) => {
-      renderFolderPage(runningId)
+      await renderFolderPage(runningId)
       await userEvent.click(await screen.findByRole("button", { name: view }))
       const entries = await folderContents()
 
@@ -183,7 +183,7 @@ describe("FolderPage", () => {
 
   it("plays the folder's tracks in folder order from the play button", async () => {
     const playbackStarts: Array<PlaybackStart> = []
-    renderFolderPage(
+    await renderFolderPage(
       runningId,
       fakeMainProcess({ folderTree }),
       spotifyRecordingPlaybackStarts(playbackStarts),
@@ -201,7 +201,7 @@ describe("FolderPage", () => {
   // Spotify queues only tracks, so the user must learn why the folder's
   // playlists, albums, artists, and shows do not play.
   it("describes the play button with how many tracks play and why the rest do not", async () => {
-    renderFolderPage(runningId)
+    await renderFolderPage(runningId)
 
     expect(await screen.findByRole("button", { name: "Play Running" })).toHaveAccessibleDescription(
       "Plays the folder's 2 tracks. Spotify can't queue the other items.",
@@ -209,14 +209,14 @@ describe("FolderPage", () => {
   })
 
   it("hides the play button in a folder without tracks", async () => {
-    renderFolderPage(warmUpId)
+    await renderFolderPage(warmUpId)
 
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Warm-up")
     expect(screen.queryByRole("button", { name: "Play Warm-up" })).not.toBeInTheDocument()
   })
 
   it("says to choose a device when playing the folder finds no device", async () => {
-    renderFolderPage(
+    await renderFolderPage(
       runningId,
       fakeMainProcess({ folderTree }),
       spotifyApiFakeWith(() => ({ startPlayback: () => Effect.fail(new NoActiveDevice()) })),
@@ -232,7 +232,7 @@ describe("FolderPage", () => {
   it.each(["Grid", "List"])(
     "removes an entry from the folder through its own menu in the %s view",
     async (view) => {
-      renderFolderPage(runningId)
+      await renderFolderPage(runningId)
       await userEvent.click(await screen.findByRole("button", { name: view }))
       const entries = await folderContents()
 
@@ -258,7 +258,7 @@ describe("FolderPage", () => {
 
   // A folder is not a Spotify item, so Add to folder cannot hold it.
   it("opens no menu for a folder inside the folder", async () => {
-    renderFolderPage(runningId)
+    await renderFolderPage(runningId)
     const entries = await folderContents()
 
     await userEvent.pointer({
@@ -270,14 +270,14 @@ describe("FolderPage", () => {
   })
 
   it("explains how to add items to an empty folder", async () => {
-    renderFolderPage(stretchingId)
+    await renderFolderPage(stretchingId)
 
     expect(await screen.findByText(/This folder is empty/)).toHaveTextContent("Add to folder")
     expect(screen.queryByRole("list", { name: "Folder contents" })).not.toBeInTheDocument()
   })
 
   it("goes to a parent folder from the breadcrumb", async () => {
-    const router = renderFolderPage(stretchingId)
+    const router = await renderFolderPage(stretchingId)
     const breadcrumb = await screen.findByRole("navigation", { name: "Breadcrumb" })
 
     await userEvent.click(within(breadcrumb).getByRole("link", { name: "Warm-up" }))
@@ -288,7 +288,7 @@ describe("FolderPage", () => {
   it("shows an error when the folder cannot load, and loads it on retry", async () => {
     const mainProcess = mainProcessWithConnection()
     mainProcess.setReachable(false)
-    renderFolderPage(runningId, mainProcess)
+    await renderFolderPage(runningId, mainProcess)
 
     expect(await screen.findByRole("alert")).toHaveTextContent("This folder didn't load.")
     mainProcess.setReachable(true)
@@ -299,7 +299,7 @@ describe("FolderPage", () => {
 
   // The user can come back to a folder through history after deleting it.
   it("says so when the folder no longer exists", async () => {
-    renderFolderPage("6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4eff")
+    await renderFolderPage("6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4eff")
 
     expect(await screen.findByText(/This folder doesn't exist/)).toBeInTheDocument()
   })

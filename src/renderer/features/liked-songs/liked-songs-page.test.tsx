@@ -26,7 +26,7 @@ const spotifyRecordingPageRequests = () => {
 }
 
 const renderLikedSongsPage = async (spotifyApi?: Layer.Layer<SpotifyApi>) => {
-  renderScreen(
+  await renderScreen(
     <FakeMainView>
       <LikedSongsPage />
     </FakeMainView>,

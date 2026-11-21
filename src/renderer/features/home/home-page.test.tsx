@@ -84,7 +84,7 @@ const spotifyFailingFirstTopTracksRequest = spotifyApiFakeWith((spotify) => {
 
 describe("HomePage", () => {
   it("greets the user by their display name", async () => {
-    renderHomePage()
+    await renderHomePage()
 
     expect(
       await screen.findByRole("heading", { name: "Hello, Mira Kaelin", level: 1 }),
@@ -94,7 +94,7 @@ describe("HomePage", () => {
   // The play history repeats contexts, and some contexts have no page: Liked
   // Songs, and plays without a context.
   it("jumps back into each album, playlist, and artist played from once, most recent first, up to eight", async () => {
-    renderHomePage()
+    await renderHomePage()
 
     const jumpBackIn = await screen.findByRole("list", { name: "Jump back in" })
     expect(cardLinks("Jump back in")).toEqual([
@@ -113,7 +113,7 @@ describe("HomePage", () => {
   })
 
   it("leaves a deleted playlist out of Jump back in", async () => {
-    renderHomePage(spotifyWithoutLateNightDrive)
+    await renderHomePage(spotifyWithoutLateNightDrive)
 
     await screen.findByRole("list", { name: "Jump back in" })
     expect(cardLinks("Jump back in")).not.toContain("/playlist/fake-playlist-late-night-drive")
@@ -121,7 +121,7 @@ describe("HomePage", () => {
   })
 
   it("lists recently played tracks without repeating a track played twice in a row", async () => {
-    renderHomePage()
+    await renderHomePage()
 
     await screen.findByRole("table", { name: "Recently played" })
     expect(trackRowNames("Recently played")).toEqual(
@@ -131,7 +131,7 @@ describe("HomePage", () => {
 
   it("loads the top artists for the time range the user picks", async () => {
     const { requestedRanges, spotifyApi } = spotifyRecordingTopArtistRanges()
-    renderHomePage(spotifyApi)
+    await renderHomePage(spotifyApi)
     const topArtists = await screen.findByRole("region", { name: "Your top artists" })
     await within(topArtists).findByRole("list", { name: "Your top artists" })
 
@@ -153,7 +153,7 @@ describe("HomePage", () => {
   // Hiding the section would take the switch with it, and the user could not
   // go back to a time range that has artists.
   it("keeps the top artists and their time range switch when the picked range has none", async () => {
-    renderHomePage(spotifyWithoutRecentTopArtists)
+    await renderHomePage(spotifyWithoutRecentTopArtists)
     const topArtists = await screen.findByRole("region", { name: "Your top artists" })
     await within(topArtists).findByRole("list", { name: "Your top artists" })
 
@@ -169,14 +169,14 @@ describe("HomePage", () => {
   })
 
   it("welcomes a new account with no listening history instead of showing empty sections", async () => {
-    renderHomePage(spotifyForNewAccount)
+    await renderHomePage(spotifyForNewAccount)
 
     expect(await screen.findByText(/^Welcome to Open Spotify\./)).toBeInTheDocument()
     expect(screen.queryAllByRole("heading", { level: 2 })).toEqual([])
   })
 
   it("keeps the other sections when one fails, and shows it after Retry", async () => {
-    renderHomePage(spotifyFailingFirstTopTracksRequest)
+    await renderHomePage(spotifyFailingFirstTopTracksRequest)
     const topTracks = await screen.findByRole("region", { name: "Your top tracks" })
 
     const alert = await within(topTracks).findByRole("alert")
@@ -192,7 +192,7 @@ describe("HomePage", () => {
 
   // Jump back in and Recently played both come from the play history.
   it("shows the play history failing in both sections it feeds, and loads both after Retry", async () => {
-    renderHomePage(spotifyFailingFirstPlayHistoryRequest)
+    await renderHomePage(spotifyFailingFirstPlayHistoryRequest)
     const jumpBackIn = await screen.findByRole("region", { name: "Jump back in" })
     const recentlyPlayed = screen.getByRole("region", { name: "Recently played" })
 
@@ -210,7 +210,7 @@ describe("HomePage", () => {
   // The cards are looked up after the play history loads, so they can fail on
   // their own while Recently played, fed by the same history, still shows.
   it("shows a failed card lookup in Jump back in only, and loads the cards after Retry", async () => {
-    renderHomePage(spotifyFailingFirstAlbumRequest)
+    await renderHomePage(spotifyFailingFirstAlbumRequest)
 
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent("Jump back in didn't load.")

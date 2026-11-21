@@ -65,7 +65,7 @@ const loadEpisodesUntilRetry = async (spotify: ReturnType<typeof spotifyWithConn
 
 describe("ShowPage", () => {
   it("shows the show's header and the first page of its episodes", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
 
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Slow Science")
     expect(screen.getByText("Show")).toBeInTheDocument()
@@ -77,7 +77,7 @@ describe("ShowPage", () => {
   })
 
   it("loads the next page when the end of the episode list scrolls into view", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     await screen.findByRole("heading", { level: 1 })
 
     scrollObservedElementsIntoView()
@@ -87,7 +87,7 @@ describe("ShowPage", () => {
   })
 
   it("expands an episode's full description", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     const latestEpisode = await screen.findByRole("article", { name: "Tide Pools, part 1" })
 
     await userEvent.click(within(latestEpisode).getByRole("button", { name: "Show more" }))
@@ -100,7 +100,7 @@ describe("ShowPage", () => {
 
   // Show notes come from podcast publishers, so markup in them must never run.
   it("shows an HTML description as text instead of markup", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     const episode = await screen.findByRole("article", { name: "Lichen, part 1" })
 
     expect(within(episode).getByText(/<b>bold claims<\/b>/)).toBeInTheDocument()
@@ -108,14 +108,14 @@ describe("ShowPage", () => {
   })
 
   it("says so when a show has no episodes", async () => {
-    renderShowPage("fake-show-long-edit")
+    await renderShowPage("fake-show-long-edit")
 
     expect(await screen.findByText("This show has no episodes yet.")).toBeInTheDocument()
     expect(screen.queryByRole("list")).not.toBeInTheDocument()
   })
 
   it("plays a double-clicked episode within its show and marks it as playing", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     const thirdEpisode = await screen.findByRole("article", { name: "Deep Time, part 1" })
 
     await userEvent.dblClick(thirdEpisode)
@@ -125,7 +125,7 @@ describe("ShowPage", () => {
   })
 
   it("plays the focused episode when Enter is pressed", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     const secondEpisode = await screen.findByRole("article", { name: "Lichen, part 1" })
 
     await tabToEpisodes()
@@ -135,7 +135,7 @@ describe("ShowPage", () => {
   })
 
   it("moves between episodes with the arrow keys and j and k", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     await screen.findByRole("heading", { level: 1 })
 
     await tabToEpisodes()
@@ -149,7 +149,7 @@ describe("ShowPage", () => {
   })
 
   it("leaves Ctrl+K to the app-wide shortcut", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     await screen.findByRole("heading", { level: 1 })
 
     await tabToEpisodes()
@@ -161,7 +161,7 @@ describe("ShowPage", () => {
   // Only the active row is a tab stop, so Tab leaves the list instead of
   // walking through every episode.
   it("keeps the episode list to one tab stop", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     await screen.findByRole("heading", { level: 1 })
 
     const latestEpisode = screen.getByRole("article", { name: "Tide Pools, part 1" })
@@ -178,7 +178,7 @@ describe("ShowPage", () => {
   it("shows an error when the show cannot load, and loads it on retry", async () => {
     const spotify = spotifyWithConnection()
     spotify.setOnline(false)
-    renderShowPage("fake-show-slow-science", spotify.layer)
+    await renderShowPage("fake-show-slow-science", spotify.layer)
 
     expect(await screen.findByRole("alert")).toHaveTextContent("This show didn't load.")
     spotify.setOnline(true)
@@ -189,7 +189,7 @@ describe("ShowPage", () => {
 
   it("shows an error when the next page cannot load, and loads it on retry", async () => {
     const spotify = spotifyWithConnection()
-    renderShowPage("fake-show-slow-science", spotify.layer)
+    await renderShowPage("fake-show-slow-science", spotify.layer)
     await screen.findByRole("heading", { level: 1 })
 
     spotify.setOnline(false)
@@ -203,7 +203,7 @@ describe("ShowPage", () => {
 
   it("moves focus back to Retry when the page Retry asked for fails again", async () => {
     const spotify = spotifyWithConnection()
-    renderShowPage("fake-show-slow-science", spotify.layer)
+    await renderShowPage("fake-show-slow-science", spotify.layer)
     const retry = await loadEpisodesUntilRetry(spotify)
 
     await userEvent.click(retry)
@@ -213,7 +213,7 @@ describe("ShowPage", () => {
 
   it("moves focus to the first new episode when the page Retry asked for loads", async () => {
     const spotify = spotifyWithConnection()
-    renderShowPage("fake-show-slow-science", spotify.layer)
+    await renderShowPage("fake-show-slow-science", spotify.layer)
     const retry = await loadEpisodesUntilRetry(spotify)
     spotify.setOnline(true)
 
@@ -226,7 +226,7 @@ describe("ShowPage", () => {
   // Pages load as the user scrolls, and moving focus would scroll them away
   // from where they were reading.
   it("leaves focus alone when a page loads as the end of the list scrolls into view", async () => {
-    renderShowPage("fake-show-slow-science")
+    await renderShowPage("fake-show-slow-science")
     await screen.findByRole("heading", { level: 1 })
 
     scrollObservedElementsIntoView()
@@ -236,7 +236,7 @@ describe("ShowPage", () => {
   })
 
   it("goes to the login screen, saying why, when the session has expired", async () => {
-    const router = renderShowPage(
+    const router = await renderShowPage(
       "fake-show-slow-science",
       spotifyApiFakeWith(() => ({ getShow: () => Effect.fail(new SessionExpired()) })),
     )

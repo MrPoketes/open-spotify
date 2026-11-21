@@ -37,6 +37,7 @@ const quietRivers: TrackListEntry = {
   durationMs: 200_000,
 }
 
+const lateNightDriveId = "fake-playlist-late-night-drive"
 const lateNightDriveUri = "spotify:playlist:37i9dQZF1DX4wta20PHgwo"
 
 // The main process accepts only real Spotify ids, which the shared fixtures
@@ -72,11 +73,11 @@ const folderTree: FolderTree = [
   { _tag: "Folder", id: focusId, name: "Focus", entries: [] },
 ]
 
-const renderWithFolders = (
+const renderWithFolders = async (
   page: ReactNode,
   mainProcess: DesktopApi = fakeMainProcess({ folderTree }),
 ) => {
-  renderScreen(
+  await renderScreen(
     <StatusMessageProvider>
       <FoldersProvider>
         <Library />
@@ -148,7 +149,7 @@ const findStatusMessage = (text: string) => screen.findByText(text, { selector: 
 
 describe("Add to folder", () => {
   it("adds a track to the chosen folder and marks that folder afterwards", async () => {
-    const user = renderWithFolders(trackList)
+    const user = await renderWithFolders(trackList)
 
     const folderSubmenu = await openFolderSubmenu(user, await trackRow())
     await user.click(
@@ -163,7 +164,7 @@ describe("Add to folder", () => {
   })
 
   it("adds an album from the sidebar to a folder inside another folder", async () => {
-    const user = renderWithFolders(trackList)
+    const user = await renderWithFolders(trackList)
 
     const runningSubmenu = await openRunningSubmenu(user, await sidebarAlbum())
     await user.click(within(runningSubmenu).getByRole("menuitemcheckbox", { name: "Morning" }))
@@ -176,7 +177,7 @@ describe("Add to folder", () => {
   })
 
   it("removes the item from a folder that already holds it", async () => {
-    const user = renderWithFolders(trackList)
+    const user = await renderWithFolders(trackList)
 
     const runningSubmenu = await openRunningSubmenu(user, await trackRow())
     await user.click(
@@ -191,7 +192,7 @@ describe("Add to folder", () => {
   })
 
   it("creates a new folder with the item in it", async () => {
-    const user = renderWithFolders(trackList)
+    const user = await renderWithFolders(trackList)
 
     const folderSubmenu = await openFolderSubmenu(user, await trackRow())
     await user.click(within(folderSubmenu).getByRole("menuitem", { name: "New folder…" }))
@@ -208,7 +209,7 @@ describe("Add to folder", () => {
   })
 
   it("asks for a name instead of creating a folder with a blank one", async () => {
-    const user = renderWithFolders(trackList)
+    const user = await renderWithFolders(trackList)
 
     const folderSubmenu = await openFolderSubmenu(user, await trackRow())
     await user.click(within(folderSubmenu).getByRole("menuitem", { name: "New folder…" }))
@@ -227,7 +228,7 @@ describe("Add to folder", () => {
   })
 
   it("adds an album to a folder from its page header's context menu", async () => {
-    const user = renderWithFolders(<AlbumPage albumId="fake-album-4" />)
+    const user = await renderWithFolders(<AlbumPage albumId="fake-album-4" />)
     const header = await screen.findByRole("group", { name: "Low Orbit" })
 
     header.focus()
@@ -244,7 +245,7 @@ describe("Add to folder", () => {
   })
 
   it("adds an album to a folder from its card's context menu", async () => {
-    const user = renderWithFolders(
+    const user = await renderWithFolders(
       <DiscographySection
         title="Albums"
         artistId="0OdUWJ0sBjDrqHygGUXeCF"
@@ -269,7 +270,7 @@ describe("Add to folder", () => {
   })
 
   it("removes a playlist from a folder with its page's More options button", async () => {
-    const user = renderWithFolders(<PlaylistPage playlistId="fake-playlist-late-night-drive" />)
+    const user = await renderWithFolders(<PlaylistPage playlistId={lateNightDriveId} />)
 
     await user.click(await screen.findByRole("button", { name: "More options" }))
     await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
@@ -288,7 +289,7 @@ describe("Add to folder", () => {
   // A page that went back to its loading state to show the item would lose
   // the user's place in a long folder.
   it("shows an item added from the sidebar on the open folder's page, in place", async () => {
-    const user = renderWithFolders(<FolderPage folderId={focusId} />)
+    const user = await renderWithFolders(<FolderPage folderId={focusId} />)
     const heading = await screen.findByRole("heading", { level: 1, name: "Focus" })
 
     const folderSubmenu = await openFolderSubmenu(user, await sidebarAlbum())
@@ -300,7 +301,7 @@ describe("Add to folder", () => {
   })
 
   it("shows a library entry added to a folder in the sidebar folder tree", async () => {
-    const user = renderWithFolders(<SidebarFolderTree />)
+    const user = await renderWithFolders(<SidebarFolderTree />)
 
     const folderSubmenu = await openFolderSubmenu(user, await sidebarAlbum())
     await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
@@ -313,7 +314,7 @@ describe("Add to folder", () => {
 
   // Liked Songs is not an item Spotify can link to, so no folder can hold it.
   it("opens no menu for Liked Songs", async () => {
-    const user = renderWithFolders(trackList)
+    const user = await renderWithFolders(trackList)
 
     await user.pointer({
       keys: "[MouseRight]",
@@ -324,7 +325,7 @@ describe("Add to folder", () => {
   })
 
   it("says when the item could not be added", async () => {
-    const user = renderWithFolders(
+    const user = await renderWithFolders(
       trackList,
       mainProcessFailingOn(ipcChannels.addFolderItem, fakeMainProcess({ folderTree })),
     )
@@ -338,7 +339,7 @@ describe("Add to folder", () => {
   // The folder exists even though the item did not go in, so it must show up
   // in the menu instead of being created again on the next try.
   it("lists a new folder whose item could not be added", async () => {
-    const user = renderWithFolders(
+    const user = await renderWithFolders(
       trackList,
       mainProcessFailingOn(ipcChannels.addFolderItem, fakeMainProcess({ folderTree })),
     )
@@ -357,7 +358,7 @@ describe("Add to folder", () => {
   })
 
   it("loads the folders again after they failed to load", async () => {
-    const user = renderWithFolders(trackList, mainProcessFailingFirstTreeRead())
+    const user = await renderWithFolders(trackList, mainProcessFailingFirstTreeRead())
 
     await user.pointer({ keys: "[MouseRight]", target: await trackRow() })
     await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))

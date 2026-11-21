@@ -19,7 +19,7 @@ const loadSavedDensity = (mainProcess: DesktopApi) =>
 
 // The app loads the saved density at launch and hands it to the provider.
 const launchApp = async (mainProcess: DesktopApi) => {
-  renderScreen(
+  await renderScreen(
     <TrackListDensityProvider savedDensity={await loadSavedDensity(mainProcess)}>
       <TrackListDensitySetting />
       <FakeMainView>

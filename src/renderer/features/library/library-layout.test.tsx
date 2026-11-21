@@ -33,7 +33,7 @@ const chooseSectionOption = async (sectionName: string, option: string) => {
 
 describe("Library pins and sections", () => {
   it("moves a pinned entry out of its section to the top of the library", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     await userEvent.click(await screen.findByRole("button", { name: "Pin Small Hours to the top" }))
 
@@ -44,7 +44,7 @@ describe("Library pins and sections", () => {
 
   // The pin button only shows on hover, so the keyboard needs its own way in.
   it("pins and unpins the focused entry with P, keeping focus on it as it moves", async () => {
-    renderLibrary()
+    await renderLibrary()
     const albumLink = await screen.findByRole("link", { name: /^Small Hours/ })
     act(() => albumLink.focus())
 
@@ -60,7 +60,7 @@ describe("Library pins and sections", () => {
   })
 
   it("removes a hidden section and brings it back with its Show button", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     await chooseSectionOption("Albums", "Hide section")
     expect(screen.queryByRole("region", { name: "Albums" })).not.toBeInTheDocument()
@@ -73,7 +73,7 @@ describe("Library pins and sections", () => {
   })
 
   it("collapses a section to its heading and expands it again", async () => {
-    renderLibrary()
+    await renderLibrary()
     const albumsToggle = await sectionToggle("Albums")
 
     await userEvent.click(albumsToggle)
@@ -85,7 +85,7 @@ describe("Library pins and sections", () => {
   })
 
   it("moves a section past its neighbour with Move down and back with Move up", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     await chooseSectionOption("Liked Songs", "Move down")
     expect(sectionNames().slice(0, 2)).toEqual(["Playlists", "Liked Songs"])
@@ -97,7 +97,7 @@ describe("Library pins and sections", () => {
 
   it("restores pins and section settings after a restart", async () => {
     const mainProcess = fakeMainProcess()
-    renderLibrary(mainProcess)
+    await renderLibrary(mainProcess)
     await userEvent.click(
       await screen.findByRole("button", { name: "Pin Slow Science to the top" }),
     )
@@ -106,7 +106,7 @@ describe("Library pins and sections", () => {
     await userEvent.click(await sectionToggle("Albums"))
 
     cleanup()
-    renderLibrary(mainProcess)
+    await renderLibrary(mainProcess)
 
     expect(await sectionEntryTexts("Pinned")).toEqual(["Slow ScienceShow"])
     expect(sectionNames()).toEqual(["Pinned", "Playlists", "Liked Songs", "Albums", "Shows"])
@@ -119,7 +119,7 @@ describe("Library pins and sections", () => {
       key: "librarySections",
       value: defaultLibrarySections.map((librarySection) => ({ ...librarySection, hidden: true })),
     })
-    renderLibrary(mainProcess)
+    await renderLibrary(mainProcess)
 
     expect(
       await screen.findByText("Everything in your library is in a hidden section."),
@@ -128,7 +128,7 @@ describe("Library pins and sections", () => {
 
   // Saying nothing matches would be wrong: the entry exists, only its section is hidden.
   it("says the matching entries are in a hidden section when the filters only match those", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     await chooseSectionOption("Shows", "Hide section")
     await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "slow")
@@ -139,7 +139,7 @@ describe("Library pins and sections", () => {
   })
 
   it("moves focus to the section heading when an entry is unpinned into a collapsed section", async () => {
-    renderLibrary()
+    await renderLibrary()
     await userEvent.click(await screen.findByRole("button", { name: "Pin Small Hours to the top" }))
     await userEvent.click(await sectionToggle("Albums"))
     const pinnedLink = within(await section("Pinned")).getByRole("link", { name: /^Small Hours/ })
@@ -152,7 +152,7 @@ describe("Library pins and sections", () => {
 
   // Every other control a change could focus may be gone, but the filter never is.
   it("moves focus to the name filter when a shown section has no entries to show", async () => {
-    renderLibrary()
+    await renderLibrary()
     await chooseSectionOption("Albums", "Hide section")
     await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "slow")
 

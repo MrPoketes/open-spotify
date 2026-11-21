@@ -42,7 +42,7 @@ const mainProcessRefusingFolderMoves = (): DesktopApi => {
 
 describe("Moving folder entries", () => {
   it("moves the focused entry down among its siblings with Alt+Down and keeps focus on it", async () => {
-    renderTree()
+    await renderTree()
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}")
@@ -56,7 +56,7 @@ describe("Moving folder entries", () => {
   })
 
   it("moves a focused Spotify item down within its folder with Alt+Down", async () => {
-    renderTree()
+    await renderTree()
     await expandRunning()
     await focusTreeItem("Easy Start")
 
@@ -72,7 +72,7 @@ describe("Moving folder entries", () => {
   // A step past the first entry has no position to land at, so it must not
   // reach the main process and come back as a "Couldn't move" error.
   it("leaves the first and last entries in place, and says nothing, when moved past the end", async () => {
-    renderTree()
+    await renderTree()
 
     await focusTreeItem("Running")
     await userEvent.keyboard("{Alt>}{ArrowUp}{/Alt}")
@@ -86,7 +86,7 @@ describe("Moving folder entries", () => {
   })
 
   it("offers to move a folder to the top level and into folders outside it, never into itself or its descendants", async () => {
-    renderTree()
+    await renderTree()
     await expandRunning()
 
     const moveSubmenu = await openMoveSubmenu("Warm-up")
@@ -96,7 +96,7 @@ describe("Moving folder entries", () => {
   })
 
   it("moves an entry into the folder chosen from its context menu", async () => {
-    renderTree()
+    await renderTree()
     await expandRunning()
 
     const moveSubmenu = await openMoveSubmenu("Easy Start")
@@ -111,7 +111,7 @@ describe("Moving folder entries", () => {
   })
 
   it("moves a folder to the end of the top level", async () => {
-    renderTree()
+    await renderTree()
     await expandRunning()
 
     const moveSubmenu = await openMoveSubmenu("Warm-up")
@@ -122,7 +122,7 @@ describe("Moving folder entries", () => {
   })
 
   it("moves a folder, with what is inside it, into another folder", async () => {
-    renderTree()
+    await renderTree()
     await expandRunning()
 
     const moveSubmenu = await openMoveSubmenu("Warm-up")
@@ -138,7 +138,7 @@ describe("Moving folder entries", () => {
   })
 
   it("leaves the tree as it was and says why when the main process refuses a move", async () => {
-    renderTree(mainProcessRefusingFolderMoves())
+    await renderTree(mainProcessRefusingFolderMoves())
     await expandRunning()
 
     const moveSubmenu = await openMoveSubmenu("Warm-up")

@@ -26,7 +26,7 @@ const sunset = {
 }
 
 const renderWithImportReply = async (importThemeReply: typeof ImportThemeReply.Encoded) => {
-  renderScreen(
+  await renderScreen(
     <AppearanceSettings library={builtInLibrary} />,
     fakeMainProcess({ importThemeReply }),
   )
@@ -34,7 +34,7 @@ const renderWithImportReply = async (importThemeReply: typeof ImportThemeReply.E
 }
 
 const renderAndExport = async (mainProcess: DesktopApi) => {
-  renderScreen(<AppearanceSettings library={builtInLibrary} />, mainProcess)
+  await renderScreen(<AppearanceSettings library={builtInLibrary} />, mainProcess)
   await userEvent.click(await screen.findByRole("button", { name: "Export current theme…" }))
 }
 
@@ -54,7 +54,7 @@ const renderWithImportedThemes = async (
   savedTheme: LibraryTheme,
   mainProcess = fakeMainProcess({ importedThemes: [sunset, ember] }),
 ) => {
-  renderScreen(
+  await renderScreen(
     <AppearanceSettings library={{ themes: themeLibrary([sunset, ember]), savedTheme }} />,
     mainProcess,
   )
@@ -183,7 +183,7 @@ describe("AppearanceSettings", () => {
   // Most Mac keyboards have no forward Delete key.
   it("deletes the focused theme with Backspace on macOS", async () => {
     const mainProcess = fakeMainProcess({ importedThemes: [sunset, ember] })
-    renderScreen(
+    await renderScreen(
       <IsMacContext value>
         <AppearanceSettings
           library={{ themes: themeLibrary([sunset, ember]), savedTheme: sunset }}
@@ -206,7 +206,7 @@ describe("AppearanceSettings", () => {
       ...sunset,
       theme: { ...sunset.theme, tokens: { ...sunset.theme.tokens, "radius-medium": "13px" } },
     }
-    renderScreen(
+    await renderScreen(
       <AppearanceSettings library={{ themes: themeLibrary([sunset]), savedTheme: sunset }} />,
       fakeMainProcess({ importThemeReply: { _tag: "ThemeImported", importedTheme: newSunset } }),
     )

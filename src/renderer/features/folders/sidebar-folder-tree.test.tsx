@@ -64,7 +64,7 @@ const renameField = () => screen.findByRole("textbox", { name: "Folder name" })
 
 describe("SidebarFolderTree", () => {
   it("opens an entry's page when it is activated", async () => {
-    const router = renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    const router = await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{ArrowRight}{ArrowDown}{Enter}")
@@ -75,7 +75,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("opens a folder's page when it is clicked", async () => {
-    const router = renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    const router = await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
 
     await userEvent.click(await treeItem("Running"))
 
@@ -84,7 +84,7 @@ describe("SidebarFolderTree", () => {
 
   it("keeps the folders the user expanded open, and the ones they collapsed closed, after a restart", async () => {
     const mainProcess = fakeMainProcess({ folderTree })
-    renderScreen(sidebarFolderTree, mainProcess)
+    await renderScreen(sidebarFolderTree, mainProcess)
     await focusTreeItem("Running")
     // Expands Running, moves down to Warm-up, then expands and collapses it.
     await userEvent.keyboard("{ArrowRight}{ArrowDown}{ArrowDown}{ArrowRight}")
@@ -93,14 +93,14 @@ describe("SidebarFolderTree", () => {
     expect(await treeItem("Warm-up")).toHaveAttribute("aria-expanded", "false")
     cleanup()
 
-    renderScreen(sidebarFolderTree, mainProcess)
+    await renderScreen(sidebarFolderTree, mainProcess)
 
     expect(await treeItem("Running")).toHaveAttribute("aria-expanded", "true")
     expect(await treeItem("Warm-up")).toHaveAttribute("aria-expanded", "false")
   })
 
   it("lets a user without folders create one and name it straight away", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess())
+    await renderScreen(sidebarFolderTree, fakeMainProcess())
 
     await userEvent.click(await screen.findByRole("button", { name: "New folder" }))
     const field = await renameField()
@@ -112,7 +112,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("creates a folder inside a folder from its context menu", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Focus")
 
     await userEvent.keyboard("{Shift>}{F10}{/Shift}")
@@ -125,7 +125,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("renames a folder with F2", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{F2}")
@@ -137,7 +137,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("renames a folder from its context menu", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
 
     await userEvent.pointer({ keys: "[MouseRight]", target: await treeItem("Focus") })
     await userEvent.click(screen.getByRole("menuitem", { name: "Rename" }))
@@ -148,7 +148,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("saves a rename when the user leaves the field, and leaves focus where they moved it", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{F2}")
@@ -163,7 +163,7 @@ describe("SidebarFolderTree", () => {
   // A click on the row's icon or padding focuses the row being renamed, which
   // the end of the rename replaces, so focus must land on the row that follows.
   it("saves a rename and focuses the folder's row when the user clicks that row outside the field", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{F2}")
@@ -177,7 +177,7 @@ describe("SidebarFolderTree", () => {
   // App-wide shortcuts, such as Alt+Left to go back, listen on the window and
   // must still work while a folder name is edited.
   it("leaves keys held with Ctrl, Alt, or Cmd in the rename field to app-wide shortcuts", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
     await userEvent.keyboard("{F2}")
     await renameField()
@@ -193,7 +193,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("refuses a blank name, and keeps the old one when the rename is cancelled", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{F2}")
@@ -207,7 +207,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("deletes a folder after saying how many items go with it, and focuses the next row", async () => {
-    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{Shift>}{F10}{/Shift}")
@@ -223,7 +223,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("moves focus to the New folder button when the last folder is deleted", async () => {
-    renderScreen(
+    await renderScreen(
       sidebarFolderTree,
       fakeMainProcess({
         folderTree: [{ _tag: "Folder", id: focusId, name: "Focus", entries: [] }],
@@ -242,7 +242,7 @@ describe("SidebarFolderTree", () => {
 
   it("reloads the folders and says so when a folder was deleted elsewhere", async () => {
     const mainProcess = fakeMainProcess({ folderTree })
-    renderScreen(sidebarFolderTree, mainProcess)
+    await renderScreen(sidebarFolderTree, mainProcess)
     await focusTreeItem("Running")
     // Another window deletes Running while this one still shows it.
     await mainProcess.invoke(ipcChannels.deleteFolder, { folderId: runningId })
@@ -257,7 +257,7 @@ describe("SidebarFolderTree", () => {
   })
 
   it("says so and offers a retry when the folders fail to load", async () => {
-    renderScreen(
+    await renderScreen(
       sidebarFolderTree,
       mainProcessFailingOn(ipcChannels.getFolderTree, fakeMainProcess({ folderTree })),
     )

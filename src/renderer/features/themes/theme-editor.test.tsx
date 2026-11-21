@@ -38,7 +38,7 @@ const renderSettingsWithDarkSaved = (mainProcess: DesktopApi) => {
 }
 
 const openEditor = async (mainProcess: DesktopApi = fakeMainProcess()) => {
-  const router = renderSettingsWithDarkSaved(mainProcess)
+  const router = await renderSettingsWithDarkSaved(mainProcess)
   await userEvent.click(await screen.findByRole("button", { name: "Edit a copy" }))
   return router
 }
@@ -78,7 +78,7 @@ describe("ThemeEditor", () => {
   })
 
   it("starts from a copy of the theme chosen in the picker", async () => {
-    renderSettingsWithDarkSaved(fakeMainProcess())
+    await renderSettingsWithDarkSaved(fakeMainProcess())
     await userEvent.click(
       await screen.findByRole("button", { name: "Open Spotify Light by Open Spotify" }),
     )

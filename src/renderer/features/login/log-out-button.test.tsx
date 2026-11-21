@@ -29,7 +29,7 @@ const mainProcessWithSession = (): DesktopApi => {
 describe("LogOutButton", () => {
   it("ends the session and goes to the login screen", async () => {
     const mainProcess = mainProcessWithSession()
-    const router = renderScreen(<LogOutButton />, mainProcess)
+    const router = await renderScreen(<LogOutButton />, mainProcess)
 
     await userEvent.click(await screen.findByRole("button", { name: "Log out" }))
 
@@ -41,7 +41,7 @@ describe("LogOutButton", () => {
   })
 
   it("says when logging out fails and stays where it is", async () => {
-    const router = renderScreen(
+    const router = await renderScreen(
       <LogOutButton />,
       mainProcessFailingOn(ipcChannels.logOut, mainProcessWithSession()),
     )

@@ -33,7 +33,7 @@ const spotifyFailingFirstAlbumRequest = spotifyApiFakeWith((spotify) => {
 
 describe("AlbumPage", () => {
   it("shows the album's name, artists, release year, track count, and duration", async () => {
-    renderAlbumPage("fake-album-0")
+    await renderAlbumPage("fake-album-0")
 
     const header = await albumHeader("Glass Harbour")
     expect(header).toHaveTextContent("Northbound Static · 2019 · 10 tracks · 30 min")
@@ -41,14 +41,14 @@ describe("AlbumPage", () => {
 
   // Spotify embeds only the first 50 tracks, and the total must count them all.
   it("adds the tracks after the first page to the total duration", async () => {
-    renderAlbumPage("fake-album-4")
+    await renderAlbumPage("fake-album-4")
 
     const header = await albumHeader("Low Orbit")
     expect(header).toHaveTextContent("Kite Theory · 2016 · 60 tracks · 3 hr 15 min")
   })
 
   it("links the album's artist to their artist page", async () => {
-    renderAlbumPage("fake-album-0")
+    await renderAlbumPage("fake-album-0")
 
     const header = await albumHeader("Glass Harbour")
     expect(within(header).getByRole("link", { name: "Northbound Static" })).toHaveAttribute(
@@ -58,7 +58,7 @@ describe("AlbumPage", () => {
   })
 
   it("links each artist of a track with several artists to their own page", async () => {
-    const router = renderAlbumPage("fake-album-0")
+    const router = await renderAlbumPage("fake-album-0")
     const row = await screen.findByRole("row", {
       name: "Glass Harbour, part 1.3 by Northbound Static, Lena Varga",
     })
@@ -73,7 +73,7 @@ describe("AlbumPage", () => {
   })
 
   it("groups the tracks of a two-disc album under a heading for each disc", async () => {
-    renderAlbumPage("fake-album-4")
+    await renderAlbumPage("fake-album-4")
 
     const discHeadings = await screen.findAllByRole("heading", { level: 2 })
     expect(discHeadings.map((heading) => heading.textContent)).toEqual(["Disc 1", "Disc 2"])
@@ -81,14 +81,14 @@ describe("AlbumPage", () => {
   })
 
   it("shows no disc heading for a single-disc album", async () => {
-    renderAlbumPage("fake-album-0")
+    await renderAlbumPage("fake-album-0")
 
     expect(await screen.findByRole("table", { name: "Tracks" })).toBeInTheDocument()
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull()
   })
 
   it("numbers each disc's tracks from 1 and leaves out the album and date-added columns", async () => {
-    renderAlbumPage("fake-album-4")
+    await renderAlbumPage("fake-album-4")
 
     const secondDisc = await screen.findByRole("table", { name: "Disc 2" })
     expect(within(secondDisc).queryByRole("columnheader", { name: "Album" })).toBeNull()
@@ -102,7 +102,7 @@ describe("AlbumPage", () => {
   // Each disc is its own list, so a row's position in its list is not its
   // position in the album that Spotify starts from.
   it("plays a double-clicked track on the second disc within the album", async () => {
-    renderAlbumPage("fake-album-4")
+    await renderAlbumPage("fake-album-4")
     const track = await screen.findByRole("row", { name: "Low Orbit, part 2.3 by Kite Theory" })
 
     await userEvent.dblClick(track)
@@ -118,7 +118,7 @@ describe("AlbumPage", () => {
   // A track opened on its own, such as from a folder, lands on its album and
   // can sit far below the screen on a long disc.
   it("scrolls to, highlights, and focuses the track the page was opened for", async () => {
-    renderScreen(
+    await renderScreen(
       <FakeMainView>
         <AlbumPage albumId="fake-album-4" highlightedTrackId="fake-album-4-track-2-25" />
       </FakeMainView>,
@@ -133,7 +133,7 @@ describe("AlbumPage", () => {
   })
 
   it("says the album was not found when Spotify has no album with the id", async () => {
-    renderAlbumPage("fake-album-missing")
+    await renderAlbumPage("fake-album-missing")
 
     expect(await screen.findByRole("heading", { name: "Album not found" })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull()
@@ -141,7 +141,7 @@ describe("AlbumPage", () => {
 
   // Spotify rejects an id that cannot be an album's with 400 rather than 404.
   it("says the album was not found when Spotify rejects the id as malformed", async () => {
-    renderAlbumPage(
+    await renderAlbumPage(
       "not-an-album-id",
       spotifyApiFakeWith(() => ({
         getAlbum: () =>
@@ -153,7 +153,7 @@ describe("AlbumPage", () => {
   })
 
   it("shows the album after Retry when loading it failed", async () => {
-    renderAlbumPage("fake-album-0", spotifyFailingFirstAlbumRequest)
+    await renderAlbumPage("fake-album-0", spotifyFailingFirstAlbumRequest)
 
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent("This album didn't load.")
@@ -164,7 +164,7 @@ describe("AlbumPage", () => {
 
   // Retry cannot bring back a session, so the page sends the user to log in.
   it("goes to the login screen, saying why, when the session has expired", async () => {
-    const router = renderAlbumPage(
+    const router = await renderAlbumPage(
       "fake-album-0",
       spotifyApiFakeWith(() => ({ getAlbum: () => Effect.fail(new SessionExpired()) })),
     )

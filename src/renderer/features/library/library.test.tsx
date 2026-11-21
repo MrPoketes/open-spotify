@@ -36,7 +36,7 @@ const entryTexts = async () => (await libraryEntries()).map(({ textContent }) =>
 
 describe("Library", () => {
   it("says the library is loading until it arrives", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     expect(await screen.findByRole("status")).toHaveTextContent("Loading your library")
     await screen.findAllByRole("list")
@@ -44,7 +44,7 @@ describe("Library", () => {
   })
 
   it("lists Liked Songs, playlists, albums, artists, and shows with what each one is", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     const entries = await libraryEntries()
 
@@ -67,7 +67,7 @@ describe("Library", () => {
   })
 
   it("links Liked Songs to the Liked Songs page", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     const likedSongsLink = await screen.findByRole("link", { name: /^Liked Songs/ })
 
@@ -75,7 +75,7 @@ describe("Library", () => {
   })
 
   it("links a playlist to its playlist page", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     const playlistLink = await screen.findByRole("link", { name: /^Road Trip with Sam/ })
 
@@ -83,7 +83,7 @@ describe("Library", () => {
   })
 
   it("links a saved album to its album page", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     const albumLink = await screen.findByRole("link", { name: /^Small Hours/ })
 
@@ -91,7 +91,7 @@ describe("Library", () => {
   })
 
   it("links a followed artist to its artist page", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     const artistLink = await screen.findByRole("link", { name: /^Velvet Choir/ })
 
@@ -99,7 +99,7 @@ describe("Library", () => {
   })
 
   it("links a saved show to its show page", async () => {
-    renderLibrary()
+    await renderLibrary()
 
     const showLink = await screen.findByRole("link", { name: /Slow Science/ })
 
@@ -108,7 +108,7 @@ describe("Library", () => {
 
   // The sidebar holds every saved item, so Tab must not walk through each one.
   it("keeps each section's entries to one tab stop that the arrow keys move within", async () => {
-    renderLibrary()
+    await renderLibrary()
     const playlists = within(await screen.findByRole("region", { name: "Playlists" }))
     const [firstPlaylist, secondPlaylist] = playlists.getAllByRole("link")
     const playlistsOptions = playlists.getByRole("button", { name: "Playlists section options" })
@@ -130,7 +130,7 @@ describe("Library", () => {
   // A section remembers its last focused entry, and a filter can leave fewer
   // entries than that, which would take the section out of the tab order.
   it("keeps a section's entries reachable with Tab after a filter shortens it", async () => {
-    renderLibrary()
+    await renderLibrary()
     const playlistsOptions = await screen.findByRole("button", {
       name: "Playlists section options",
     })
@@ -147,7 +147,7 @@ describe("Library", () => {
   })
 
   it("explains where entries come from when the library is empty", async () => {
-    renderLibrary(
+    await renderLibrary(
       spotifyApiFakeWith(() => ({
         likedSongsCount: Effect.succeed(0),
         currentUserPlaylists: Stream.empty,
@@ -165,7 +165,7 @@ describe("Library", () => {
 
   it("loads the library again when Retry is pressed after a failed request", async () => {
     const failFirstRequest = failingFirstTime()
-    renderLibrary(
+    await renderLibrary(
       spotifyApiFakeWith((spotify) => ({
         // The stream starts from an effect, so the first run fails before it
         // reads any shows.
@@ -182,14 +182,14 @@ describe("Library", () => {
   })
 
   it("goes to the login screen, saying why, when the session has expired", async () => {
-    const router = renderLibrary(failingWith(new SessionExpired()))
+    const router = await renderLibrary(failingWith(new SessionExpired()))
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
     expect(router.state.location.search).toEqual({ sessionExpired: true })
   })
 
   it("goes to the login screen when the user is not logged in", async () => {
-    const router = renderLibrary(failingWith(new NotLoggedIn()))
+    const router = await renderLibrary(failingWith(new NotLoggedIn()))
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
     expect(router.state.location.search).toEqual({})
@@ -198,7 +198,7 @@ describe("Library", () => {
   // The main process keeps the session when Spotify is briefly unreachable,
   // so logging in again would not help and Retry can.
   it("offers Retry instead of login when Spotify cannot refresh the session right now", async () => {
-    const router = renderLibrary(
+    const router = await renderLibrary(
       failingWith(new AccessTokenUnavailable({ message: "Spotify is unreachable" })),
     )
 
@@ -208,7 +208,7 @@ describe("Library", () => {
   })
 
   it("narrows the list to one kind when its chip is pressed, counting Liked Songs as a playlist", async () => {
-    renderLibrary()
+    await renderLibrary()
     await screen.findAllByRole("list")
 
     await userEvent.click(kindChip("Playlists"))
@@ -221,7 +221,7 @@ describe("Library", () => {
   })
 
   it("shows every entry again when the active chip is pressed a second time", async () => {
-    renderLibrary()
+    await renderLibrary()
     const allEntries = await libraryEntries()
     const albumsChip = kindChip("Albums")
 
@@ -234,7 +234,7 @@ describe("Library", () => {
   })
 
   it("filters entries by name, ignoring case and surrounding spaces", async () => {
-    renderLibrary()
+    await renderLibrary()
     await screen.findAllByRole("list")
 
     await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), " SLOW ")
@@ -243,7 +243,7 @@ describe("Library", () => {
   })
 
   it("applies the kind and name filters together", async () => {
-    renderLibrary()
+    await renderLibrary()
     await screen.findAllByRole("list")
 
     await userEvent.click(kindChip("Playlists"))
@@ -256,7 +256,7 @@ describe("Library", () => {
   })
 
   it("says nothing matches when the filters exclude every entry", async () => {
-    renderLibrary()
+    await renderLibrary()
     await screen.findAllByRole("list")
 
     await userEvent.type(screen.getByRole("searchbox", { name: "Filter by name" }), "zzz")
