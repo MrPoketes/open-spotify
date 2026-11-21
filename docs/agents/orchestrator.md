@@ -34,6 +34,10 @@ For each issue in `In Progress` or `In Review`:
 | Its thread is idle with no PR and no progress for 2 hours                     | Send the thread a nudge to continue. On the second time, move the issue to `Todo` with a comment.                                                                                                                                                                     |
 | No thread exists for it                                                       | Move it to `Todo`.                                                                                                                                                                                                                                                    |
 
+Then delete the backups (see 3.1) that nobody needs any more. For each branch that
+`git ls-remote --heads origin "refs/heads/backup/*"` lists, find its issue from the `arm-<n>`
+in its name. If that issue is `Done` or `Canceled`, run `git push origin --delete <branch>`.
+
 ## 3. Fill free slots
 
 Active workers are issues in `In Progress` or `In Review` with a live thread. While there are
@@ -42,12 +46,17 @@ fewer than 5:
 1. Pick the next `Todo` issue: highest priority first (Urgent, High, Medium, Low, None), then
    oldest. Skip issues with an unfinished `blocked by` issue. Skip issues whose files are likely
    to collide with an active worker's issue (same feature folder) unless nothing else is ready.
-2. Move it to `In Progress`.
-3. Launch its worker with `t3_thread_launch`:
+2. Count its earlier workers (see 3.2). If it has had 3 or more since it was last parked, park it
+   (see 3.3) and go back to item 1.
+3. Choose its `workspaceStrategy` and `message` (see 3.1). If 3.1 parks the issue, go back to
+   item 1.
+4. Move it to `In Progress`. Do this only now, so an issue that launches nothing never sits in
+   `In Progress` without a thread.
+5. Launch its worker with `t3_thread_launch`:
    - `projectId`: `276c2197-0a35-4b86-8cd4-7af8cc7023e2`
    - `title`: `ARM-<n>: <issue title>`
    - `workspaceStrategy`: `{ "type": "worktree", "baseRef": "origin/main", "startFromOrigin": true, "branch": "<gitBranchName>" }`,
-     unless the branch already exists (see 3.1)
+     unless 3.1 chose another
    - `runtimeMode`: `full-access`
    - `message`:
 
@@ -57,7 +66,9 @@ fewer than 5:
      Work autonomously; never wait for human input.
      ```
 
-4. Comment on the issue with the thread link.
+6. Comment on the issue: `Started in T3 thread <thread link>.` This is the line the worker
+   posts in worker.md step 1. Posting it here too means 3.2 still counts a worker that dies
+   before it posts its own.
 
 ### 3.1 The issue's branch already exists
 
@@ -71,12 +82,21 @@ choose the `workspaceStrategy` and `message` here. In the project root:
 2. If `git branch --list <gitBranchName>` prints the branch, its worktree is gone but the branch
    is left. Run `git push origin <gitBranchName>` so no commit of the earlier worker is lost.
    If `git branch -r --contains <gitBranchName>` does not list `origin/<gitBranchName>`, the
-   push was rejected and the branch has commits that `origin` lacks. Save them with
-   `git push origin <gitBranchName>:refs/heads/backup/<gitBranchName>` and add to the end of
-   `message`:
-   `Commits that never reached origin are saved on backup/<gitBranchName>. Keep what you need.`
-   If that push fails too, launch nothing for this issue in this run. Otherwise delete the
-   local branch with `git branch -D <gitBranchName>`.
+   push was rejected and the branch has commits that `origin` lacks. Save them under a name
+   that ends in the branch's short commit hash, so a later attempt's backup never collides
+   with this one:
+
+   ```sh
+   git push origin "<gitBranchName>:refs/heads/backup/<gitBranchName>-$(git rev-parse --short <gitBranchName>)"
+   ```
+
+   If that push fails too, park the issue (see 3.3) with the push's error output as the
+   reason, and launch nothing for it: the commits stay on the local branch until someone
+   saves them. Otherwise add to the end of `message`, with the backup's full name:
+   `Commits that never reached origin are saved on backup/<gitBranchName>-<hash>. Keep what you need.`
+
+   In every case except parking, delete the local branch with `git branch -D <gitBranchName>`.
+
 3. If `git ls-remote --heads origin <gitBranchName>` prints the branch, use
    `{ "type": "worktree", "baseRef": "origin/<gitBranchName>", "startFromOrigin": true, "branch": "<gitBranchName>" }`.
    If it prints nothing, the branch does not exist: use the usual `workspaceStrategy` and
@@ -84,6 +104,31 @@ choose the `workspaceStrategy` and `message` here. In the project root:
 4. Add to the end of `message`: `An earlier worker left commits on this branch. Build on them.`
    If `gh pr list --head <gitBranchName> --state open --json number` lists a PR, also add:
    `Its PR #<number> is still open. Continue that PR; do not open a new one.`
+
+### 3.2 Count an issue's earlier workers
+
+A worker that cannot finish moves its issue back to `Todo` (worker.md step 4, and the `Todo`
+moves in step 2 above). Without a limit, an issue that no worker can finish is relaunched on
+every run and holds a slot forever.
+
+Read the issue's comments (`list_comments`) and find its newest comment that starts with
+`Parked:`. Among the comments posted after it (or all of them, if there is none), count the
+distinct thread links in comments that start with `Started in T3 thread`. Count links, not
+comments: the orchestrator and the worker each post the line for the same thread.
+
+An issue that someone moves back to `Todo`, usually after rewriting or splitting it, gets 3
+fresh workers, because the count starts after its last `Parked:` comment.
+
+### 3.3 Park an issue
+
+1. Move it to `Backlog`. The orchestrator never picks issues from `Backlog`, so it stays there
+   until someone moves it back to `Todo`.
+2. Comment on it, starting with `Parked:` and the reason, for example
+   `Parked: 3 workers could not finish it.` Then sum up what is still unresolved, so whoever picks it up does not have to
+   read every attempt. Take it from the comments earlier workers left when they stopped and
+   from the newest `## Agent review: CHANGES REQUESTED` comment on its open PR, if any. List
+   each unresolved problem in one line, and link the open PR and the branch.
+3. Name the issue and the reason in the step 7 status update.
 
 ## 4. Keep the queue full
 
