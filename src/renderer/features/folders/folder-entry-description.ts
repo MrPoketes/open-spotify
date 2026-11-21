@@ -61,7 +61,7 @@ const parseSpotifyUri = (uri: string) => {
   return { kind, id }
 }
 
-export interface FolderEntryDescription {
+interface FolderEntryDescription {
   readonly key: string
   readonly name: string
   readonly details: string
