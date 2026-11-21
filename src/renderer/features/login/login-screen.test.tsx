@@ -41,7 +41,7 @@ const mainProcessAwaitingEachLogIn = (firstLogInReply: Deferred.Deferred<unknown
 
 describe("LoginScreen", () => {
   it("continues to the app after the login succeeds", async () => {
-    const router = renderScreen(
+    const router = await renderScreen(
       <LoginScreen sessionExpired={false} />,
       mainProcessReplyingToLogIn({ _tag: "LoggedIn" }),
     )
@@ -62,7 +62,10 @@ describe("LoginScreen", () => {
       "Could not open the browser.",
     ],
   ])("explains the login error %o", async (logInReply, explanation) => {
-    renderScreen(<LoginScreen sessionExpired={false} />, mainProcessReplyingToLogIn(logInReply))
+    await renderScreen(
+      <LoginScreen sessionExpired={false} />,
+      mainProcessReplyingToLogIn(logInReply),
+    )
 
     await userEvent.click(await screen.findByRole("button", { name: "Log in with Spotify" }))
 
@@ -70,7 +73,7 @@ describe("LoginScreen", () => {
   })
 
   it("says it waits for the browser and offers the login again after Cancel", async () => {
-    renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser())
+    await renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser())
 
     await userEvent.click(await screen.findByRole("button", { name: "Log in with Spotify" }))
     expect(screen.getByRole("status")).toHaveTextContent("Finish logging in in your browser")
@@ -83,7 +86,7 @@ describe("LoginScreen", () => {
   // Starting the login disables the focused button and cancelling removes
   // the next one, either of which would drop a keyboard user's focus.
   it("keeps keyboard focus on the login controls while waiting and after Cancel", async () => {
-    renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser())
+    await renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser())
     const logInButton = await screen.findByRole("button", { name: "Log in with Spotify" })
     logInButton.focus()
 
@@ -95,7 +98,7 @@ describe("LoginScreen", () => {
   })
 
   it("says when Cancel fails and keeps waiting for the browser", async () => {
-    renderScreen(
+    await renderScreen(
       <LoginScreen sessionExpired={false} />,
       mainProcessFailingOn(ipcChannels.cancelLogIn, mainProcessWaitingForBrowser()),
     )
@@ -109,7 +112,7 @@ describe("LoginScreen", () => {
 
   it("forgets a failed Cancel when the user logs in again", async () => {
     const firstLogInReply = Deferred.makeUnsafe<unknown>()
-    renderScreen(
+    await renderScreen(
       <LoginScreen sessionExpired={false} />,
       mainProcessFailingOn(ipcChannels.cancelLogIn, mainProcessAwaitingEachLogIn(firstLogInReply)),
     )
@@ -128,7 +131,10 @@ describe("LoginScreen", () => {
   // different Client ID, and store a session for the old one.
   it("cancels the pending login when the user leaves the login screen", async () => {
     const logInReply = Deferred.makeUnsafe<unknown>()
-    renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser(logInReply))
+    await renderScreen(
+      <LoginScreen sessionExpired={false} />,
+      mainProcessWaitingForBrowser(logInReply),
+    )
 
     await userEvent.click(await screen.findByRole("button", { name: "Log in with Spotify" }))
     await userEvent.click(screen.getByRole("link", { name: "Change Client ID" }))
@@ -137,7 +143,7 @@ describe("LoginScreen", () => {
   })
 
   it("keeps waiting when Log in is double-clicked", async () => {
-    renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser())
+    await renderScreen(<LoginScreen sessionExpired={false} />, mainProcessWaitingForBrowser())
 
     await userEvent.dblClick(await screen.findByRole("button", { name: "Log in with Spotify" }))
 
@@ -145,7 +151,10 @@ describe("LoginScreen", () => {
   })
 
   it("explains that the session expired", async () => {
-    renderScreen(<LoginScreen sessionExpired />, mainProcessReplyingToLogIn({ _tag: "LoggedIn" }))
+    await renderScreen(
+      <LoginScreen sessionExpired />,
+      mainProcessReplyingToLogIn({ _tag: "LoggedIn" }),
+    )
 
     expect(await screen.findByText(/Your Spotify session has expired/)).toBeInTheDocument()
   })

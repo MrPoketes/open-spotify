@@ -27,7 +27,7 @@ const spotifyFailingFirstPageRequest = spotifyApiFakeWith((spotify) => {
 })
 
 const renderPlaylistPage = async (playlistId: string, spotifyApi?: Layer.Layer<SpotifyApi>) => {
-  const router = renderScreen(
+  const router = await renderScreen(
     <FakeMainView>
       <PlaylistPage playlistId={playlistId} />
     </FakeMainView>,
@@ -182,7 +182,7 @@ describe("PlaylistPage", () => {
   // A play Spotify refuses, such as a list of tracks too long for it, must
   // not fail silently.
   it("says so when Spotify refuses to play a track", async () => {
-    renderScreen(
+    await renderScreen(
       <StatusMessageProvider>
         <FakeMainView>
           <PlaylistPage playlistId="fake-playlist-late-night-drive" />

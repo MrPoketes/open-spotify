@@ -12,7 +12,7 @@ const renderTrackPage = (trackId: string, spotifyApi?: Parameters<typeof renderS
 
 describe("TrackPage", () => {
   it("opens the track's album page with the track highlighted", async () => {
-    const router = renderTrackPage("fake-album-4-track-2-25")
+    const router = await renderTrackPage("fake-album-4-track-2-25")
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/album/fake-album-4"))
     expect(router.state.location.search).toEqual({ track: "fake-album-4-track-2-25" })
@@ -21,20 +21,20 @@ describe("TrackPage", () => {
   // Going back from the album must not land on this page, which would open
   // the album again at once.
   it("replaces itself in the history with the album page", async () => {
-    const router = renderTrackPage("fake-album-4-track-2-25")
+    const router = await renderTrackPage("fake-album-4-track-2-25")
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/album/fake-album-4"))
     expect(router.history.length).toBe(1)
   })
 
   it("says so when Spotify has no such track", async () => {
-    renderTrackPage("missing-track")
+    await renderTrackPage("missing-track")
 
     expect(await screen.findByRole("heading", { name: "Track not found" })).toBeInTheDocument()
   })
 
   it("shows an error when the track cannot load, and loads it on retry", async () => {
-    const router = renderTrackPage(
+    const router = await renderTrackPage(
       "fake-album-4-track-2-25",
       spotifyApiFakeWith((spotify) => {
         const failFirst = failingFirstTime()

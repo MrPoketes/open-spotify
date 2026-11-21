@@ -89,7 +89,7 @@ const renderTracks = async (
   Playlists: PlaylistsProvider = EditablePlaylistsProvider,
 ) => {
   const user = userEvent.setup()
-  const router = renderScreen(
+  const router = await renderScreen(
     <StatusMessageProvider>
       <Playlists>
         <FakeMainView>

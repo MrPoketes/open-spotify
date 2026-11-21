@@ -52,7 +52,7 @@ const deviceButton = async (picker: HTMLElement, name: RegExp) =>
 
 describe("NowPlayingBar", () => {
   it("shows what is playing and on which device", async () => {
-    renderNowPlayingBar()
+    await renderNowPlayingBar()
 
     expect(await screen.findByText(fakePlayingTrack.name)).toBeInTheDocument()
     expect(screen.getByText("Northbound Static")).toBeInTheDocument()
@@ -60,7 +60,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("links the track title to its album and each artist to their page", async () => {
-    renderNowPlayingBar(
+    await renderNowPlayingBar(
       playing({
         ...fakePlayingTrack,
         artists: [...fakePlayingTrack.artists, { id: "fake-artist-1", name: "Lena Varga" }],
@@ -81,7 +81,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("links a playing episode's title to its show", async () => {
-    renderNowPlayingBar(playing(fakeEpisode))
+    await renderNowPlayingBar(playing(fakeEpisode))
     const bar = await nowPlaying()
 
     expect(await within(bar).findByRole("link", { name: fakeEpisode.name })).toHaveAttribute(
@@ -93,7 +93,7 @@ describe("NowPlayingBar", () => {
   // A local file has no Spotify id, so there is no album or artist page to
   // open.
   it("shows a local file's title and artists as plain text", async () => {
-    renderNowPlayingBar(playing(fakeLocalTrack))
+    await renderNowPlayingBar(playing(fakeLocalTrack))
     const bar = await nowPlaying()
 
     expect(await within(bar).findByText(fakeLocalTrack.name)).toBeInTheDocument()
@@ -104,7 +104,7 @@ describe("NowPlayingBar", () => {
   // Playback is remote control, so without an active device pressing play
   // would do nothing. The bar has to say why and offer the fix.
   it("explains where audio plays when no device is active and opens the picker", async () => {
-    renderNowPlayingBar(spotifyApiFakeWith(() => noActiveDevice))
+    await renderNowPlayingBar(spotifyApiFakeWith(() => noActiveDevice))
 
     expect(
       await screen.findByText("Audio plays in the Spotify app or on another device."),
@@ -117,7 +117,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("says Spotify cannot be reached when the playback state fails to load", async () => {
-    renderNowPlayingBar(
+    await renderNowPlayingBar(
       spotifyApiFakeWith(() => ({
         getPlaybackState: Effect.fail(
           new SpotifyResponseError({ status: 503, message: "Service unavailable" }),
@@ -130,7 +130,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("lists the available devices with their type and marks the active one", async () => {
-    renderNowPlayingBar()
+    await renderNowPlayingBar()
 
     const picker = await openPicker()
 
@@ -144,7 +144,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("transfers playback to the chosen device", async () => {
-    renderNowPlayingBar()
+    await renderNowPlayingBar()
     const picker = await openPicker()
 
     await userEvent.click(await deviceButton(picker, /Kitchen Speaker/))
@@ -154,7 +154,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("says so and stays open when playback could not be transferred", async () => {
-    renderNowPlayingBar(
+    await renderNowPlayingBar(
       spotifyApiFakeWith(() => ({
         transferPlayback: () =>
           Effect.fail(new SpotifyResponseError({ status: 404, message: "Device not found" })),
@@ -171,7 +171,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("lists the devices again when Retry is pressed after they failed to load", async () => {
-    renderNowPlayingBar(
+    await renderNowPlayingBar(
       spotifyApiFakeWith(() => ({ getAvailableDevices: failingFirstTime()(Effect.succeed([])) })),
     )
     const picker = await openPicker()
@@ -184,7 +184,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("explains how to start the Spotify app when there are no devices", async () => {
-    renderNowPlayingBar(
+    await renderNowPlayingBar(
       spotifyApiFakeWith(() => ({
         ...noActiveDevice,
         getAvailableDevices: Effect.succeed([]),
@@ -202,7 +202,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("chooses a device with the keyboard and returns focus to the picker button", async () => {
-    renderNowPlayingBar()
+    await renderNowPlayingBar()
     const button = await pickerButton("Playing on Mira's Laptop")
     button.focus()
 
@@ -231,7 +231,7 @@ describe("NowPlayingBar", () => {
       volumePercent: null,
       supportsVolume: false,
     }
-    renderNowPlayingBar(
+    await renderNowPlayingBar(
       spotifyApiFakeWith((spotify) => ({
         getPlaybackState: Effect.succeedNone,
         getAvailableDevices: spotify.getAvailableDevices.pipe(
@@ -256,7 +256,7 @@ describe("NowPlayingBar", () => {
   })
 
   it("closes on Escape and returns focus to the picker button", async () => {
-    renderNowPlayingBar()
+    await renderNowPlayingBar()
     await openPicker()
 
     await userEvent.keyboard("{Escape}")

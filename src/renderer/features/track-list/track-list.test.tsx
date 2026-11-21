@@ -24,7 +24,7 @@ const renderTrackList = async (
   density: TrackListDensity,
   { layout, trackCount }: { readonly layout: TrackListLayout; readonly trackCount: number },
 ) => {
-  renderScreen(
+  await renderScreen(
     <TrackListDensityProvider savedDensity={density}>
       <FakeMainView>
         <div>

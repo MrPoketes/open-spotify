@@ -12,7 +12,7 @@ import { OnboardingScreen } from "./onboarding-screen"
 describe("OnboardingScreen", () => {
   it("saves the pasted Client ID and continues", async () => {
     const mainProcess = fakeMainProcess()
-    const router = renderScreen(<OnboardingScreen initialClientId="" />, mainProcess)
+    const router = await renderScreen(<OnboardingScreen initialClientId="" />, mainProcess)
 
     await userEvent.type(await screen.findByLabelText("Client ID"), "  my-client-id ")
     await userEvent.click(screen.getByRole("button", { name: "Save and continue" }))
@@ -24,7 +24,7 @@ describe("OnboardingScreen", () => {
 
   it("asks for a Client ID instead of saving an empty one", async () => {
     const mainProcess = fakeMainProcess()
-    renderScreen(<OnboardingScreen initialClientId="" />, mainProcess)
+    await renderScreen(<OnboardingScreen initialClientId="" />, mainProcess)
 
     await userEvent.click(await screen.findByRole("button", { name: "Save and continue" }))
 
@@ -35,7 +35,7 @@ describe("OnboardingScreen", () => {
 
   // A screen reader reads the problem when the field is focused, not only once when it appears.
   it("describes an invalid Client ID field with its problem", async () => {
-    renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
+    await renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
 
     await userEvent.click(await screen.findByRole("button", { name: "Save and continue" }))
 
@@ -46,7 +46,7 @@ describe("OnboardingScreen", () => {
 
   // A Client ID is not a word: autocorrect or a remembered entry would change what the user pasted.
   it("turns off spell check and autocomplete on the Client ID field", async () => {
-    renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
+    await renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
 
     const clientIdInput = await screen.findByLabelText("Client ID")
     expect(clientIdInput).toHaveAttribute("spellcheck", "false")
@@ -54,7 +54,7 @@ describe("OnboardingScreen", () => {
   })
 
   it("reports a failed save without marking the Client ID invalid", async () => {
-    renderScreen(
+    await renderScreen(
       <OnboardingScreen initialClientId="my-client-id" />,
       mainProcessFailingOn(ipcChannels.setSetting, fakeMainProcess()),
     )
@@ -68,7 +68,7 @@ describe("OnboardingScreen", () => {
   })
 
   it("drops an earlier save failure when the next attempt has a different problem", async () => {
-    renderScreen(
+    await renderScreen(
       <OnboardingScreen initialClientId="my-client-id" />,
       mainProcessFailingOn(ipcChannels.setSetting, fakeMainProcess()),
     )
@@ -84,7 +84,7 @@ describe("OnboardingScreen", () => {
 
   // A new user must not mistake Open Spotify for the official app, before they set anything up.
   it("says Open Spotify is an unofficial client", async () => {
-    renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
+    await renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
 
     expect(
       await screen.findByText(

@@ -21,7 +21,7 @@ interface RenderOptions {
 // With a text field beside the bar, and the status message the app shell
 // shows above it.
 const renderNowPlayingBar = async ({ isMac = false, spotifyApi }: RenderOptions = {}) => {
-  renderScreen(
+  await renderScreen(
     <IsMacContext value={isMac}>
       <StatusMessageProvider>
         <input aria-label="Notes" />
@@ -224,7 +224,7 @@ describe("playback shortcuts", () => {
   // The reason is in the control's tooltip, which a keyboard user may never
   // have seen.
   it("says why a shortcut does nothing when no device is active", async () => {
-    renderScreen(
+    await renderScreen(
       <StatusMessageProvider>{nowPlayingBarAlone}</StatusMessageProvider>,
       fakeMainProcess(),
       spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })),

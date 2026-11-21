@@ -21,10 +21,10 @@ const controlNames = ["Shuffle", "Previous", "Play", "Next", "Repeat"]
 
 describe("NowPlayingBar controls", () => {
   it("pauses playback and resumes it from the keyboard", async () => {
-    renderNowPlayingBarAlone()
+    await renderNowPlayingBarAlone()
     // A role query computes styles and accessible names on every retry, and
-    // retrying it through the file's first render slowed that render's
-    // playback load past the timeout.
+    // retrying it through the file's first playback load slowed that load past
+    // the timeout.
     await screen.findByText(fakeTrack(0).name)
 
     await userEvent.click(await control("Pause"))
@@ -36,7 +36,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("turns shuffle on and moves repeat from off to the context to the track", async () => {
-    renderNowPlayingBarAlone()
+    await renderNowPlayingBarAlone()
     await screen.findByText(fakeTrack(0).name)
     const shuffle = await control("Shuffle")
     expect(shuffle).toHaveAttribute("aria-pressed", "false")
@@ -52,7 +52,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("shows the next track and the previous one after skipping", async () => {
-    renderNowPlayingBarAlone()
+    await renderNowPlayingBarAlone()
     await screen.findByText(fakeTrack(0).name)
 
     await userEvent.click(await control("Next"))
@@ -63,7 +63,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("puts the control back and says so when Spotify rejects the change", async () => {
-    renderNowPlayingBarAlone(
+    await renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({
         pause: rejectedCommand,
       })),
@@ -77,7 +77,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("asks for a device when a command finds that none is active", async () => {
-    renderNowPlayingBarAlone(
+    await renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({ skipToNext: Effect.fail(new NoActiveDevice()) })),
     )
     await screen.findByText(fakeTrack(0).name)
@@ -90,7 +90,9 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("disables every control and says why when no device is active", async () => {
-    renderNowPlayingBarAlone(spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
+    await renderNowPlayingBarAlone(
+      spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })),
+    )
     await screen.findByText("No device is playing")
 
     for (const name of controlNames) {
@@ -101,7 +103,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("disables every control on a device that other apps cannot control", async () => {
-    renderNowPlayingBarAlone(
+    await renderNowPlayingBarAlone(
       spotifyApiFakeWithPlayback((playback) => ({
         ...playback,
         device: { ...playback.device, isRestricted: true },
@@ -119,7 +121,7 @@ describe("NowPlayingBar controls", () => {
   // Spotify disallows some actions in some contexts, such as skipping back
   // at the start of a playlist, and the command would only fail.
   it("disables only the controls Spotify disallows right now", async () => {
-    renderNowPlayingBarAlone(
+    await renderNowPlayingBarAlone(
       spotifyApiFakeWithPlayback((playback) => ({
         ...playback,
         actions: { disallows: { skippingPrev: true, seeking: true } },
@@ -137,7 +139,7 @@ describe("NowPlayingBar controls", () => {
 
 describe("NowPlayingBar seek bar", () => {
   it("steps with the arrow and page keys and jumps to the start and end with Home and End", async () => {
-    renderNowPlayingBarAlone(pausedPlayback)
+    await renderNowPlayingBarAlone(pausedPlayback)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
@@ -161,7 +163,7 @@ describe("NowPlayingBar seek bar", () => {
   // a second.
   it("seeks once when an arrow key is held down", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
-    renderNowPlayingBarAlone(spotifyApi)
+    await renderNowPlayingBarAlone(spotifyApi)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
@@ -177,7 +179,7 @@ describe("NowPlayingBar seek bar", () => {
   // before the bar renders the shortcut's seek.
   it("steps from where the last seek went before the bar shows it", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
-    renderNowPlayingBarAlone(spotifyApi)
+    await renderNowPlayingBarAlone(spotifyApi)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
@@ -194,7 +196,7 @@ describe("NowPlayingBar seek bar", () => {
   // not a whole number of milliseconds.
   it("seeks to a whole millisecond when a page step is not one", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks(lastingMs(213_457))
-    renderNowPlayingBarAlone(spotifyApi)
+    await renderNowPlayingBarAlone(spotifyApi)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 3:33")
 
@@ -208,7 +210,7 @@ describe("NowPlayingBar seek bar", () => {
   // Alt+Left goes back in history, and the seek bar must not take it.
   it("leaves the position alone when a shortcut modifier is held", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
-    renderNowPlayingBarAlone(spotifyApi)
+    await renderNowPlayingBarAlone(spotifyApi)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
@@ -227,7 +229,7 @@ describe("NowPlayingBar seek bar", () => {
   // makes: input on every step, then change once the thumb is let go.
   it("seeks once, to where the thumb is let go, when it is dragged", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
-    renderNowPlayingBarAlone(spotifyApi)
+    await renderNowPlayingBarAlone(spotifyApi)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
@@ -241,7 +243,7 @@ describe("NowPlayingBar seek bar", () => {
   })
 
   it("puts the position back and says so when Spotify rejects a seek", async () => {
-    renderNowPlayingBarAlone(pausedPlaybackWithSeek(() => () => rejectedCommand))
+    await renderNowPlayingBarAlone(pausedPlaybackWithSeek(() => () => rejectedCommand))
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
@@ -253,7 +255,9 @@ describe("NowPlayingBar seek bar", () => {
   })
 
   it("disables the seek bar and says why when no device is active", async () => {
-    renderNowPlayingBarAlone(spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
+    await renderNowPlayingBarAlone(
+      spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })),
+    )
     await screen.findByText("No device is playing")
 
     const slider = await seekBar()
@@ -263,7 +267,7 @@ describe("NowPlayingBar seek bar", () => {
 
   // Spotify reports no item while an ad plays, and there is nothing to seek in.
   it("disables the seek bar while nothing is playing", async () => {
-    renderNowPlayingBarAlone(
+    await renderNowPlayingBarAlone(
       spotifyApiFakeWithPlayback((playback) => ({ ...playback, item: null })),
     )
     await screen.findByText("Nothing is playing")

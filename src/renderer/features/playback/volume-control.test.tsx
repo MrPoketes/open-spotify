@@ -42,7 +42,7 @@ describe("NowPlayingBar volume", () => {
   // ID shares, so a drag must not send one per step.
   it("sends the volume once the slider settles instead of on every step", async () => {
     const spotify = recordingVolumes()
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
     const slider = await volumeSlider()
     await waitFor(() => expect(slider).toHaveValue(fakeVolume))
 
@@ -57,7 +57,7 @@ describe("NowPlayingBar volume", () => {
 
   it("mutes and restores the volume from before the mute when unmuted", async () => {
     const spotify = recordingVolumes()
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
     const slider = await volumeSlider()
     await waitFor(() => expect(slider).toHaveValue(fakeVolume))
 
@@ -75,7 +75,7 @@ describe("NowPlayingBar volume", () => {
   // slider would keep showing the dragged volume over the muted one.
   it("mutes at once while the slider is still settling and drops the slider's change", async () => {
     const spotify = recordingVolumes()
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
     const slider = await volumeSlider()
     await waitFor(() => expect(slider).toHaveValue(fakeVolume))
 
@@ -91,7 +91,7 @@ describe("NowPlayingBar volume", () => {
   // the slider must not take them. jsdom does not step a range input, so the
   // test checks which key presses Chromium's own step is held back for.
   it("steps with the arrow keys but leaves them alone when a shortcut modifier is held", async () => {
-    renderNowPlayingBarAlone()
+    await renderNowPlayingBarAlone()
     const slider = await volumeSlider()
     slider.focus()
 
@@ -102,7 +102,7 @@ describe("NowPlayingBar volume", () => {
 
   it("turns the volume up 10 with Ctrl+↑ and down 10 with Ctrl+↓", async () => {
     const spotify = recordingVolumes()
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
     const slider = await volumeSlider()
     await waitFor(() => expect(slider).toHaveValue(fakeVolume))
 
@@ -117,7 +117,7 @@ describe("NowPlayingBar volume", () => {
   // add up to.
   it("adds up quick volume presses into one request", async () => {
     const spotify = recordingVolumes()
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
     const slider = await volumeSlider()
     await waitFor(() => expect(slider).toHaveValue(fakeVolume))
 
@@ -129,7 +129,7 @@ describe("NowPlayingBar volume", () => {
 
   it("keeps changing the volume while Ctrl+↑ is held down", async () => {
     const spotify = recordingVolumes()
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
     const slider = await volumeSlider()
     await waitFor(() => expect(slider).toHaveValue(fakeVolume))
 
@@ -140,7 +140,7 @@ describe("NowPlayingBar volume", () => {
 
   it("keeps the volume from the shortcuts between 0 and 100", async () => {
     const spotify = recordingVolumes()
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
     const slider = await volumeSlider()
     await waitFor(() => expect(slider).toHaveValue(fakeVolume))
 
@@ -153,7 +153,7 @@ describe("NowPlayingBar volume", () => {
 
   it("unmutes to half volume when Spotify has reported no volume above zero", async () => {
     const spotify = recordingVolumes((device) => ({ ...device, volumePercent: 0 }))
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
 
     await userEvent.click(await muteButton("Unmute"))
 
@@ -161,7 +161,7 @@ describe("NowPlayingBar volume", () => {
   })
 
   it("puts the volume back and says so when Spotify rejects it", async () => {
-    renderNowPlayingBarAlone(
+    await renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({
         setVolume: () => rejectedCommand,
       })),
@@ -179,7 +179,7 @@ describe("NowPlayingBar volume", () => {
 
   it("disables the volume and says why on a device that does not support it", async () => {
     const spotify = recordingVolumes((device) => ({ ...device, supportsVolume: false }))
-    renderNowPlayingBarAlone(spotify.layer)
+    await renderNowPlayingBarAlone(spotify.layer)
     await screen.findByText(fakeTrack(0).name)
     const slider = await volumeSlider()
     const mute = await muteButton("Mute")
@@ -202,7 +202,7 @@ describe("NowPlayingBar volume", () => {
   it("says once why the volume cannot change while Ctrl+↓ is held down", async () => {
     const spotify = recordingVolumes((device) => ({ ...device, supportsVolume: false }))
     const statusMessages: Array<StatusMessage> = []
-    renderScreen(
+    await renderScreen(
       <StatusMessageContext value={(message) => statusMessages.push(message)}>
         {nowPlayingBarAlone}
       </StatusMessageContext>,
@@ -220,7 +220,9 @@ describe("NowPlayingBar volume", () => {
   })
 
   it("disables the volume and says why when no device is active", async () => {
-    renderNowPlayingBarAlone(spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
+    await renderNowPlayingBarAlone(
+      spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })),
+    )
     await screen.findByText("No device is playing")
 
     for (const control of [await volumeSlider(), await muteButton("Mute")]) {

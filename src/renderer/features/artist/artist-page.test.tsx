@@ -65,14 +65,14 @@ const showAllAlbumsUntilRetry = async () => {
 
 describe("ArtistPage", () => {
   it("shows the artist's name and genres", async () => {
-    renderArtistPage("fake-artist-0")
+    await renderArtistPage("fake-artist-0")
 
     const title = await screen.findByRole("heading", { name: "Northbound Static", level: 1 })
     expect(title.parentElement).toHaveTextContent("dream pop, shoegaze")
   })
 
   it("plays the artist from the play button, and pauses them from the same button", async () => {
-    renderArtistPage("fake-artist-0")
+    await renderArtistPage("fake-artist-0")
 
     await userEvent.click(await screen.findByRole("button", { name: "Play Northbound Static" }))
     await userEvent.click(await screen.findByRole("button", { name: "Pause Northbound Static" }))
@@ -83,7 +83,7 @@ describe("ArtistPage", () => {
   })
 
   it("shows a row of albums, singles and EPs, and appearances, each linking to its album", async () => {
-    renderArtistPage("fake-artist-0")
+    await renderArtistPage("fake-artist-0")
 
     const sectionHeadings = await screen.findAllByRole("heading", { level: 2 })
     expect(sectionHeadings.map((heading) => heading.textContent)).toEqual([
@@ -103,7 +103,7 @@ describe("ArtistPage", () => {
   })
 
   it("leaves out the parts of the discography that have no albums", async () => {
-    renderArtistPage("fake-artist-1")
+    await renderArtistPage("fake-artist-1")
 
     expect(await screen.findByRole("heading", { name: "Albums" })).toBeInTheDocument()
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1)
@@ -111,7 +111,7 @@ describe("ArtistPage", () => {
   })
 
   it("says so when Spotify lists no releases for the artist", async () => {
-    renderArtistPage("fake-artist-10")
+    await renderArtistPage("fake-artist-10")
 
     expect(
       await screen.findByText("Spotify lists no releases for this artist."),
@@ -119,7 +119,7 @@ describe("ArtistPage", () => {
   })
 
   it("shows every album after Show all, loading the next page at the end of the grid", async () => {
-    renderArtistPage("fake-artist-0")
+    await renderArtistPage("fake-artist-0")
     const albums = await screen.findByRole("region", { name: "Albums" })
 
     await userEvent.click(within(albums).getByRole("button", { name: "Show all" }))
@@ -135,7 +135,7 @@ describe("ArtistPage", () => {
   })
 
   it("keeps the loaded albums and offers Retry when the next page fails", async () => {
-    renderArtistPage("fake-artist-0", spotifyFailingFirstLaterAlbumsPage)
+    await renderArtistPage("fake-artist-0", spotifyFailingFirstLaterAlbumsPage)
     const albums = await screen.findByRole("region", { name: "Albums" })
 
     await userEvent.click(within(albums).getByRole("button", { name: "Show all" }))
@@ -149,7 +149,7 @@ describe("ArtistPage", () => {
   })
 
   it("moves focus back to Retry when the page Retry asked for fails again", async () => {
-    renderArtistPage("fake-artist-0", spotifyFailingLaterAlbumsPages)
+    await renderArtistPage("fake-artist-0", spotifyFailingLaterAlbumsPages)
     const { albums, retry } = await showAllAlbumsUntilRetry()
 
     await userEvent.click(retry)
@@ -158,7 +158,7 @@ describe("ArtistPage", () => {
   })
 
   it("moves focus to the first new album when the page Retry asked for loads", async () => {
-    renderArtistPage("fake-artist-0", spotifyFailingFirstLaterAlbumsPage)
+    await renderArtistPage("fake-artist-0", spotifyFailingFirstLaterAlbumsPage)
     const { albums, retry } = await showAllAlbumsUntilRetry()
 
     await userEvent.click(retry)
@@ -168,14 +168,14 @@ describe("ArtistPage", () => {
   })
 
   it("says the artist was not found when Spotify has no artist with the id", async () => {
-    renderArtistPage("fake-artist-missing")
+    await renderArtistPage("fake-artist-missing")
 
     expect(await screen.findByRole("heading", { name: "Artist not found" })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull()
   })
 
   it("shows the artist after Retry when loading them failed", async () => {
-    renderArtistPage("fake-artist-0", spotifyFailingFirstArtistRequest)
+    await renderArtistPage("fake-artist-0", spotifyFailingFirstArtistRequest)
 
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent("This artist didn't load.")

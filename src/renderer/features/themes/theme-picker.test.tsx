@@ -29,7 +29,7 @@ function PickerWithSavedTheme({ initialThemeId }: { readonly initialThemeId: The
 
 const renderPickerWithDarkSaved = async () => {
   const mainProcess = fakeMainProcess()
-  renderScreen(
+  await renderScreen(
     <>
       <PickerWithSavedTheme initialThemeId="dark" />
       <button type="button">Elsewhere</button>
@@ -98,7 +98,7 @@ describe("ThemePicker", () => {
   // so neither the pointer nor focus ever leaves the picker.
   it("restores the saved theme when the page closes during a preview", async () => {
     const mainProcess = fakeMainProcess()
-    const router = renderScreen(<PickerWithSavedTheme initialThemeId="dark" />, mainProcess)
+    const router = await renderScreen(<PickerWithSavedTheme initialThemeId="dark" />, mainProcess)
 
     await userEvent.hover(await screen.findByRole("button", { name: /Open Spotify Light/ }))
     expect(appliedToken("color-accent")).toBe(lightAccent)
@@ -111,7 +111,7 @@ describe("ThemePicker", () => {
   })
 
   it("enters the list on the saved theme when tabbed into", async () => {
-    renderScreen(<PickerWithSavedTheme initialThemeId="light" />, fakeMainProcess())
+    await renderScreen(<PickerWithSavedTheme initialThemeId="light" />, fakeMainProcess())
     await screen.findByRole("list", { name: "Theme" })
 
     await userEvent.tab()

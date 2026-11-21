@@ -42,7 +42,7 @@ describe("Dragging folder entries", () => {
   })
 
   it("reorders a folder dropped on the line above another one", async () => {
-    renderTree()
+    await renderTree()
 
     await dragTreeItemOnto(await treeItem("Focus"), await treeItem("Running"), 0.1)
 
@@ -58,7 +58,7 @@ describe("Dragging folder entries", () => {
       ...folderTree,
       { _tag: "Folder" as const, id: sleepId, name: "Sleep", entries: [] },
     ]
-    renderTree(fakeMainProcess({ folderTree: withSleep }))
+    await renderTree(fakeMainProcess({ folderTree: withSleep }))
 
     await dragTreeItemOnto(await treeItem("Running"), await treeItem("Focus"), 0.9)
 
@@ -68,7 +68,7 @@ describe("Dragging folder entries", () => {
   })
 
   it("refuses a drop that would leave the entry where it is, and shows no drop indicator", async () => {
-    renderTree()
+    await renderTree()
 
     const drag = await dragTreeItemOver(await treeItem("Focus"), await treeItem("Running"), 0.9)
     expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
@@ -80,7 +80,7 @@ describe("Dragging folder entries", () => {
 
   // Pressing in the field and moving the mouse selects text.
   it("starts no drag from a folder's rename field", async () => {
-    renderTree()
+    await renderTree()
     await focusTreeItem("Focus")
     await userEvent.keyboard("{F2}")
 
@@ -92,7 +92,7 @@ describe("Dragging folder entries", () => {
 
   // The menu is drawn outside the row, but React still hands the row its presses.
   it("starts no drag from a row's context menu", async () => {
-    renderTree()
+    await renderTree()
     await userEvent.pointer({ keys: "[MouseRight]", target: await treeItem("Focus") })
 
     const renameItem = await screen.findByRole("menuitem", { name: "Rename" })
@@ -104,7 +104,7 @@ describe("Dragging folder entries", () => {
   // The rows below a folder that opens move down, the dragged row with them,
   // while the pointer stays on the folder.
   it("drops inside a folder that opened above the dragged row", async () => {
-    renderTree()
+    await renderTree()
 
     const drag = await dragTreeItemOver(await treeItem("Focus"), await treeItem("Running"), 0.5)
     await treeItem("Easy Start")
@@ -117,7 +117,7 @@ describe("Dragging folder entries", () => {
   // A folder keeps one copy of each item, so the copy already in the target
   // folder goes, and the moved item takes the place it was dropped on.
   it("puts a Spotify item where it was dropped in a folder that held a copy of it", async () => {
-    renderTree(fakeMainProcess({ folderTree: treeWithCopyInFocus }))
+    await renderTree(fakeMainProcess({ folderTree: treeWithCopyInFocus }))
     await expandRunning()
     await focusTreeItem("Focus")
     await userEvent.keyboard("{ArrowRight}")
@@ -131,7 +131,7 @@ describe("Dragging folder entries", () => {
   })
 
   it("highlights the folder a dragged entry would go into, then moves the entry into it", async () => {
-    renderTree()
+    await renderTree()
     await expandRunning()
 
     const drag = await dragTreeItemOver(await treeItem("Easy Start"), await treeItem("Focus"), 0.5)
@@ -143,7 +143,7 @@ describe("Dragging folder entries", () => {
   })
 
   it("refuses to drop a folder into a folder inside it, and shows no drop indicator", async () => {
-    renderTree()
+    await renderTree()
     await expandRunning()
     await focusTreeItem("Warm-up")
     await userEvent.keyboard("{ArrowRight}")
@@ -159,7 +159,7 @@ describe("Dragging folder entries", () => {
 
   // Spotify items live only inside folders.
   it("refuses to drop a Spotify item on the top level, and shows no drop indicator", async () => {
-    renderTree()
+    await renderTree()
     await expandRunning()
 
     const drag = await dragTreeItemOver(

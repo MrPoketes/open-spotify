@@ -14,7 +14,7 @@ import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
 
 describe("media keys and the operating system's media overlay", () => {
   it("shows the playing track's title, artists, album, and artwork", async () => {
-    renderNowPlayingBarAlone()
+    await renderNowPlayingBarAlone()
 
     const { album } = fakeTrack(0)
     await waitFor(() =>
@@ -34,7 +34,7 @@ describe("media keys and the operating system's media overlay", () => {
   })
 
   it("pauses, plays, and skips when the media keys are pressed", async () => {
-    renderNowPlayingBarAlone()
+    await renderNowPlayingBarAlone()
     await waitFor(() =>
       expect(fakeMediaSession).toMatchObject({
         playbackState: "playing",
@@ -63,7 +63,7 @@ describe("media keys and the operating system's media overlay", () => {
 
   it("leaves the overlay when the device stops being active", async () => {
     let device: "active" | "gone" = "active"
-    renderNowPlayingBarAlone(
+    await renderNowPlayingBarAlone(
       spotifyApiFakeWith((spotify) => {
         const playbackStates = { active: spotify.getPlaybackState, gone: Effect.succeedNone }
         return { getPlaybackState: Effect.suspend(() => playbackStates[device]) }
@@ -90,7 +90,7 @@ describe("media keys and the operating system's media overlay", () => {
   // A player that never played does not count, so without one the play key
   // would do nothing until the user started Spotify some other way.
   it("keeps a paused media player when Spotify starts out paused", async () => {
-    renderNowPlayingBarAlone(
+    await renderNowPlayingBarAlone(
       spotifyApiFakeWithPlayback((playbackState) => ({ ...playbackState, isPlaying: false })),
     )
 
