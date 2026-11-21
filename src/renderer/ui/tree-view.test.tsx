@@ -1,7 +1,9 @@
 import { act, render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { useState } from "react"
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { dragTreeItemOnto, dragTreeItemOver, layOutTreeRows } from "../lib/drag-tree-item"
+import type { TreeDrop } from "./tree-drop"
 import { TreeView } from "./tree-view"
 import type { TreeNode } from "./visible-tree-rows"
 
@@ -22,9 +24,10 @@ const library = [
 interface TreeProps {
   readonly initiallyExpanded: ReadonlyArray<string>
   readonly nodes?: ReadonlyArray<TreeNode<string>>
+  readonly onDrop?: (drop: TreeDrop<string>) => void
 }
 
-function Tree({ initiallyExpanded, nodes = library }: TreeProps) {
+function Tree({ initiallyExpanded, nodes = library, onDrop = () => undefined }: TreeProps) {
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<string>>(new Set(initiallyExpanded))
   const toggle = (key: string) => {
     const next = new Set(expandedKeys)
@@ -40,6 +43,8 @@ function Tree({ initiallyExpanded, nodes = library }: TreeProps) {
         expandedKeys={expandedKeys}
         onToggleExpanded={toggle}
         renderItem={(name, itemProps) => <span {...itemProps}>{name}</span>}
+        canDrop={({ dragged, target }) => dragged !== target}
+        onDrop={onDrop}
       />
     </>
   )
@@ -160,5 +165,49 @@ describe("TreeView", () => {
     await userEvent.click(screen.getByRole("button", { hidden: true }))
 
     expect(item("Running")).toHaveFocus()
+  })
+})
+
+describe("Dragging in a TreeView", () => {
+  beforeEach(() => {
+    layOutTreeRows()
+  })
+
+  it("expands a collapsed branch that a drag rests on", async () => {
+    render(<Tree initiallyExpanded={[]} />)
+
+    await dragTreeItemOver(item("Loose track"), item("Running"), 0.5)
+
+    expect(
+      await screen.findByRole("treeitem", { name: "Quiet Rivers" }, { timeout: 2000 }),
+    ).toBeVisible()
+    expect(item("Running")).toHaveAttribute("aria-expanded", "true")
+  })
+
+  // The children of an expanded branch sit right below it, so a line drawn
+  // below the branch would look like the line above its first child.
+  it("drops above the first child when let go at the bottom edge of an expanded branch", async () => {
+    const onDrop = vi.fn<(drop: TreeDrop<string>) => void>()
+    render(<Tree initiallyExpanded={["Running"]} onDrop={onDrop} />)
+
+    await dragTreeItemOnto(item("Loose track"), item("Running"), 0.9)
+
+    expect(onDrop).toHaveBeenCalledWith({
+      dragged: "Loose track",
+      target: "Quiet Rivers",
+      position: "before",
+    })
+  })
+
+  // An item is often a link, and the browser would load its page in full on a
+  // click that React never sees.
+  it("cancels the click that ends a drag over the item it started on", async () => {
+    render(<Tree initiallyExpanded={[]} />)
+    const clicks: Array<MouseEvent> = []
+    window.addEventListener("click", (event) => clicks.push(event), { capture: true })
+
+    await dragTreeItemOnto(item("Focus"), item("Focus"), 0.9)
+
+    expect(clicks.map((click) => click.defaultPrevented)).toEqual([true])
   })
 })

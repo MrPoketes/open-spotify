@@ -246,6 +246,18 @@ screen. The status message reports each move ("Moved Warm-up down"); a move the 
 refuses leaves the tree as it was and says why ("Couldn't move Warm-up. A folder can't go inside
 itself.").
 
+The mouse can rearrange the tree too, by dragging a row; a press that moves less than 4 px is
+still a click. Letting go on the top or bottom quarter of a folder's row, or the top or bottom half
+of a Spotify item's, puts the entry on the line above or below that row, which a 2 px `accent` line
+indented to the row's level shows. Letting go on the middle of a folder puts the entry last inside
+it, which the folder shows with `surface-raised` and a 2 px `accent` outline. The line below an
+expanded folder is the line above its first child. A drop that is not allowed shows no indicator
+and does nothing: a folder inside itself or a folder within it, a Spotify item at the top level, or
+a drop that leaves the entry where it is. Resting on a collapsed folder for 600 ms while dragging
+opens it. The dragged row is dimmed to 50 % opacity, and the status message reports the drop like a
+keyboard move ("Moved Warm-up up", "Moved Warm-up to Focus"). Dragging is for the mouse only, since
+the keyboard moves above do the same.
+
 Folders start collapsed. The ones the user expands are the `expandedFolders` setting, so they
 stay open after a restart.
 

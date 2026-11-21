@@ -1,9 +1,10 @@
 import { act, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import type { FolderTree } from "../../../shared/folders"
 import { ipcChannels } from "../../../shared/ipc-channels"
+import { dragTreeItemOnto, dragTreeItemOver, layOutTreeRows } from "../../lib/drag-tree-item"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
@@ -198,5 +199,68 @@ describe("Moving folder entries", () => {
     ).toBeInTheDocument()
     expect(await treeItem("Warm-up")).toHaveAttribute("aria-level", "2")
     expect(await treeItem("Warm-up")).toHaveAttribute("aria-posinset", "2")
+  })
+})
+
+const statusMessage = (text: string) => screen.findByText(text, { selector: "output > p" })
+
+describe("Dragging folder entries", () => {
+  beforeEach(() => {
+    layOutTreeRows()
+  })
+
+  it("reorders a folder dropped on the line above another one", async () => {
+    renderTree()
+
+    await dragTreeItemOnto(await treeItem("Focus"), await treeItem("Running"), 0.1)
+
+    expect(await statusMessage("Moved Focus up")).toBeInTheDocument()
+    expect(await treeItem("Focus")).toHaveAttribute("aria-posinset", "1")
+    expect(await treeItem("Running")).toHaveAttribute("aria-posinset", "2")
+  })
+
+  it("highlights the folder a dragged entry would go into, then moves the entry into it", async () => {
+    renderTree()
+    await expandRunning()
+
+    const drag = await dragTreeItemOver(await treeItem("Easy Start"), await treeItem("Focus"), 0.5)
+    expect((await treeItem("Focus")).parentElement).toHaveAttribute("data-drop-position", "inside")
+    await drag.release()
+
+    expect(await statusMessage("Moved Easy Start to Focus")).toBeInTheDocument()
+    expect(screen.queryByRole("treeitem", { name: /^Easy Start/ })).not.toBeInTheDocument()
+  })
+
+  it("refuses to drop a folder into a folder inside it, and shows no drop indicator", async () => {
+    renderTree()
+    await expandRunning()
+    await focusTreeItem("Warm-up")
+    await userEvent.keyboard("{ArrowRight}")
+
+    const drag = await dragTreeItemOver(await treeItem("Warm-up"), await treeItem("Stretch"), 0.5)
+    expect((await treeItem("Stretch")).parentElement).not.toHaveAttribute("data-drop-position")
+    await drag.release()
+
+    await act(() => Promise.resolve())
+    expect(await treeItem("Stretch")).toHaveAttribute("aria-level", "3")
+    expect(screen.getByRole("status")).toBeEmptyDOMElement()
+  })
+
+  // Spotify items live only inside folders.
+  it("refuses to drop a Spotify item on the top level, and shows no drop indicator", async () => {
+    renderTree()
+    await expandRunning()
+
+    const drag = await dragTreeItemOver(
+      await treeItem("Easy Start"),
+      await treeItem("Running"),
+      0.1,
+    )
+    expect((await treeItem("Running")).parentElement).not.toHaveAttribute("data-drop-position")
+    await drag.release()
+
+    await act(() => Promise.resolve())
+    expect(await treeItem("Easy Start")).toHaveAttribute("aria-level", "2")
+    expect(screen.getByRole("status")).toBeEmptyDOMElement()
   })
 })
