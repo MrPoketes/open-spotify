@@ -1,10 +1,14 @@
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react"
 import { blankFolderNameMessage } from "./blank-folder-name-message"
 
+// How a rename ended. Ended with Enter or Escape, focus goes back to the row;
+// ended by leaving the field, it stays on the control the user moved to.
+export type RenameEnd = "key" | "leave"
+
 interface FolderRenameFieldProps {
   readonly folderName: string
-  readonly onRename: (name: string) => void
-  readonly onCancel: () => void
+  readonly onRename: (name: string, end: RenameEnd) => void
+  readonly onCancel: (end: RenameEnd) => void
 }
 
 // Edits a folder's name in place of its row. Enter saves and Escape cancels.
@@ -30,12 +34,12 @@ export function FolderRenameField({ folderName, onRename, onCancel }: FolderRena
     end()
   }
 
-  const save = () => {
+  const save = (end: RenameEnd) => {
     if (isNameBlank) {
       setTriedBlankName(true)
       return
     }
-    finish(() => onRename(name.trim()))
+    finish(() => onRename(name.trim(), end))
   }
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -44,18 +48,18 @@ export function FolderRenameField({ folderName, onRename, onCancel }: FolderRena
     event.stopPropagation()
     if (event.key === "Enter") {
       event.preventDefault()
-      save()
+      save("key")
     }
     if (event.key === "Escape") {
       event.preventDefault()
-      finish(onCancel)
+      finish(() => onCancel("key"))
     }
   }
 
   const saveOnLeave = () => {
     if (isDone.current) return
-    if (isNameBlank) finish(onCancel)
-    else save()
+    if (isNameBlank) finish(() => onCancel("leave"))
+    else save("leave")
   }
 
   return (

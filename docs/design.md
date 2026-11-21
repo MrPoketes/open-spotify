@@ -249,8 +249,9 @@ replaces it. Rename, or `F2` on a focused folder (which its `aria-keyshortcuts` 
 a `surface-raised` `rounded-small` text field named "Folder name" in place of the row's text, in
 `text-sm` to keep the row's height. `Enter` saves and `Escape` cancels; leaving the field saves
 too, as in a file manager. A blank name is refused like the New folder dialog's: a `danger` ring
-and "Enter a name for the folder." under the field. Focus returns to the row when the rename ends
-from the keyboard. Delete… opens a confirmation dialog, styled like the New folder dialog, that
+and "Enter a name for the folder." under the field. While the name is edited, the field is the
+row's tab stop. Focus returns to the row when `Enter` or `Escape` ends the rename, and stays
+on the control the user moved to when they leave the field. Delete… opens a confirmation dialog, styled like the New folder dialog, that
 says how many items go with the folder, counting everything inside the folders in it, and that
 nothing leaves the Spotify library. After a delete, focus goes to the row that takes its place
 (or the last row), or to the New folder button when no folder is left.

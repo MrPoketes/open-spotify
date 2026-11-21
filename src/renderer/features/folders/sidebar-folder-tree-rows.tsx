@@ -7,15 +7,15 @@ import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import type { TreeItemProps } from "../../ui/tree-view"
 import { useContextMenu } from "../../ui/use-context-menu"
 import { describeFolderEntry } from "./folder-entry-description"
-import { FolderRenameField } from "./folder-rename-field"
+import { FolderRenameField, type RenameEnd } from "./folder-rename-field"
 
 const rowClassName = "flex min-w-0 flex-1 rounded-small py-1 pr-2"
 
 export interface SidebarFolderActions {
   readonly createFolderInside: (folder: Folder) => void
   readonly startRenaming: (folder: Folder) => void
-  readonly rename: (folder: Folder, name: string) => void
-  readonly cancelRenaming: (folder: Folder) => void
+  readonly rename: (folder: Folder, name: string, end: RenameEnd) => void
+  readonly cancelRenaming: (folder: Folder, end: RenameEnd) => void
   readonly askToDelete: (folder: Folder) => void
 }
 
@@ -42,14 +42,21 @@ export function SidebarFolderRow({
     ],
   })
 
+  // While the name is edited, the field is the row's tab stop. Shift+Tab
+  // from it must leave the row, which the end of the rename replaces.
   if (isRenaming) {
     return (
-      <div {...itemProps} aria-label={name} className={`${rowClassName} items-center gap-3`}>
+      <div
+        {...itemProps}
+        tabIndex={-1}
+        aria-label={name}
+        className={`${rowClassName} items-center gap-3`}
+      >
         <Artwork sources={[]} placeholderIcon={icon} size={40} className="rounded-small" />
         <FolderRenameField
           folderName={name}
-          onRename={(newName) => actions.rename(folder, newName)}
-          onCancel={() => actions.cancelRenaming(folder)}
+          onRename={(newName, end) => actions.rename(folder, newName, end)}
+          onCancel={(end) => actions.cancelRenaming(folder, end)}
         />
       </div>
     )

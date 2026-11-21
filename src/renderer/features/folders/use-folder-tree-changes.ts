@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, useState } from "react"
 import type { Folder, FolderTree } from "../../../shared/folders"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
+import type { RenameEnd } from "./folder-rename-field"
 import { useChangeFolders } from "./use-change-folders"
 
 // A new folder starts with this name, selected in its rename field, so the
@@ -10,8 +11,8 @@ import { useChangeFolders } from "./use-change-folders"
 const newFolderName = "New folder"
 
 // Focus follows a change that replaces or removes the focused row. Once a
-// rename ends, the folder's row takes focus back from the field, unless the
-// user left the field for another control. A deleted folder hands focus to
+// rename ends with Enter or Escape, the folder's row takes focus back from
+// the field. A deleted folder hands focus to
 // the row that takes its place once the tree has been read again, or to the
 // New folder button when no folder is left.
 function useFocusAfterFolderChange(tree: FolderTree) {
@@ -23,9 +24,7 @@ function useFocusAfterFolderChange(tree: FolderTree) {
   useLayoutEffect(() => {
     const row = rowToFocusAfterRender.current
     rowToFocusAfterRender.current = null
-    if (row !== null && document.activeElement === document.body) {
-      rowFocusRef.current?.focusRow(row)
-    }
+    if (row !== null) rowFocusRef.current?.focusRow(row)
   })
 
   useLayoutEffect(() => {
@@ -55,8 +54,8 @@ export function useFolderTreeChanges(tree: FolderTree, rowIndex: (folderId: stri
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null)
   const focus = useFocusAfterFolderChange(tree)
 
-  const endRenaming = (folder: Folder) => {
-    focus.focusRowAfterRender(rowIndex(folder.id))
+  const endRenaming = (folder: Folder, end: RenameEnd) => {
+    if (end === "key") focus.focusRowAfterRender(rowIndex(folder.id))
     setRenamingFolderId(null)
   }
 
@@ -73,8 +72,8 @@ export function useFolderTreeChanges(tree: FolderTree, rowIndex: (folderId: stri
     })
   }
 
-  const renameFolder = (folder: Folder, name: string) => {
-    endRenaming(folder)
+  const renameFolder = (folder: Folder, name: string, end: RenameEnd) => {
+    endRenaming(folder, end)
     if (name === folder.name) return
     const rename = Effect.gen(function* () {
       const bridge = yield* DesktopBridge

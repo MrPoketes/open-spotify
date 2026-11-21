@@ -136,6 +136,19 @@ describe("SidebarFolderTree", () => {
     expect(screen.queryByRole("treeitem", { name: /^Running/ })).not.toBeInTheDocument()
   })
 
+  it("saves a rename when the user leaves the field, and leaves focus where they moved it", async () => {
+    renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await focusTreeItem("Running")
+
+    await userEvent.keyboard("{F2}")
+    await userEvent.clear(await renameField())
+    await userEvent.keyboard("Long runs")
+    await userEvent.tab({ shift: true })
+
+    expect(await treeItem("Long runs")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "New folder" })).toHaveFocus()
+  })
+
   it("refuses a blank name, and keeps the old one when the rename is cancelled", async () => {
     renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
@@ -164,6 +177,24 @@ describe("SidebarFolderTree", () => {
       expect(screen.queryByRole("treeitem", { name: /^Running/ })).not.toBeInTheDocument(),
     )
     expect(await treeItem("Focus")).toHaveFocus()
+  })
+
+  it("moves focus to the New folder button when the last folder is deleted", async () => {
+    renderScreen(
+      sidebarFolderTree,
+      fakeMainProcess({
+        folderTree: [{ _tag: "Folder", id: focusId, name: "Focus", entries: [] }],
+      }),
+    )
+    await focusTreeItem("Focus")
+
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}")
+    await userEvent.click(screen.getByRole("menuitem", { name: "Delete…" }))
+    expect(screen.getByRole("dialog", { name: "Delete Focus?" })).toHaveTextContent("empty")
+    await userEvent.click(screen.getByRole("button", { name: "Delete folder" }))
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "New folder" })).toHaveFocus())
+    expect(screen.queryByRole("tree")).not.toBeInTheDocument()
   })
 
   it("reloads the folders and says so when a folder was deleted elsewhere", async () => {
