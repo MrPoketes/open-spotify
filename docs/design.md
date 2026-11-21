@@ -393,8 +393,13 @@ well as its `accent` fill. The choice is the `folderView` setting and applies to
 - **List:** 32 px rows with a 16 px kind icon instead of artwork, the name, and the kind at the
   right end.
 
-Both views are one tab stop with roving focus. An entry whose kind has a page links to it; the
-others are plain rows until their page exists.
+Both views are one tab stop with roving focus. Every entry links to its page. A track has no
+page of its own, so it opens on its album page: `/track/<id>` looks up the track's album and
+replaces itself in the history with `/album/<id>?track=<track id>`, so Back skips it.
+
+The album page scrolls the highlighted track to the middle of the screen and focuses it. The
+row has the `surface-raised` fill and 600 weight, so the highlight does not rest on color alone,
+and `aria-current`.
 
 ### Search
 

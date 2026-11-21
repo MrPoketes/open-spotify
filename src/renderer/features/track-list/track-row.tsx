@@ -99,18 +99,20 @@ export function TrackListHeader({ layout }: { readonly layout: TrackListLayout }
 interface TrackRowSlot {
   readonly index: number
   readonly tabIndex: 0 | -1
+  readonly isHighlighted: boolean
   readonly offset: number
   readonly onFocus: () => void
   readonly onKeyDown: (event: KeyboardEvent) => void
 }
 
 const rowAttributes = (
-  { index, tabIndex, offset, onFocus }: TrackRowSlot,
+  { index, tabIndex, isHighlighted, offset, onFocus }: TrackRowSlot,
   layout: TrackListLayout,
   density: TrackListDensity,
 ) => ({
   "aria-rowindex": index + 2,
   "data-index": index,
+  "aria-current": isHighlighted ? ("true" as const) : undefined,
   tabIndex,
   onFocus,
   style: {
@@ -119,7 +121,8 @@ const rowAttributes = (
     height: trackRowHeight[density],
     transform: `translateY(${offset}px)`,
   } satisfies CSSProperties,
-  className: `${trackColumns(layout)} rounded-small text-sm transition-colors duration-120 ease-out hover:bg-surface-raised focus-visible:bg-surface-raised`,
+  // The highlight is also bold, so it does not rest on color alone.
+  className: `${trackColumns(layout)} rounded-small text-sm transition-colors duration-120 ease-out hover:bg-surface-raised focus-visible:bg-surface-raised ${isHighlighted ? "bg-surface-raised font-semibold" : ""}`,
 })
 
 const accessibleName = (index: number, entry: TrackListEntry | undefined) => {

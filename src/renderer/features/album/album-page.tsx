@@ -27,7 +27,13 @@ function AlbumNotFound() {
   )
 }
 
-export function AlbumPage({ albumId }: { readonly albumId: string }) {
+interface AlbumPageProps {
+  readonly albumId: string
+  // A track to highlight, for links that open a track on its album.
+  readonly highlightedTrackId?: string | undefined
+}
+
+export function AlbumPage({ albumId, highlightedTrackId }: AlbumPageProps) {
   const { state, retry } = useLoad(loadAlbum(albumId), "The album failed to load")
 
   if (state.status === "loading") {
@@ -46,7 +52,7 @@ export function AlbumPage({ albumId }: { readonly albumId: string }) {
   return (
     <div className="flex flex-col gap-8">
       <AlbumHeader album={album} totalDurationMs={totalDurationMs} />
-      <AlbumTracks tracks={tracks} />
+      <AlbumTracks tracks={tracks} highlightedTrackId={highlightedTrackId} />
     </div>
   )
 }

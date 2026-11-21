@@ -1,4 +1,4 @@
-import type { AlbumGroup } from "./spotify-api"
+import type { AlbumGroup } from "./spotify-artist-requests"
 import { coverUrl, fakeAlbums } from "./spotify-fixtures"
 
 type FakeFullAlbum = (typeof fakeAlbums)[number]

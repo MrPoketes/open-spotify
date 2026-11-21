@@ -1,7 +1,7 @@
+import { Link } from "@tanstack/react-router"
 import type { FolderEntry } from "../../../shared/folders"
 import { useRovingFocus } from "../../ui/use-roving-focus"
 import { describeFolderEntry } from "./folder-entry-description"
-import { FolderEntryTarget } from "./folder-entry-target"
 
 // Dense rows without artwork, so a large folder can be scanned at a glance.
 export function FolderEntryList({ entries }: { readonly entries: ReadonlyArray<FolderEntry> }) {
@@ -13,16 +13,15 @@ export function FolderEntryList({ entries }: { readonly entries: ReadonlyArray<F
         const { key, name, details, icon: Icon, page } = describeFolderEntry(entry)
         return (
           <li key={key}>
-            <FolderEntryTarget
-              page={page}
-              rovingProps={rowProps(index)}
-              className="flex h-8 items-center gap-3 rounded-small px-3"
-              hoverClassName="hover:bg-surface-raised"
+            <Link
+              {...page}
+              {...rowProps(index)}
+              className="flex h-8 items-center gap-3 rounded-small px-3 transition duration-120 ease-out hover:bg-surface-raised"
             >
               <Icon aria-hidden size={16} className="shrink-0 text-muted" />
               <span className="min-w-0 flex-1 truncate text-sm">{name}</span>
               <span className="shrink-0 text-xs text-muted">{details}</span>
-            </FolderEntryTarget>
+            </Link>
           </li>
         )
       })}

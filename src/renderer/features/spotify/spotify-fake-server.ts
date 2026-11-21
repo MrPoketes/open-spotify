@@ -1,7 +1,7 @@
 import { Effect, Layer } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
 import { SpotifyAccessToken } from "./spotify-access-token"
-import type { AlbumGroup } from "./spotify-api"
+import type { AlbumGroup } from "./spotify-artist-requests"
 import { fakeDiscography } from "./spotify-discography-fixtures"
 import { fakePlayer } from "./spotify-fake-player"
 import { searchPageSize } from "./spotify-search"
@@ -169,6 +169,18 @@ const respondToAlbum = (url: URL): readonly [number, unknown] => {
   return [200, { ...album, tracks: pageOf(album.tracks, tracksUrl, embeddedAlbumTrackLimit) }]
 }
 
+// An album's tracks leave out the album, which a track on its own carries.
+const fakeTracks = [
+  ...fakeAlbums.flatMap(({ tracks, ...album }) => tracks.map((track) => ({ ...track, album }))),
+  ...fakeLikedSongs.map(({ track }) => track),
+]
+
+const respondToTrack = (url: URL): readonly [number, unknown] => {
+  const trackId = url.pathname.slice("/v1/tracks/".length)
+  const track = fakeTracks.find(({ id }) => id === trackId)
+  return track ? [200, track] : notFound
+}
+
 const albumGroups: ReadonlyArray<AlbumGroup> = ["album", "single", "appears_on"]
 
 // An artist's albums are filtered by the comma-separated include_groups.
@@ -247,6 +259,7 @@ const resourcesByPathPrefix = [
   ["/v1/shows/", respondToShow],
   ["/v1/albums/", respondToAlbum],
   ["/v1/artists/", respondToArtist],
+  ["/v1/tracks/", respondToTrack],
   ["/v1/search", respondToSearch],
 ] as const
 

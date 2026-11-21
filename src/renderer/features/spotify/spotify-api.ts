@@ -12,10 +12,11 @@ import {
   Album,
   AlbumTracksPage,
   type AlbumTrack,
-  ArtistAlbumsPage,
+  type ArtistAlbumsPage,
   SavedAlbum,
 } from "./spotify-album"
 import { Artist } from "./spotify-artist"
+import { type AlbumGroup, artistRequests } from "./spotify-artist-requests"
 import { SpotifyAccessToken } from "./spotify-access-token"
 import { spotifyApiBaseUrl } from "./spotify-api-url"
 import type { Device } from "./spotify-device"
@@ -29,7 +30,7 @@ import { playerCommands, playerReads, playerUrl } from "./spotify-player-request
 import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
 import { SearchResults, type SearchType, searchPageSize } from "./spotify-search"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
-import { SavedTracksPage, type Track } from "./spotify-track"
+import { SavedTracksPage, Track } from "./spotify-track"
 import { CurrentUser } from "./spotify-user"
 
 export class SpotifyResponseError extends Schema.TaggedError<SpotifyResponseError>()(
@@ -61,14 +62,6 @@ export type SpotifyApiError =
 // The largest page Spotify allows for playlists, playlist items, album tracks,
 // show episodes, and the user's saved and followed collections.
 export const maximumPageSize = 50
-
-// Spotify caps a page of an artist's albums at 10.
-export const artistAlbumsPageSize = 10
-
-// The include_groups values for the parts of an artist's discography. Spotify
-// no longer says which group an album belongs to, so each group is requested
-// on its own.
-export type AlbumGroup = "album" | "single" | "appears_on"
 
 // Without this, Spotify only promises to return tracks: a playlist that
 // contains a podcast episode would fail to decode, and a playing episode
@@ -183,6 +176,7 @@ export class SpotifyApi extends Context.Service<
       albumGroup: AlbumGroup,
       offset: number,
     ) => Effect.Effect<ArtistAlbumsPage, SpotifyApiError>
+    readonly getTrack: (trackId: string) => Effect.Effect<Track, SpotifyApiError>
     // The page of each requested kind of result that starts at the offset.
     readonly search: (
       query: string,
@@ -263,13 +257,8 @@ export class SpotifyApi extends Context.Service<
             `${spotifyApiBaseUrl}/albums/${encodeURIComponent(albumId)}/tracks?limit=${maximumPageSize}&offset=${offset}`,
             (url) => getJson(url, AlbumTracksPage),
           ),
-        getArtist: (artistId) =>
-          getJson(`${spotifyApiBaseUrl}/artists/${encodeURIComponent(artistId)}`, Artist),
-        getArtistAlbumsPage: (artistId, albumGroup, offset) =>
-          getJson(
-            `${spotifyApiBaseUrl}/artists/${encodeURIComponent(artistId)}/albums?include_groups=${albumGroup}&limit=${artistAlbumsPageSize}&offset=${offset}`,
-            ArtistAlbumsPage,
-          ),
+        getTrack: (trackId) =>
+          getJson(`${spotifyApiBaseUrl}/tracks/${encodeURIComponent(trackId)}`, Track),
         search: (query, types, offset) => getJson(searchUrl(query, types, offset), SearchResults),
         likedSongsCount: getJson(
           `${spotifyApiBaseUrl}/me/tracks?limit=1`,
@@ -297,6 +286,7 @@ export class SpotifyApi extends Context.Service<
             `${spotifyApiBaseUrl}/shows/${encodeURIComponent(showId)}/episodes?limit=${maximumPageSize}&offset=${offset}`,
             ShowEpisodePage,
           ),
+        ...artistRequests(getJson),
         ...listeningHistoryRequests(getJson),
         getPlaybackState,
         ...playerReads(getJson),
