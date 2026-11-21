@@ -139,8 +139,21 @@ const positionShownBy = (shownState: Effect.Effect<Option.Option<PlayerState>>) 
     if (item === null || progressMs === null) {
       return null
     }
-    return { itemUri: item.uri, progressMs, durationMs: item.durationMs }
+    // While playing, the position worked out since the last poll can run
+    // past the end of the item.
+    return {
+      itemUri: item.uri,
+      progressMs: Math.min(progressMs, item.durationMs),
+      durationMs: item.durationMs,
+    }
   })
+
+const progressShownBy = (shownPosition: ReturnType<typeof positionShownBy>) =>
+  shownPosition.pipe(
+    Effect.map((shown): PlaybackProgress | null =>
+      shown === null ? null : { positionMs: shown.progressMs, durationMs: shown.durationMs },
+    ),
+  )
 
 // A seek shows at once at the position it goes to, which Spotify reports only
 // on the next poll.
@@ -164,11 +177,8 @@ const seekCommands = (
         if (shown === null) {
           return
         }
-        // While playing, the position worked out since the last poll can run
-        // past the end of the item.
-        const fromMs = Math.min(shown.progressMs, shown.durationMs)
-        const targetMs = clamp(fromMs + offsetMs, 0, shown.durationMs)
-        if (targetMs !== fromMs) {
+        const targetMs = clamp(shown.progressMs + offsetMs, 0, shown.durationMs)
+        if (targetMs !== shown.progressMs) {
           yield* seekInItem(shown.itemUri, targetMs)
         }
       }),
@@ -200,6 +210,9 @@ export class Player extends Context.Service<
     // Null while there is no active device, no item is playing, or Spotify
     // does not say how far into the item playback is.
     readonly progress: Stream.Stream<PlaybackProgress | null>
+    // Where playback is now, counting the seeks Spotify has not reported
+    // yet, which the latest progress may not show. Null whenever progress is.
+    readonly position: Effect.Effect<PlaybackProgress | null>
     readonly listDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => PlayerCommand
     // Resumes what was playing.
@@ -290,6 +303,7 @@ export class Player extends Context.Service<
         state,
         queueChanges: Stream.fromPubSub(queueChanges),
         progress: Stream.switchMap(state, progressOf),
+        position: progressShownBy(shownPosition),
         listDevices: spotify.getAvailableDevices,
         transferPlayback: (deviceId) => sendThenRefresh(spotify.transferPlayback(deviceId)),
         play: showPlayingWhileSending(true, send(spotify.play)),

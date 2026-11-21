@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
@@ -170,6 +170,24 @@ describe("NowPlayingBar seek bar", () => {
 
     await showsPosition(slider, "0:57 of 2:30")
     expect(seekPositions).toEqual([57_000])
+  })
+
+  // A position worked out before a seek can reach the bar after it, so the
+  // bar can lag behind the seek for a moment. Here the arrow press comes
+  // before the bar renders the shortcut's seek.
+  it("steps from where the last seek went before the bar shows it", async () => {
+    const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
+    renderNowPlayingBarAlone(spotifyApi)
+    const slider = await seekBar()
+    await showsPosition(slider, "0:42 of 2:30")
+
+    act(() => {
+      fireEvent.keyDown(document.body, { key: "ArrowRight", ctrlKey: true, shiftKey: true })
+      fireEvent.keyDown(slider, { key: "ArrowRight" })
+    })
+    fireEvent.keyUp(slider, { key: "ArrowRight" })
+
+    await waitFor(() => expect(seekPositions).toEqual([47_000, 52_000]))
   })
 
   // A page step is a tenth of the item, and Spotify rejects a position that is

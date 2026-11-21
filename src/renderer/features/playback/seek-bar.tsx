@@ -1,6 +1,7 @@
 import { Effect, Stream } from "effect"
-import { type KeyboardEvent, useEffect, useEffectEvent, useState } from "react"
+import { type KeyboardEvent, use, useEffect, useEffectEvent, useState } from "react"
 import { clamp } from "../../lib/clamp"
+import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useStreamValue } from "../../lib/use-stream-value"
 import { RangeSlider } from "../../ui/range-slider"
 import { formatTrackDuration } from "../track-list/format-duration"
@@ -14,6 +15,11 @@ const playbackProgress = Stream.unwrap(
     return player.progress
   }),
 )
+
+const playbackPosition = Effect.gen(function* () {
+  const player = yield* Player
+  return yield* player.position
+})
 
 const seekStepMs = 5000
 
@@ -77,6 +83,7 @@ function useSeekOnRelease(progress: PlaybackProgress | null, onSeek: (positionMs
   return {
     sliderRef: setSlider,
     heldPositionMs: isShown ? held.positionMs : null,
+    isHolding: held?.status === "holding",
     hold,
     release,
   }
@@ -92,20 +99,24 @@ interface SeekBarProps {
 // aria-disabled instead of disabled keeps the slider focusable, like the
 // other playback controls, and its title says why it is off.
 export function SeekBar({ unavailableReason, onSeek, onSeekBy }: SeekBarProps) {
+  const runtime = use(RendererRuntimeContext)
   const progress = useStreamValue(playbackProgress, null)
   const reason = unavailableReason ?? (progress === null ? "Nothing is playing." : null)
-  const { sliderRef, heldPositionMs, hold, release } = useSeekOnRelease(progress, (positionMs) => {
-    if (reason === null) {
-      onSeek(positionMs)
-    }
-  })
+  const { sliderRef, heldPositionMs, isHolding, hold, release } = useSeekOnRelease(
+    progress,
+    (positionMs) => {
+      if (reason === null) {
+        onSeek(positionMs)
+      }
+    },
+  )
   const { positionMs, durationMs } = progress ?? noProgress
   const shownPositionMs = heldPositionMs ?? positionMs
-  const withinItem = (targetMs: number) => clamp(targetMs, 0, durationMs)
 
-  // The Player steps from the position of every seek it has sent, which the
-  // slider may not show yet: a progress worked out before a seek can arrive
-  // after it.
+  // The Player counts every seek it has sent, which the slider may not show
+  // yet: a progress worked out before a seek can arrive after it. So the
+  // shortcuts, and the first key press of a hold, step from the Player's
+  // position.
   const seekShortcut = (offsetMs: number) => ({
     unavailableReason: reason,
     run: () => onSeekBy(offsetMs),
@@ -119,8 +130,14 @@ export function SeekBar({ unavailableReason, onSeek, onSeekBy }: SeekBarProps) {
       return
     }
     event.preventDefault()
-    if (reason === null) {
-      hold(withinItem(target({ positionMs: shownPositionMs, durationMs })))
+    if (reason !== null) {
+      return
+    }
+    const from = isHolding
+      ? { positionMs: shownPositionMs, durationMs }
+      : runtime.runSync(playbackPosition)
+    if (from !== null) {
+      hold(clamp(target(from), 0, from.durationMs))
     }
   }
 
