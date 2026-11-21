@@ -172,7 +172,9 @@ describe("NowPlayingBar volume", () => {
     fireEvent.change(slider, { target: { value: "20" } })
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't change the volume.")
-    expect(slider).toHaveValue(fakeVolume)
+    // The message comes from the failed command, and the volume from the
+    // Player's next state, which can reach the bar a moment later.
+    await waitFor(() => expect(slider).toHaveValue(fakeVolume))
   })
 
   it("disables the volume and says why on a device that does not support it", async () => {

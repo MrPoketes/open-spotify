@@ -53,7 +53,11 @@ export function PlaybackControls({ playerState }: PlaybackControlsProps) {
           onPress={playback.cycleRepeat.run}
         />
       </div>
-      <SeekBar unavailableReason={playback.seek.unavailableReason} onSeek={playback.seek.run} />
+      <SeekBar
+        unavailableReason={playback.seek.unavailableReason}
+        onSeek={playback.seek.run}
+        onSeekBy={playback.seekBy.run}
+      />
       {failure !== null && (
         <p role="alert" className="text-xs text-danger">
           {failure}
