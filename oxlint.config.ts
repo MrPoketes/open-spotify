@@ -70,6 +70,7 @@ export default defineConfig({
     "react/exhaustive-deps": "error",
     "react/no-array-index-key": "error",
     "react/jsx-no-useless-fragment": "error",
+    "react/jsx-no-constructed-context-values": "error",
     "react/only-export-components": ["error", { allowExportNames: ["Route"] }],
 
     // Tests must be deliberate: no skipped, focused, or assertion-free tests.
