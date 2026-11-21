@@ -15,6 +15,9 @@ const controlNames = ["Shuffle", "Previous", "Play", "Next", "Repeat"]
 describe("NowPlayingBar controls", () => {
   it("pauses playback and resumes it from the keyboard", async () => {
     renderNowPlayingBarAlone()
+    // A role query computes styles and accessible names on every retry, and
+    // retrying it through the first load slowed that load past the timeout.
+    await screen.findByText(fakeTrack(0).name)
 
     await userEvent.click(await control("Pause"))
     const playButton = await control("Play")
