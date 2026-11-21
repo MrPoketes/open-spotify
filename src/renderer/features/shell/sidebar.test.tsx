@@ -35,7 +35,7 @@ const mainProcessFailing = (): DesktopApi => ({
 describe("Sidebar folder menu", () => {
   it("imports folders from the keyboard and says how many were added", async () => {
     renderScreen(
-      <Sidebar width={280} />,
+      <Sidebar savedWidth={280} />,
       mainProcessReplying({
         [ipcChannels.importFolders]: { _tag: "FoldersImported", folderCount: 3 },
       }),
@@ -56,7 +56,7 @@ describe("Sidebar folder menu", () => {
     const user = userEvent.setup()
     renderScreen(
       <FoldersProvider>
-        <Sidebar width={280} />
+        <Sidebar savedWidth={280} />
       </FoldersProvider>,
       mainProcessImportingOneFolder(),
     )
@@ -76,7 +76,7 @@ describe("Sidebar folder menu", () => {
 
   it("confirms that the folders were exported", async () => {
     renderScreen(
-      <Sidebar width={280} />,
+      <Sidebar savedWidth={280} />,
       mainProcessReplying({ [ipcChannels.exportFolders]: { _tag: "FoldersExported" } }),
     )
 
@@ -88,7 +88,7 @@ describe("Sidebar folder menu", () => {
 
   it("explains why a folders file was refused", async () => {
     renderScreen(
-      <Sidebar width={280} />,
+      <Sidebar savedWidth={280} />,
       mainProcessReplying({
         [ipcChannels.importFolders]: { _tag: "FoldersFileUnsupportedVersion", version: 2 },
       }),
@@ -105,7 +105,7 @@ describe("Sidebar folder menu", () => {
   // A folder the user cannot write to, or a file that disappears before it is
   // read, fails in the main process instead of with a reply.
   it("says so when the folders cannot be exported", async () => {
-    renderScreen(<Sidebar width={280} />, mainProcessFailing())
+    renderScreen(<Sidebar savedWidth={280} />, mainProcessFailing())
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
     await userEvent.click(screen.getByRole("menuitem", { name: "Export folders…" }))
@@ -114,7 +114,7 @@ describe("Sidebar folder menu", () => {
   })
 
   it("says so when a folders file cannot be imported", async () => {
-    renderScreen(<Sidebar width={280} />, mainProcessFailing())
+    renderScreen(<Sidebar savedWidth={280} />, mainProcessFailing())
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
     await userEvent.click(screen.getByRole("menuitem", { name: "Import folders…" }))
@@ -133,7 +133,7 @@ describe("Sidebar folder tree", () => {
   it("shows the folder tree above the library sections", async () => {
     renderScreen(
       <FoldersProvider>
-        <Sidebar width={280} />
+        <Sidebar savedWidth={280} />
       </FoldersProvider>,
       fakeMainProcess({ folderTree: roadTripTree }),
     )
@@ -148,7 +148,7 @@ describe("Sidebar folder tree", () => {
     const user = userEvent.setup()
     renderScreen(
       <FoldersProvider>
-        <Sidebar width={280} />
+        <Sidebar savedWidth={280} />
       </FoldersProvider>,
       mainProcessImportingOneFolder(),
     )

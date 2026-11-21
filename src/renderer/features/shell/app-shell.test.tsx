@@ -93,6 +93,7 @@ const renderAppShell = async ({
 }
 
 const sidebarDivider = () => screen.getByRole("separator", { name: "Resize sidebar" })
+const queueDivider = () => screen.getByRole("separator", { name: "Resize queue" })
 
 const openQueue = async () => {
   await userEvent.click(await screen.findByRole("button", { name: "Queue" }))
@@ -253,6 +254,18 @@ describe("AppShell", () => {
     const queuePane = screen.getByRole("complementary", { name: "Queue" })
     expect(queuePane).toHaveFocus()
     expect(screen.getByRole("button", { name: "Queue" })).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("keeps the queue's width when the queue is closed and opened again", async () => {
+    await renderAppShell({ savedRightPaneWidth: 300 })
+    await openQueue()
+
+    queueDivider().focus()
+    await userEvent.keyboard("{End}")
+    await userEvent.click(screen.getByRole("button", { name: "Close queue" }))
+    await openQueue()
+
+    expect(queueDivider()).toHaveAttribute("aria-valuenow", "400")
   })
 
   // Closing the pane removes the element that had focus, which would drop

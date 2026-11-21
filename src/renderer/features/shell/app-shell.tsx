@@ -1,18 +1,5 @@
-import { type ReactNode, use, useCallback, useState } from "react"
-import {
-  defaultRightPaneWidth,
-  maximumRightPaneWidth,
-  minimumRightPaneWidth,
-} from "../../../shared/right-pane-width"
-import {
-  defaultSidebarWidth,
-  maximumSidebarWidth,
-  minimumSidebarWidth,
-} from "../../../shared/sidebar-width"
+import { type ReactNode, useCallback, useState } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
-import { RendererRuntimeContext } from "../../lib/renderer-runtime"
-import { saveSetting } from "../../lib/saved-setting"
-import { PaneDivider } from "../../ui/pane-divider"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { FoldersProvider } from "../folders/folders-provider"
 import { LibraryPlaylistsProvider } from "../library/library-playlists-provider"
@@ -52,9 +39,6 @@ function AppShellLayout({
   savedTrackListDensity,
   children,
 }: Omit<AppShellProps, "platform">) {
-  const runtime = use(RendererRuntimeContext)
-  const [sidebarWidth, setSidebarWidth] = useState(savedSidebarWidth)
-  const [rightPaneWidth, setRightPaneWidth] = useState(savedRightPaneWidth)
   const { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef } = useQueuePane()
   const [isDevicePickerOpen, setDevicePickerOpen] = useState(false)
   const openDevicePicker = useCallback(() => setDevicePickerOpen(true), [])
@@ -66,17 +50,7 @@ function AppShellLayout({
         <FoldersProvider>
           <div className="flex h-screen flex-col gap-2 p-2">
             <div className="flex min-h-0 flex-1">
-              <Sidebar width={sidebarWidth} />
-              <PaneDivider
-                label="Resize sidebar"
-                paneSide="left"
-                paneWidth={sidebarWidth}
-                minimumWidth={minimumSidebarWidth}
-                maximumWidth={maximumSidebarWidth}
-                defaultWidth={defaultSidebarWidth}
-                onResize={setSidebarWidth}
-                onResizeEnd={(width) => runtime.runFork(saveSetting("sidebarWidth", width))}
-              />
+              <Sidebar savedWidth={savedSidebarWidth} />
               <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
                 <TopBar />
                 <main className="min-h-0 flex-1 overflow-y-auto p-6">
@@ -89,21 +63,12 @@ function AppShellLayout({
                   </TrackListDensityProvider>
                 </main>
               </div>
-              {isQueueOpen && (
-                <>
-                  <PaneDivider
-                    label="Resize queue"
-                    paneSide="right"
-                    paneWidth={rightPaneWidth}
-                    minimumWidth={minimumRightPaneWidth}
-                    maximumWidth={maximumRightPaneWidth}
-                    defaultWidth={defaultRightPaneWidth}
-                    onResize={setRightPaneWidth}
-                    onResizeEnd={(width) => runtime.runFork(saveSetting("rightPaneWidth", width))}
-                  />
-                  <QueuePane ref={queuePaneRef} width={rightPaneWidth} onClose={closeQueue} />
-                </>
-              )}
+              <QueuePane
+                ref={queuePaneRef}
+                isOpen={isQueueOpen}
+                savedWidth={savedRightPaneWidth}
+                onClose={closeQueue}
+              />
             </div>
             <NowPlayingBar
               isQueueOpen={isQueueOpen}
