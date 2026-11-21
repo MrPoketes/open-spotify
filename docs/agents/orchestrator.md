@@ -280,7 +280,8 @@ Unless another run opened the PR, run the block once more. If it fails again, fi
 ## 6. Daily quality sweep
 
 Once per day (look for a `Quality sweep YYYY-MM-DD` issue created today), create an issue titled
-`Quality sweep <date>` with priority High:
+`Quality sweep <date>` with priority High, in team `Armintas`, project `Open Spotify`, with the
+label `Open-Spotify`:
 
 > Read every file changed on `main` in the last 24 hours (`git log --since=24.hours --name-only`).
 > Find slop as defined in AGENTS.md: unclear names, comments that restate code, speculative
@@ -298,4 +299,5 @@ since the last one: issues finished, workers started, problems found. Keep it to
   make is a release's version bump (step 5).
 - Never launch more than 5 workers.
 - Never ask the owner for input. If something needs a human (for example, a Spotify account
-  change), create an Urgent issue titled `Needs owner: …` and keep working on everything else.
+  change), create an Urgent issue titled `Needs owner: …` (team `Armintas`, project
+  `Open Spotify`, label `Open-Spotify`) and keep working on everything else.

@@ -13,14 +13,14 @@ const groupHeadings: Record<TokenPrefix<ThemeToken>, string> = {
   shadow: "Shadows",
 }
 
-export type TokenControl = "color" | "length" | "text"
+type TokenControl = "color" | "length" | "text"
 
 export interface TokenField {
   readonly token: ThemeToken
   readonly control: TokenControl
 }
 
-export interface TokenGroup {
+interface TokenGroup {
   readonly heading: string
   readonly fields: ReadonlyArray<TokenField>
 }

@@ -33,7 +33,7 @@ match the headings below; Linear, not this file, records what has been ticketed.
 ## M3: Library and browsing
 
 - Library in the sidebar: playlists, liked songs, saved albums, followed artists, saved shows
-- Playlist page, album page, artist page (top tracks, albums), show page
+- Playlist page, album page, artist page (discography), show page
 - Liked songs page with fast scrolling through thousands of tracks (virtualised list)
 - Search across tracks, artists, albums, playlists (10 results per page, load more)
 - Home page: recently played, top artists and tracks, jump back in

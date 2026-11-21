@@ -1,6 +1,6 @@
 import { Effect, Stream } from "effect"
 import type { LibraryEntryKind } from "../../../shared/library-layout"
-import { songCountText } from "../liked-songs/song-count-text"
+import { formatCount } from "../../ui/format-count"
 import { formatArtistNames } from "../spotify/format-artist-names"
 import type { SavedAlbum } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
@@ -28,7 +28,7 @@ const likedSongsEntry = (songCount: number): LibraryEntry => ({
   uri: "spotify:collection:tracks",
   kind: "liked-songs",
   name: "Liked Songs",
-  details: `Playlist · ${songCountText(songCount)}`,
+  details: `Playlist · ${formatCount(songCount, "song", "songs")}`,
   images: [],
   page: { to: "/collection/tracks" },
 })

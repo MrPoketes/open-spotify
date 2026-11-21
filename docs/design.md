@@ -26,9 +26,9 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
    to 32 px rows without it, so twice as many tracks fit on screen. Large libraries are
    scanned, not browsed; dense rows make a 2,000-track playlist usable.
 3. **Keyboard-first navigation.** Arrow keys and `j`/`k` move through lists, `Enter` plays,
-   `/` focuses search, and `Alt+←`/`Alt+→` go back and forward. Every action has a
-   shortcut. Power users never need the mouse, and making every control focusable also helps
-   screen reader users.
+   `/` focuses search, and `Alt+←`/`Alt+→` (`Cmd+[`/`Cmd+]` on macOS) go back and forward.
+   Every action has a shortcut. Power users never need the mouse, and making every control
+   focusable also helps screen reader users.
 4. **Command palette.** `Ctrl+K` (`Cmd+K` on macOS) opens a search box that jumps to any
    playlist, folder, artist, or setting, and runs any command. One shortcut replaces hunting
    through menus and the sidebar.
@@ -554,7 +554,7 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
   error message. `on-accent` reaches 4.5:1 against `accent`. Icons and `focus` reach 3:1
   against those surfaces. `border` is decorative and has no target, so a control's edge is
   shown by its surface color or an icon, not by a border alone. The default dark theme's
-  lowest ratio is `muted` on `surface-overlay`, at 5.6:1; the light theme's is `accent` on
+  lowest ratio is `danger` on `surface-overlay`, at 5.4:1; the light theme's is `accent` on
   `canvas`, at 4.7:1.
 - **Focus.** Every interactive element shows a 2 px `focus` outline with a 2 px offset when
   focused from the keyboard (`:focus-visible`). `app.css` sets this globally. Never remove it;

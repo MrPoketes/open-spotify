@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import { SpotifyApi } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { TrackPage } from "./track-page"
 
 const renderTrackPage = (trackId: string, spotifyApi?: Parameters<typeof renderScreen>[2]) =>
@@ -36,7 +36,7 @@ describe("TrackPage", () => {
   it("shows an error when the track cannot load, and loads it on retry", async () => {
     const router = renderTrackPage(
       "fake-album-4-track-2-25",
-      SpotifyApi.layerFakeWith((spotify) => {
+      spotifyApiFakeWith((spotify) => {
         const failFirst = failingFirstTime()
         return { getTrack: (trackId) => failFirst(spotify.getTrack(trackId)) }
       }),

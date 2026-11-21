@@ -9,7 +9,8 @@ import { render } from "@testing-library/react"
 import type { Layer } from "effect"
 import type { ReactNode } from "react"
 import type { DesktopApi } from "../../preload/desktop-api"
-import { SpotifyApi } from "../features/spotify/spotify-api"
+import type { SpotifyApi } from "../features/spotify/spotify-api"
+import { spotifyApiFake } from "../features/spotify/spotify-api-fake"
 import { fakeRendererRuntime } from "./fake-renderer-runtime"
 import { RendererRuntimeContext } from "./renderer-runtime"
 
@@ -20,7 +21,7 @@ import { RendererRuntimeContext } from "./renderer-runtime"
 export const renderScreen = (
   screen: ReactNode,
   mainProcess: DesktopApi,
-  spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake,
+  spotifyApi: Layer.Layer<SpotifyApi> = spotifyApiFake,
 ) => {
   const rootRoute = createRootRoute()
   const screenRoute = createRoute({

@@ -84,6 +84,7 @@ export default defineConfig({
 
     "open-spotify/descriptive-test-names": "error",
     "open-spotify/no-junk-drawer-modules": "error",
+    "open-spotify/no-stale-file-references": "error",
     "open-spotify/no-try-catch": "error",
     "open-spotify/require-disable-reason": "error",
   },
@@ -122,7 +123,7 @@ export default defineConfig({
     },
     {
       // A theme restyles only what reads a theme token, so renderer code takes
-      // every color from the tokens defined in src/renderer/styles/tokens.css.
+      // every color from the theme tokens in src/shared/theme.ts.
       files: ["src/renderer/**"],
       rules: { "open-spotify/no-hard-coded-colors": "error" },
     },

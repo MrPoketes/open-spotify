@@ -11,6 +11,7 @@ import {
   fakeAccessToken,
   spotifyFakeServer,
 } from "../src/renderer/features/spotify/spotify-fake-server"
+import { spotifyRedirectUri } from "../src/shared/spotify-redirect-uri"
 
 const answerFromFakeServer = Effect.fn("answerFromFakeServer")(function* (
   fakeServer: HttpClient.HttpClient,
@@ -52,31 +53,34 @@ export async function serveFakeWebApi(context: BrowserContext): Promise<void> {
 // approves the login at once, and fetch answers only Spotify's token endpoint
 // and fails everything else, so nothing reaches the network.
 export async function fakeSpotifyAccounts(electronApp: ElectronApplication): Promise<void> {
-  await electronApp.evaluate(({ safeStorage, shell }, accessToken) => {
-    // CI's Linux machines run no keyring, and without one safeStorage refuses
-    // to encrypt unless it may fall back to its built-in key.
-    safeStorage.setUsePlainTextEncryption(true)
+  await electronApp.evaluate(
+    ({ safeStorage, shell }, { accessToken, redirectUri }) => {
+      // CI's Linux machines run no keyring, and without one safeStorage refuses
+      // to encrypt unless it may fall back to its built-in key.
+      safeStorage.setUsePlainTextEncryption(true)
 
-    const networkFetch = globalThis.fetch
-    shell.openExternal = async (authorizeUrl) => {
-      const state = new URL(authorizeUrl).searchParams.get("state") ?? ""
-      const callbackUrl = new URL("http://127.0.0.1:43821/callback")
-      callbackUrl.search = new URLSearchParams({ code: "fake-code", state }).toString()
-      await networkFetch(callbackUrl)
-    }
-    globalThis.fetch = (input) => {
-      const url = input instanceof Request ? input.url : String(input)
-      if (url !== "https://accounts.spotify.com/api/token") {
-        return Promise.reject(new Error(`The end-to-end test blocks ${url}`))
+      const networkFetch = globalThis.fetch
+      shell.openExternal = async (authorizeUrl) => {
+        const state = new URL(authorizeUrl).searchParams.get("state") ?? ""
+        const callbackUrl = new URL(redirectUri)
+        callbackUrl.search = new URLSearchParams({ code: "fake-code", state }).toString()
+        await networkFetch(callbackUrl)
       }
-      const tokens = {
-        access_token: accessToken,
-        refresh_token: "fake-refresh-token",
-        expires_in: 3600,
+      globalThis.fetch = (input) => {
+        const url = input instanceof Request ? input.url : String(input)
+        if (url !== "https://accounts.spotify.com/api/token") {
+          return Promise.reject(new Error(`The end-to-end test blocks ${url}`))
+        }
+        const tokens = {
+          access_token: accessToken,
+          refresh_token: "fake-refresh-token",
+          expires_in: 3600,
+        }
+        return Promise.resolve(Response.json(tokens))
       }
-      return Promise.resolve(Response.json(tokens))
-    }
-  }, fakeAccessToken)
+    },
+    { accessToken: fakeAccessToken, redirectUri: spotifyRedirectUri },
+  )
 }
 
 export async function logInThroughOnboarding(appWindow: Page): Promise<void> {

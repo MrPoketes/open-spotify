@@ -1,6 +1,6 @@
 import { Context, Effect, Layer, Schema } from "effect"
 
-export class BrowserOpenError extends Schema.TaggedError<BrowserOpenError>()("BrowserOpenError", {
+class BrowserOpenError extends Schema.TaggedError<BrowserOpenError>()("BrowserOpenError", {
   cause: Schema.Defect(),
 }) {}
 

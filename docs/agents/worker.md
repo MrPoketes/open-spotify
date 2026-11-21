@@ -12,9 +12,9 @@ decisions and write them down in the PR description.
 3. Comment on the issue: `Started in T3 thread <your thread link>.`
 
 If the issue is too large for one PR (roughly 400 changed lines, excluding tests and lock
-files), split it: create sub-issues in Linear with the label `Open-Spotify`, the project
-`Open Spotify`, and acceptance criteria. Implement the first slice yourself and leave the rest
-in `Todo`. Say so in a comment on the parent issue.
+files), split it: create sub-issues in Linear in team `Armintas`, project `Open Spotify`, with
+the label `Open-Spotify`, the parent's milestone, and acceptance criteria. Implement the first
+slice yourself and leave the rest in `Todo`. Say so in a comment on the parent issue.
 
 If the issue cannot be done (an endpoint was removed, or it depends on unfinished work), comment
 with the reason, add `blocked by` links where they apply, move it back to `Todo`, and stop.
@@ -84,4 +84,5 @@ unresolved, move it to `Todo`, and stop.
   reviewer would accept.
 - Never edit files outside the scope of your issue, except to fix something that blocks you.
   Mention it in the PR.
-- If you find slop that is not yours, fix it in a separate issue: create it in Linear in `Todo`.
+- If you find slop that is not yours, fix it in a separate issue: create it in Linear in `Todo`, in
+  team `Armintas`, project `Open Spotify`, with the label `Open-Spotify`.

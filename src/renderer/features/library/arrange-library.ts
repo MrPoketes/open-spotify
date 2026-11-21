@@ -1,12 +1,12 @@
 import type { LibrarySection } from "../../../shared/library-layout"
 import type { LibraryEntry } from "./library-entries"
 
-export interface ShownLibrarySection {
+interface ShownLibrarySection {
   readonly section: LibrarySection
   readonly entries: ReadonlyArray<LibraryEntry>
 }
 
-export interface ArrangedLibrary {
+interface ArrangedLibrary {
   readonly pinnedEntries: ReadonlyArray<LibraryEntry>
   readonly shownSections: ReadonlyArray<ShownLibrarySection>
 }

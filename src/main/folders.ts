@@ -14,16 +14,16 @@ import { type FolderEntriesTable, makeFolderEntriesTable } from "./folder-entrie
 import { assembleFolderTree } from "./folder-tree-rows"
 import type { PortableFolder } from "./folders-file"
 
-export class FolderNotFound extends Schema.TaggedError<FolderNotFound>()("FolderNotFound", {
+class FolderNotFound extends Schema.TaggedError<FolderNotFound>()("FolderNotFound", {
   folderId: Schema.String,
 }) {}
 
-export class FolderItemNotFound extends Schema.TaggedError<FolderItemNotFound>()(
-  "FolderItemNotFound",
-  { folderId: Schema.String, uri: Schema.String },
-) {}
+class FolderItemNotFound extends Schema.TaggedError<FolderItemNotFound>()("FolderItemNotFound", {
+  folderId: Schema.String,
+  uri: Schema.String,
+}) {}
 
-export class FolderMovedIntoOwnSubtree extends Schema.TaggedError<FolderMovedIntoOwnSubtree>()(
+class FolderMovedIntoOwnSubtree extends Schema.TaggedError<FolderMovedIntoOwnSubtree>()(
   "FolderMovedIntoOwnSubtree",
   { folderId: Schema.String, parentFolderId: Schema.String },
 ) {}

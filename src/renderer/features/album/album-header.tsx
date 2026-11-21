@@ -3,7 +3,7 @@ import { PageHeader } from "../../ui/page-header"
 import { ArtistLinks } from "../artist/artist-links"
 import type { Album } from "../spotify/spotify-album"
 import { formatTotalDuration } from "../track-list/format-duration"
-import { formatTrackCount } from "../track-list/format-track-count"
+import { formatCount } from "../../ui/format-count"
 
 interface AlbumHeaderProps {
   readonly album: Album
@@ -14,7 +14,7 @@ export function AlbumHeader({ album, totalDurationMs }: AlbumHeaderProps) {
   const details = [
     // Release dates start with the year, whatever their precision.
     album.releaseDate.slice(0, 4),
-    formatTrackCount(album.totalTracks),
+    formatCount(album.totalTracks, "track", "tracks"),
     formatTotalDuration(totalDurationMs),
   ]
 

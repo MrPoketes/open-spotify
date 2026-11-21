@@ -1,4 +1,4 @@
-export type NavigationDecision = "in-app" | "browser" | "blocked"
+type NavigationDecision = "in-app" | "browser" | "blocked"
 
 // Compares protocol and host rather than `origin`: Node reports the origin of
 // a custom scheme such as `app://` as "null", which would match nothing.

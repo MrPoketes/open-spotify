@@ -11,7 +11,7 @@ import { createPortal } from "react-dom"
 import { menuItemTargetForKey } from "./menu-item-target"
 import type { ContextMenuAnchor } from "./use-context-menu"
 
-export interface ContextMenuAction {
+interface ContextMenuAction {
   // Tells apart actions with the same label, such as two playlists that
   // share a name.
   readonly id?: string
@@ -19,7 +19,7 @@ export interface ContextMenuAction {
   readonly onSelect: () => void
 }
 
-export interface ContextSubmenu {
+interface ContextSubmenu {
   readonly label: string
   readonly items: ReadonlyArray<ContextMenuItem>
 }

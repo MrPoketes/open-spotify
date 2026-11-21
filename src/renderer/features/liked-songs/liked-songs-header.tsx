@@ -1,6 +1,6 @@
 import { Heart } from "lucide-react"
 import { PageHeader } from "../../ui/page-header"
-import { songCountText } from "./song-count-text"
+import { formatCount } from "../../ui/format-count"
 
 // Spotify has no cover for Liked Songs, so it always shows the heart tile.
 const likedSongsCover = {
@@ -16,7 +16,9 @@ interface LikedSongsHeaderProps {
 }
 
 export function LikedSongsHeader({ songCount, totalDuration }: LikedSongsHeaderProps) {
-  const details = [songCountText(songCount), totalDuration].filter((detail) => detail !== null)
+  const details = [formatCount(songCount, "song", "songs"), totalDuration].filter(
+    (detail) => detail !== null,
+  )
   return (
     <PageHeader kind="Playlist" title="Liked Songs" cover={likedSongsCover}>
       <p className="text-sm text-muted">{details.join(" · ")}</p>

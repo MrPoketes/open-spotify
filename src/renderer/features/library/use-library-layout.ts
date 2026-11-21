@@ -9,7 +9,7 @@ export interface SavedLibraryLayout {
   readonly sections: ReadonlyArray<LibrarySection>
 }
 
-export interface SectionNeighbours {
+interface SectionNeighbours {
   readonly previous: LibrarySection | undefined
   readonly next: LibrarySection | undefined
 }

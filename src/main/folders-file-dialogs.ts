@@ -2,7 +2,7 @@ import type { BaseWindow, Dialog, FileFilter } from "electron"
 import { Context, Effect, Layer, Option, Schema } from "effect"
 import { showModalOpenDialog, showModalSaveDialog } from "./modal-dialogs"
 
-export class FoldersFileDialogError extends Schema.TaggedError<FoldersFileDialogError>()(
+class FoldersFileDialogError extends Schema.TaggedError<FoldersFileDialogError>()(
   "FoldersFileDialogError",
   {
     cause: Schema.Defect(),

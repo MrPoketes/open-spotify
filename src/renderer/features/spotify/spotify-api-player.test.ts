@@ -2,6 +2,7 @@ import { assert, describe, it } from "@effect/vitest"
 import { Effect, Option } from "effect"
 import { scriptedSpotify } from "./scripted-spotify-api"
 import { SpotifyApi } from "./spotify-api"
+import { spotifyApiFake } from "./spotify-api-fake"
 import {
   fakeDevices,
   fakeEpisode,
@@ -29,7 +30,7 @@ describe("SpotifyApi player", () => {
           ["Kitchen Speaker", false],
         ],
       )
-    }).pipe(Effect.provide(SpotifyApi.layerFake)),
+    }).pipe(Effect.provide(spotifyApiFake)),
   )
 
   it.effect("decodes a queue that holds both tracks and podcast episodes", () =>
@@ -47,7 +48,7 @@ describe("SpotifyApi player", () => {
           ["track", fakeTrack(2).name],
         ],
       )
-    }).pipe(Effect.provide(SpotifyApi.layerFake)),
+    }).pipe(Effect.provide(spotifyApiFake)),
   )
 
   it.effect("moves playback to the device it transfers to", () =>
@@ -64,7 +65,7 @@ describe("SpotifyApi player", () => {
         devices.filter(({ isActive }) => isActive).map(({ id }) => id),
         [kitchenSpeaker.id],
       )
-    }).pipe(Effect.provide(SpotifyApi.layerFake)),
+    }).pipe(Effect.provide(spotifyApiFake)),
   )
 
   it.effect("applies each playback command to the playback state", () =>
@@ -87,7 +88,7 @@ describe("SpotifyApi player", () => {
         [changed.isPlaying, changed.shuffle, changed.repeat, changed.item?.name],
         [true, true, "track", fakeTrack(1).name],
       )
-    }).pipe(Effect.provide(SpotifyApi.layerFake)),
+    }).pipe(Effect.provide(spotifyApiFake)),
   )
 
   // Spotify answers a player command with 404 and this reason when no device

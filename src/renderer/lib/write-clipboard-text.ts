@@ -1,9 +1,8 @@
 import { Effect, Schema } from "effect"
 
-export class ClipboardWriteError extends Schema.TaggedError<ClipboardWriteError>()(
-  "ClipboardWriteError",
-  { cause: Schema.Defect() },
-) {}
+class ClipboardWriteError extends Schema.TaggedError<ClipboardWriteError>()("ClipboardWriteError", {
+  cause: Schema.Defect(),
+}) {}
 
 // Chromium refuses clipboard writes while the window is not focused.
 export const writeClipboardText = (text: string) =>

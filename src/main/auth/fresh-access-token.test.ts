@@ -8,7 +8,6 @@ import {
   makeFakeSpotifyAccounts,
   restoreFakeSession,
 } from "./spotify-session-fakes"
-import { SpotifySession } from "./spotify-session"
 
 // Login has its own tests. These start from a session saved by an earlier
 // launch, so they never open the loopback server.
@@ -19,17 +18,6 @@ const sessionWithoutLogin = (spotifyAccounts: FakeSpotifyAccounts) =>
   )
 
 describe("SpotifySession.getAccessToken", () => {
-  it.effect("fails with NotLoggedIn before the first login", () => {
-    const spotifyAccounts = makeFakeSpotifyAccounts()
-    return Effect.gen(function* () {
-      const session = yield* SpotifySession
-
-      const error = yield* Effect.flip(session.getAccessToken)
-
-      assert.strictEqual(error._tag, "NotLoggedIn")
-    }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
-  })
-
   // Tokens last an hour. Refreshing a minute early means the renderer never
   // sends a request with a token that expires on the way.
   it.effect("refreshes the access token one minute before it expires", () => {

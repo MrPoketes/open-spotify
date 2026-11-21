@@ -5,17 +5,18 @@ import { describe, expect, it } from "vitest"
 import { NotLoggedIn, SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
-import { SpotifyApi } from "../spotify/spotify-api"
+import type { SpotifyApi } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import { giveMainViewALayout, scrollMainView } from "../track-list/fake-main-view-layout"
 import { PlaylistPage } from "./playlist-page"
 
-const spotifyFailingFirstPlaylistRequest = SpotifyApi.layerFakeWith((spotify) => {
+const spotifyFailingFirstPlaylistRequest = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return { getPlaylist: (playlistId) => failFirst(spotify.getPlaylist(playlistId)) }
 })
 
-const spotifyFailingFirstPageRequest = SpotifyApi.layerFakeWith((spotify) => {
+const spotifyFailingFirstPageRequest = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
   return {
     getPlaylistItemsPage: (playlistId, offset) =>
@@ -176,7 +177,7 @@ describe("PlaylistPage", () => {
   it("goes to the login screen, saying why, when the session has expired", async () => {
     const { router } = await renderPlaylistPage(
       "fake-playlist-late-night-drive",
-      SpotifyApi.layerFakeWith(() => ({ getPlaylist: () => Effect.fail(new SessionExpired()) })),
+      spotifyApiFakeWith(() => ({ getPlaylist: () => Effect.fail(new SessionExpired()) })),
     )
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
@@ -186,7 +187,7 @@ describe("PlaylistPage", () => {
   it("goes to the login screen when the user is not logged in", async () => {
     const { router } = await renderPlaylistPage(
       "fake-playlist-late-night-drive",
-      SpotifyApi.layerFakeWith(() => ({ getPlaylist: () => Effect.fail(new NotLoggedIn()) })),
+      spotifyApiFakeWith(() => ({ getPlaylist: () => Effect.fail(new NotLoggedIn()) })),
     )
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"))

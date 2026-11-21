@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useLoad } from "../../lib/use-load"
-import { SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { SpotifyResponseError } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakePlaylists } from "../spotify/spotify-fixtures"
 import { useLibraryPlaylists } from "./library-playlists"
 import { LibraryPlaylistsProvider } from "./library-playlists-provider"
@@ -14,7 +15,7 @@ import { LibraryPlaylistsProvider } from "./library-playlists-provider"
 // asked to, like a request that hit a brief outage.
 const countingLoads = ({ failFirst }: { readonly failFirst: boolean }) => {
   let loadCount = 0
-  const spotifyApi = SpotifyApi.layerFakeWith((spotify) => ({
+  const spotifyApi = spotifyApiFakeWith((spotify) => ({
     currentUserPlaylists: Stream.suspend(() => {
       loadCount += 1
       if (failFirst && loadCount === 1) {

@@ -2,15 +2,14 @@ import { Context, Duration, Effect, Layer, Schema } from "effect"
 import { FetchHttpClient, HttpClient, HttpClientRequest, type UrlParams } from "effect/http"
 import { spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
 
-export class TokenRequestRejected extends Schema.TaggedError<TokenRequestRejected>()(
+class TokenRequestRejected extends Schema.TaggedError<TokenRequestRejected>()(
   "TokenRequestRejected",
   { error: Schema.String },
 ) {}
 
-export class TokenRequestFailed extends Schema.TaggedError<TokenRequestFailed>()(
-  "TokenRequestFailed",
-  { cause: Schema.Defect() },
-) {}
+class TokenRequestFailed extends Schema.TaggedError<TokenRequestFailed>()("TokenRequestFailed", {
+  cause: Schema.Defect(),
+}) {}
 
 type TokenRequestError = TokenRequestRejected | TokenRequestFailed
 

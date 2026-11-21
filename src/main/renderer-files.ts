@@ -19,7 +19,7 @@ export const resolveRendererFile = Effect.fn("resolveRendererFile")(function* (
     return shellPath
   }
 
-  const fileInfo = yield* Effect.option(fileSystem.stat(requestedPath))
-  const isFile = Option.isSome(fileInfo) && fileInfo.value.type === "File"
+  const requestedFileStats = yield* Effect.option(fileSystem.stat(requestedPath))
+  const isFile = Option.isSome(requestedFileStats) && requestedFileStats.value.type === "File"
   return isFile ? requestedPath : shellPath
 })

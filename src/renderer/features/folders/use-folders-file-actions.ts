@@ -2,6 +2,7 @@ import { Effect } from "effect"
 import { use, useState } from "react"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { formatCount } from "../../ui/format-count"
 import type { MenuAction } from "../../ui/menu-button"
 
 export interface FoldersFileOutcome {
@@ -30,8 +31,7 @@ const importFolders = Effect.gen(function* () {
   const bridge = yield* DesktopBridge
   const reply = yield* bridge.importFolders
   if (reply._tag === "FileDialogCanceled") return null
-  const folderNoun = reply.folderCount === 1 ? "folder" : "folders"
-  return success(`Imported ${reply.folderCount} ${folderNoun}.`)
+  return success(`Imported ${formatCount(reply.folderCount, "folder", "folders")}.`)
 }).pipe(
   Effect.catchTags({
     FoldersFileNotJson: () => Effect.succeed(failure(`That file isn't JSON. ${nothingImported}`)),

@@ -75,7 +75,7 @@ const paletteClass = new RegExp(
 
 // Themes can restyle only what reads a theme token. A color written into a
 // component, or one of Tailwind's palette classes, stays the same in every
-// theme. Colors are defined once, in src/renderer/styles/tokens.css.
+// theme. Colors are defined once, as the theme tokens in src/shared/theme.ts.
 export const noHardCodedColors = defineRule({
   meta: {
     type: "problem",

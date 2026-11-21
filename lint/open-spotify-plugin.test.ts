@@ -1,8 +1,10 @@
+import path from "node:path"
 import { RuleTester } from "oxlint/plugins-dev"
 import { describe, it } from "vitest"
 import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
+import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
 import { requireDisableReason } from "./rules/require-disable-reason.ts"
 
@@ -29,6 +31,20 @@ ruleTester.run("no-try-catch", noTryCatch, {
 ruleTester.run("require-disable-reason", requireDisableReason, {
   valid: ["// oxlint-disable-next-line no-console -- the CLI prints to stdout\nconsole.log(1)"],
   invalid: [{ code: "// oxlint-disable-next-line no-console\nconsole.log(1)", errors: 1 }],
+})
+
+// Comments name files by their path from the repository root.
+const repositoryRoot = path.resolve(import.meta.dirname, "..")
+
+ruleTester.run("no-stale-file-references", noStaleFileReferences, {
+  valid: [
+    { code: "// The tokens live in src/shared/theme.ts.", cwd: repositoryRoot },
+    { code: "// Fetched from https://example.com/src/missing.ts", cwd: repositoryRoot },
+    { code: "// Route files under src/renderer/routes/** are exempt", cwd: repositoryRoot },
+  ],
+  invalid: [
+    { code: "// Defined in src/renderer/styles/tokens.css.", cwd: repositoryRoot, errors: 1 },
+  ],
 })
 
 ruleTester.run("descriptive-test-names", descriptiveTestNames, {

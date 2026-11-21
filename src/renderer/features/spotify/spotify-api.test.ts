@@ -3,6 +3,7 @@ import { Effect, Fiber, Stream } from "effect"
 import { HttpClient, HttpClientError } from "effect/http"
 import { TestClock } from "effect/testing"
 import { SpotifyApi } from "./spotify-api"
+import { spotifyApiFake } from "./spotify-api-fake"
 import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
 import {
   fakeCurrentUser,
@@ -16,7 +17,7 @@ import {
 const spotifyErrorBody = (status: number, message: string) =>
   JSON.stringify({ error: { status, message } })
 
-layer(SpotifyApi.layerFake)("SpotifyApi.layerFake", (test) => {
+layer(spotifyApiFake)("spotifyApiFake", (test) => {
   test.effect("decodes the current user and every fixture playlist", () =>
     Effect.gen(function* () {
       const spotify = yield* SpotifyApi
