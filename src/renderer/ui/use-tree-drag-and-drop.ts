@@ -9,7 +9,9 @@ export interface TreeDropRules<Value> {
   readonly canDrop: (drop: TreeDrop<Value>) => boolean
   readonly onDrop: (drop: TreeDrop<Value>) => void
   // A row dragged in from elsewhere in the drag area brings the data its
-  // source gave dnd-kit, which carries no type, so the owner decodes it.
+  // source gave dnd-kit, which carries no type, so the owner decodes it. One
+  // of the tree's own rows that is gone mid-drag comes here too, with no
+  // data, so the owner must refuse data it cannot decode.
   readonly canDropFromOutside: (drop: TreeDrop<Value, unknown>) => boolean
   readonly onDropFromOutside: (drop: TreeDrop<Value, unknown>) => void
 }
@@ -75,8 +77,6 @@ export function useTreeDragAndDrop<Value>(options: TreeDragAndDropOptions<Value>
     })
   }
 
-  // A row of this tree that is gone mid-drag carries no data, so the owner
-  // refuses it as a drop from outside.
   const allowedDropAt = (event: DragMoveEvent) => {
     const place = dropPlace(event)
     if (place === undefined) return undefined
