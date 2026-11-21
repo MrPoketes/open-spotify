@@ -4,6 +4,7 @@ import {
   type AddFolderItemRequest,
   type CreateFolderRequest,
   type DeleteFolderRequest,
+  FolderChangeError,
   FolderId,
   FolderTree,
   type MoveFolderItemRequest,
@@ -18,6 +19,8 @@ import {
   ImportFoldersReply,
 } from "../../shared/folders-file-replies"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
+import { IpcReply } from "../../shared/ipc-reply"
+import { MalformedIpcRequest } from "../../shared/malformed-ipc-request"
 import {
   type SettingKey,
   type SettingValue,
@@ -54,6 +57,50 @@ const importedThemeFromReply = (reply: ImportThemeReply) => {
   return Effect.succeed(Option.some(reply.importedTheme))
 }
 
+const ipcSender = (desktopApi: DesktopApi) => {
+  const send = <A>(channel: IpcChannel, reply: Schema.Decoder<A>, request?: unknown) =>
+    Effect.tryPromise(() => desktopApi.invoke(channel, request)).pipe(
+      Effect.flatMap(Schema.decodeUnknownEffect(reply)),
+      Effect.mapError((cause) => new DesktopBridgeError({ channel, cause })),
+    )
+
+  const sendWithTaggedFailures = <Value, Failure>(
+    channel: IpcChannel,
+    schemas: { readonly value: Schema.Decoder<Value>; readonly failure: Schema.Decoder<Failure> },
+    request?: unknown,
+  ) =>
+    send(channel, IpcReply(schemas.value, schemas.failure), request).pipe(
+      Effect.flatMap((reply) =>
+        reply._tag === "IpcSucceeded" ? Effect.succeed(reply.value) : Effect.fail(reply.error),
+      ),
+    )
+
+  return { send, sendWithTaggedFailures }
+}
+
+const folderChangeReply = { value: Schema.Undefined, failure: FolderChangeError }
+
+const folderChanges = ({ sendWithTaggedFailures }: ReturnType<typeof ipcSender>) => ({
+  createFolder: (request: CreateFolderRequest) =>
+    sendWithTaggedFailures(
+      ipcChannels.createFolder,
+      { value: FolderId, failure: FolderChangeError },
+      request,
+    ),
+  renameFolder: (request: RenameFolderRequest) =>
+    sendWithTaggedFailures(ipcChannels.renameFolder, folderChangeReply, request),
+  deleteFolder: (request: DeleteFolderRequest) =>
+    sendWithTaggedFailures(ipcChannels.deleteFolder, folderChangeReply, request),
+  addFolderItem: (request: AddFolderItemRequest) =>
+    sendWithTaggedFailures(ipcChannels.addFolderItem, folderChangeReply, request),
+  removeFolderItem: (request: RemoveFolderItemRequest) =>
+    sendWithTaggedFailures(ipcChannels.removeFolderItem, folderChangeReply, request),
+  moveFolder: (request: MoveFolderRequest) =>
+    sendWithTaggedFailures(ipcChannels.moveFolder, folderChangeReply, request),
+  moveFolderItem: (request: MoveFolderItemRequest) =>
+    sendWithTaggedFailures(ipcChannels.moveFolderItem, folderChangeReply, request),
+})
+
 // Typed access to the main process. Replies are decoded with a Schema, so the
 // rest of the renderer only ever sees values of the declared type.
 export class DesktopBridge extends Context.Service<
@@ -62,11 +109,11 @@ export class DesktopBridge extends Context.Service<
     readonly getAppInfo: Effect.Effect<AppInfo, DesktopBridgeError>
     readonly getSetting: <K extends SettingKey>(
       key: K,
-    ) => Effect.Effect<Option.Option<SettingValue<K>>, DesktopBridgeError>
+    ) => Effect.Effect<Option.Option<SettingValue<K>>, MalformedIpcRequest | DesktopBridgeError>
     readonly setSetting: <K extends SettingKey>(
       key: K,
       value: SettingValue<K>,
-    ) => Effect.Effect<void, DesktopBridgeError>
+    ) => Effect.Effect<void, MalformedIpcRequest | DesktopBridgeError>
     readonly getEnvironmentClientId: Effect.Effect<Option.Option<string>, DesktopBridgeError>
     readonly logIn: Effect.Effect<void, LogInError | DesktopBridgeError>
     readonly cancelLogIn: Effect.Effect<void, DesktopBridgeError>
@@ -75,19 +122,25 @@ export class DesktopBridge extends Context.Service<
     readonly getFolderTree: Effect.Effect<FolderTree, DesktopBridgeError>
     readonly createFolder: (
       request: CreateFolderRequest,
-    ) => Effect.Effect<string, DesktopBridgeError>
-    readonly renameFolder: (request: RenameFolderRequest) => Effect.Effect<void, DesktopBridgeError>
-    readonly deleteFolder: (request: DeleteFolderRequest) => Effect.Effect<void, DesktopBridgeError>
+    ) => Effect.Effect<string, FolderChangeError | DesktopBridgeError>
+    readonly renameFolder: (
+      request: RenameFolderRequest,
+    ) => Effect.Effect<void, FolderChangeError | DesktopBridgeError>
+    readonly deleteFolder: (
+      request: DeleteFolderRequest,
+    ) => Effect.Effect<void, FolderChangeError | DesktopBridgeError>
     readonly addFolderItem: (
       request: AddFolderItemRequest,
-    ) => Effect.Effect<void, DesktopBridgeError>
+    ) => Effect.Effect<void, FolderChangeError | DesktopBridgeError>
     readonly removeFolderItem: (
       request: RemoveFolderItemRequest,
-    ) => Effect.Effect<void, DesktopBridgeError>
-    readonly moveFolder: (request: MoveFolderRequest) => Effect.Effect<void, DesktopBridgeError>
+    ) => Effect.Effect<void, FolderChangeError | DesktopBridgeError>
+    readonly moveFolder: (
+      request: MoveFolderRequest,
+    ) => Effect.Effect<void, FolderChangeError | DesktopBridgeError>
     readonly moveFolderItem: (
       request: MoveFolderItemRequest,
-    ) => Effect.Effect<void, DesktopBridgeError>
+    ) => Effect.Effect<void, FolderChangeError | DesktopBridgeError>
     readonly listImportedThemes: Effect.Effect<ReadonlyArray<LibraryTheme>, DesktopBridgeError>
     // None when the user cancels.
     readonly importThemeFile: Effect.Effect<
@@ -109,11 +162,8 @@ export class DesktopBridge extends Context.Service<
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
-    const send = <A>(channel: IpcChannel, reply: Schema.Decoder<A>, request?: unknown) =>
-      Effect.tryPromise(() => desktopApi.invoke(channel, request)).pipe(
-        Effect.flatMap(Schema.decodeUnknownEffect(reply)),
-        Effect.mapError((cause) => new DesktopBridgeError({ channel, cause })),
-      )
+    const sender = ipcSender(desktopApi)
+    const { send, sendWithTaggedFailures } = sender
 
     const setSetting = Effect.fn("DesktopBridge.setSetting")(function* <K extends SettingKey>(
       key: K,
@@ -124,12 +174,21 @@ export class DesktopBridge extends Context.Service<
           (cause) => new DesktopBridgeError({ channel: ipcChannels.setSetting, cause }),
         ),
       )
-      yield* send(ipcChannels.setSetting, Schema.Undefined, { key, value: encodedValue })
+      yield* sendWithTaggedFailures(
+        ipcChannels.setSetting,
+        { value: Schema.Undefined, failure: MalformedIpcRequest },
+        { key, value: encodedValue },
+      )
     })
 
     return DesktopBridge.of({
       getAppInfo: send(ipcChannels.getAppInfo, AppInfo),
-      getSetting: (key) => send(ipcChannels.getSetting, SettingReply(key), { key }),
+      getSetting: (key) =>
+        sendWithTaggedFailures(
+          ipcChannels.getSetting,
+          { value: SettingReply(key), failure: MalformedIpcRequest },
+          { key },
+        ),
       setSetting,
       getEnvironmentClientId: send(
         ipcChannels.getEnvironmentClientId,
@@ -146,13 +205,7 @@ export class DesktopBridge extends Context.Service<
       ),
       logOut: send(ipcChannels.logOut, Schema.Undefined),
       getFolderTree: send(ipcChannels.getFolderTree, FolderTree),
-      createFolder: (request) => send(ipcChannels.createFolder, FolderId, request),
-      renameFolder: (request) => send(ipcChannels.renameFolder, Schema.Undefined, request),
-      deleteFolder: (request) => send(ipcChannels.deleteFolder, Schema.Undefined, request),
-      addFolderItem: (request) => send(ipcChannels.addFolderItem, Schema.Undefined, request),
-      removeFolderItem: (request) => send(ipcChannels.removeFolderItem, Schema.Undefined, request),
-      moveFolder: (request) => send(ipcChannels.moveFolder, Schema.Undefined, request),
-      moveFolderItem: (request) => send(ipcChannels.moveFolderItem, Schema.Undefined, request),
+      ...folderChanges(sender),
       listImportedThemes: send(ipcChannels.listImportedThemes, Schema.Array(LibraryTheme)),
       importThemeFile: send(ipcChannels.importThemeFile, ImportThemeReply).pipe(
         Effect.flatMap(importedThemeFromReply),

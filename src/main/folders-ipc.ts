@@ -3,6 +3,7 @@ import {
   AddFolderItemRequest,
   CreateFolderRequest,
   DeleteFolderRequest,
+  FolderChangeError,
   MoveFolderItemRequest,
   MoveFolderRequest,
   RemoveFolderItemRequest,
@@ -11,6 +12,7 @@ import {
 import { type IpcChannel, ipcChannels } from "../shared/ipc-channels"
 import { decodeIpcRequest } from "./decode-ipc-request"
 import { Folders } from "./folders"
+import { replyWithTaggedFailures } from "./reply-with-tagged-failures"
 
 const decodedFolderOperation =
   <Request, Reply, E>(
@@ -23,7 +25,7 @@ const decodedFolderOperation =
       const decodedRequest = yield* decodeIpcRequest(channel, requestSchema, request)
       const folders = yield* Folders
       return yield* operation(folders, decodedRequest)
-    })
+    }).pipe(replyWithTaggedFailures(FolderChangeError))
 
 export const folderIpcOperations = {
   [ipcChannels.getFolderTree]: () =>

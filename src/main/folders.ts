@@ -1,32 +1,21 @@
-import { Context, Effect, Layer, Option, Schema } from "effect"
+import { Context, Effect, Layer, Option, type Schema } from "effect"
 import { SqlClient, type SqlError } from "effect/sql"
-import type {
-  AddFolderItemRequest,
-  CreateFolderRequest,
-  DeleteFolderRequest,
-  FolderTree,
-  MoveFolderItemRequest,
-  MoveFolderRequest,
-  RemoveFolderItemRequest,
-  RenameFolderRequest,
+import {
+  type AddFolderItemRequest,
+  type CreateFolderRequest,
+  type DeleteFolderRequest,
+  FolderItemNotFound,
+  FolderMovedIntoOwnSubtree,
+  FolderNotFound,
+  type FolderTree,
+  type MoveFolderItemRequest,
+  type MoveFolderRequest,
+  type RemoveFolderItemRequest,
+  type RenameFolderRequest,
 } from "../shared/folders"
 import { type FolderEntriesTable, makeFolderEntriesTable } from "./folder-entries-table"
 import { assembleFolderTree } from "./folder-tree-rows"
 import type { PortableFolder } from "./folders-file"
-
-class FolderNotFound extends Schema.TaggedError<FolderNotFound>()("FolderNotFound", {
-  folderId: Schema.String,
-}) {}
-
-class FolderItemNotFound extends Schema.TaggedError<FolderItemNotFound>()("FolderItemNotFound", {
-  folderId: Schema.String,
-  uri: Schema.String,
-}) {}
-
-class FolderMovedIntoOwnSubtree extends Schema.TaggedError<FolderMovedIntoOwnSubtree>()(
-  "FolderMovedIntoOwnSubtree",
-  { folderId: Schema.String, parentFolderId: Schema.String },
-) {}
 
 type StorageError = SqlError.SqlError | Schema.SchemaError
 

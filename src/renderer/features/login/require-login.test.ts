@@ -12,7 +12,7 @@ import { desktopBridgeOver } from "../../lib/desktop-bridge-fakes"
 import { redirectUnlessLoggedIn } from "./require-login"
 
 // The only setting the guard reads is the Client ID, and a missing setting
-// travels as null.
+// travels as null inside the IPC reply envelope.
 const mainProcessWith = ({
   clientId,
   accessTokenReply,
@@ -21,7 +21,11 @@ const mainProcessWith = ({
   readonly accessTokenReply: unknown
 }): DesktopApi => ({
   invoke: (channel) =>
-    Promise.resolve(channel === ipcChannels.getAccessToken ? accessTokenReply : clientId),
+    Promise.resolve(
+      channel === ipcChannels.getAccessToken
+        ? accessTokenReply
+        : { _tag: "IpcSucceeded", value: clientId },
+    ),
 })
 
 // Visits an app route guarded the way the `_app` layout route is, and returns

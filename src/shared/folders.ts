@@ -1,4 +1,5 @@
 import { Schema } from "effect"
+import { MalformedIpcRequest } from "./malformed-ipc-request"
 
 // The main process generates folder ids with crypto.randomUUID().
 export const FolderId = Schema.String.check(Schema.isUUID(4))
@@ -84,3 +85,28 @@ export type AddFolderItemRequest = typeof AddFolderItemRequest.Type
 export type RemoveFolderItemRequest = typeof RemoveFolderItemRequest.Type
 export type MoveFolderRequest = typeof MoveFolderRequest.Type
 export type MoveFolderItemRequest = typeof MoveFolderItemRequest.Type
+
+export class FolderNotFound extends Schema.TaggedError<FolderNotFound>()("FolderNotFound", {
+  folderId: Schema.String,
+}) {}
+
+export class FolderItemNotFound extends Schema.TaggedError<FolderItemNotFound>()(
+  "FolderItemNotFound",
+  { folderId: Schema.String, uri: Schema.String },
+) {}
+
+export class FolderMovedIntoOwnSubtree extends Schema.TaggedError<FolderMovedIntoOwnSubtree>()(
+  "FolderMovedIntoOwnSubtree",
+  { folderId: Schema.String, parentFolderId: Schema.String },
+) {}
+
+// What a folder change can fail with that the sidebar reacts to, for example
+// by reloading a tree that no longer holds the folder.
+export const FolderChangeError = Schema.Union([
+  MalformedIpcRequest,
+  FolderNotFound,
+  FolderItemNotFound,
+  FolderMovedIntoOwnSubtree,
+])
+
+export type FolderChangeError = typeof FolderChangeError.Type

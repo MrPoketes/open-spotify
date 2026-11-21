@@ -1,10 +1,6 @@
 import { Effect, Schema } from "effect"
 import type { IpcChannel } from "../shared/ipc-channels"
-
-export class MalformedIpcRequest extends Schema.TaggedError<MalformedIpcRequest>()(
-  "MalformedIpcRequest",
-  { channel: Schema.String, cause: Schema.Defect() },
-) {}
+import { MalformedIpcRequest } from "../shared/malformed-ipc-request"
 
 // The renderer shows web content, so nothing it sends is trusted until it
 // has been decoded.
