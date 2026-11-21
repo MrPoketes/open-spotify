@@ -20,7 +20,7 @@ const spotifyItemPages: Record<SpotifyItemKind, (id: string) => FolderEntryPage>
   track: (trackId) => ({ to: "/track/$trackId", params: { trackId } }),
 }
 
-const parseSpotifyUri = (uri: string) => {
+export const parseSpotifyUri = (uri: string) => {
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the folder tree's Schema only accepts URIs shaped spotify:<kind>:<id>, so the parts always have these types
   const [, kind, id] = uri.split(":") as [string, SpotifyItemKind, string]
   return { kind, id }

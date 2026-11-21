@@ -17,7 +17,7 @@ type PlaybackOffset = { readonly position: number } | { readonly uri: string }
 // artist, playlist, or show), or a list of track URIs.
 export type PlaybackStart =
   | { readonly contextUri: string; readonly offset?: PlaybackOffset }
-  | { readonly uris: ReadonlyArray<string>; readonly offset: PlaybackOffset }
+  | { readonly uris: ReadonlyArray<string>; readonly offset?: PlaybackOffset }
 
 const playbackStartBody = (start: PlaybackStart) =>
   "contextUri" in start

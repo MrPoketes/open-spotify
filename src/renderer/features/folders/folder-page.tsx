@@ -10,7 +10,9 @@ import { FolderBreadcrumb } from "./folder-breadcrumb"
 import { FolderEntryGrid } from "./folder-entry-grid"
 import { FolderEntryList } from "./folder-entry-list"
 import { type FolderLocation, locateFolder } from "./folder-location"
+import { FolderPlayButton } from "./folder-play-button"
 import { useFolderTree } from "./folder-tree"
+import { folderTrackUris } from "./folder-track-uris"
 import { FolderViewToggle } from "./folder-view-toggle"
 import { formatCount } from "../../ui/format-count"
 
@@ -44,6 +46,7 @@ interface LoadedFolderProps {
 function LoadedFolder({ location, savedView }: LoadedFolderProps) {
   const [view, changeView] = useSavedSettingState("folderView", savedView)
   const { folder, ancestors } = location
+  const trackUris = folderTrackUris(folder)
 
   return (
     <div className="flex flex-col gap-8">
@@ -53,6 +56,11 @@ function LoadedFolder({ location, savedView }: LoadedFolderProps) {
           kind="Folder"
           title={folder.name}
           cover={{ sources: [], placeholderIcon: FolderIcon }}
+          playButton={
+            trackUris.length === 0 ? undefined : (
+              <FolderPlayButton folder={folder} trackUris={trackUris} />
+            )
+          }
         >
           <p className="text-xs text-muted tabular-nums">
             {formatCount(folder.entries.length, "item", "items")}
