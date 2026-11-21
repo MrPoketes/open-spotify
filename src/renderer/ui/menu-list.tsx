@@ -24,7 +24,6 @@ interface MenuSubmenu {
 
 export type MenuItem = MenuAction | MenuSubmenu
 
-// Which item takes focus when the menu opens.
 export type MenuOpenFocus = "first" | "last"
 
 const isSubmenu = (item: MenuItem): item is MenuSubmenu => "items" in item
