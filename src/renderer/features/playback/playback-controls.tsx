@@ -3,6 +3,7 @@ import { PlayerControlButton } from "./player-control-button"
 import { useMediaSession } from "./use-media-session"
 import { usePlaybackActions } from "./use-playback-actions"
 import { usePlaybackShortcuts } from "./use-playback-shortcuts"
+import { SeekBar } from "./seek-bar"
 import type { PlayerStateOrLoading } from "./use-player-state"
 
 interface PlaybackControlsProps {
@@ -52,6 +53,7 @@ export function PlaybackControls({ playerState }: PlaybackControlsProps) {
           onPress={playback.cycleRepeat.run}
         />
       </div>
+      <SeekBar unavailableReason={playback.seek.unavailableReason} onSeek={playback.seek.run} />
       {failure !== null && (
         <p role="alert" className="text-xs text-danger">
           {failure}

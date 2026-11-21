@@ -6,7 +6,9 @@ import { shortcutKeys, type WindowShortcutName, windowShortcuts } from "./keyboa
 const isTextEntry = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable ||
-    target.matches("textarea, select, input:not([type='checkbox'], [type='radio'])"))
+    target.matches(
+      "textarea, select, input:not([type='checkbox'], [type='radio'], [type='range'])",
+    ))
 
 // Space presses a focused button, so a shortcut on Space gives way to it. On
 // a link Space only scrolls, and a focused radio button is already checked, so

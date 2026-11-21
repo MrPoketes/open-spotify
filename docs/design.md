@@ -252,6 +252,17 @@ icon, so the state does not rely on color, and set `aria-pressed`. Repeat cycles
 context, and the track; for the track it uses the `Repeat1` icon and is named "Repeat one
 track".
 
+Under the controls, a seek bar shows how far into the item playback is: the elapsed time, a
+slider, and the total time, in `text-xs` `muted` `tabular-nums` (`-:--` while nothing plays).
+The slider's track is a `rounded-full` bar in `muted`, filled with `accent` up to the position,
+with an `accent` thumb.
+Between polls the slider moves on by itself while playback plays, and stands still while it is
+paused. The slider is labelled "Playback position", and its value reads as "1:23 of 3:45".
+Left and right (or down and up) arrows step 5 seconds, `PageDown` and `PageUp` step a tenth of
+the item, and `Home` and `End` jump to the start and the end. A held key or a dragged thumb seeks
+once, when it is let go. A seek, like a pause, stops or moves the position from the moment of
+the press, not from the last poll.
+
 A control updates as soon as it is pressed. It keeps that state while the command is on its
 way and for one second after Spotify accepts it, because Spotify can report the old state for a
 moment; after that, the polled state wins again. If Spotify rejects the command, the control

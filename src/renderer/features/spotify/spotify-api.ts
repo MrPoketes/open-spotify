@@ -224,6 +224,7 @@ export class SpotifyApi extends Context.Service<
     readonly pause: Effect.Effect<void, SpotifyApiError>
     readonly skipToNext: Effect.Effect<void, SpotifyApiError>
     readonly skipToPrevious: Effect.Effect<void, SpotifyApiError>
+    readonly seek: (positionMs: number) => Effect.Effect<void, SpotifyApiError>
     readonly setShuffle: (isOn: boolean) => Effect.Effect<void, SpotifyApiError>
     readonly setRepeat: (mode: RepeatMode) => Effect.Effect<void, SpotifyApiError>
     readonly addToQueue: (uri: string) => Effect.Effect<void, SpotifyApiError>

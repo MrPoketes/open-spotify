@@ -9,6 +9,7 @@ import {
 } from "../spotify/spotify-api"
 import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeDevices, fakeTrack } from "../spotify/spotify-fixtures"
+import { collectStream } from "../../lib/collect-stream"
 import { Player, type PlayerState } from "./player"
 
 // Counts playback state requests and fails the ones listed in failingRequests
@@ -33,16 +34,9 @@ const setWindowVisibility = (visibility: DocumentVisibilityState) =>
     document.dispatchEvent(new Event("visibilitychange"))
   })
 
-// Subscribes to the player state for the rest of the test. Responses from the
-// fake server resolve through real promises, so a test takes each state from
-// the queue instead of expecting it to arrive within a clock adjustment.
 const subscribe = Effect.gen(function* () {
   const player = yield* Player
-  const states = yield* Queue.unbounded<PlayerState>()
-  yield* Stream.runForEach(player.state, (state) => Queue.offer(states, state)).pipe(
-    Effect.forkScoped,
-  )
-  return states
+  return yield* collectStream(player.state)
 })
 
 const activeDeviceId = (state: PlayerState) =>

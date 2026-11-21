@@ -1,0 +1,155 @@
+import { Effect, Stream } from "effect"
+import { type KeyboardEvent, useEffect, useEffectEvent, useState } from "react"
+import { useStreamValue } from "../../lib/use-stream-value"
+import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
+import { formatTrackDuration } from "../track-list/format-duration"
+import type { PlaybackProgress } from "./playback-progress"
+import { Player } from "./player"
+
+const playbackProgress = Stream.unwrap(
+  Effect.gen(function* () {
+    const player = yield* Player
+    return player.progress
+  }),
+)
+
+const arrowKeyStepMs = 5000
+
+// A tenth of the item, so a page step stays useful in a long podcast episode.
+// Rounded, because Spotify takes only whole milliseconds.
+const pageStepMs = (durationMs: number) => Math.round(durationMs / 10)
+
+const keyboardTargets: Record<string, (progress: PlaybackProgress) => number> = {
+  ArrowLeft: ({ positionMs }) => positionMs - arrowKeyStepMs,
+  ArrowDown: ({ positionMs }) => positionMs - arrowKeyStepMs,
+  ArrowRight: ({ positionMs }) => positionMs + arrowKeyStepMs,
+  ArrowUp: ({ positionMs }) => positionMs + arrowKeyStepMs,
+  PageDown: ({ positionMs, durationMs }) => positionMs - pageStepMs(durationMs),
+  PageUp: ({ positionMs, durationMs }) => positionMs + pageStepMs(durationMs),
+  Home: () => 0,
+  End: ({ durationMs }) => durationMs,
+}
+
+const noProgress: PlaybackProgress = { positionMs: 0, durationMs: 0 }
+
+// Where the user moves the slider to with the pointer or the arrow keys.
+type HeldPosition =
+  | { readonly status: "holding"; readonly positionMs: number }
+  // The seek is on its way. The position stays until the next progress
+  // arrives, so the slider does not flick back to where playback was.
+  | {
+      readonly status: "released"
+      readonly positionMs: number
+      readonly progressAtRelease: PlaybackProgress | null
+    }
+
+// While the user drags the thumb or holds down a key, the slider follows them,
+// and it seeks once they let go: a held key repeats about 30 times a second,
+// and every request counts against Spotify's rate limit. The native change
+// event fires once the thumb is let go, while React's onChange fires on every
+// step of the drag.
+function useSeekOnRelease(progress: PlaybackProgress | null, onSeek: (positionMs: number) => void) {
+  const [slider, setSlider] = useState<HTMLInputElement | null>(null)
+  const [held, setHeld] = useState<HeldPosition | null>(null)
+
+  const hold = (positionMs: number) => setHeld({ status: "holding", positionMs })
+  const release = () => {
+    if (held?.status !== "holding") {
+      return
+    }
+    setHeld({ status: "released", positionMs: held.positionMs, progressAtRelease: progress })
+    onSeek(held.positionMs)
+  }
+  const releaseThumb = useEffectEvent(release)
+
+  useEffect(() => {
+    if (slider === null) {
+      return undefined
+    }
+    const seekToThumb = () => releaseThumb()
+    slider.addEventListener("change", seekToThumb)
+    return () => slider.removeEventListener("change", seekToThumb)
+  }, [slider])
+
+  const isShown =
+    held?.status === "holding" || (held !== null && held.progressAtRelease === progress)
+  return { sliderRef: setSlider, heldPositionMs: isShown ? held.positionMs : null, hold, release }
+}
+
+interface SeekBarProps {
+  // Why the playback controls cannot be used right now, or null when they can.
+  readonly unavailableReason: string | null
+  readonly onSeek: (positionMs: number) => void
+}
+
+// aria-disabled instead of disabled keeps the slider focusable, like the
+// other playback controls, and its title says why it is off.
+export function SeekBar({ unavailableReason, onSeek }: SeekBarProps) {
+  const progress = useStreamValue(playbackProgress, null)
+  const reason = unavailableReason ?? (progress === null ? "Nothing is playing." : null)
+  const { sliderRef, heldPositionMs, hold, release } = useSeekOnRelease(progress, (positionMs) => {
+    if (reason === null) {
+      onSeek(positionMs)
+    }
+  })
+  const { positionMs, durationMs } = progress ?? noProgress
+  const shownPositionMs = heldPositionMs ?? positionMs
+
+  const stepFromKeyboard = (event: KeyboardEvent<HTMLInputElement>) => {
+    const target = keyboardTargets[event.key]
+    if (target === undefined) {
+      return
+    }
+    // Chromium steps a range input on these keys even with a modifier held,
+    // which would seek on Alt+Left. The app-wide shortcuts still see the key.
+    event.preventDefault()
+    if (reason === null && !hasShortcutModifier(event)) {
+      hold(Math.min(Math.max(target({ positionMs: shownPositionMs, durationMs }), 0), durationMs))
+    }
+  }
+
+  const elapsedFraction = durationMs === 0 ? 0 : shownPositionMs / durationMs
+
+  return (
+    <div className="flex w-[40vw] max-w-xl items-center gap-2 text-xs text-muted tabular-nums">
+      <span aria-hidden className="min-w-10 text-right">
+        {progress === null ? "-:--" : formatTrackDuration(shownPositionMs)}
+      </span>
+      {/* Chromium draws a native range track in its own colors, so the input
+          is transparent over a track drawn from theme tokens. */}
+      <div className="relative flex h-4 min-w-0 flex-1 items-center has-aria-disabled:opacity-50">
+        <div aria-hidden className="h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-full bg-accent" style={{ width: `${elapsedFraction * 100}%` }} />
+        </div>
+        <input
+          ref={sliderRef}
+          type="range"
+          aria-label="Playback position"
+          title={reason ?? "Playback position"}
+          aria-disabled={reason !== null}
+          aria-valuetext={
+            progress === null
+              ? undefined
+              : `${formatTrackDuration(shownPositionMs)} of ${formatTrackDuration(durationMs)}`
+          }
+          min={0}
+          max={durationMs}
+          step={1000}
+          value={shownPositionMs}
+          onChange={(event) => {
+            if (reason === null) {
+              hold(event.target.valueAsNumber)
+            }
+          }}
+          onKeyDown={stepFromKeyboard}
+          onKeyUp={release}
+          onBlur={release}
+          className="absolute inset-0 cursor-pointer appearance-none bg-transparent aria-disabled:cursor-default [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent"
+        />
+      </div>
+      <span aria-hidden className="min-w-10">
+        {progress === null ? "-:--" : formatTrackDuration(durationMs)}
+      </span>
+    </div>
+  )
+}

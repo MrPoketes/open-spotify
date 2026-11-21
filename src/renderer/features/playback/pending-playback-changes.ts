@@ -1,21 +1,36 @@
 import { Clock, Effect, PubSub, Ref, Stream } from "effect"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
+import type { TimedPlayback } from "./playback-progress"
 
 type PlaybackSettings = Pick<PlaybackState, "isPlaying" | "shuffle" | "repeat">
+
+// Where to show playback in an item, as of the moment the change was made.
+interface PendingPosition {
+  readonly itemUri: string
+  readonly progressMs: number
+}
 
 // A change the user made that the polled playback state may not show yet.
 interface PendingChange {
   readonly settings: Partial<PlaybackSettings>
+  readonly position: PendingPosition | null
+  readonly madeAt: number
   // When Spotify accepted the change, or null while the request is in flight.
   readonly acceptedAt: number | null
 }
 
-const applyChanges = (playback: PlaybackState, changes: ReadonlyArray<PendingChange>) => {
-  let changedPlayback = playback
-  for (const { settings } of changes) {
-    changedPlayback = { ...changedPlayback, ...settings }
+// A position shows only while its item plays. Once another item plays, such
+// as after a seek past the end, that item starts from Spotify's position.
+const applyChanges = (timedPlayback: TimedPlayback, changes: ReadonlyArray<PendingChange>) => {
+  let { playback, progressReadAt } = timedPlayback
+  for (const { settings, position, madeAt } of changes) {
+    playback = { ...playback, ...settings }
+    if (position !== null && position.itemUri === playback.item?.uri) {
+      playback = { ...playback, progressMs: position.progressMs }
+      progressReadAt = madeAt
+    }
   }
-  return changedPlayback
+  return { playback, progressReadAt }
 }
 
 // Spotify applies a player command after accepting it, and the playback
@@ -62,8 +77,10 @@ export const makePendingPlaybackChanges = Effect.gen(function* () {
   const showWhileSending = Effect.fn("PendingPlaybackChanges.showWhileSending")(function* <E>(
     settings: Partial<PlaybackSettings>,
     request: Effect.Effect<void, E>,
+    position: PendingPosition | null = null,
   ) {
-    const change: PendingChange = { settings, acceptedAt: null }
+    const madeAt = yield* Clock.currentTimeMillis
+    const change: PendingChange = { settings, position, madeAt, acceptedAt: null }
     yield* update((changes) => [...changes, change])
     yield* request.pipe(Effect.onError(() => update(withoutChange(change))))
     const acceptedAt = yield* Clock.currentTimeMillis
@@ -72,8 +89,8 @@ export const makePendingPlaybackChanges = Effect.gen(function* () {
 
   return {
     updates: Stream.fromPubSub(updates),
-    applyTo: (playback: PlaybackState) =>
-      Ref.get(pendingChanges).pipe(Effect.map((changes) => applyChanges(playback, changes))),
+    applyTo: (timedPlayback: TimedPlayback) =>
+      Ref.get(pendingChanges).pipe(Effect.map((changes) => applyChanges(timedPlayback, changes))),
     forgetSettledBefore: (pollStartedAt: number) =>
       Ref.update(pendingChanges, withoutChangesSettledBefore(pollStartedAt)),
     showWhileSending,

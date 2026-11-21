@@ -92,6 +92,17 @@ describe("SpotifyApi player", () => {
     }).pipe(Effect.provide(spotifyApiFake)),
   )
 
+  it.effect("moves the playback position to where it seeks", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+
+      yield* spotify.seek(95_000)
+      const playback = Option.getOrThrow(yield* spotify.getPlaybackState)
+
+      assert.strictEqual(playback.progressMs, 95_000)
+    }).pipe(Effect.provide(spotifyApiFake)),
+  )
+
   // The offset names the track to start at, so a wrong key or position in the
   // request body would start the context somewhere else.
   it.effect("starts a playlist at the given position and reports it as the context", () =>

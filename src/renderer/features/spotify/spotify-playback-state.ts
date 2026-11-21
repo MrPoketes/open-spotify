@@ -17,6 +17,7 @@ const DisallowedActions = Schema.Struct({
   togglingShuffle: disallowed,
   togglingRepeatContext: disallowed,
   togglingRepeatTrack: disallowed,
+  seeking: disallowed,
 }).pipe(
   Schema.encodeKeys({
     skippingNext: "skipping_next",
@@ -37,8 +38,16 @@ export const PlaybackState = Schema.Struct({
   context: Schema.NullOr(Schema.Struct({ uri: Schema.String })),
   // Null while an ad plays or when Spotify cannot say what is playing.
   item: Schema.NullOr(PlayableItem),
+  // How far into the item playback was when Spotify answered. Spotify can
+  // leave it null.
+  progressMs: Schema.NullOr(Schema.Number),
 }).pipe(
-  Schema.encodeKeys({ isPlaying: "is_playing", shuffle: "shuffle_state", repeat: "repeat_state" }),
+  Schema.encodeKeys({
+    isPlaying: "is_playing",
+    shuffle: "shuffle_state",
+    repeat: "repeat_state",
+    progressMs: "progress_ms",
+  }),
 )
 
 export type PlaybackState = typeof PlaybackState.Type
