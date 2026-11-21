@@ -1,22 +1,16 @@
 import { screen } from "@testing-library/react"
-import { Effect, type Layer } from "effect"
+import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
-import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeMediaSession } from "../../lib/fake-media-session"
-import { renderScreen } from "../../lib/render-screen"
-import type { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeTrack } from "../spotify/spotify-fixtures"
-import { nowPlayingBarAlone } from "./now-playing-bar-alone"
-
-const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
-  renderScreen(nowPlayingBarAlone, fakeMainProcess(), spotifyApi)
+import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
 
 const control = (name: string) => screen.findByRole("button", { name })
 
 describe("media keys and the operating system's media overlay", () => {
   it("shows the playing track's title, artists, album, and artwork", async () => {
-    renderNowPlayingBar()
+    renderNowPlayingBarAlone()
     await screen.findByText(fakeTrack(0).name)
 
     const { album } = fakeTrack(0)
@@ -33,7 +27,7 @@ describe("media keys and the operating system's media overlay", () => {
   })
 
   it("pauses, plays, and skips when the media keys are pressed", async () => {
-    renderNowPlayingBar()
+    renderNowPlayingBarAlone()
     await screen.findByText(fakeTrack(0).name)
 
     fakeMediaSession.press("pause")
@@ -50,7 +44,7 @@ describe("media keys and the operating system's media overlay", () => {
   })
 
   it("shows nothing in the overlay while no device is active", async () => {
-    renderNowPlayingBar(spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
+    renderNowPlayingBarAlone(spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
     await screen.findByText("No device is playing")
 
     expect(fakeMediaSession.metadata).toBeNull()

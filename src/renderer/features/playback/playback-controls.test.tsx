@@ -1,17 +1,12 @@
 import { screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, type Layer, Option } from "effect"
+import { Effect, Option } from "effect"
 import { describe, expect, it } from "vitest"
-import { fakeMainProcess } from "../../lib/fake-main-process"
-import { renderScreen } from "../../lib/render-screen"
-import { NoActiveDevice, type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { NoActiveDevice, SpotifyResponseError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
-import { nowPlayingBarAlone } from "./now-playing-bar-alone"
-
-const renderNowPlayingBar = (spotifyApi?: Layer.Layer<SpotifyApi>) =>
-  renderScreen(nowPlayingBarAlone, fakeMainProcess(), spotifyApi)
+import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
 
 const withPlayback = (change: (playback: PlaybackState) => PlaybackState) =>
   spotifyApiFakeWith((spotify) => ({
@@ -24,7 +19,7 @@ const controlNames = ["Shuffle", "Previous", "Play", "Next", "Repeat"]
 
 describe("NowPlayingBar controls", () => {
   it("pauses playback and resumes it from the keyboard", async () => {
-    renderNowPlayingBar()
+    renderNowPlayingBarAlone()
 
     await userEvent.click(await control("Pause"))
     const playButton = await control("Play")
@@ -35,7 +30,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("turns shuffle on and moves repeat from off to the context to the track", async () => {
-    renderNowPlayingBar()
+    renderNowPlayingBarAlone()
     await screen.findByText(fakeTrack(0).name)
     const shuffle = await control("Shuffle")
     expect(shuffle).toHaveAttribute("aria-pressed", "false")
@@ -51,7 +46,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("shows the next track and the previous one after skipping", async () => {
-    renderNowPlayingBar()
+    renderNowPlayingBarAlone()
     await screen.findByText(fakeTrack(0).name)
 
     await userEvent.click(await control("Next"))
@@ -62,7 +57,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("puts the control back and says so when Spotify rejects the change", async () => {
-    renderNowPlayingBar(
+    renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({
         pause: Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" })),
       })),
@@ -75,7 +70,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("asks for a device when a command finds that none is active", async () => {
-    renderNowPlayingBar(
+    renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({ skipToNext: Effect.fail(new NoActiveDevice()) })),
     )
     await screen.findByText(fakeTrack(0).name)
@@ -88,7 +83,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("disables every control and says why when no device is active", async () => {
-    renderNowPlayingBar(spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
+    renderNowPlayingBarAlone(spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })))
     await screen.findByText("No device is playing")
 
     for (const name of controlNames) {
@@ -99,7 +94,7 @@ describe("NowPlayingBar controls", () => {
   })
 
   it("disables every control on a device that other apps cannot control", async () => {
-    renderNowPlayingBar(
+    renderNowPlayingBarAlone(
       withPlayback((playback) => ({
         ...playback,
         device: { ...playback.device, isRestricted: true },
@@ -117,7 +112,7 @@ describe("NowPlayingBar controls", () => {
   // Spotify disallows some actions in some contexts, such as skipping back
   // at the start of a playlist, and the command would only fail.
   it("disables only the controls Spotify disallows right now", async () => {
-    renderNowPlayingBar(
+    renderNowPlayingBarAlone(
       withPlayback((playback) => ({ ...playback, actions: { disallows: { skippingPrev: true } } })),
     )
     await screen.findByText(fakeTrack(0).name)
