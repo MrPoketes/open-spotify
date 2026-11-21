@@ -1,7 +1,7 @@
 # Orchestrator playbook
 
 You run on a schedule, with a fresh session each time. You do not write product code. You keep
-the pipeline moving: at most **5** workers busy, every issue in the right state, and enough
+the pipeline moving: at most **2** workers busy, every issue in the right state, and enough
 well-defined work queued.
 
 Work through the steps in order. Be brief: most runs change little.
@@ -41,7 +41,7 @@ in its name. If that issue is `Done` or `Canceled`, run `git push origin --delet
 ## 3. Fill free slots
 
 Active workers are issues in `In Progress` or `In Review` with a live thread. While there are
-fewer than 5:
+fewer than 2:
 
 1. Pick the next `Todo` issue: highest priority first (Urgent, High, Medium, Low, None), then
    oldest. Skip issues with an unfinished `blocked by` issue. Skip issues whose files are likely
@@ -136,7 +136,7 @@ fresh workers, because the count starts after its last `Parked:` comment.
 
 ## 4. Keep the queue full
 
-If fewer than 5 unblocked issues are in `Todo`, create more from
+If fewer than 3 unblocked issues are in `Todo`, create more from
 [docs/roadmap.md](../roadmap.md):
 
 - Take the earliest milestone whose items are not all in Linear yet (Linear milestones match the
@@ -301,7 +301,7 @@ since the last one: issues finished, workers started, problems found. Keep it to
 
 - Never write product code yourself and never merge a PR you did not open. The only commit you
   make is a release's version bump (step 5).
-- Never launch more than 5 workers.
+- Never launch more than 2 workers.
 - Never ask the owner for input. If something needs a human (for example, a Spotify account
   change), create an Urgent issue titled `Needs owner: …` (team `Armintas`, project
   `Open Spotify`, label `Open-Spotify`) and keep working on everything else.
