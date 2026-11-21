@@ -2,8 +2,8 @@ import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Option } from "effect"
 import { describe, expect, it } from "vitest"
-import { SpotifyResponseError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
 import type { Device } from "../spotify/spotify-device"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
@@ -109,8 +109,7 @@ describe("NowPlayingBar volume", () => {
   it("puts the volume back and says so when Spotify rejects it", async () => {
     renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({
-        setVolume: () =>
-          Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" })),
+        setVolume: () => rejectedCommand,
       })),
     )
     const slider = await volumeSlider()

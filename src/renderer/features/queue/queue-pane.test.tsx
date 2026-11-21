@@ -7,8 +7,9 @@ import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { Player } from "../playback/player"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import type { SpotifyApi } from "../spotify/spotify-api"
-import { NoActiveDevice, SpotifyRequestError, SpotifyResponseError } from "../spotify/spotify-api"
+import { NoActiveDevice, SpotifyRequestError } from "../spotify/spotify-api"
 import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
 import { fakePlayOrder } from "../spotify/spotify-fake-player"
 import { fakeDevices, fakeEpisode, fakeTrack } from "../spotify/spotify-fixtures"
 import { QueuePane } from "./queue-pane"
@@ -268,7 +269,7 @@ describe("QueuePane", () => {
   it("says so when an item could not be played", async () => {
     renderQueuePane(
       spotifyApiFakeWith(() => ({
-        skipToNext: Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" })),
+        skipToNext: rejectedCommand,
       })),
     )
 

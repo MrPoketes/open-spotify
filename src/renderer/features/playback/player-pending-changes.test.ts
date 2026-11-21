@@ -2,8 +2,9 @@ import { assert, describe, it } from "@effect/vitest"
 import { Deferred, Effect, Exit, Fiber, Layer, Queue } from "effect"
 import { TestClock } from "effect/testing"
 import { collectStream } from "../../lib/collect-stream"
-import { SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
 import { Player, type PlayerState } from "./player"
 import { playerOver } from "./player-over"
 
@@ -13,8 +14,6 @@ const subscribe = Effect.gen(function* () {
 })
 
 const isPlaying = (state: PlayerState) => state.status === "active" && state.playback.isPlaying
-
-const rejected = Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" }))
 
 // A change the user makes shows at once, on top of the polled state, until
 // Spotify has had time to report it.
@@ -73,7 +72,7 @@ describe("Player pending changes", () => {
       assert.isTrue(isPlaying(shownAfterRejection))
     }).pipe(
       Effect.scoped,
-      Effect.provide(playerOver(spotifyApiFakeWith(() => ({ pause: rejected })))),
+      Effect.provide(playerOver(spotifyApiFakeWith(() => ({ pause: rejectedCommand })))),
     ),
   )
 

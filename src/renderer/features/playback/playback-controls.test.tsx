@@ -2,8 +2,9 @@ import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Option } from "effect"
 import { describe, expect, it } from "vitest"
-import { NoActiveDevice, type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { NoActiveDevice, type SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith, spotifyApiFakeWithPlayback } from "../spotify/spotify-api-fake"
+import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
 import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
@@ -54,7 +55,7 @@ describe("NowPlayingBar controls", () => {
   it("puts the control back and says so when Spotify rejects the change", async () => {
     renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({
-        pause: Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" })),
+        pause: rejectedCommand,
       })),
     )
 
@@ -253,11 +254,7 @@ describe("NowPlayingBar seek bar", () => {
   })
 
   it("puts the position back and says so when Spotify rejects a seek", async () => {
-    renderNowPlayingBarAlone(
-      pausedPlaybackWithSeek(
-        () => () => Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" })),
-      ),
-    )
+    renderNowPlayingBarAlone(pausedPlaybackWithSeek(() => () => rejectedCommand))
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
