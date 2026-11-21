@@ -2,7 +2,7 @@ import { Duration, Effect, Option, type Semaphore } from "effect"
 import { ClientIdMissing, LoginFailed, LoginTimedOut } from "../../shared/spotify-auth-replies"
 import { Settings } from "../settings"
 import { makeAuthorizationRequest } from "./authorization-request"
-import { listenForAuthorizationCode } from "./callback-server"
+import { listenOnRedirectPort } from "./callback-server"
 import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
 import { SystemBrowser } from "./system-browser"
 import { TokenStore, makeStoredSession } from "./token-store"
@@ -31,8 +31,11 @@ export const logIn = Effect.fn("logIn")(
     const tokenStore = yield* TokenStore
 
     const clientId = yield* readClientId
-    const authorization = yield* makeAuthorizationRequest(clientId)
-    const awaitAuthorizationCode = yield* listenForAuthorizationCode(authorization.state)
+    const callbackServer = yield* listenOnRedirectPort
+    const authorization = yield* makeAuthorizationRequest(clientId, callbackServer.redirectUri)
+    const awaitAuthorizationCode = yield* callbackServer.serveAuthorizationCallback(
+      authorization.state,
+    )
     yield* browser.open(authorization.url)
     const code = yield* awaitAuthorizationCode.pipe(
       Effect.timeoutOrElse({
@@ -44,6 +47,7 @@ export const logIn = Effect.fn("logIn")(
       clientId,
       code,
       codeVerifier: authorization.codeVerifier,
+      redirectUri: callbackServer.redirectUri,
     })
     const session = yield* makeStoredSession({
       clientId,

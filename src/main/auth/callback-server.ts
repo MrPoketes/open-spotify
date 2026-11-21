@@ -1,7 +1,7 @@
 import { createServer } from "node:http"
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer"
-import { Deferred, Effect, Exit, Schema } from "effect"
-import { HttpServerRequest, HttpServerResponse } from "effect/http"
+import { Context, Deferred, Effect, Exit, Schema } from "effect"
+import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http"
 import {
   LoginDenied,
   LoginFailed,
@@ -9,6 +9,12 @@ import {
   LoginStateMismatch,
 } from "../../shared/spotify-auth-replies"
 import { spotifyRedirectPort, spotifyRedirectUri } from "../../shared/spotify-redirect-uri"
+
+// Tests listen on a port the OS picks instead, so test runs on one machine
+// never compete for the real one.
+export const LoginRedirectPort = Context.Reference<number>("open-spotify/LoginRedirectPort", {
+  defaultValue: () => spotifyRedirectPort,
+})
 
 const CallbackQuery = Schema.Union([
   Schema.Struct({ state: Schema.String, code: Schema.String }),
@@ -53,41 +59,49 @@ const readAuthorizationCode = Effect.fn("readAuthorizationCode")(function* (
   return yield* new LoginFailed({ message: `Spotify refused the login: ${callback.error}.` })
 })
 
-const listenOnRedirectPort = NodeHttpServer.make(() => createServer(), {
-  host: "127.0.0.1",
-  port: spotifyRedirectPort,
-  // The browser may keep its connection open; login should not wait for it.
-  gracefulShutdownTimeout: "1 second",
-}).pipe(
-  Effect.mapError((error) =>
-    Schema.is(AddressInUse)(error.cause)
-      ? new LoginPortInUse()
-      : new LoginFailed({ message: `Could not listen for the login: ${String(error.cause)}` }),
-  ),
-)
-
-// Binds the redirect port and returns an effect that waits for Spotify's
-// callback. Binding first means a busy port fails before the browser opens.
-// The server closes with the surrounding scope.
-export const listenForAuthorizationCode = Effect.fn("listenForAuthorizationCode")(function* (
-  expectedState: string,
-) {
-  const authorizationCode = yield* Deferred.make<
-    string,
-    LoginStateMismatch | LoginDenied | LoginFailed
-  >()
-  const server = yield* listenOnRedirectPort
-  yield* server.serve(
-    Effect.gen(function* () {
-      const request = yield* HttpServerRequest.HttpServerRequest
-      const requestUrl = new URL(request.url, spotifyRedirectUri)
-      if (requestUrl.pathname !== callbackPath) {
-        return HttpServerResponse.empty({ status: 404 })
-      }
-      const outcome = yield* Effect.exit(readAuthorizationCode(requestUrl, expectedState))
-      yield* Deferred.done(authorizationCode, outcome)
-      return Exit.isSuccess(outcome) ? loggedInPage : failedPage
-    }),
+const listen = (port: number) =>
+  NodeHttpServer.make(() => createServer(), {
+    host: "127.0.0.1",
+    port,
+    // The browser may keep its connection open; login should not wait for it.
+    gracefulShutdownTimeout: "1 second",
+  }).pipe(
+    Effect.mapError((error) =>
+      Schema.is(AddressInUse)(error.cause)
+        ? new LoginPortInUse()
+        : new LoginFailed({ message: `Could not listen for the login: ${String(error.cause)}` }),
+    ),
   )
-  return Deferred.await(authorizationCode)
+
+// Binds the redirect port, so a busy port fails before the browser opens. The
+// redirect URI names the port the server got. The server closes with the
+// surrounding scope.
+export const listenOnRedirectPort = Effect.gen(function* () {
+  const server = yield* listen(yield* LoginRedirectPort)
+  const redirectUri = `${HttpServer.formatAddress(server.address)}${callbackPath}`
+
+  // Returns an effect that waits for Spotify's callback.
+  const serveAuthorizationCallback = Effect.fn("serveAuthorizationCallback")(function* (
+    expectedState: string,
+  ) {
+    const authorizationCode = yield* Deferred.make<
+      string,
+      LoginStateMismatch | LoginDenied | LoginFailed
+    >()
+    yield* server.serve(
+      Effect.gen(function* () {
+        const request = yield* HttpServerRequest.HttpServerRequest
+        const requestUrl = new URL(request.url, redirectUri)
+        if (requestUrl.pathname !== callbackPath) {
+          return HttpServerResponse.empty({ status: 404 })
+        }
+        const outcome = yield* Effect.exit(readAuthorizationCode(requestUrl, expectedState))
+        yield* Deferred.done(authorizationCode, outcome)
+        return Exit.isSuccess(outcome) ? loggedInPage : failedPage
+      }),
+    )
+    return Deferred.await(authorizationCode)
+  })
+
+  return { redirectUri, serveAuthorizationCallback }
 })

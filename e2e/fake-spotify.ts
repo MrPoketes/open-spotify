@@ -61,7 +61,12 @@ export async function fakeSpotifyAccounts(electronApp: ElectronApplication): Pro
 
       const networkFetch = globalThis.fetch
       shell.openExternal = async (authorizeUrl) => {
-        const state = new URL(authorizeUrl).searchParams.get("state") ?? ""
+        const authorizeQuery = new URL(authorizeUrl).searchParams
+        // Spotify never calls back to a redirect URI the user did not register.
+        if (authorizeQuery.get("redirect_uri") !== redirectUri) {
+          return
+        }
+        const state = authorizeQuery.get("state") ?? ""
         const callbackUrl = new URL(redirectUri)
         callbackUrl.search = new URLSearchParams({ code: "fake-code", state }).toString()
         await networkFetch(callbackUrl)
