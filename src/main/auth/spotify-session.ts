@@ -3,6 +3,7 @@ import {
   type AccessTokenError,
   LoginCancelled,
   type LogInError,
+  SessionExpired,
 } from "../../shared/spotify-auth-replies"
 import type { Settings } from "../settings"
 import { freshAccessToken } from "./fresh-access-token"
@@ -34,6 +35,9 @@ export class SpotifySession extends Context.Service<
       const sessionLock = yield* Semaphore.make(1)
       // Only one login can listen on the redirect port at a time.
       const loginLock = yield* Semaphore.make(1)
+      // The stored session is deleted when Spotify refuses its refresh token,
+      // so without this only the first caller would learn that it expired.
+      const sessionHasExpired = yield* Ref.make(false)
       // Completing the pending login's signal makes it fail with LoginCancelled.
       const pendingLoginCancellation = yield* Ref.make(yield* Deferred.make<void>())
 
@@ -55,15 +59,23 @@ export class SpotifySession extends Context.Service<
               Deferred.await(cancellation).pipe(Effect.andThen(Effect.fail(new LoginCancelled()))),
             ),
           )
+        yield* Ref.set(sessionHasExpired, false)
       })
+
+      const accessToken = Effect.gen(function* () {
+        if (yield* Ref.get(sessionHasExpired)) {
+          return yield* new SessionExpired()
+        }
+        return yield* freshAccessToken
+      }).pipe(Effect.tapErrorTag("SessionExpired", () => Ref.set(sessionHasExpired, true)))
 
       return SpotifySession.of({
         logIn: replacePendingLogIn.pipe(Effect.provideContext(services)),
         cancelLogIn,
-        getAccessToken: sessionLock
-          .withPermit(freshAccessToken)
-          .pipe(Effect.provideContext(services)),
-        logOut: sessionLock.withPermit(tokenStore.clear),
+        getAccessToken: sessionLock.withPermit(accessToken).pipe(Effect.provideContext(services)),
+        logOut: sessionLock
+          .withPermit(tokenStore.clear)
+          .pipe(Effect.andThen(Ref.set(sessionHasExpired, false))),
       })
     }),
   )

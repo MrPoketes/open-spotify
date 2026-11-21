@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { DesktopBridge } from "../../lib/desktop-bridge"
+import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
 import { LogOutButton } from "./log-out-button"
 
@@ -37,5 +38,17 @@ describe("LogOutButton", () => {
       Effect.flip(DesktopBridge.make(mainProcess).getAccessToken),
     )
     expect(accessTokenError._tag).toBe("NotLoggedIn")
+  })
+
+  it("says when logging out fails and stays where it is", async () => {
+    const router = renderScreen(
+      <LogOutButton />,
+      mainProcessFailingOn(ipcChannels.logOut, mainProcessWithSession()),
+    )
+
+    await userEvent.click(await screen.findByRole("button", { name: "Log out" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not log out")
+    expect(router.state.location.pathname).toBe("/screen")
   })
 })

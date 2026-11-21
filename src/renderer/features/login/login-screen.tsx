@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router"
 import { Effect } from "effect"
-import { use, useState } from "react"
+import { use, useEffect, useRef, useState } from "react"
 import type { LogInError } from "../../../shared/spotify-auth-replies"
 import { DesktopBridge, type DesktopBridgeError } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
@@ -9,7 +9,7 @@ import { loginErrorText } from "./login-error-text"
 
 type LoginStatus =
   | { readonly _tag: "Ready" }
-  | { readonly _tag: "WaitingForBrowser" }
+  | { readonly _tag: "WaitingForBrowser"; readonly cancelFailed: boolean }
   | { readonly _tag: "Failed"; readonly explanation: string }
 
 const statusAfterFailure = (error: LogInError | DesktopBridgeError): LoginStatus =>
@@ -31,15 +31,44 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
   const runtime = use(RendererRuntimeContext)
   const navigate = useNavigate()
   const [status, setStatus] = useState<LoginStatus>({ _tag: "Ready" })
+  const isLogInPending = useRef(false)
+
+  // A login left waiting in the browser could finish after the user saved a
+  // different Client ID, and store a session for the old one.
+  useEffect(
+    () => () => {
+      if (isLogInPending.current) {
+        runtime.runFork(cancelLogIn)
+      }
+    },
+    [runtime],
+  )
 
   const logIn = () => {
-    setStatus({ _tag: "WaitingForBrowser" })
+    isLogInPending.current = true
+    setStatus({ _tag: "WaitingForBrowser", cancelFailed: false })
     runtime.runFork(
       logInThroughBrowser.pipe(
+        Effect.ensuring(Effect.sync(() => (isLogInPending.current = false))),
         Effect.matchEffect({
           onSuccess: () => Effect.promise(() => navigate({ to: "/" })),
           onFailure: (error) => Effect.sync(() => setStatus(statusAfterFailure(error))),
         }),
+      ),
+    )
+  }
+
+  // A Cancel that fails after the login has ended has nothing left to report.
+  const setCancelFailed = (cancelFailed: boolean) =>
+    setStatus((current) =>
+      current._tag === "WaitingForBrowser" ? { ...current, cancelFailed } : current,
+    )
+
+  const cancel = () => {
+    setCancelFailed(false)
+    runtime.runFork(
+      cancelLogIn.pipe(
+        Effect.catchTag("DesktopBridgeError", () => Effect.sync(() => setCancelFailed(true))),
       ),
     )
   }
@@ -59,8 +88,14 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
         <LoginButtons
           isWaiting={status._tag === "WaitingForBrowser"}
           onLogIn={logIn}
-          onCancel={() => runtime.runFork(cancelLogIn)}
+          onCancel={cancel}
         />
+        {status._tag === "WaitingForBrowser" && status.cancelFailed && (
+          <p role="alert" className="text-danger">
+            Open Spotify could not cancel the login. Try again, or finish logging in in your
+            browser.
+          </p>
+        )}
         {status._tag === "Failed" && (
           <p role="alert" className="text-danger">
             {status.explanation}
