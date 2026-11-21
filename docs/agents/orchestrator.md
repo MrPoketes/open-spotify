@@ -26,13 +26,13 @@ Work through the steps in order. Be brief: most runs change little.
 
 For each issue in `In Progress` or `In Review`:
 
-| Situation                                                                     | Action                                                                                                                                                                                                                                                                |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Its PR is merged                                                              | Move it to `Done` and comment with the PR link (the worker may have died before doing it).                                                                                                                                                                            |
-| Its thread is `failed`, `interrupted`, or `cancelled`                         | `t3_thread_read` it to see where it stopped. Then send the thread a message (`t3_thread_send`) telling it to continue from there, following `docs/agents/worker.md`. If it has already failed twice, comment on the issue with what went wrong and move it to `Todo`. |
-| Its thread is idle, it has an open PR, and checks are red or the PR conflicts | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.`                                                                                                                                                      |
-| Its thread is idle with no PR and no progress for 2 hours                     | Send the thread a nudge to continue. On the second time, move the issue to `Todo` with a comment.                                                                                                                                                                     |
-| No thread exists for it                                                       | Move it to `Todo`.                                                                                                                                                                                                                                                    |
+| Situation                                                                     | Action                                                                                                           |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Its PR is merged                                                              | Move it to `Done` and comment with the PR link (the worker may have died before doing it).                       |
+| Its thread is `failed`, `interrupted`, or `cancelled`                         | The worker is paused and holds no slot. Leave it; step 3 resumes it when a slot is free.                         |
+| Its thread is idle, it has an open PR, and checks are red or the PR conflicts | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.` |
+| Its thread is idle with no PR and no progress for 2 hours                     | Send the thread a nudge to continue. On the second time, move the issue to `Todo` with a comment.                |
+| No thread exists for it                                                       | Move it to `Todo`.                                                                                               |
 
 Then delete the backups (see 3.1) that nobody needs any more. For each branch that
 `git ls-remote --heads origin "refs/heads/backup/*"` lists, find its issue from the `arm-<n>`
@@ -40,8 +40,13 @@ in its name. If that issue is `Done` or `Canceled`, run `git push origin --delet
 
 ## 3. Fill free slots
 
-Active workers are issues in `In Progress` or `In Review` with a live thread. While there are
-fewer than 2:
+Active workers are issues in `In Progress` or `In Review` whose thread is running, starting,
+queued, or waiting, or idle while watching its PR. While there are fewer than 2, first resume
+paused workers (threads that are `failed`, `interrupted`, or `cancelled`): `In Review` issues
+before `In Progress`, oldest thread first. `t3_thread_read` the thread to see where it stopped,
+then `t3_thread_send` it a message telling it to continue from there, following
+`docs/agents/worker.md`. If it has already failed twice, comment on the issue with what went
+wrong and move it to `Todo` instead. When no paused worker is left and a slot is still free:
 
 1. Pick the next `Todo` issue: highest priority first (Urgent, High, Medium, Low, None), then
    oldest. Skip issues with an unfinished `blocked by` issue. Skip issues whose files are likely
