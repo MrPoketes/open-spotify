@@ -242,7 +242,7 @@ stay open after a restart. A user without folders sees no Folders heading at all
 
 The bar has three columns: what is playing on the left, the playback controls in the middle,
 and the queue button and device picker on the right. The left column shows 40 px artwork, as in
-library rows, then the title in `text-sm` and the artists in `text-xs` `muted` ("Podcast
+library rows, then the title in `text-sm` and the artists in `text-xs` `muted` ("Show
 episode" for an episode).
 
 The controls are, in order: shuffle, previous, play or pause, next, repeat. They are 32 px
@@ -305,7 +305,7 @@ and a close button. Opening the pane moves focus into it, and closing it while f
 returns focus to the queue button.
 
 The pane shows a "Now playing" section with the playing item and a "Next up" list, both in the
-now-playing bar's layout: 40 px artwork, the title, and the artists or "Podcast episode". Each
+now-playing bar's layout: 40 px artwork, the title, and the artists or "Show episode". Each
 upcoming item is a row button, and the list is one tab stop with roving focus. Pressing a row
 plays that item. Spotify has no endpoint for that, so the app reads the queue again, finds the
 item, and skips to the next item once for every item before it; if the item has left the queue,
