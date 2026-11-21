@@ -9,6 +9,21 @@ export const playerUrl = `${spotifyApiBaseUrl}/me/player`
 
 const AvailableDevices = Schema.Struct({ devices: Schema.Array(Device) })
 
+// Where playback starts in a context or a list of tracks: at a zero-based
+// position, or at the item with a uri.
+type PlaybackOffset = { readonly position: number } | { readonly uri: string }
+
+// What to play: a context, which Spotify keeps playing through (an album,
+// artist, playlist, or show), or a list of track URIs.
+export type PlaybackStart =
+  | { readonly contextUri: string; readonly offset?: PlaybackOffset }
+  | { readonly uris: ReadonlyArray<string>; readonly offset: PlaybackOffset }
+
+const playbackStartBody = (start: PlaybackStart) =>
+  "contextUri" in start
+    ? { context_uri: start.contextUri, offset: start.offset }
+    : { uris: start.uris, offset: start.offset }
+
 export const playerReads = <E>(
   getJson: <A>(url: string, responseSchema: Schema.Decoder<A>) => Effect.Effect<A, E>,
 ) => ({
@@ -29,6 +44,12 @@ export const playerCommands = <E>(
       ),
     ),
   play: sendCommand(HttpClientRequest.put(`${playerUrl}/play`)),
+  startPlayback: (start: PlaybackStart) =>
+    sendCommand(
+      HttpClientRequest.put(`${playerUrl}/play`).pipe(
+        HttpClientRequest.bodyJsonUnsafe(playbackStartBody(start)),
+      ),
+    ),
   pause: sendCommand(HttpClientRequest.put(`${playerUrl}/pause`)),
   skipToNext: sendCommand(HttpClientRequest.post(`${playerUrl}/next`)),
   skipToPrevious: sendCommand(HttpClientRequest.post(`${playerUrl}/previous`)),

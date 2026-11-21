@@ -1,5 +1,5 @@
 import { ListMusic } from "lucide-react"
-import { type RefObject, useState } from "react"
+import type { RefObject } from "react"
 import { AccentButton } from "../../ui/pill-button"
 import { DevicePicker } from "./device-picker"
 import { PlayableItemSummary } from "./playable-item-summary"
@@ -21,11 +21,20 @@ interface NowPlayingBarProps {
   readonly isQueueOpen: boolean
   readonly onQueueToggle: () => void
   readonly queueButtonRef: RefObject<HTMLButtonElement | null>
+  // The app shell holds whether the picker is open, because playing from a
+  // page with no active device opens it too.
+  readonly isDevicePickerOpen: boolean
+  readonly onDevicePickerOpenChange: (isOpen: boolean) => void
 }
 
-export function NowPlayingBar({ isQueueOpen, onQueueToggle, queueButtonRef }: NowPlayingBarProps) {
+export function NowPlayingBar({
+  isQueueOpen,
+  onQueueToggle,
+  queueButtonRef,
+  isDevicePickerOpen,
+  onDevicePickerOpenChange,
+}: NowPlayingBarProps) {
   const playerState = usePlayerState()
-  const [isPickerOpen, setPickerOpen] = useState(false)
 
   return (
     <section
@@ -33,7 +42,10 @@ export function NowPlayingBar({ isQueueOpen, onQueueToggle, queueButtonRef }: No
       className="grid h-18 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-medium bg-surface-raised px-4 shadow-raised"
     >
       <div className="min-w-0">
-        <NowPlayingSummary playerState={playerState} onChooseDevice={() => setPickerOpen(true)} />
+        <NowPlayingSummary
+          playerState={playerState}
+          onChooseDevice={() => onDevicePickerOpenChange(true)}
+        />
       </div>
       <PlaybackControls playerState={playerState} />
       <div className="flex items-center justify-end gap-2">
@@ -47,8 +59,8 @@ export function NowPlayingBar({ isQueueOpen, onQueueToggle, queueButtonRef }: No
         />
         <DevicePicker
           deviceLabel={deviceLabel(playerState)}
-          isOpen={isPickerOpen}
-          onOpenChange={setPickerOpen}
+          isOpen={isDevicePickerOpen}
+          onOpenChange={onDevicePickerOpenChange}
         />
       </div>
     </section>

@@ -1,3 +1,4 @@
+import { Volume2 } from "lucide-react"
 import { useId, useState } from "react"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import type { Episode } from "../spotify/spotify-episode"
@@ -6,23 +7,39 @@ import { formatReleaseDate } from "./format-release-date"
 
 interface EpisodeRowProps {
   readonly episode: Episode
+  // The episode is the one the active device plays or has paused.
+  readonly isPlaying: boolean
   readonly rovingProps: RovingRowProps
+  readonly onPlay: () => void
 }
 
-export function EpisodeRow({ episode, rovingProps }: EpisodeRowProps) {
+export function EpisodeRow({ episode, isPlaying, rovingProps, onPlay }: EpisodeRowProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false)
   const titleId = useId()
   const descriptionId = useId()
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the episode is a focusable row of a roving-focus list, and Enter or a double-click plays the focused row, as in track lists (docs/design.md)
     <article
       {...rovingProps}
       aria-labelledby={titleId}
+      onDoubleClick={onPlay}
+      onKeyDown={(event) => {
+        // Enter on the Show more button expands the description instead.
+        if (event.key === "Enter" && event.target === event.currentTarget) {
+          onPlay()
+        }
+      }}
       className="flex flex-col gap-1 rounded-small p-3 transition-colors duration-120 ease-out hover:bg-surface-raised"
     >
-      <h3 id={titleId} className="text-sm font-semibold">
+      <h3
+        id={titleId}
+        className={`flex items-center gap-2 text-sm font-semibold ${isPlaying ? "text-accent" : ""}`}
+      >
+        {isPlaying ? <Volume2 aria-hidden size={16} className="shrink-0" /> : null}
         {episode.name}
       </h3>
+      {isPlaying ? <p className="sr-only">Playing</p> : null}
       <p className="text-xs text-muted tabular-nums">
         <time dateTime={episode.releaseDate}>{formatReleaseDate(episode)}</time>
         <span aria-hidden> · </span>

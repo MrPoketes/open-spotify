@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router"
-import { Clock, Music } from "lucide-react"
+import { Clock, Music, Volume2 } from "lucide-react"
 import type { CSSProperties, KeyboardEvent } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
@@ -101,9 +101,12 @@ interface TrackRowSlot {
   readonly index: number
   readonly tabIndex: 0 | -1
   readonly isHighlighted: boolean
+  // The row holds the track that the active device plays or has paused.
+  readonly isPlaying: boolean
   readonly offset: number
   readonly onFocus: () => void
   readonly onKeyDown: (event: KeyboardEvent) => void
+  readonly onPlay: () => void
 }
 
 const rowAttributes = (
@@ -160,14 +163,28 @@ function AlbumCell({ album, tabIndex }: AlbumCellProps) {
   )
 }
 
+// The playing row shows an icon in place of its number and its title in the
+// accent color, so it does not rest on color alone.
+function PositionCell({ index, isPlaying }: Pick<TrackRowSlot, "index" | "isPlaying">) {
+  if (!isPlaying) {
+    return <td className="text-right text-muted tabular-nums">{index + 1}</td>
+  }
+  return (
+    <td className="flex justify-end text-accent">
+      <Volume2 aria-hidden size={16} />
+      <span className="sr-only">Playing</span>
+    </td>
+  )
+}
+
 interface TrackCellsProps {
   readonly entry: TrackListEntry
   readonly layout: TrackListLayout
   readonly density: TrackListDensity
-  readonly tabIndex: 0 | -1
+  readonly slot: TrackRowSlot
 }
 
-function TrackCells({ entry, layout, density, tabIndex }: TrackCellsProps) {
+function TrackCells({ entry, layout, density, slot: { tabIndex, isPlaying } }: TrackCellsProps) {
   return (
     <>
       <td className="flex min-w-0 items-center gap-3">
@@ -180,7 +197,7 @@ function TrackCells({ entry, layout, density, tabIndex }: TrackCellsProps) {
           />
         ) : null}
         <span className={titleLinesByDensity[density]}>
-          <span className="truncate">{entry.title}</span>
+          <span className={`truncate ${isPlaying ? "text-accent" : ""}`}>{entry.title}</span>
           <span className="truncate text-xs text-muted">
             <ArtistLinks artists={entry.artists} tabIndex={tabIndex} />
           </span>
@@ -241,18 +258,23 @@ export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
       {...rowAttributes(slot, layout, density)}
       aria-label={accessibleName(slot.index, entry)}
       onContextMenu={opensMenu ? trackMenu.openAtPointer : undefined}
+      onDoubleClick={entry === undefined ? undefined : slot.onPlay}
       onKeyDown={(event) => {
         if (opensMenu) {
           trackMenu.openWithKeyboard(event)
         }
+        // Enter on a link in the row follows the link instead.
+        if (event.key === "Enter" && event.target === event.currentTarget && entry !== undefined) {
+          slot.onPlay()
+        }
         slot.onKeyDown(event)
       }}
     >
-      <td className="text-right text-muted tabular-nums">{slot.index + 1}</td>
+      <PositionCell index={slot.index} isPlaying={slot.isPlaying} />
       {entry === undefined ? (
         <PlaceholderCells layout={layout} density={density} />
       ) : (
-        <TrackCells entry={entry} layout={layout} density={density} tabIndex={slot.tabIndex} />
+        <TrackCells entry={entry} layout={layout} density={density} slot={slot} />
       )}
       {entry !== undefined && opensMenu && trackMenu.anchor !== null ? (
         <ContextMenu

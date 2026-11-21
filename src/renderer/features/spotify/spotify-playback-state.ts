@@ -33,6 +33,8 @@ export const PlaybackState = Schema.Struct({
   shuffle: Schema.Boolean,
   repeat: RepeatMode,
   actions: Schema.Struct({ disallows: Schema.optionalKey(DisallowedActions) }),
+  // Null when what plays is not a context, such as a list of tracks.
+  context: Schema.NullOr(Schema.Struct({ uri: Schema.String })),
   // Null while an ad plays or when Spotify cannot say what is playing.
   item: Schema.NullOr(PlayableItem),
 }).pipe(

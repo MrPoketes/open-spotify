@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
+import { ContextPlayButton } from "../playback/context-play-button"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { Playlist } from "../spotify/spotify-playlist"
@@ -12,7 +13,7 @@ const loadPlaylist = Effect.fn("loadPlaylist")(function* (playlistId: string) {
 })
 
 // Spotify withholds the items of playlists the user only follows, so the
-// official app is the only place to see them.
+// official app is the only place to see them. The playlist still plays.
 function ItemsWithheld({ playlistId }: { readonly playlistId: string }) {
   return (
     <section className="flex flex-col items-start gap-2">
@@ -34,6 +35,7 @@ function PlaylistContent({ playlist }: { readonly playlist: Playlist }) {
     return (
       <div className="flex flex-col gap-8">
         <PlaylistHeader playlist={playlist} totalDuration={null} />
+        <ContextPlayButton contextUri={playlist.uri} contextName={playlist.name} />
         <ItemsWithheld playlistId={playlist.id} />
       </div>
     )

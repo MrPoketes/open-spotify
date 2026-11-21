@@ -25,7 +25,12 @@ import { Paging, streamPages } from "./spotify-paging"
 import type { PlayHistory } from "./spotify-play-history"
 import { PlaybackState, type RepeatMode } from "./spotify-playback-state"
 import type { PlayerQueue } from "./spotify-player-queue"
-import { playerCommands, playerReads, playerUrl } from "./spotify-player-requests"
+import {
+  type PlaybackStart,
+  playerCommands,
+  playerReads,
+  playerUrl,
+} from "./spotify-player-requests"
 import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
 import { SearchResults, type SearchType, searchPageSize } from "./spotify-search"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
@@ -213,7 +218,9 @@ export class SpotifyApi extends Context.Service<
     readonly getAvailableDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
     readonly getQueue: Effect.Effect<PlayerQueue, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => Effect.Effect<void, SpotifyApiError>
+    // Resumes what was playing.
     readonly play: Effect.Effect<void, SpotifyApiError>
+    readonly startPlayback: (start: PlaybackStart) => Effect.Effect<void, SpotifyApiError>
     readonly pause: Effect.Effect<void, SpotifyApiError>
     readonly skipToNext: Effect.Effect<void, SpotifyApiError>
     readonly skipToPrevious: Effect.Effect<void, SpotifyApiError>

@@ -33,6 +33,7 @@ const renderTrackList = async (
             layout={layout}
             trackCount={trackCount}
             trackAt={trackWithArtwork}
+            playbackStartAt={(index) => ({ uris: [], offset: { position: index } })}
           />
         </div>
       </FakeMainView>
