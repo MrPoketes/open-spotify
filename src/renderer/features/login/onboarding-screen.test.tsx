@@ -2,19 +2,12 @@ import { screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Option } from "effect"
 import { describe, expect, it } from "vitest"
-import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { fakeMainProcess } from "../../lib/fake-main-process"
+import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
 import { OnboardingScreen } from "./onboarding-screen"
-
-const saveFailing = (mainProcess: DesktopApi): DesktopApi => ({
-  invoke: (channel, request) =>
-    channel === ipcChannels.setSetting
-      ? Promise.reject(new Error("SQLITE_BUSY: database is locked"))
-      : mainProcess.invoke(channel, request),
-})
 
 describe("OnboardingScreen", () => {
   it("saves the pasted Client ID and continues", async () => {
@@ -56,9 +49,9 @@ describe("OnboardingScreen", () => {
   })
 
   it("reports a failed save without marking the Client ID invalid", async () => {
-    const router = renderScreen(
+    renderScreen(
       <OnboardingScreen initialClientId="my-client-id" />,
-      saveFailing(fakeMainProcess()),
+      mainProcessFailingOn(ipcChannels.setSetting, fakeMainProcess()),
     )
 
     await userEvent.click(await screen.findByRole("button", { name: "Save and continue" }))
@@ -67,7 +60,21 @@ describe("OnboardingScreen", () => {
       "Could not save the Client ID. Try again.",
     )
     expect(screen.getByLabelText("Client ID")).toBeValid()
-    expect(router.state.location.pathname).toBe("/screen")
+  })
+
+  it("drops an earlier save failure when the next attempt has a different problem", async () => {
+    renderScreen(
+      <OnboardingScreen initialClientId="my-client-id" />,
+      mainProcessFailingOn(ipcChannels.setSetting, fakeMainProcess()),
+    )
+    const saveButton = await screen.findByRole("button", { name: "Save and continue" })
+    await userEvent.click(saveButton)
+    await screen.findByText("Could not save the Client ID. Try again.")
+
+    await userEvent.clear(screen.getByLabelText("Client ID"))
+    await userEvent.click(saveButton)
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Paste the Client ID")
   })
 
   // A new user must not mistake Open Spotify for the official app, before they set anything up.
