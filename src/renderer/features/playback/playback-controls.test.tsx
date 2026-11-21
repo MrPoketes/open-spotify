@@ -16,7 +16,8 @@ describe("NowPlayingBar controls", () => {
   it("pauses playback and resumes it from the keyboard", async () => {
     renderNowPlayingBarAlone()
     // A role query computes styles and accessible names on every retry, and
-    // retrying it through the first load slowed that load past the timeout.
+    // retrying it through the file's first render slowed that render's
+    // playback load past the timeout.
     await screen.findByText(fakeTrack(0).name)
 
     await userEvent.click(await control("Pause"))
@@ -60,6 +61,7 @@ describe("NowPlayingBar controls", () => {
         pause: Effect.fail(new SpotifyResponseError({ status: 403, message: "Restricted" })),
       })),
     )
+    await screen.findByText(fakeTrack(0).name)
 
     await userEvent.click(await control("Pause"))
 
