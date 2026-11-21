@@ -9,6 +9,7 @@ import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { saveSetting } from "../../lib/saved-setting"
 import { MenuButton } from "../../ui/menu-button"
 import { PaneDivider } from "../../ui/pane-divider"
+import { RowDragArea } from "../../ui/row-drag-area"
 import { FoldersFileOutcomeMessage } from "../folders/folders-file-outcome-message"
 import { SidebarFolderTree } from "../folders/sidebar-folder-tree"
 import { useFoldersFileActions } from "../folders/use-folders-file-actions"
@@ -57,10 +58,13 @@ const SidebarContents = memo(function SidebarContents() {
         </div>
         <FoldersFileOutcomeMessage outcome={foldersFileActions.outcome} />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
-        <SidebarFolderTree />
-        <Library />
-      </div>
+      {/* One drag area holds both, so library rows can be dropped on folders. */}
+      <RowDragArea>
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+          <SidebarFolderTree />
+          <Library />
+        </div>
+      </RowDragArea>
     </>
   )
 })

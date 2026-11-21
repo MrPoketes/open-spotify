@@ -4,8 +4,10 @@ import type { TreeNode } from "./visible-tree-rows"
 // above it, inside it, or on the line below it.
 export type TreeDropPosition = "before" | "inside" | "after"
 
-export interface TreeDrop<Value> {
-  readonly dragged: Value
+// The dragged row is usually one of the tree's own, but can come from
+// elsewhere on the page.
+export interface TreeDrop<Value, Dragged = Value> {
+  readonly dragged: Dragged
   readonly target: Value
   readonly position: TreeDropPosition
 }

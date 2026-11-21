@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 2026-11-21 | Copies of the status message test query and the drop indicator check                              | Shared helpers in ARM-136; rule 9 covers new copies    |
 | 2026-11-21 | Five copies of a fake player command that Spotify rejects with a 403                              | Shared fake in ARM-131; rule 9 covers new copies       |
 | 2026-11-21 | Copies of the roving list, loading message, not-found page, and paged-list footer, drifting apart | Shared components in ARM-106; rule 9 covers new copies |
 | 2026-11-21 | Six inline copies of the Ctrl/Alt/Cmd check that key handlers use                                 | Shared `hasShortcutModifier`; lint rule in ARM-122     |

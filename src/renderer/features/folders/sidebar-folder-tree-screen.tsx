@@ -4,6 +4,7 @@ import type { DesktopApi } from "../../../preload/desktop-api"
 import type { FolderTree } from "../../../shared/folders"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
+import { RowDragArea } from "../../ui/row-drag-area"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { FoldersProvider } from "./folders-provider"
 import { SidebarFolderTree } from "./sidebar-folder-tree"
@@ -43,7 +44,9 @@ export const renderTree = (mainProcess: DesktopApi = fakeMainProcess({ folderTre
   renderScreen(
     <StatusMessageProvider>
       <FoldersProvider>
-        <SidebarFolderTree />
+        <RowDragArea>
+          <SidebarFolderTree />
+        </RowDragArea>
       </FoldersProvider>
     </StatusMessageProvider>,
     mainProcess,
@@ -51,6 +54,11 @@ export const renderTree = (mainProcess: DesktopApi = fakeMainProcess({ folderTre
 
 export const treeItem = (name: string) =>
   screen.findByRole("treeitem", { name: new RegExp(`^${name}`) })
+
+// Where a drop on the item's row would land, or null while the row shows no
+// drop indicator.
+export const dropPositionOn = async (name: string) =>
+  (await treeItem(name)).parentElement?.getAttribute("data-drop-position") ?? null
 
 export const focusTreeItem = async (name: string) => {
   const item = await treeItem(name)

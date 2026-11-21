@@ -7,19 +7,21 @@ import type { DesktopApi } from "../../../preload/desktop-api"
 import type { FolderTree } from "../../../shared/folders"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { fakeMainProcess } from "../../lib/fake-main-process"
+import { findStatusMessage } from "../../lib/find-status-message"
 import { mainProcessFailingOn } from "../../lib/main-process-failing-on"
 import { renderScreen } from "../../lib/render-screen"
+import { RowDragArea } from "../../ui/row-drag-area"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { AlbumPage } from "../album/album-page"
 import { DiscographySection } from "../artist/discography-section"
 import { Library } from "../library/library"
 import { PlaylistPage } from "../playlist/playlist-page"
-import type { SavedAlbum } from "../spotify/spotify-album"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { FakeMainView } from "../track-list/fake-main-view"
 import { TrackList } from "../track-list/track-list"
 import type { TrackListEntry } from "../track-list/track-row"
 import { FolderPage } from "./folder-page"
+import { lowOrbit } from "./low-orbit-album"
 import { FoldersProvider } from "./folders-provider"
 import { SidebarFolderTree } from "./sidebar-folder-tree"
 
@@ -39,18 +41,6 @@ const quietRivers: TrackListEntry = {
 
 const lateNightDriveId = "fake-playlist-late-night-drive"
 const lateNightDriveUri = "spotify:playlist:37i9dQZF1DX4wta20PHgwo"
-
-// The main process accepts only real Spotify ids, which the shared fixtures
-// do not use.
-const lowOrbit: SavedAlbum = {
-  album: {
-    id: "2noRn2Aes5aoNVsU6iWThc",
-    name: "Low Orbit",
-    images: [{ url: "https://covers.open-spotify.invalid/low-orbit.jpg", width: 640, height: 640 }],
-    artists: [{ id: "0OdUWJ0sBjDrqHygGUXeCF", name: "Kite Theory" }],
-    uri: "spotify:album:2noRn2Aes5aoNVsU6iWThc",
-  },
-}
 
 // Running already holds Quiet Rivers and Late Night Drive; Morning, inside
 // it, and Focus do not.
@@ -143,9 +133,6 @@ const openRunningSubmenu = async (user: User, target: HTMLElement) => {
   await user.click(within(folderSubmenu).getByRole("menuitem", { name: "Running" }))
   return screen.getByRole("menu", { name: "Running" })
 }
-
-// The library has a status region of its own, for its filters.
-const findStatusMessage = (text: string) => screen.findByText(text, { selector: "output > p" })
 
 describe("Add to folder", () => {
   it("adds a track to the chosen folder and marks that folder afterwards", async () => {
@@ -301,7 +288,11 @@ describe("Add to folder", () => {
   })
 
   it("shows a library entry added to a folder in the sidebar folder tree", async () => {
-    const user = await renderWithFolders(<SidebarFolderTree />)
+    const user = await renderWithFolders(
+      <RowDragArea>
+        <SidebarFolderTree />
+      </RowDragArea>,
+    )
 
     const folderSubmenu = await openFolderSubmenu(user, await sidebarAlbum())
     await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))

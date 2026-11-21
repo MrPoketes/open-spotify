@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { use } from "react"
-import type { SpotifyItem } from "../../../shared/folders"
+import type { Folder, SpotifyItem } from "../../../shared/folders"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { useShowStatusMessage } from "../../ui/status-message-context"
 import type { AnnouncedOutcome } from "../../ui/use-run-announced"
@@ -19,7 +19,7 @@ export interface FolderItemSource {
 
 // A folder shows its items as cards, so it keeps the widest image, which
 // Spotify lists first.
-const toSpotifyItem = ({ uri, name, images }: FolderItemSource): SpotifyItem => ({
+export const toSpotifyItem = ({ uri, name, images }: FolderItemSource): SpotifyItem => ({
   _tag: "SpotifyItem",
   uri,
   name,
@@ -38,28 +38,36 @@ const removeOutcome = (folderName: string): AnnouncedOutcome<FolderChangeFailure
   failureLog: "Could not remove an item from a folder",
 })
 
+// Adds the item last in the folder and says so.
+export function useAddFolderItem() {
+  const changeFolders = useChangeFolders()
+  return (folder: Folder, item: SpotifyItem) => {
+    const addition = Effect.gen(function* () {
+      const bridge = yield* DesktopBridge
+      yield* bridge.addFolderItem({ folderId: folder.id, item })
+    })
+    changeFolders(addition, addOutcome(folder.name))
+  }
+}
+
 export function useAddToFolder() {
   const folderTree = useFolderTree()
   const askForFolderName = use(AskForFolderNameContext)
   const showStatusMessage = useShowStatusMessage()
   const changeFolders = useChangeFolders()
+  const addFolderItem = useAddFolderItem()
 
   const actions: AddToFolderActions = {
     toggleItem: (folder, item) => {
-      const folderId = folder.id
-      if (holdsItem(folder, item.uri)) {
-        const removal = Effect.gen(function* () {
-          const bridge = yield* DesktopBridge
-          yield* bridge.removeFolderItem({ folderId, uri: item.uri })
-        })
-        changeFolders(removal, removeOutcome(folder.name))
+      if (!holdsItem(folder, item.uri)) {
+        addFolderItem(folder, item)
         return
       }
-      const addition = Effect.gen(function* () {
+      const removal = Effect.gen(function* () {
         const bridge = yield* DesktopBridge
-        yield* bridge.addFolderItem({ folderId, item })
+        yield* bridge.removeFolderItem({ folderId: folder.id, uri: item.uri })
       })
-      changeFolders(addition, addOutcome(folder.name))
+      changeFolders(removal, removeOutcome(folder.name))
     },
     addToNewFolder: (item) =>
       askForFolderName((name) => {

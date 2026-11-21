@@ -1,4 +1,3 @@
-import { DndContext } from "@dnd-kit/core"
 import {
   type KeyboardEvent,
   type ReactNode,
@@ -113,6 +112,9 @@ function arrowKeyExpansion<Value>(
 // sibling that carries its level and position, so no group element has to wrap
 // an expanded item's children. The tree is one tab stop, and the arrow keys
 // move between items and expand or collapse them.
+//
+// The mouse drags rows inside an enclosing RowDragArea, which lets rows from
+// outside the tree be dropped on it too.
 export function TreeView<Value>({
   labelledBy,
   nodes,
@@ -120,16 +122,14 @@ export function TreeView<Value>({
   onToggleExpanded,
   renderItem,
   rowFocusRef,
-  canDrop,
-  onDrop,
+  ...dropRules
 }: TreeViewProps<Value>) {
   const rows = visibleTreeRows(nodes, expandedKeys)
-  const { draggedKey, dropIndicator, contextProps } = useTreeDragAndDrop({
+  const { draggedKey, dropIndicator } = useTreeDragAndDrop({
     rows,
     expandedKeys,
     onToggleExpanded,
-    canDrop,
-    onDrop,
+    ...dropRules,
   })
   const { onKeyDown, rowProps, focusRow } = useRovingFocus(rows.length)
   useImperativeHandle(rowFocusRef, () => ({ focusRow }), [focusRow])
@@ -155,38 +155,36 @@ export function TreeView<Value>({
   }
 
   return (
-    <DndContext {...contextProps}>
-      <div
-        role="tree"
-        tabIndex={-1}
-        aria-labelledby={labelledBy}
-        onKeyDown={onKeyDown}
-        className="flex flex-col"
-      >
-        {rows.map((row, index) => (
-          <TreeRow
-            key={row.node.key}
-            rowKey={row.node.key}
-            level={row.level}
-            isDragged={row.node.key === draggedKey}
-            dropPosition={
-              dropIndicator?.targetKey === row.node.key ? dropIndicator.position : undefined
-            }
-            expander={
-              <Expander
-                isBranch={row.node.children !== null}
-                isExpanded={expandedKeys.has(row.node.key)}
-                onToggle={() => {
-                  focusRow(index)
-                  onToggleExpanded(row.node.key)
-                }}
-              />
-            }
-          >
-            {renderItem(row.node.value, itemProps(row, index))}
-          </TreeRow>
-        ))}
-      </div>
-    </DndContext>
+    <div
+      role="tree"
+      tabIndex={-1}
+      aria-labelledby={labelledBy}
+      onKeyDown={onKeyDown}
+      className="flex flex-col"
+    >
+      {rows.map((row, index) => (
+        <TreeRow
+          key={row.node.key}
+          rowKey={row.node.key}
+          level={row.level}
+          isDragged={row.node.key === draggedKey}
+          dropPosition={
+            dropIndicator?.targetKey === row.node.key ? dropIndicator.position : undefined
+          }
+          expander={
+            <Expander
+              isBranch={row.node.children !== null}
+              isExpanded={expandedKeys.has(row.node.key)}
+              onToggle={() => {
+                focusRow(index)
+                onToggleExpanded(row.node.key)
+              }}
+            />
+          }
+        >
+          {renderItem(row.node.value, itemProps(row, index))}
+        </TreeRow>
+      ))}
+    </div>
   )
 }
