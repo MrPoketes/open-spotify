@@ -262,8 +262,8 @@ the songs that have loaded as a list, and search results and the home page's tra
 tracks of their list. `Enter` on a link inside a row follows the link instead.
 
 The row of the item that plays, or is paused, shows a 16 px `Volume2` icon in `accent` in place
-of its number, and its title in `accent`, on every page that lists it. Screen readers hear
-"Playing" in that cell.
+of its number, and its title in `accent`, on every page that lists it. The row's accessible
+description is "Playing", so screen readers announce it when the row has focus.
 
 A play that fails says so in the status message. With no active device, the device picker opens
 as well, and the message says to choose a device and try again.
@@ -478,9 +478,9 @@ inside an `alert`.
 
 What an action from a context menu or a page's play controls did is said in a small Overlay
 message (`surface-overlay`, `shadow-overlay`, `rounded-large`, `text-sm`) centered 16 px above the
-now-playing bar, in `danger` text for a failure. It fades in like a menu and goes away after five seconds. It sits in a
-`output` (`role="status"`) that stays on the page, so screen readers announce every message
-(`useShowStatusMessage` in `src/renderer/ui`).
+now-playing bar, in `danger` text for a failure. It fades in like a menu and goes away after five
+seconds. It sits in a `output` (`role="status"`) that stays on the page, so screen readers
+announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 
 ### Loading, empty, and error states
 
