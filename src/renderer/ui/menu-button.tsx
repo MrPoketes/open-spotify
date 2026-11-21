@@ -11,49 +11,50 @@ interface MenuButtonProps {
 }
 
 // Follows the WAI-ARIA menu button pattern: the arrow keys open the menu on
-// its first or last item, and closing it returns focus to the button.
+// its first or last item, Escape closes it and returns focus to the button,
+// and Tab closes it and moves on.
 export function MenuButton({ label, icon: Icon, actions }: MenuButtonProps) {
   const menuId = useId()
   const buttonRef = useRef<HTMLButtonElement>(null)
-  // Null while the menu is closed.
-  const [openFocus, setOpenFocus] = useState<MenuOpenFocus | null>(null)
+  // The item the menu opened on, or null while it is closed.
+  const [menuOpenedOn, setMenuOpenedOn] = useState<MenuOpenFocus | null>(null)
 
   const closeAndFocusButton = () => {
-    setOpenFocus(null)
+    setMenuOpenedOn(null)
     buttonRef.current?.focus()
   }
 
   const openWithKeyboard = (event: KeyboardEvent) => {
-    const openFocusByKey: Record<string, MenuOpenFocus> = { ArrowDown: "first", ArrowUp: "last" }
-    const focus = openFocusByKey[event.key]
-    if (focus === undefined) return
+    const openedOnByKey: Record<string, MenuOpenFocus> = { ArrowDown: "first", ArrowUp: "last" }
+    const openedOn = openedOnByKey[event.key]
+    if (openedOn === undefined) return
     event.preventDefault()
-    setOpenFocus(focus)
+    setMenuOpenedOn(openedOn)
   }
 
   return (
-    <div className="relative" onBlur={closeWhenFocusLeaves(() => setOpenFocus(null))}>
+    <div className="relative" onBlur={closeWhenFocusLeaves(() => setMenuOpenedOn(null))}>
       <button
         ref={buttonRef}
         type="button"
         aria-label={label}
         title={label}
         aria-haspopup="menu"
-        aria-expanded={openFocus !== null}
-        aria-controls={openFocus === null ? undefined : menuId}
-        onClick={() => setOpenFocus(openFocus === null ? "first" : null)}
+        aria-expanded={menuOpenedOn !== null}
+        aria-controls={menuOpenedOn === null ? undefined : menuId}
+        onClick={() => setMenuOpenedOn(menuOpenedOn === null ? "first" : null)}
         onKeyDown={openWithKeyboard}
         className={iconControlClassName}
       >
         <Icon aria-hidden size={20} />
       </button>
-      {openFocus !== null && (
+      {menuOpenedOn !== null && (
         <div className="absolute top-full right-0 z-10 mt-1">
           <MenuList
             id={menuId}
             label={label}
             items={actions}
-            focusOnOpen={openFocus}
+            focusOnOpen={menuOpenedOn}
             closeAll={closeAndFocusButton}
           />
         </div>

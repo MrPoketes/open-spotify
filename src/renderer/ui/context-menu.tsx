@@ -30,7 +30,7 @@ export function ContextMenu({ label, items, anchor, onClose }: ContextMenuProps)
       style={{ position: "fixed", left: anchor.x, top: anchor.y }}
       className="z-20"
     >
-      <MenuList label={label} items={items} closeAll={closeAndFocusOpener} />
+      <MenuList label={label} items={items} closeAll={closeAndFocusOpener} tabReturnsToOpener />
     </div>,
     document.body,
   )

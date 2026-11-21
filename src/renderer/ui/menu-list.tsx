@@ -26,6 +26,9 @@ export type MenuItem = MenuAction | MenuSubmenu
 
 export type MenuOpenFocus = "first" | "last"
 
+// Indexes for Array.at, where -1 is the last item.
+const openFocusIndex: Record<MenuOpenFocus, number> = { first: 0, last: -1 }
+
 const isSubmenu = (item: MenuItem): item is MenuSubmenu => "items" in item
 
 const menuItemKey = (item: MenuItem) => (isSubmenu(item) ? item.label : (item.id ?? item.label))
@@ -60,6 +63,9 @@ interface MenuListProps {
   // Only a menu button names its menu, so the button can point at it.
   readonly id?: string
   readonly focusOnOpen?: MenuOpenFocus
+  // A context menu is portalled to the end of the page, so letting Tab go
+  // on from it would skip everything after its opener.
+  readonly tabReturnsToOpener?: boolean
   // Only a submenu has an item to go back to.
   readonly backToParent?: () => void
 }
@@ -72,6 +78,7 @@ export function MenuList({
   closeAll,
   id,
   focusOnOpen = "first",
+  tabReturnsToOpener = false,
   backToParent,
 }: MenuListProps) {
   const menuRef = useRef<HTMLUListElement>(null)
@@ -79,9 +86,7 @@ export function MenuList({
   const [openSubmenuIndex, setOpenSubmenuIndex] = useState<number | null>(null)
   const shift = useShiftIntoWindow(menuRef)
 
-  useLayoutEffect(() => {
-    itemRefs.current.at(focusOnOpen === "first" ? 0 : -1)?.focus()
-  }, [focusOnOpen])
+  useLayoutEffect(() => itemRefs.current.at(openFocusIndex[focusOnOpen])?.focus(), [focusOnOpen])
 
   const openItem = (item: MenuItem, index: number) => {
     if (isSubmenu(item)) {
@@ -110,9 +115,8 @@ export function MenuList({
       setOpenSubmenuIndex(focusedIndex)
       return
     }
-    if (event.key === "Escape" || event.key === "ArrowLeft" || event.key === "Tab") {
+    if (closeWithKey(event.key, { closeAll, tabReturnsToOpener, backToParent })) {
       event.preventDefault()
-      closeWithKey(event.key, { closeAll, backToParent })
     }
   }
 
@@ -144,7 +148,12 @@ export function MenuList({
             onClick={() => openItem(item, index)}
           />
           {isSubmenu(item) && openSubmenuIndex === index ? (
-            <Submenu submenu={item} closeAll={closeAll} backToParent={backToItem(index)} />
+            <Submenu
+              submenu={item}
+              closeAll={closeAll}
+              tabReturnsToOpener={tabReturnsToOpener}
+              backToParent={backToItem(index)}
+            />
           ) : null}
         </li>
       ))}
@@ -180,40 +189,53 @@ function MenuItemButton({ ref, item, isSubmenuOpen, onClick }: MenuItemButtonPro
 interface SubmenuProps {
   readonly submenu: MenuSubmenu
   readonly closeAll: () => void
+  readonly tabReturnsToOpener: boolean
   readonly backToParent: () => void
 }
 
-function Submenu({ submenu, closeAll, backToParent }: SubmenuProps) {
+function Submenu({ submenu, closeAll, tabReturnsToOpener, backToParent }: SubmenuProps) {
   return (
     <div className="absolute top-0 left-full z-10 -mt-1 pl-1">
       <MenuList
         label={submenu.label}
         items={submenu.items}
         closeAll={closeAll}
+        tabReturnsToOpener={tabReturnsToOpener}
         backToParent={backToParent}
       />
     </div>
   )
 }
 
+interface CloseActions {
+  readonly closeAll: () => void
+  readonly tabReturnsToOpener: boolean
+  readonly backToParent: (() => void) | undefined
+}
+
 // Escape and the left arrow close a submenu and go back to its item; Escape
-// closes the top menu too. Tab leaves the menu altogether.
+// closes the top menu too. Tab closes every level at once, unless it should
+// go on to the next control, which the browser does by itself. Returns
+// whether the menu handled the key.
 const closeWithKey = (
-  key: "Escape" | "ArrowLeft" | "Tab",
-  {
-    closeAll,
-    backToParent,
-  }: { readonly closeAll: () => void; readonly backToParent: (() => void) | undefined },
-) => {
+  key: string,
+  { closeAll, tabReturnsToOpener, backToParent }: CloseActions,
+): boolean => {
   if (key === "Tab") {
-    closeAll()
-    return
+    if (tabReturnsToOpener) {
+      closeAll()
+    }
+    return tabReturnsToOpener
+  }
+  if (key !== "Escape" && key !== "ArrowLeft") {
+    return false
   }
   if (backToParent) {
     backToParent()
-    return
+    return true
   }
   if (key === "Escape") {
     closeAll()
   }
+  return true
 }

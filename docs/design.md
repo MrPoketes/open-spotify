@@ -427,8 +427,8 @@ from a fresh page, so an earlier query's results can never show up after a later
 
 A menu opens from a 32 px icon button (`MenuButton` in `src/renderer/ui`) and follows the
 WAI-ARIA menu button pattern: `Enter`, `Space`, or `↓` opens it on the first item, `↑` on the
-last, the arrow keys wrap, `Home` and `End` jump to the ends, and `Escape` closes it and returns
-focus to the button. It is an Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`)
+last, the arrow keys wrap, `Home` and `End` jump to the ends, `Escape` closes it and returns
+focus to the button, and `Tab` closes it and moves on to the next control. It is an Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`)
 with 4 px of padding, aligned to the button's right edge. Items are `text-sm` rows with
 `rounded-small` corners that turn `surface-raised` on hover or focus. An item that opens a
 dialog ends its label with an ellipsis ("Import folders…").

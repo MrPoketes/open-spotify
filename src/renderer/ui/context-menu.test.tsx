@@ -84,6 +84,18 @@ describe("ContextMenu", () => {
     expect(target).toHaveFocus()
   })
 
+  // The menu is portalled to the end of the page, so letting Tab go on from
+  // it would skip everything after the element it opened from.
+  it("closes on Tab and returns focus to its target", async () => {
+    const { target } = renderMenuTarget()
+    await userEvent.keyboard("{ContextMenu}")
+
+    await userEvent.tab()
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    expect(target).toHaveFocus()
+  })
+
   it("opens where the pointer right-clicks, with focus on the first item", async () => {
     const { target } = renderMenuTarget()
 
