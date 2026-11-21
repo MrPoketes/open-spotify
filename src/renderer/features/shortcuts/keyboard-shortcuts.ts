@@ -73,6 +73,11 @@ export const rowShortcuts = {
     group: "Focused row",
     keys: { key: "p" },
   },
+  renameFolder: {
+    description: "Rename a folder in the sidebar",
+    group: "Focused row",
+    keys: { key: "F2" },
+  },
   // Most Mac keyboards have no forward Delete key, and label Backspace "delete".
   deleteTheme: {
     description: "Delete an imported theme",

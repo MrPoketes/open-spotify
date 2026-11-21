@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react"
-import type { KeyboardEvent, ReactNode } from "react"
+import { type KeyboardEvent, type ReactNode, type Ref, useImperativeHandle } from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
-import { type RovingRowProps, useRovingFocus } from "./use-roving-focus"
+import { type RovingRowProps, type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
 import { type TreeNode, type VisibleTreeRow, visibleTreeRows } from "./visible-tree-rows"
 
 export interface TreeItemProps extends RovingRowProps {
@@ -20,6 +20,9 @@ interface TreeViewProps<Value> {
   readonly onToggleExpanded: (key: string) => void
   // Renders the focusable tree item, spreading itemProps onto it.
   readonly renderItem: (value: Value, itemProps: TreeItemProps) => ReactNode
+  // Lets the owner move focus to a row, such as after a change removed the
+  // focused one.
+  readonly rowFocusRef?: Ref<RowFocusHandle>
 }
 
 const levelIndent = 16
@@ -34,9 +37,11 @@ export function TreeView<Value>({
   expandedKeys,
   onToggleExpanded,
   renderItem,
+  rowFocusRef,
 }: TreeViewProps<Value>) {
   const rows = visibleTreeRows(nodes, expandedKeys)
   const { onKeyDown, rowProps, focusRow } = useRovingFocus(rows.length)
+  useImperativeHandle(rowFocusRef, () => ({ focusRow }), [focusRow])
 
   // An expanded item has its first child right below it.
   const expandOrEnter = ({ node }: VisibleTreeRow<Value>, index: number) => {
