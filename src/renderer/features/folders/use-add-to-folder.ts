@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { use } from "react"
-import type { SpotifyItem } from "../../../shared/folders"
+import type { FolderChangeError, SpotifyItem } from "../../../shared/folders"
 import { DesktopBridge, type DesktopBridgeError } from "../../lib/desktop-bridge"
 import type { RendererServices } from "../../lib/renderer-runtime"
 import { useShowStatusMessage } from "../../ui/status-message-context"
@@ -26,13 +26,15 @@ const toSpotifyItem = ({ uri, name, images }: FolderItemSource): SpotifyItem => 
   imageUrl: images[0]?.url ?? null,
 })
 
-const addOutcome = (folderName: string): AnnouncedOutcome<DesktopBridgeError> => ({
+type FolderChangeFailure = FolderChangeError | DesktopBridgeError
+
+const addOutcome = (folderName: string): AnnouncedOutcome<FolderChangeFailure> => ({
   success: `Added to ${folderName}`,
   failure: () => `Couldn't add to ${folderName}.`,
   failureLog: "Could not add an item to a folder",
 })
 
-const removeOutcome = (folderName: string): AnnouncedOutcome<DesktopBridgeError> => ({
+const removeOutcome = (folderName: string): AnnouncedOutcome<FolderChangeFailure> => ({
   success: `Removed from ${folderName}`,
   failure: () => `Couldn't remove from ${folderName}.`,
   failureLog: "Could not remove an item from a folder",
@@ -50,8 +52,8 @@ export function useAddToFolder() {
   // such as a new folder, may have happened. The message is about the change
   // alone.
   const changeFolders = (
-    change: Effect.Effect<unknown, DesktopBridgeError, RendererServices>,
-    outcome: AnnouncedOutcome<DesktopBridgeError>,
+    change: Effect.Effect<unknown, FolderChangeFailure, RendererServices>,
+    outcome: AnnouncedOutcome<FolderChangeFailure>,
   ) => runAnnounced(change.pipe(Effect.ensuring(readTreeAgain)), outcome)
 
   const actions: AddToFolderActions = {

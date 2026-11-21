@@ -5,7 +5,7 @@ interface TextFieldProps {
   readonly value: string
   readonly onChange: (value: string) => void
   readonly focusOnMount?: boolean
-  readonly errorMessage?: string
+  readonly errorMessage?: string | undefined
 }
 
 // The error sits under the field and describes it, so a screen reader reads

@@ -44,7 +44,7 @@ export const fakeFolderChannels = (
       } else {
         changeTree(parentFolderId, (entries) => [...entries, folder])
       }
-      return folder.id
+      return { _tag: "IpcSucceeded", value: folder.id }
     },
     [ipcChannels.addFolderItem]: (request) => {
       const { folderId, item } = Schema.decodeUnknownSync(AddFolderItemRequest)(request)
@@ -53,12 +53,14 @@ export const fakeFolderChannels = (
           ? entries
           : [...entries, item],
       )
+      return { _tag: "IpcSucceeded", value: undefined }
     },
     [ipcChannels.removeFolderItem]: (request) => {
       const { folderId, uri } = Schema.decodeUnknownSync(RemoveFolderItemRequest)(request)
       changeTree(folderId, (entries) =>
         entries.filter((entry) => entry._tag === "Folder" || entry.uri !== uri),
       )
+      return { _tag: "IpcSucceeded", value: undefined }
     },
   }
 }
