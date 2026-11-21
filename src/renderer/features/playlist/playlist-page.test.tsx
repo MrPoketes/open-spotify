@@ -271,6 +271,7 @@ describe("PlaylistPage", () => {
       "https://open.spotify.com/playlist/fake-playlist-indie-finds",
     )
     expect(screen.queryByRole("table")).toBeNull()
+    expect(screen.getByRole("button", { name: "Play Indie Finds" })).toBeInTheDocument()
   })
 
   it("shows an empty state for a playlist without tracks", async () => {
@@ -279,6 +280,14 @@ describe("PlaylistPage", () => {
     expect(await screen.findByText(/This playlist is empty/)).toBeInTheDocument()
     expect(screen.getByText("Mira Kaelin · 0 tracks")).toBeInTheDocument()
     expect(screen.queryByRole("table")).toBeNull()
+  })
+
+  // An empty playlist has nothing to play, but it can still go in a folder.
+  it("offers More options but no play button for a playlist without tracks", async () => {
+    await renderPlaylistPage("fake-playlist-ideas")
+
+    expect(await screen.findByRole("button", { name: "More options" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Play Ideas for Later" })).toBeNull()
   })
 
   it("shows the playlist after Retry when loading it failed", async () => {
