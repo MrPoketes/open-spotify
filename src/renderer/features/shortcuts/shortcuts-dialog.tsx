@@ -3,11 +3,16 @@ import { use, useId, useRef } from "react"
 import { IconButton } from "../../ui/icon-button"
 import { IsMacContext } from "./is-mac-context"
 import { keyComboLabels } from "./key-combo"
-import { keyboardShortcuts, shortcutGroups, shortcutKeys } from "./keyboard-shortcuts"
+import {
+  keyboardShortcuts,
+  type ShortcutGroupName,
+  shortcutGroups,
+  shortcutKeys,
+} from "./keyboard-shortcuts"
 import { useKeyboardShortcut } from "./use-keyboard-shortcut"
 
 interface ShortcutGroupProps {
-  readonly group: (typeof shortcutGroups)[number]
+  readonly group: ShortcutGroupName
   readonly isMac: boolean
 }
 
@@ -54,10 +59,10 @@ export function ShortcutsDialog() {
     <dialog
       ref={dialogRef}
       aria-labelledby={headingId}
-      className="m-auto w-full max-w-md rounded-large bg-surface-overlay p-6 text-foreground shadow-overlay transition-[opacity,translate] duration-200 ease-out backdrop:bg-canvas/70 starting:open:translate-y-2 starting:open:opacity-0"
+      className="m-auto w-full max-w-md rounded-large bg-surface-overlay p-6 text-foreground shadow-overlay transition-[opacity,translate] duration-200 ease-out backdrop:bg-canvas/60 starting:open:translate-y-2 starting:open:opacity-0"
     >
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 id={headingId} className="text-xl font-bold">
+        <h2 id={headingId} className="font-display text-xl font-bold">
           Keyboard shortcuts
         </h2>
         <IconButton label="Close" icon={X} onClick={() => dialogRef.current?.close()} />

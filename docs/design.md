@@ -572,8 +572,8 @@ shortcut once. A playback shortcut whose control cannot be used says why in the 
 since the control's tooltip may never have been seen.
 
 `?` opens the shortcuts dialog: a modal Overlay (`surface-overlay`, `shadow-overlay`,
-`rounded-large`) at most 448 px wide with 24 px of padding, a `text-xl` "Keyboard shortcuts"
-heading, and a Close icon button. Below them come a Playback and a General section, each with a
+`rounded-large`) at most 448 px wide with 24 px of padding, over a `canvas` backdrop at 60 %
+opacity, with a `font-display` `text-xl` "Keyboard shortcuts" heading and a Close icon button. Below them come a Playback and a General section, each with a
 `text-sm` 600 `muted` heading and one row per shortcut: the action in `text-sm` and its keys as
 `kbd` chips (`surface-raised`, `rounded-small`, `text-xs` 600). `Escape` closes it and focus
 returns to where it was.
