@@ -44,7 +44,10 @@ pnpm package:dir   # build, then package an unpacked app in release/
 pnpm test:e2e      # launch that app against fake Spotify
 ```
 
-All three must pass before you open a pull request. `pnpm lint:fix` and `pnpm format` fix most
+`pnpm check` must pass before you open a pull request. Run `pnpm package:dir` and
+`pnpm test:e2e` too if you changed `src/main`, `src/preload`, `e2e/`, or the packaging files
+(`electron-builder.yml`, `electron.vite.config.ts`, `build/`); CI runs them on all three
+platforms either way. `pnpm lint:fix` and `pnpm format` fix most
 lint and format errors for you.
 
 If your change alters how the main view looks, run `pnpm screenshots` after `pnpm package:dir` to

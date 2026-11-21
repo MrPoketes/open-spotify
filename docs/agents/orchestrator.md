@@ -26,7 +26,9 @@ Work through the steps in order. Be brief: most runs change little.
 
 ### Worker states
 
-An issue's worker is the newest thread titled `ARM-<n>: …`. Classify it by its T3 status:
+An issue's worker is the newest thread titled `ARM-<n>: …`. Find it with `t3_thread_list` and
+`titleContains: "ARM-<n>:"`, because the full list comes back in pages. Classify it by its T3
+status:
 
 - **Active** (holds a slot): `preparing`, `queued`, `starting`, `running`, or `waiting`; or
   `idle` or `completed` while it still has work in flight. That means its
@@ -38,13 +40,13 @@ An issue's worker is the newest thread titled `ARM-<n>: …`. Classify it by its
 
 For each issue in `In Progress` or `In Review`:
 
-| Situation                                                                                                                           | Action                                                                                                           |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Its PR is merged                                                                                                                    | Move it to `Done` and comment with the PR link (the worker may have died before doing it).                       |
-| No thread exists for it                                                                                                             | Move it to `Todo`.                                                                                               |
-| Its worker is paused and has been resumed twice already (two `Resumed by the orchestrator` comments that link this worker's thread) | Comment on the issue with what went wrong, from the thread, and move it to `Todo`.                               |
-| Its worker is paused otherwise                                                                                                      | Leave it. Step 3 resumes it when a slot is free.                                                                 |
-| Its worker is active, watching a PR whose checks failed or that conflicts, and the thread's `updatedAt` is more than an hour old    | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.` |
+| Situation                                                                                                                                                              | Action                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Its PR is merged                                                                                                                                                       | Move it to `Done` and comment with the PR link (the worker may have died before doing it).                       |
+| No thread exists for it                                                                                                                                                | Move it to `Todo`.                                                                                               |
+| Its worker is paused and has been resumed twice already (two `Resumed by the orchestrator` comments that link this worker's thread; read every comment page as in 3.2) | Comment on the issue with what went wrong, from the thread, and move it to `Todo`.                               |
+| Its worker is paused otherwise                                                                                                                                         | Leave it. Step 3 resumes it when a slot is free.                                                                 |
+| Its worker is active, watching a PR whose checks failed or that conflicts, and the thread's `updatedAt` is more than an hour old                                       | Send the thread: `CI failed (or: the PR has conflicts) on #<n>. Fix it, following docs/agents/worker.md step 5.` |
 
 Then delete the backups (see 3.1) that nobody needs any more. For each branch that
 `git ls-remote --heads origin "refs/heads/backup/*"` lists, find its issue from the `arm-<n>`
@@ -52,8 +54,9 @@ in its name. If that issue is `Done` or `Canceled`, run `git push origin --delet
 
 ## 3. Fill free slots
 
-Count the active workers (see the worker states in step 2). While there are fewer than 2,
-first resume paused workers: `In Review` issues before `In Progress`, oldest thread first. For
+Count the issues in `In Progress` or `In Review` whose worker is active (see the worker states
+in step 2). A worker you resume or launch in this run counts as active from that moment. While
+there are fewer than 2, first resume paused workers: `In Review` issues before `In Progress`, oldest thread first. For
 each one:
 
 1. `t3_thread_read` the thread to see where it stopped.
