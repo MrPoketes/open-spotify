@@ -449,6 +449,9 @@ the most Spotify returns per request in development mode, and a round `surface-r
 scroll-to-load rule (see Loading, empty, and error states) because its sections are stacked: a
 track list that grew as it scrolled would push the other sections out of reach. While a page
 loads, the button stays focusable with `aria-disabled` and "Loading more tracks…" sits beside it.
+When the page fails, an alert with Retry takes the button's place. Focus follows the button
+when it goes away: to Retry after a failure, back to "Load more" when Retry asks again, and to
+the first new result when the last page loads.
 
 Before anything is typed the page asks for a query. A query that matches nothing says
 "No results for “query”." A new query replaces the old results with "Searching…" and starts

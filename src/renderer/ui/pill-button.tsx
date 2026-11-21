@@ -8,7 +8,7 @@ interface PillButtonProps {
   // For a control that must stay focusable while it is unavailable.
   readonly "aria-disabled"?: boolean
   readonly "aria-label"?: string
-  readonly ref?: Ref<HTMLButtonElement>
+  readonly ref?: Ref<HTMLButtonElement> | undefined
 }
 
 const toneStyles = {

@@ -61,4 +61,10 @@ export const useRovingFocus = (rowCount: number, initialIndex = 0) => {
   return { onKeyDown, rowProps, focusRow }
 }
 
+// Lets the owner of a list move focus to one of its rows, such as the first
+// row that a newly loaded page added.
+export interface RowFocusHandle {
+  readonly focusRow: (index: number) => void
+}
+
 export type RovingRowProps = ReturnType<ReturnType<typeof useRovingFocus>["rowProps"]>

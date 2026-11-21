@@ -1,8 +1,8 @@
 import { Link, type LinkProps } from "@tanstack/react-router"
 import type { LucideIcon } from "lucide-react"
-import type { Ref } from "react"
+import { type Ref, useImperativeHandle } from "react"
 import { Artwork, type ArtworkSource } from "./artwork"
-import { useRovingFocus } from "./use-roving-focus"
+import { type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
 
 export interface GridCard {
   readonly key: string
@@ -21,11 +21,13 @@ interface CardGridProps {
   readonly label: string
   readonly cards: ReadonlyArray<GridCard>
   readonly ref?: Ref<HTMLUListElement>
+  readonly rowFocusRef?: Ref<RowFocusHandle>
 }
 
 // Its columns must match useCardGridColumnCount.
-export function CardGrid({ id, label, cards, ref }: CardGridProps) {
-  const { onKeyDown, rowProps } = useRovingFocus(cards.length)
+export function CardGrid({ id, label, cards, ref, rowFocusRef }: CardGridProps) {
+  const { onKeyDown, rowProps, focusRow } = useRovingFocus(cards.length)
+  useImperativeHandle(rowFocusRef, () => ({ focusRow }), [focusRow])
   return (
     // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- key presses bubble up from the focused card, and the grid moves focus between its cards: the roving focus docs/design.md requires for lists
     <ul

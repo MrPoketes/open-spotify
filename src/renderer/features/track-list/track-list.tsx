@@ -1,5 +1,15 @@
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { type RefObject, use, useEffect, useLayoutEffect, useRef, useState } from "react"
+import {
+  type Ref,
+  type RefObject,
+  use,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react"
+import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { type TrackListEntry, TrackListHeader, type TrackListLayout, TrackRow } from "./track-row"
 import { TrackListDensityContext } from "./track-list-density-context"
@@ -55,6 +65,7 @@ interface TrackListProps {
   // A track the list highlights and opens scrolled to and focused, such as a
   // track opened on its album page.
   readonly highlightedIndex?: number | undefined
+  readonly rowFocusRef?: Ref<RowFocusHandle> | undefined
 }
 
 export function TrackList({
@@ -65,6 +76,7 @@ export function TrackList({
   playbackStartAt,
   onRowsRendered,
   highlightedIndex,
+  rowFocusRef,
 }: TrackListProps) {
   const { density } = use(TrackListDensityContext)
   const playback = useTrackPlayback(playbackStartAt)
@@ -90,6 +102,7 @@ export function TrackList({
     initialFocusedIndex: highlightedIndex,
     scrollToIndex: (index) => virtualizer.scrollToIndex(index),
   })
+  useImperativeHandle(rowFocusRef, () => ({ focusRow: rowFocus.focusRow }))
 
   // The highlighted row is not in the DOM until the list scrolls to it. The
   // virtualiser keeps aiming at the row while the offset of the rows settles.
