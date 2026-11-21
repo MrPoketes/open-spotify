@@ -46,8 +46,8 @@ fewer than 5:
 1. Pick the next `Todo` issue: highest priority first (Urgent, High, Medium, Low, None), then
    oldest. Skip issues with an unfinished `blocked by` issue. Skip issues whose files are likely
    to collide with an active worker's issue (same feature folder) unless nothing else is ready.
-2. Count its earlier workers (see 3.2). If it has had 3 since it was last parked, park it (see
-   3.3) and go back to item 1.
+2. Count its earlier workers (see 3.2). If it has had 3 or more since it was last parked, park it
+   (see 3.3) and go back to item 1.
 3. Choose its `workspaceStrategy` and `message` (see 3.1). If 3.1 parks the issue, go back to
    item 1.
 4. Move it to `In Progress`. Do this only now, so an issue that launches nothing never sits in
@@ -66,8 +66,9 @@ fewer than 5:
      Work autonomously; never wait for human input.
      ```
 
-6. Comment on the issue: `Started in T3 thread <thread link>.` The worker posts the same line
-   in worker.md step 1, so the count in 3.2 holds even for a worker that dies before it.
+6. Comment on the issue: `Started in T3 thread <thread link>.` This is the line the worker
+   posts in worker.md step 1. Posting it here too means 3.2 still counts a worker that dies
+   before it posts its own.
 
 ### 3.1 The issue's branch already exists
 
@@ -122,8 +123,8 @@ fresh workers, because the count starts after its last `Parked:` comment.
 
 1. Move it to `Backlog`. The orchestrator never picks issues from `Backlog`, so it stays there
    until someone moves it back to `Todo`.
-2. Comment on it, starting with `Parked:` and the reason (for example, `3 workers could not
-   finish it`). Then sum up what is still unresolved, so whoever picks it up does not have to
+2. Comment on it, starting with `Parked:` and the reason, for example
+   `Parked: 3 workers could not finish it.` Then sum up what is still unresolved, so whoever picks it up does not have to
    read every attempt. Take it from the comments earlier workers left when they stopped and
    from the newest `## Agent review: CHANGES REQUESTED` comment on its open PR, if any. List
    each unresolved problem in one line, and link the open PR and the branch.
