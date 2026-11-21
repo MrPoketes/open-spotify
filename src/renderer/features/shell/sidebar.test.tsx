@@ -1,5 +1,7 @@
 import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
+import { Stream } from "effect"
+import type { ReactNode } from "react"
 import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import type { FolderTree } from "../../../shared/folders"
@@ -7,7 +9,18 @@ import { ipcChannels } from "../../../shared/ipc-channels"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { FoldersProvider } from "../folders/folders-provider"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { Sidebar } from "./sidebar"
+
+// The fake follows 55 artists so that paging tests must follow the cursor.
+// These tests never look at them, and rendering them in every test made the
+// file time out when several test suites ran at once.
+const renderSidebar = (sidebar: ReactNode, mainProcess: DesktopApi) =>
+  renderScreen(
+    sidebar,
+    mainProcess,
+    spotifyApiFakeWith(() => ({ followedArtists: Stream.empty })),
+  )
 
 const mainProcessReplying = (replies: Partial<Record<string, unknown>>): DesktopApi => ({
   invoke: (channel) => Promise.resolve(replies[channel]),
@@ -34,7 +47,7 @@ const mainProcessFailing = (): DesktopApi => ({
 
 describe("Sidebar folder menu", () => {
   it("imports folders from the keyboard and says how many were added", async () => {
-    await renderScreen(
+    await renderSidebar(
       <Sidebar savedWidth={280} />,
       mainProcessReplying({
         [ipcChannels.importFolders]: { _tag: "FoldersImported", folderCount: 3 },
@@ -54,7 +67,7 @@ describe("Sidebar folder menu", () => {
 
   it("offers imported folders in Add to folder menus", async () => {
     const user = userEvent.setup()
-    await renderScreen(
+    await renderSidebar(
       <FoldersProvider>
         <Sidebar savedWidth={280} />
       </FoldersProvider>,
@@ -75,7 +88,7 @@ describe("Sidebar folder menu", () => {
   })
 
   it("confirms that the folders were exported", async () => {
-    await renderScreen(
+    await renderSidebar(
       <Sidebar savedWidth={280} />,
       mainProcessReplying({ [ipcChannels.exportFolders]: { _tag: "FoldersExported" } }),
     )
@@ -87,7 +100,7 @@ describe("Sidebar folder menu", () => {
   })
 
   it("explains why a folders file was refused", async () => {
-    await renderScreen(
+    await renderSidebar(
       <Sidebar savedWidth={280} />,
       mainProcessReplying({
         [ipcChannels.importFolders]: { _tag: "FoldersFileUnsupportedVersion", version: 2 },
@@ -105,7 +118,7 @@ describe("Sidebar folder menu", () => {
   // A folder the user cannot write to, or a file that disappears before it is
   // read, fails in the main process instead of with a reply.
   it("says so when the folders cannot be exported", async () => {
-    await renderScreen(<Sidebar savedWidth={280} />, mainProcessFailing())
+    await renderSidebar(<Sidebar savedWidth={280} />, mainProcessFailing())
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
     await userEvent.click(screen.getByRole("menuitem", { name: "Export folders…" }))
@@ -114,7 +127,7 @@ describe("Sidebar folder menu", () => {
   })
 
   it("says so when a folders file cannot be imported", async () => {
-    await renderScreen(<Sidebar savedWidth={280} />, mainProcessFailing())
+    await renderSidebar(<Sidebar savedWidth={280} />, mainProcessFailing())
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
     await userEvent.click(screen.getByRole("menuitem", { name: "Import folders…" }))
@@ -131,7 +144,7 @@ const roadTripTree: FolderTree = [
 
 describe("Sidebar folder tree", () => {
   it("shows the folder tree above the library sections", async () => {
-    await renderScreen(
+    await renderSidebar(
       <FoldersProvider>
         <Sidebar savedWidth={280} />
       </FoldersProvider>,
@@ -146,7 +159,7 @@ describe("Sidebar folder tree", () => {
 
   it("shows imported folders in the tree without a restart", async () => {
     const user = userEvent.setup()
-    await renderScreen(
+    await renderSidebar(
       <FoldersProvider>
         <Sidebar savedWidth={280} />
       </FoldersProvider>,
