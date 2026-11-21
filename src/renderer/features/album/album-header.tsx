@@ -1,6 +1,8 @@
 import { Disc3 } from "lucide-react"
 import { PageHeader } from "../../ui/page-header"
 import { ArtistLinks } from "../artist/artist-links"
+import { useAddToFolder } from "../folders/use-add-to-folder"
+import { ContextPlayButton } from "../playback/context-play-button"
 import type { Album } from "../spotify/spotify-album"
 import { formatTotalDuration } from "../track-list/format-duration"
 import { formatCount } from "../../ui/format-count"
@@ -11,6 +13,7 @@ interface AlbumHeaderProps {
 }
 
 export function AlbumHeader({ album, totalDurationMs }: AlbumHeaderProps) {
+  const addToFolder = useAddToFolder()
   const details = [
     // Release dates start with the year, whatever their precision.
     album.releaseDate.slice(0, 4),
@@ -23,6 +26,8 @@ export function AlbumHeader({ album, totalDurationMs }: AlbumHeaderProps) {
       kind="Album"
       title={album.name}
       cover={{ sources: album.images, placeholderIcon: Disc3 }}
+      menuItems={[addToFolder(album)]}
+      playButton={<ContextPlayButton contextUri={album.uri} contextName={album.name} />}
     >
       <p className="text-sm text-muted">
         <ArtistLinks artists={album.artists} />

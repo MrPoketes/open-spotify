@@ -42,11 +42,9 @@ const trackRows = () => within(screen.getByRole("table", { name: "Tracks" })).ge
 
 const renderedRowIndexes = () => trackRows().map((row) => row.getAttribute("aria-rowindex"))
 
-// The playlist's play button comes before the tracks in the tab order.
-const tabToTracks = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.tab()
-  await user.tab()
-}
+// The page header, its play button, and its More options button come before
+// the tracks in the tab order.
+const tabToTracks = (user: ReturnType<typeof userEvent.setup>) => user.keyboard("{Tab>4/}")
 
 describe("PlaylistPage", () => {
   it("shows the playlist's name, description, owner, track count, and duration", async () => {
@@ -273,6 +271,7 @@ describe("PlaylistPage", () => {
       "https://open.spotify.com/playlist/fake-playlist-indie-finds",
     )
     expect(screen.queryByRole("table")).toBeNull()
+    expect(screen.getByRole("button", { name: "Play Indie Finds" })).toBeInTheDocument()
   })
 
   it("shows an empty state for a playlist without tracks", async () => {
@@ -281,6 +280,14 @@ describe("PlaylistPage", () => {
     expect(await screen.findByText(/This playlist is empty/)).toBeInTheDocument()
     expect(screen.getByText("Mira Kaelin · 0 tracks")).toBeInTheDocument()
     expect(screen.queryByRole("table")).toBeNull()
+  })
+
+  // An empty playlist has nothing to play, but it can still go in a folder.
+  it("offers More options but no play button for a playlist without tracks", async () => {
+    await renderPlaylistPage("fake-playlist-ideas")
+
+    expect(await screen.findByRole("button", { name: "More options" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Play Ideas for Later" })).toBeNull()
   })
 
   it("shows the playlist after Retry when loading it failed", async () => {

@@ -492,7 +492,8 @@ WAI-ARIA menu button pattern: `Enter`, `Space`, or `↓` opens it on the first i
 last, the arrow keys wrap, `Home` and `End` jump to the ends, `Escape` or `Shift+Tab` closes it
 and returns focus to the button, and `Tab` closes it and moves on to the next control. It is an
 Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`) with 4 px of padding, aligned to
-the button's right edge. Items are `text-sm` rows with `rounded-small` corners that turn
+the button's right edge, or to its left edge for a button near the left of the main view, which
+would otherwise clip the menu. Items are `text-sm` rows with `rounded-small` corners that turn
 `surface-raised` on hover or focus. An item that opens a dialog ends its label with an ellipsis
 ("Import folders…").
 
@@ -518,6 +519,11 @@ Add to playlist says why in the status message instead of opening an empty subme
 
 Every sidebar library entry except Liked Songs, which no folder can hold, has a context menu with
 Add to folder.
+
+The header of an album, playlist, artist, or show page has a context menu with Add to folder, and
+the same menu opens from a 32 px `Ellipsis` "More options" button right of the page's play button
+(alone, for an empty playlist). The header is a tab stop, so `Shift+F10` and the context-menu key
+can reach it.
 
 ### Add to folder
 

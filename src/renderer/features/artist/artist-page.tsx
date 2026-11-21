@@ -1,6 +1,5 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
-import { ContextPlayButton } from "../playback/context-play-button"
 import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { AlbumGroup } from "../spotify/spotify-artist-requests"
@@ -63,7 +62,6 @@ export function ArtistPage({ artistId }: { readonly artistId: string }) {
   return (
     <div className="flex flex-col gap-8">
       <ArtistHeader artist={artist} />
-      <ContextPlayButton contextUri={artist.uri} contextName={artist.name} />
       {parts.length === 0 ? (
         <p className="text-muted">Spotify lists no releases for this artist.</p>
       ) : null}

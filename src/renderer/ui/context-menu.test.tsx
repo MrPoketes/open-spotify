@@ -1,31 +1,26 @@
 import { fireEvent, render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
-import { ContextMenu } from "./context-menu"
 import type { MenuItem } from "./menu-list"
 import { useContextMenu } from "./use-context-menu"
 
 function MenuTarget({ items }: { readonly items: ReadonlyArray<MenuItem> }) {
-  const menu = useContextMenu()
+  const menu = useContextMenu({ label: "Target actions", items })
   return (
     <>
       <button type="button" onContextMenu={menu.openAtPointer} onKeyDown={menu.openWithKeyboard}>
         Target
       </button>
-      {menu.anchor === null ? null : (
-        <ContextMenu
-          label="Target actions"
-          items={items}
-          anchor={menu.anchor}
-          onClose={menu.close}
-        />
-      )}
+      {menu.menu}
     </>
   )
 }
 
 function ListRowWithMenu({ onKey }: { readonly onKey: (key: string) => void }) {
-  const menu = useContextMenu()
+  const menu = useContextMenu({
+    label: "Row actions",
+    items: [{ label: "Only", onSelect: () => {} }],
+  })
   return (
     // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- Stands in for a list row that listens for its own keys.
     <div
@@ -35,14 +30,7 @@ function ListRowWithMenu({ onKey }: { readonly onKey: (key: string) => void }) {
       }}
     >
       <button type="button">Row</button>
-      {menu.anchor === null ? null : (
-        <ContextMenu
-          label="Row actions"
-          items={[{ label: "Only", onSelect: () => {} }]}
-          anchor={menu.anchor}
-          onClose={menu.close}
-        />
-      )}
+      {menu.menu}
     </div>
   )
 }

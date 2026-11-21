@@ -3,7 +3,6 @@ import { Clock, Music, Volume2 } from "lucide-react"
 import { type CSSProperties, type KeyboardEvent, useId } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
-import { ContextMenu } from "../../ui/context-menu"
 import { useContextMenu } from "../../ui/use-context-menu"
 import { ArtistLinks } from "../artist/artist-links"
 import { useAddToFolder } from "../folders/use-add-to-folder"
@@ -261,33 +260,33 @@ interface TrackRowProps {
 // row keeps keyboard focus when its page arrives. Each disc of an album is
 // its own list, so a row's position is also its track number.
 export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
-  const trackMenu = useContextMenu()
   const trackActions = useTrackActions()
   const editablePlaylists = useEditablePlaylists()
   const addToFolder = useAddToFolder()
   const playingTextId = useId()
   // A row that is still loading has no actions yet, and a row whose actions
   // would all lead nowhere, such as a local file's, opens no menu.
-  const menuItems =
+  const trackMenu = useContextMenu(
     entry === undefined
-      ? []
-      : trackMenuItems(entry, trackActions, {
-          editablePlaylists: editablePlaylists.state,
-          addToFolder,
-        })
-  const opensMenu = menuItems.length > 0
+      ? null
+      : {
+          label: `Actions for ${entry.title}`,
+          items: trackMenuItems(entry, trackActions, {
+            editablePlaylists: editablePlaylists.state,
+            addToFolder,
+          }),
+        },
+  )
 
   return (
     <tr
       {...rowAttributes(slot, layout, density)}
       aria-label={accessibleName(slot.index, entry)}
       aria-describedby={slot.isCurrentItem ? playingTextId : undefined}
-      onContextMenu={opensMenu ? trackMenu.openAtPointer : undefined}
+      onContextMenu={trackMenu.openAtPointer}
       onDoubleClick={entry === undefined ? undefined : slot.onPlay}
       onKeyDown={(event) => {
-        if (opensMenu) {
-          trackMenu.openWithKeyboard(event)
-        }
+        trackMenu.openWithKeyboard(event)
         // Enter on a link in the row follows the link instead.
         if (event.key === "Enter" && event.target === event.currentTarget && entry !== undefined) {
           slot.onPlay()
@@ -305,14 +304,7 @@ export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
       ) : (
         <TrackCells entry={entry} layout={layout} density={density} slot={slot} />
       )}
-      {entry !== undefined && opensMenu && trackMenu.anchor !== null ? (
-        <ContextMenu
-          label={`Actions for ${entry.title}`}
-          items={menuItems}
-          anchor={trackMenu.anchor}
-          onClose={trackMenu.close}
-        />
-      ) : null}
+      {trackMenu.menu}
     </tr>
   )
 }

@@ -1,6 +1,5 @@
 import { Effect } from "effect"
 import { useCallback } from "react"
-import { ContextPlayButton } from "../playback/context-play-button"
 import { SpotifyApi, maximumPageSize } from "../spotify/spotify-api"
 import type { Playlist, PlaylistItem, PlaylistItemsPage } from "../spotify/spotify-playlist"
 import { formatListDuration } from "../track-list/format-duration"
@@ -41,7 +40,6 @@ export function PlaylistTracks({ playlist, firstPage }: PlaylistTracksProps) {
         playlist={playlist}
         totalDuration={formatListDuration(loadedDurationsMs(tracks.items), firstPage.total)}
       />
-      <ContextPlayButton contextUri={playlist.uri} contextName={playlist.name} />
       <TrackList
         label="Tracks"
         layout="playlist"

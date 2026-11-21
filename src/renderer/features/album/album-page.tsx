@@ -1,6 +1,5 @@
 import { Effect, Stream } from "effect"
 import { useLoad } from "../../lib/use-load"
-import { ContextPlayButton } from "../playback/context-play-button"
 import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
@@ -53,7 +52,6 @@ export function AlbumPage({ albumId, highlightedTrackId }: AlbumPageProps) {
   return (
     <div className="flex flex-col gap-8">
       <AlbumHeader album={album} totalDurationMs={totalDurationMs} />
-      <ContextPlayButton contextUri={album.uri} contextName={album.name} />
       <AlbumTracks album={album} tracks={tracks} highlightedTrackId={highlightedTrackId} />
     </div>
   )
