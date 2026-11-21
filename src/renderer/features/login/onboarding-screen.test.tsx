@@ -44,6 +44,15 @@ describe("OnboardingScreen", () => {
     expect(clientIdInput).toHaveAccessibleDescription("Paste the Client ID from your Spotify app.")
   })
 
+  // A Client ID is not a word: autocorrect or a remembered entry would change what the user pasted.
+  it("turns off spell check and autocomplete on the Client ID field", async () => {
+    renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
+
+    const clientIdInput = await screen.findByLabelText("Client ID")
+    expect(clientIdInput).toHaveAttribute("spellcheck", "false")
+    expect(clientIdInput).toHaveAttribute("autocomplete", "off")
+  })
+
   it("reports a failed save without marking the Client ID invalid", async () => {
     renderScreen(
       <OnboardingScreen initialClientId="my-client-id" />,
