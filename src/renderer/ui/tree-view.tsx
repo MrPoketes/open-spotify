@@ -122,19 +122,22 @@ export function TreeView<Value>({
     }
   }
 
-  const itemProps = (row: VisibleTreeRow<Value>, index: number): TreeItemProps => ({
-    ...rowProps(index),
-    onFocus: () => {
-      rowProps(index).onFocus()
-      rememberFocusedRow({ key: row.node.key, index, element: document.activeElement })
-    },
-    role: "treeitem",
-    "aria-level": row.level,
-    "aria-setsize": row.setSize,
-    "aria-posinset": row.positionInSet,
-    "aria-expanded": row.node.children === null ? undefined : expandedKeys.has(row.node.key),
-    onKeyDown: (event) => expandOrCollapseWithKey(event, row, index),
-  })
+  const itemProps = (row: VisibleTreeRow<Value>, index: number): TreeItemProps => {
+    const rovingProps = rowProps(index)
+    return {
+      ...rovingProps,
+      onFocus: () => {
+        rovingProps.onFocus()
+        rememberFocusedRow({ key: row.node.key, index, element: document.activeElement })
+      },
+      role: "treeitem",
+      "aria-level": row.level,
+      "aria-setsize": row.setSize,
+      "aria-posinset": row.positionInSet,
+      "aria-expanded": row.node.children === null ? undefined : expandedKeys.has(row.node.key),
+      onKeyDown: (event) => expandOrCollapseWithKey(event, row, index),
+    }
+  }
 
   return (
     <div

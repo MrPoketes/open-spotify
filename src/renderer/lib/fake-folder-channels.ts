@@ -53,7 +53,6 @@ const withoutItem = (folder: Folder, uri: string) =>
     folder.entries.filter((entry) => entry._tag === "Folder" || entry.uri !== uri),
   )
 
-// The tree the fake channels share, kept in memory.
 const makeFolderStore = (initialTree: FolderTree) => {
   let tree = initialTree
   return {

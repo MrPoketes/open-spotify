@@ -116,6 +116,19 @@ describe("Moving folder entries", () => {
     expect(await treeItem("Easy Start")).toHaveFocus()
   })
 
+  // A step past the first entry has no position to land at, so it must not
+  // reach the main process and come back as a "Couldn't move" error.
+  it("leaves the first entry in place, and says nothing, when Alt+Up is pressed on it", async () => {
+    renderTree()
+    await focusTreeItem("Running")
+
+    await userEvent.keyboard("{Alt>}{ArrowUp}{/Alt}")
+
+    await act(() => Promise.resolve())
+    expect(await treeItem("Running")).toHaveAttribute("aria-posinset", "1")
+    expect(screen.getByRole("status")).toBeEmptyDOMElement()
+  })
+
   it("offers to move a folder to the top level and into folders outside it, never into itself or its descendants", async () => {
     renderTree()
     await expandRunning()
