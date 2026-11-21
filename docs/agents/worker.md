@@ -26,9 +26,9 @@ with the reason, add `blocked by` links where they apply, move it back to `Todo`
    rules in `AGENTS.md`: every test must protect a behaviour and must be named after it.
 3. Implement until the tests pass. Keep the change focused on the issue. While iterating, run
    only the test files your change affects: `pnpm vitest run <paths>`.
-4. Run `pnpm check` once. It must pass. If you changed `src/main`, `src/preload`, packaging,
-   or `e2e/`, also run `pnpm package:dir` and `pnpm test:e2e`; otherwise CI runs them on all
-   three platforms.
+4. Run `pnpm check`. It must pass. If you changed `src/main`, `src/preload`, `e2e/`, or the
+   packaging files (`electron-builder.yml`, `electron.vite.config.ts`, `build/`), also run
+   `pnpm package:dir` and `pnpm test:e2e`; otherwise CI runs them on all three platforms.
 5. Read your own diff (`git diff origin/main`) against the no-slop rules as if someone else
    wrote it. Remove anything speculative, any comment that restates code, any unused export.
 
@@ -85,8 +85,8 @@ unresolved, move it to `Todo`, and stop.
   posted another's PR description because both used `$TEMP/pr-body.md`.
 - Keep CPU use low: other workers and the owner share this machine. Never run the full test
   suite in a loop or several copies at once. To reproduce a flaky test, repeat only that file
-  (`pnpm vitest run <path> --repeat <n>`). Run `pnpm check` before opening the PR and again
-  after review fixes, not after every edit.
+  (`pnpm vitest run <path> --repeats <n>`). Run `pnpm check` before opening the PR and again
+  after review fixes or a rebase, not after every edit.
 - Never disable a lint rule to get green, unless the disable comment carries a reason that a
   reviewer would accept.
 - Never edit files outside the scope of your issue, except to fix something that blocks you.

@@ -18,6 +18,7 @@ Closes
 
 ## Checklist
 
-- [ ] `pnpm check`, `pnpm package:dir`, and `pnpm test:e2e` pass
+- [ ] `pnpm check` passes, and so do `pnpm package:dir` and `pnpm test:e2e` if the change
+      touches `src/main`, `src/preload`, `e2e/`, or the packaging files
 - [ ] I read my diff against the no-slop rules in AGENTS.md
 - [ ] New dependencies are pinned and justified above
