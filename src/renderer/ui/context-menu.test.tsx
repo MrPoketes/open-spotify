@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
-import { ContextMenu, type ContextMenuItem } from "./context-menu"
+import { ContextMenu } from "./context-menu"
+import type { MenuItem } from "./menu-list"
 import { useContextMenu } from "./use-context-menu"
 
-function MenuTarget({ items }: { readonly items: ReadonlyArray<ContextMenuItem> }) {
+function MenuTarget({ items }: { readonly items: ReadonlyArray<MenuItem> }) {
   const menu = useContextMenu()
   return (
     <>
@@ -78,6 +79,18 @@ describe("ContextMenu", () => {
     expect(screen.getByRole("menu", { name: "Target actions" })).toBeInTheDocument()
     expect(menuItem("First")).toHaveFocus()
     await userEvent.keyboard("{Escape}")
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    expect(target).toHaveFocus()
+  })
+
+  // The menu is portalled to the end of the page, so letting Tab go on from
+  // it would skip everything after the element it opened from.
+  it("closes on Tab and returns focus to its target", async () => {
+    const { target } = renderMenuTarget()
+    await userEvent.keyboard("{ContextMenu}")
+
+    await userEvent.tab()
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
     expect(target).toHaveFocus()

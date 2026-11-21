@@ -1,4 +1,4 @@
-import type { ContextMenuItem } from "../../ui/context-menu"
+import type { MenuItem } from "../../ui/menu-list"
 import type { SimplifiedArtist } from "../spotify/spotify-artist"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import type { TrackListEntry } from "../track-list/track-row"
@@ -19,7 +19,7 @@ const addToPlaylistItem = (
   trackUri: string,
   editablePlaylists: EditablePlaylists["state"],
   actions: TrackActions,
-): ContextMenuItem => {
+): MenuItem => {
   if (editablePlaylists.status !== "loaded" || editablePlaylists.value.length === 0) {
     return { label: "Add to playlist", onSelect: actions.explainMissingPlaylists }
   }
@@ -37,7 +37,7 @@ const addToPlaylistItem = (
 const goToArtistItems = (
   artists: ReadonlyArray<SimplifiedArtist>,
   goToArtist: TrackActions["goToArtist"],
-): ReadonlyArray<ContextMenuItem> => {
+): ReadonlyArray<MenuItem> => {
   const artistItems = artists.flatMap(({ id, name }) =>
     id === null ? [] : [{ id, label: name, onSelect: () => goToArtist(id) }],
   )
@@ -56,7 +56,7 @@ const addTrackItems = (
   trackId: string | null,
   editablePlaylists: EditablePlaylists["state"],
   actions: TrackActions,
-): ReadonlyArray<ContextMenuItem> => {
+): ReadonlyArray<MenuItem> => {
   if (trackId === null) {
     return []
   }
@@ -73,7 +73,7 @@ export function trackMenuItems(
   { trackId, artists, album }: TrackListEntry,
   actions: TrackActions,
   editablePlaylists: EditablePlaylists["state"],
-): ReadonlyArray<ContextMenuItem> {
+): ReadonlyArray<MenuItem> {
   const albumId = album?.id ?? null
   return [
     ...addTrackItems(trackId, editablePlaylists, actions),

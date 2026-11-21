@@ -1,6 +1,6 @@
 import type { LibraryEntryKind, LibrarySection } from "../../../shared/library-layout"
 import { useSavedSettingState } from "../../lib/use-saved-setting-state"
-import type { MenuAction } from "../../ui/menu-button"
+import type { MenuAction } from "../../ui/menu-list"
 import type { LibraryEntry } from "./library-entries"
 import { sectionFocusKey, showSectionFocusKey, useFocusAfterChange } from "./use-focus-after-change"
 

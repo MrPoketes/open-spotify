@@ -1,12 +1,8 @@
 import type { LucideIcon } from "lucide-react"
-import { type FocusEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from "react"
+import { type KeyboardEvent, useId, useRef, useState } from "react"
+import { closeWhenFocusLeaves } from "./close-when-focus-leaves"
 import { iconControlClassName } from "./icon-control-class-name"
-import { menuItemTargetForKey } from "./menu-item-target"
-
-export interface MenuAction {
-  readonly label: string
-  readonly onSelect: () => void
-}
+import { type MenuAction, MenuList, type MenuOpenFocus } from "./menu-list"
 
 interface MenuButtonProps {
   readonly label: string
@@ -14,104 +10,55 @@ interface MenuButtonProps {
   readonly actions: ReadonlyArray<MenuAction>
 }
 
-// Where focus lands inside the menu when it opens, or null while it is closed.
-type OpenMenu = { readonly focusIndex: number } | null
-
-// Follows the WAI-ARIA menu button pattern: arrow keys move between items,
-// Escape closes the menu and returns focus to the button.
+// Follows the WAI-ARIA menu button pattern: the arrow keys open the menu on
+// its first or last item, Escape closes it and returns focus to the button,
+// and Tab closes it and moves on.
 export function MenuButton({ label, icon: Icon, actions }: MenuButtonProps) {
   const menuId = useId()
   const buttonRef = useRef<HTMLButtonElement>(null)
-  const itemRefs = useRef<Array<HTMLButtonElement | null>>([])
-  const [openMenu, setOpenMenu] = useState<OpenMenu>(null)
-
-  useEffect(() => {
-    if (openMenu !== null) {
-      itemRefs.current.at(openMenu.focusIndex)?.focus()
-    }
-  }, [openMenu])
+  // The item the menu opened on, or null while it is closed.
+  const [menuOpenedOn, setMenuOpenedOn] = useState<MenuOpenFocus | null>(null)
 
   const closeAndFocusButton = () => {
-    setOpenMenu(null)
+    setMenuOpenedOn(null)
     buttonRef.current?.focus()
   }
 
-  const selectAction = (action: MenuAction) => {
-    closeAndFocusButton()
-    action.onSelect()
-  }
-
   const openWithKeyboard = (event: KeyboardEvent) => {
-    const focusIndexByKey: Record<string, number> = { ArrowDown: 0, ArrowUp: -1 }
-    const focusIndex = focusIndexByKey[event.key]
-    if (focusIndex === undefined) return
+    const openedOnByKey: Record<string, MenuOpenFocus> = { ArrowDown: "first", ArrowUp: "last" }
+    const openedOn = openedOnByKey[event.key]
+    if (openedOn === undefined) return
     event.preventDefault()
-    setOpenMenu({ focusIndex })
-  }
-
-  const closeWhenFocusLeaves = (event: FocusEvent) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) setOpenMenu(null)
+    setMenuOpenedOn(openedOn)
   }
 
   return (
-    <div className="relative" onBlur={closeWhenFocusLeaves}>
+    <div className="relative" onBlur={closeWhenFocusLeaves(() => setMenuOpenedOn(null))}>
       <button
         ref={buttonRef}
         type="button"
         aria-label={label}
         title={label}
         aria-haspopup="menu"
-        aria-expanded={openMenu !== null}
-        aria-controls={openMenu === null ? undefined : menuId}
-        onClick={() => setOpenMenu(openMenu === null ? { focusIndex: 0 } : null)}
+        aria-expanded={menuOpenedOn !== null}
+        aria-controls={menuOpenedOn === null ? undefined : menuId}
+        onClick={() => setMenuOpenedOn(menuOpenedOn === null ? "first" : null)}
         onKeyDown={openWithKeyboard}
         className={iconControlClassName}
       >
         <Icon aria-hidden size={20} />
       </button>
-      {openMenu !== null && (
-        <ul
-          id={menuId}
-          role="menu"
-          aria-label={label}
-          onKeyDown={(event) => moveFocusWithKeyboard(event, itemRefs.current, closeAndFocusButton)}
-          className="absolute top-full right-0 z-10 mt-1 flex min-w-48 flex-col rounded-large bg-surface-overlay p-1 shadow-overlay transition-[opacity,translate] duration-200 ease-out starting:-translate-y-2 starting:opacity-0"
-        >
-          {actions.map((action, index) => (
-            <li key={action.label} role="none">
-              <button
-                ref={(item) => {
-                  itemRefs.current[index] = item
-                }}
-                type="button"
-                role="menuitem"
-                tabIndex={-1}
-                onClick={() => selectAction(action)}
-                className="w-full rounded-small px-3 py-2 text-left text-sm transition-colors duration-120 ease-out hover:bg-surface-raised focus:bg-surface-raised"
-              >
-                {action.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+      {menuOpenedOn !== null && (
+        <div className="absolute top-full right-0 z-10 mt-1">
+          <MenuList
+            id={menuId}
+            label={label}
+            items={actions}
+            focusOnOpen={menuOpenedOn}
+            closeAll={closeAndFocusButton}
+          />
+        </div>
       )}
     </div>
   )
-}
-
-const moveFocusWithKeyboard = (
-  event: KeyboardEvent,
-  items: ReadonlyArray<HTMLButtonElement | null>,
-  closeAndFocusButton: () => void,
-) => {
-  if (event.key === "Escape") {
-    event.preventDefault()
-    closeAndFocusButton()
-    return
-  }
-  const focusedIndex = items.findIndex((item) => item === document.activeElement)
-  const targetIndex = menuItemTargetForKey(event.key, focusedIndex, items.length)
-  if (targetIndex === undefined) return
-  event.preventDefault()
-  items[targetIndex]?.focus()
 }

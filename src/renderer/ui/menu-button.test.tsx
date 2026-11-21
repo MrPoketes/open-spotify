@@ -35,4 +35,21 @@ describe("MenuButton", () => {
     await userEvent.keyboard("{ArrowDown}")
     expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
   })
+
+  // A menu button is one stop in the page's tab order, so Tab carries on to
+  // the next control instead of landing back on the button.
+  it("closes on Tab and moves focus on to the next control", async () => {
+    render(
+      <>
+        <MenuButton label="Options" icon={Settings} actions={actions} />
+        <button type="button">Next</button>
+      </>,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await userEvent.tab()
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Next" })).toHaveFocus()
+  })
 })
