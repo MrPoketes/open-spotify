@@ -84,9 +84,10 @@ describe("SpotifyApi player", () => {
       const changed = yield* playback
 
       assert.isFalse(paused.isPlaying)
+      // Shuffle swaps the second and third items of the fake's order.
       assert.deepStrictEqual(
         [changed.isPlaying, changed.shuffle, changed.repeat, changed.item?.name],
-        [true, true, "track", fakeTrack(1).name],
+        [true, true, "track", fakeEpisode.name],
       )
     }).pipe(Effect.provide(spotifyApiFake)),
   )
