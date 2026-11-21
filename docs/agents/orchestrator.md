@@ -111,10 +111,13 @@ A worker that cannot finish moves its issue back to `Todo` (worker.md step 4, an
 moves in step 2 above). Without a limit, an issue that no worker can finish is relaunched on
 every run and holds a slot forever.
 
-Read the issue's comments (`list_comments`) and find its newest comment that starts with
-`Parked:`. Among the comments posted after it (or all of them, if there is none), count the
-distinct thread links in comments that start with `Started in T3 thread`. Count links, not
-comments: the orchestrator and the worker each post the line for the same thread.
+Read every comment on the issue with `list_comments`, passing `orderBy: "createdAt"`, and
+follow `hasNextPage` until no page is left. By default it returns only 50 comments, sorted by
+last edit, which can leave out the newest `Parked:` comment or some workers. Find the newest
+comment that starts with `Parked:`. Among the comments posted after it (or all of them, if
+there is none), count the distinct thread links in comments that start with
+`Started in T3 thread`. Count links, not comments: the orchestrator and the worker each post
+the line for the same thread.
 
 An issue that someone moves back to `Todo`, usually after rewriting or splitting it, gets 3
 fresh workers, because the count starts after its last `Parked:` comment.
@@ -124,10 +127,11 @@ fresh workers, because the count starts after its last `Parked:` comment.
 1. Move it to `Backlog`. The orchestrator never picks issues from `Backlog`, so it stays there
    until someone moves it back to `Todo`.
 2. Comment on it, starting with `Parked:` and the reason, for example
-   `Parked: 3 workers could not finish it.` Then sum up what is still unresolved, so whoever picks it up does not have to
-   read every attempt. Take it from the comments earlier workers left when they stopped and
-   from the newest `## Agent review: CHANGES REQUESTED` comment on its open PR, if any. List
-   each unresolved problem in one line, and link the open PR and the branch.
+   `Parked: 3 workers could not finish it.` Then sum up what is still unresolved, so whoever
+   picks it up does not have to read every attempt. Take it from the comments earlier workers
+   left when they stopped and from the newest `## Agent review: CHANGES REQUESTED` comment on
+   its open PR, if any. List each unresolved problem in one line, and link the open PR and the
+   branch.
 3. Name the issue and the reason in the step 7 status update.
 
 ## 4. Keep the queue full
