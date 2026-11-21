@@ -23,8 +23,8 @@ describe("NowPlayingBar controls", () => {
   it("pauses playback and resumes it from the keyboard", async () => {
     await renderNowPlayingBarAlone()
     // A role query computes styles and accessible names on every retry, and
-    // retrying it through the file's first render slowed that render's
-    // playback load past the timeout.
+    // retrying it through the file's first playback load slowed that load past
+    // the timeout.
     await screen.findByText(fakeTrack(0).name)
 
     await userEvent.click(await control("Pause"))
