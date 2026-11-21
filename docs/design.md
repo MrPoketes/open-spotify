@@ -654,9 +654,11 @@ focused radio button, which is already checked, it plays or pauses. Holding the 
 shortcut once, except for the volume, which keeps stepping like a volume key. Quick presses add
 up: each seek starts from where the last one moved the seek bar, before Spotify reports it, and
 the volume slider shows each step at once and sends the total once the presses stop. A seek stays
-within the item and the volume between 0 and 100. A menu button opens on `↓` or `↑` only without
-a modifier, so `Ctrl+↓` turns the volume down even there. A playback shortcut whose control cannot be used says why in the status message,
-since the control's tooltip may never have been seen.
+within the item and the volume between 0 and 100, and a press at a limit sends nothing. A menu
+button opens on `↓` or `↑` only without a modifier, so `Ctrl+↓` turns the volume down even there.
+A playback shortcut whose control cannot be used says why in the status message, since the
+control's tooltip may never have been seen. A held volume shortcut says it once, not on every
+repeat.
 
 `?` opens the shortcuts dialog: a modal Overlay (`surface-overlay`, `shadow-overlay`,
 `rounded-large`) at most 448 px wide with 24 px of padding, over a `canvas` backdrop at 60 %

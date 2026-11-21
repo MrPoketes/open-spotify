@@ -73,7 +73,9 @@ describe("MenuButton", () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
     screen.getByRole("button", { name: "Options" }).focus()
 
-    await userEvent.keyboard("{Control>}{ArrowDown}{/Control}{Meta>}{ArrowUp}{/Meta}")
+    await userEvent.keyboard(
+      "{Control>}{ArrowDown}{/Control}{Alt>}{ArrowDown}{/Alt}{Meta>}{ArrowUp}{/Meta}",
+    )
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
   })

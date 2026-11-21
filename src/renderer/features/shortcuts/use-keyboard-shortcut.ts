@@ -24,7 +24,10 @@ const isKeyForFocusedElement = (event: KeyboardEvent) =>
 // Runs the action when the user presses the shortcut's keys anywhere in the
 // window, except while typing. Holding the keys down runs the action once,
 // unless the shortcut repeats while held.
-export function useKeyboardShortcut(name: WindowShortcutName, action: () => void) {
+export function useKeyboardShortcut(
+  name: WindowShortcutName,
+  action: (event: KeyboardEvent) => void,
+) {
   const isMac = use(IsMacContext)
   const runAction = useEffectEvent(action)
 
@@ -40,7 +43,7 @@ export function useKeyboardShortcut(name: WindowShortcutName, action: () => void
         return
       }
       event.preventDefault()
-      runAction()
+      runAction(event)
     }
     window.addEventListener("keydown", runOnShortcut)
     return () => window.removeEventListener("keydown", runOnShortcut)

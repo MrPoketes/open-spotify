@@ -20,10 +20,16 @@ export function VolumeControl({ playerState }: VolumeControlProps) {
   const isUnavailable = unavailableReason !== null
 
   // The slider shows each step at once and sends the volume once the presses
-  // stop, so quick presses and a held key add up to one request.
+  // stop, so quick presses and a held key add up to one request. At 0 or 100
+  // there is nothing to send.
   const volumeShortcut = (stepPercent: number) => ({
     unavailableReason,
-    run: () => volumeControl.changeVolume(clamp(volume + stepPercent, 0, 100)),
+    run: () => {
+      const targetVolume = clamp(volume + stepPercent, 0, 100)
+      if (targetVolume !== volume) {
+        volumeControl.changeVolume(targetVolume)
+      }
+    },
   })
   usePlaybackShortcut("volumeUp", volumeShortcut(shortcutStepPercent))
   usePlaybackShortcut("volumeDown", volumeShortcut(-shortcutStepPercent))

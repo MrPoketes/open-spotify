@@ -2,11 +2,14 @@ import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Option } from "effect"
 import { describe, expect, it } from "vitest"
+import { fakeMainProcess } from "../../lib/fake-main-process"
+import { renderScreen } from "../../lib/render-screen"
+import { type StatusMessage, StatusMessageContext } from "../../ui/status-message-context"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
 import type { Device } from "../spotify/spotify-device"
 import { fakeTrack } from "../spotify/spotify-fixtures"
-import { renderNowPlayingBarAlone } from "./now-playing-bar-alone"
+import { nowPlayingBarAlone, renderNowPlayingBarAlone } from "./now-playing-bar-alone"
 
 // The fake devices play at 60 %.
 const fakeVolume = "60"
@@ -190,6 +193,28 @@ describe("NowPlayingBar volume", () => {
     }
     expect(slider).toHaveValue(fakeVolume)
     expect(spotify.sentVolumes).toEqual([])
+  })
+
+  // A held key repeats about 30 times a second, and each new message would
+  // restart its animation and could be read out again.
+  it("says once why the volume cannot change while Ctrl+↓ is held down", async () => {
+    const spotify = recordingVolumes((device) => ({ ...device, supportsVolume: false }))
+    const statusMessages: Array<StatusMessage> = []
+    renderScreen(
+      <StatusMessageContext value={(message) => statusMessages.push(message)}>
+        {nowPlayingBarAlone}
+      </StatusMessageContext>,
+      fakeMainProcess(),
+      spotify.layer,
+    )
+    await screen.findByText(fakeTrack(0).name)
+
+    await userEvent.keyboard("{Control>}{ArrowDown>3/}{/Control}")
+
+    expect(statusMessages).toEqual([
+      { text: "This device doesn't let Spotify change its volume.", isFailure: true },
+    ])
+    expect(await volumeSlider()).toHaveValue(fakeVolume)
   })
 
   it("disables the volume and says why when no device is active", async () => {

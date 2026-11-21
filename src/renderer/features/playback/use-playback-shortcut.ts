@@ -12,11 +12,15 @@ export function usePlaybackShortcut(
 ) {
   const showStatusMessage = useShowStatusMessage()
 
-  useKeyboardShortcut(name, () => {
-    if (unavailableReason !== null) {
-      showStatusMessage({ text: unavailableReason, isFailure: true })
+  useKeyboardShortcut(name, ({ repeat }) => {
+    if (unavailableReason === null) {
+      run()
       return
     }
-    run()
+    // A shortcut that repeats while held would otherwise show the message
+    // again about 30 times a second.
+    if (!repeat) {
+      showStatusMessage({ text: unavailableReason, isFailure: true })
+    }
   })
 }

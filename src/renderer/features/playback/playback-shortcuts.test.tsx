@@ -193,7 +193,7 @@ describe("playback shortcuts", () => {
     await waitFor(() => expect(seekPositions).toEqual([47_000, 52_000, 57_000]))
   })
 
-  it("seeks no further back than the start or forward than the end", async () => {
+  it("seeks no further back than the start or forward than the end, and not again there", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks((playback) => ({
       ...lastingMs(7_000)(playback),
       progressMs: 3_000,
@@ -202,7 +202,7 @@ describe("playback shortcuts", () => {
     await seekBarShows("0:03 of 0:07")
 
     await userEvent.keyboard(
-      "{Control>}{Shift>}{ArrowLeft}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
+      "{Control>}{Shift>}{ArrowLeft}{ArrowLeft}{ArrowRight}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
     )
 
     await waitFor(() => expect(seekPositions).toEqual([0, 5_000, 7_000]))

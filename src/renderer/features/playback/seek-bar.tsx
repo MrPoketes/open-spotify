@@ -34,7 +34,8 @@ const keyboardTargets: Record<string, (progress: PlaybackProgress) => number> = 
 
 const noProgress: PlaybackProgress = { positionMs: 0, durationMs: 0 }
 
-// Where the user moves the slider to with the pointer or the arrow keys.
+// Where the user moves the slider to with the pointer, the arrow keys, or a
+// seek shortcut.
 type HeldPosition =
   | { readonly status: "holding"; readonly positionMs: number }
   // The seek is on its way. The position stays until the next progress
@@ -49,7 +50,8 @@ type HeldPosition =
 // and it seeks once they let go: a held key repeats about 30 times a second,
 // and every request counts against Spotify's rate limit. The native change
 // event fires once the thumb is let go, while React's onChange fires on every
-// step of the drag.
+// step of the drag. A seek shortcut does not repeat while held, so it seeks at
+// once.
 function useSeekOnRelease(progress: PlaybackProgress | null, onSeek: (positionMs: number) => void) {
   const [slider, setSlider] = useState<HTMLInputElement | null>(null)
   const [held, setHeld] = useState<HeldPosition | null>(null)
@@ -110,10 +112,16 @@ export function SeekBar({ unavailableReason, onSeek }: SeekBarProps) {
   const withinItem = (targetMs: number) => clamp(targetMs, 0, durationMs)
 
   // Each press seeks from the position the last one moved the slider to, so
-  // quick presses add up before Spotify reports the new position.
+  // quick presses add up before Spotify reports the new position. At the
+  // start or the end there is nothing to send.
   const seekShortcut = (stepMs: number) => ({
     unavailableReason: reason,
-    run: () => seekTo(withinItem(shownPositionMs + stepMs)),
+    run: () => {
+      const targetMs = withinItem(shownPositionMs + stepMs)
+      if (targetMs !== shownPositionMs) {
+        seekTo(targetMs)
+      }
+    },
   })
   usePlaybackShortcut("seekForward", seekShortcut(seekStepMs))
   usePlaybackShortcut("seekBack", seekShortcut(-seekStepMs))
