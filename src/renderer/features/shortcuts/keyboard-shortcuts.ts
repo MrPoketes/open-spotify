@@ -1,8 +1,11 @@
 import type { KeyCombo } from "./key-combo"
 
+// In the order the shortcuts dialog lists them.
+export const shortcutGroups = ["Playback", "General"] as const
+
 interface KeyboardShortcut {
   readonly description: string
-  readonly group: "Playback" | "General"
+  readonly group: (typeof shortcutGroups)[number]
   readonly keys: KeyCombo
   // Set only where macOS has its own convention.
   readonly macKeys?: KeyCombo

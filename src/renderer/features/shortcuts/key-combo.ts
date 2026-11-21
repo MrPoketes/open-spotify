@@ -11,8 +11,9 @@ const isLetter = (key: string) => /^[a-z]$/i.test(key)
 
 const isSymbol = (key: string) => key.length === 1 && !isLetter(key)
 
-// Matched by physical key, because macOS turns Option+letter into a symbol in
-// event.key.
+// Matched by physical key, because event.key gives a different character on
+// a non-Latin layout, such as Cyrillic, and macOS turns Option+letter into a
+// symbol.
 const isKeyPressed = (event: KeyboardEvent, key: string) =>
   isLetter(key) ? event.code === `Key${key.toUpperCase()}` : event.key === key
 

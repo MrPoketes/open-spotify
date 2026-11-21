@@ -3,10 +3,8 @@ import { use, useId, useRef } from "react"
 import { IconButton } from "../../ui/icon-button"
 import { IsMacContext } from "./is-mac-context"
 import { keyComboLabels } from "./key-combo"
-import { keyboardShortcuts, shortcutKeys } from "./keyboard-shortcuts"
+import { keyboardShortcuts, shortcutGroups, shortcutKeys } from "./keyboard-shortcuts"
 import { useKeyboardShortcut } from "./use-keyboard-shortcut"
-
-const shortcutGroups = ["Playback", "General"] as const
 
 interface ShortcutGroupProps {
   readonly group: (typeof shortcutGroups)[number]
