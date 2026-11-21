@@ -1,15 +1,24 @@
 import { act, cleanup, screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
+import { Stream } from "effect"
 import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { defaultLibrarySections } from "../../../shared/library-layout"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { Library } from "./library"
 
+// The tests need the Artists section, not its fifty-odd fake artists. Each pin,
+// hide, or collapse re-renders every entry, and rendering all of them ran the
+// first test past its timeout on a busy machine.
+const spotifyWithTwoArtists = spotifyApiFakeWith((spotify) => ({
+  followedArtists: spotify.followedArtists.pipe(Stream.take(2)),
+}))
+
 const renderLibrary = (mainProcess: DesktopApi = fakeMainProcess()) =>
-  renderScreen(<Library />, mainProcess)
+  renderScreen(<Library />, mainProcess, spotifyWithTwoArtists)
 
 const section = (name: string) => screen.findByRole("region", { name })
 

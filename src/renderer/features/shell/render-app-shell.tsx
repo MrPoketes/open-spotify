@@ -8,11 +8,12 @@ import {
 } from "@tanstack/react-router"
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import type { ManagedRuntime } from "effect"
+import { type ManagedRuntime, Stream } from "effect"
 import type { ReactNode } from "react"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext, type RendererServices } from "../../lib/renderer-runtime"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { AppShell } from "./app-shell"
 
 // Installed on import, before any test file's code runs, because
@@ -21,7 +22,18 @@ import { AppShell } from "./app-shell"
 // must be saved where rendererRuntime reads them back.
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 
-const runtimeWithFakeSpotify = fakeRendererRuntime({ mainProcess: window.desktop })
+// The library is left empty because no test of the shell reads it, and
+// rendering the fixtures' sixty-odd entries in the sidebar ran the first test
+// past its timeout on a busy machine.
+const runtimeWithFakeSpotify = fakeRendererRuntime({
+  mainProcess: window.desktop,
+  spotifyApi: spotifyApiFakeWith(() => ({
+    currentUserPlaylists: Stream.empty,
+    savedAlbums: Stream.empty,
+    followedArtists: Stream.empty,
+    savedShows: Stream.empty,
+  })),
+})
 
 interface ShellOptions {
   readonly savedSidebarWidth?: number

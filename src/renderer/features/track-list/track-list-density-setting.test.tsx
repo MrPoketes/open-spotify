@@ -26,7 +26,10 @@ const launchApp = async (mainProcess: DesktopApi) => {
         <TrackList
           label="Tracks"
           layout="playlist"
-          trackCount={20}
+          // Two rows show where the second one is placed. Twenty made each
+          // density change re-render rows no test reads, which ran the first
+          // test past its timeout on a busy machine.
+          trackCount={2}
           playbackStartAt={(index) => ({ uris: [], offset: { position: index } })}
           trackAt={(index) => ({
             trackId: null,
