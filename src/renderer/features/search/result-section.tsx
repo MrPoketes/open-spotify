@@ -7,7 +7,7 @@ import { SpotifyApi } from "../spotify/spotify-api"
 import type { Page } from "../spotify/spotify-paging"
 import type { SearchResults, SearchType } from "../spotify/spotify-search"
 import { type NextPageStatus, useNextPages } from "../spotify/use-next-pages"
-import { type LoadControl, useLoadControlFocus } from "./use-load-control-focus"
+import { type LoadControl, useLoadControlFocus } from "../spotify/use-load-control-focus"
 
 interface ResultSectionProps<A> {
   readonly query: string

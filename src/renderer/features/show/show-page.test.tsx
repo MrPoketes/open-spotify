@@ -17,7 +17,8 @@ import { ShowPage } from "./show-page"
 
 beforeEach(installFakeIntersectionObserver)
 
-// Serves the fixtures while online and fails like fetch does while offline.
+// Serves the fixtures while online and fails like fetch does while offline: a
+// moment after the request, so the page shows that it is loading first.
 const spotifyWithConnection = () => {
   let online = true
   const switchableClient = Layer.effect(
@@ -29,7 +30,9 @@ const spotifyWithConnection = () => {
           return fakeServer.execute(request)
         }
         const reason = new HttpClientError.TransportError({ request, description: "Offline" })
-        return Effect.fail(new HttpClientError.HttpClientError({ reason }))
+        return Effect.yieldNow.pipe(
+          Effect.andThen(Effect.fail(new HttpClientError.HttpClientError({ reason }))),
+        )
       })
     }),
   ).pipe(Layer.provide(spotifyFakeServer))
@@ -52,6 +55,14 @@ const episodeRows = () => screen.getAllByRole("article")
 const tabToEpisodes = async () => {
   await userEvent.tab()
   await userEvent.tab()
+}
+
+// Scrolls to the end of the episode list while offline, so the next page fails.
+const loadEpisodesUntilRetry = async (spotify: ReturnType<typeof spotifyWithConnection>) => {
+  await screen.findByRole("heading", { level: 1 })
+  spotify.setOnline(false)
+  scrollObservedElementsIntoView()
+  return screen.findByRole("button", { name: "Retry" })
 }
 
 describe("ShowPage", () => {
@@ -189,6 +200,40 @@ describe("ShowPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Retry" }))
 
     await waitFor(() => expect(episodeRows()).toHaveLength(59))
+  })
+
+  it("moves focus back to Retry when the page Retry asked for fails again", async () => {
+    const spotify = spotifyWithConnection()
+    renderShowPage("fake-show-slow-science", spotify.layer)
+    const retry = await loadEpisodesUntilRetry(spotify)
+
+    await userEvent.click(retry)
+
+    expect(await screen.findByRole("button", { name: "Retry" })).toHaveFocus()
+  })
+
+  it("moves focus to the first new episode when the page Retry asked for loads", async () => {
+    const spotify = spotifyWithConnection()
+    renderShowPage("fake-show-slow-science", spotify.layer)
+    const retry = await loadEpisodesUntilRetry(spotify)
+    spotify.setOnline(true)
+
+    await userEvent.click(retry)
+
+    await waitFor(() => expect(episodeRows()).toHaveLength(59))
+    expect(episodeRows()[50]).toHaveFocus()
+  })
+
+  // Pages load as the user scrolls, and moving focus would scroll them away
+  // from where they were reading.
+  it("leaves focus alone when a page loads as the end of the list scrolls into view", async () => {
+    renderShowPage("fake-show-slow-science")
+    await screen.findByRole("heading", { level: 1 })
+
+    scrollObservedElementsIntoView()
+
+    await waitFor(() => expect(episodeRows()).toHaveLength(59))
+    expect(document.body).toHaveFocus()
   })
 
   it("goes to the login screen, saying why, when the session has expired", async () => {
