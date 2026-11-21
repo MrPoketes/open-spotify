@@ -73,7 +73,7 @@ export const rowShortcuts = {
     group: "Focused row",
     keys: { key: "p" },
   },
-  // Mac keyboards have no forward Delete key, and label Backspace "delete".
+  // Most Mac keyboards have no forward Delete key, and label Backspace "delete".
   deleteTheme: {
     description: "Delete an imported theme",
     group: "Focused row",

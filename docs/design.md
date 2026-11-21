@@ -588,7 +588,7 @@ it was.
 
 The keyboard's play/pause, next, and previous keys control playback while a device is active,
 even with the window in the background, and the operating system's media overlay shows the
-title, the artists ("Podcast episode" for an episode), the album, and the artwork. Chromium hands
+title, the artists ("Show episode" for an episode), the album, and the artwork. Chromium hands
 a page the media keys only while it plays media, so a silent clip at volume 0 loops while a
 device is active (`src/renderer/features/playback/use-silent-clip.ts`). With no active device, the
 app leaves the overlay.

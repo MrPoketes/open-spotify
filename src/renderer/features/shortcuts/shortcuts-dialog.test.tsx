@@ -33,8 +33,8 @@ describe("ShortcutsDialog", () => {
     expect(keysFor(dialog, "Next track")).toHaveTextContent("Ctrl→")
     expect(keysFor(dialog, "Go back")).toHaveTextContent("Alt←")
     expect(keysFor(dialog, "Show or hide the queue")).toHaveTextContent("AltShiftQ")
-    expect(keysFor(dialog, "Pin or unpin a library entry")).toHaveTextContent("P")
-    expect(keysFor(dialog, "Delete an imported theme")).toHaveTextContent("Delete")
+    expect(keysFor(dialog, "Pin or unpin a library entry")).toHaveTextContent(/^P$/)
+    expect(keysFor(dialog, "Delete an imported theme")).toHaveTextContent(/^Delete$/)
   })
 
   it("lists the macOS keys on macOS", async () => {
