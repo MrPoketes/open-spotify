@@ -8,6 +8,7 @@ import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
 import type { ArtistAlbum, ArtistAlbumsPage } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { AlbumGroup } from "../spotify/spotify-artist-requests"
+import { scrollLoadedListControls, useLoadControlFocus } from "../spotify/use-load-control-focus"
 import { useNextPages } from "../spotify/use-next-pages"
 
 const albumCard = (album: ArtistAlbum): GridCard => ({
@@ -51,6 +52,12 @@ export function DiscographySection({
     loadNextPage,
   } = useNextPages({ firstPage, loadPage })
   const shownAlbums = isExpanded ? albums : albums.slice(0, columnCount)
+  // Collapsed, the grid loads a page only to fill its one row, so the first
+  // album a page adds is always shown.
+  const { retryRef, resultRowsRef } = useLoadControlFocus(
+    scrollLoadedListControls[nextPage],
+    shownAlbums.length,
+  )
   // A wide pane can fit more cards on a row than one page holds.
   const needsMoreAlbums = isExpanded || albums.length < columnCount
   const scrollEndRef = useScrolledIntoView(
@@ -76,12 +83,22 @@ export function DiscographySection({
           </button>
         ) : null}
       </div>
-      <CardGrid id={gridId} ref={gridRef} label={title} cards={shownAlbums.map(albumCard)} />
+      <CardGrid
+        id={gridId}
+        ref={gridRef}
+        label={title}
+        cards={shownAlbums.map(albumCard)}
+        rowFocusRef={resultRowsRef}
+      />
       {nextPage === "loading" ? (
         <output className="text-sm text-muted">Loading more releases…</output>
       ) : null}
       {nextPage === "failed" ? (
-        <ErrorWithRetry message="More releases didn't load." onRetry={loadNextPage} />
+        <ErrorWithRetry
+          message="More releases didn't load."
+          onRetry={loadNextPage}
+          retryRef={retryRef}
+        />
       ) : null}
       <div ref={scrollEndRef} />
     </section>

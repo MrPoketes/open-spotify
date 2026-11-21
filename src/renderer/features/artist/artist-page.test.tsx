@@ -1,6 +1,6 @@
 import { screen, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import type { Layer } from "effect"
+import { Effect, type Layer } from "effect"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   installFakeIntersectionObserver,
@@ -9,7 +9,7 @@ import {
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import type { SpotifyApi } from "../spotify/spotify-api"
+import { type SpotifyApi, SpotifyRequestError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { ArtistPage } from "./artist-page"
 
@@ -44,6 +44,24 @@ const spotifyFailingFirstLaterAlbumsPage = spotifyApiFakeWith((spotify) => {
     },
   }
 })
+
+// Fails a moment after the request, as a real one does, so the page shows
+// that it is loading before the failure arrives.
+const spotifyFailingLaterAlbumsPages = spotifyApiFakeWith((spotify) => ({
+  getArtistAlbumsPage: (artistId, albumGroup, offset) =>
+    offset === 0
+      ? spotify.getArtistAlbumsPage(artistId, albumGroup, offset)
+      : Effect.yieldNow.pipe(
+          Effect.andThen(Effect.fail(new SpotifyRequestError({ cause: "offline" }))),
+        ),
+}))
+
+const showAllAlbumsUntilRetry = async () => {
+  const albums = await screen.findByRole("region", { name: "Albums" })
+  await userEvent.click(within(albums).getByRole("button", { name: "Show all" }))
+  scrollObservedElementsIntoView()
+  return { albums, retry: await within(albums).findByRole("button", { name: "Retry" }) }
+}
 
 describe("ArtistPage", () => {
   it("shows the artist's name and genres", async () => {
@@ -128,6 +146,25 @@ describe("ArtistPage", () => {
     await userEvent.click(within(alert).getByRole("button", { name: "Retry" }))
 
     expect(await within(albums).findByText("Coastline Sessions, vol. 13")).toBeInTheDocument()
+  })
+
+  it("moves focus back to Retry when the page Retry asked for fails again", async () => {
+    renderArtistPage("fake-artist-0", spotifyFailingLaterAlbumsPages)
+    const { albums, retry } = await showAllAlbumsUntilRetry()
+
+    await userEvent.click(retry)
+
+    expect(await within(albums).findByRole("button", { name: "Retry" })).toHaveFocus()
+  })
+
+  it("moves focus to the first new album when the page Retry asked for loads", async () => {
+    renderArtistPage("fake-artist-0", spotifyFailingFirstLaterAlbumsPage)
+    const { albums, retry } = await showAllAlbumsUntilRetry()
+
+    await userEvent.click(retry)
+
+    expect(await within(albums).findByText("Coastline Sessions, vol. 13")).toBeInTheDocument()
+    expect(within(albums).getAllByRole("link")[10]).toHaveFocus()
   })
 
   it("says the artist was not found when Spotify has no artist with the id", async () => {
