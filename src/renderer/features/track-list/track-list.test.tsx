@@ -1,9 +1,14 @@
 import { screen, within } from "@testing-library/react"
+import { Effect, type Layer, Option } from "effect"
+import { Profiler } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { resizeObservedElements } from "../../lib/fake-resize-observer"
 import { renderScreen } from "../../lib/render-screen"
+import { usePlayerState } from "../playback/use-player-state"
+import type { SpotifyApi } from "../spotify/spotify-api"
+import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { FakeMainView } from "./fake-main-view"
 import { scrollMainView } from "./fake-main-view-layout"
 import { TrackList } from "./track-list"
@@ -20,14 +25,22 @@ const trackWithArtwork = (index: number): TrackListEntry => ({
   durationMs: 200_000,
 })
 
+interface TrackListOptions {
+  readonly layout: TrackListLayout
+  readonly trackCount: number
+  readonly spotifyApi?: Layer.Layer<SpotifyApi>
+  readonly onRender?: () => void
+}
+
 const renderTrackList = async (
   density: TrackListDensity,
-  { layout, trackCount }: { readonly layout: TrackListLayout; readonly trackCount: number },
+  { layout, trackCount, spotifyApi, onRender = () => {} }: TrackListOptions,
 ) => {
   await renderScreen(
     <TrackListDensityProvider savedDensity={density}>
+      <PolledProgress />
       <FakeMainView>
-        <div>
+        <Profiler id="track list" onRender={onRender}>
           <TrackList
             label="Tracks"
             layout={layout}
@@ -35,12 +48,38 @@ const renderTrackList = async (
             trackAt={trackWithArtwork}
             playbackStartAt={(index) => ({ uris: [], offset: { position: index } })}
           />
-        </div>
+        </Profiler>
       </FakeMainView>
     </TrackListDensityProvider>,
     fakeMainProcess(),
+    spotifyApi,
   )
   return screen.findByRole("table", { name: "Tracks" })
+}
+
+// Shows when a poll's state has reached the screen, beside the list rather
+// than inside it.
+function PolledProgress() {
+  const playerState = usePlayerState()
+  if (playerState.status !== "active") {
+    return null
+  }
+  return <p>Polled at {playerState.playback.progressMs} ms</p>
+}
+
+// Each poll reports one second further into the fake's first track, which
+// stays the one playing.
+const sameTrackOnEveryPoll = () => {
+  let pollCount = 0
+  return spotifyApiFakeWith((spotify) => ({
+    getPlaybackState: Effect.sync(() => (pollCount += 1)).pipe(
+      Effect.flatMap((poll) =>
+        spotify.getPlaybackState.pipe(
+          Effect.map(Option.map((playback) => ({ ...playback, progressMs: poll * 1000 }))),
+        ),
+      ),
+    ),
+  }))
 }
 
 // jsdom does no layout, so a test says where the rows start.
@@ -107,5 +146,26 @@ describe("TrackList", () => {
     scrollMainView(screen.getByRole("main"), 2000)
 
     expect(await screen.findByRole("row", { name: "Track 1 by Mira Kaelin" })).toBeInTheDocument()
+  })
+
+  // The player polls every two seconds and each poll is a new state, even
+  // when the same track plays. A list that re-rendered on each one would
+  // re-render every row it shows.
+  it("does not re-render when a poll finds the same track playing", async () => {
+    let listRenders = 0
+    await renderTrackList("comfortable", {
+      layout: "playlist",
+      trackCount: 20,
+      spotifyApi: sameTrackOnEveryPoll(),
+      onRender: () => (listRenders += 1),
+    })
+    const firstRow = await screen.findByRole("row", { name: "Track 1 by Mira Kaelin" })
+    await screen.findByText("Polled at 1000 ms")
+    expect(firstRow).toHaveAccessibleDescription("Playing")
+    listRenders = 0
+
+    await screen.findByText("Polled at 2000 ms", {}, { timeout: 3000 })
+
+    expect(listRenders).toBe(0)
   })
 })

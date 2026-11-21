@@ -1,8 +1,8 @@
 import type { Ref } from "react"
 import { RovingList } from "../../ui/roving-list"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
-import { useNowPlaying } from "../playback/use-now-playing"
 import { usePlayerCommandFromPage } from "../playback/use-player-command-from-page"
+import { usePlayingItemId } from "../playback/use-playing-item-id"
 import type { Episode } from "../spotify/spotify-episode"
 import { EpisodeRow } from "./episode-row"
 
@@ -13,7 +13,7 @@ interface EpisodeRowsProps {
 }
 
 export function EpisodeRows({ showUri, episodes, rowFocusRef }: EpisodeRowsProps) {
-  const playingItemId = useNowPlaying()?.itemId ?? null
+  const playingItemId = usePlayingItemId()
   const sendCommand = usePlayerCommandFromPage()
   // Spotify documents offsets only for albums and playlists. A show starts at
   // the episode's uri rather than its position, which a newly published
