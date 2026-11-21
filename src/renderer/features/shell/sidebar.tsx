@@ -47,17 +47,9 @@ export function Sidebar({ savedWidth }: { readonly savedWidth: number }) {
 // Dragging the divider changes the width on every pointer move, and
 // re-rendering the whole library each time made dragging slow.
 const SidebarContents = memo(function SidebarContents() {
-  const foldersFileActions = useFoldersFileActions()
-
   return (
     <>
-      <div className="flex flex-col px-4">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="font-display text-xl font-bold">Your library</h2>
-          <MenuButton label="Folder options" icon={FolderCog} items={foldersFileActions.actions} />
-        </div>
-        <FoldersFileOutcomeMessage outcome={foldersFileActions.outcome} />
-      </div>
+      <SidebarHeader />
       {/* One drag area holds both, so library rows can be dropped on folders. */}
       <RowDragArea>
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
@@ -68,3 +60,19 @@ const SidebarContents = memo(function SidebarContents() {
     </>
   )
 })
+
+// The outcome of a folders file action lives here, apart from the library, so
+// that showing it does not re-render every library row.
+function SidebarHeader() {
+  const foldersFileActions = useFoldersFileActions()
+
+  return (
+    <div className="flex flex-col px-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="font-display text-xl font-bold">Your library</h2>
+        <MenuButton label="Folder options" icon={FolderCog} items={foldersFileActions.actions} />
+      </div>
+      <FoldersFileOutcomeMessage outcome={foldersFileActions.outcome} />
+    </div>
+  )
+}
