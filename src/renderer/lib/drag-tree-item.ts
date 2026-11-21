@@ -52,7 +52,7 @@ const dragMoves = (item: HTMLElement, target: HTMLElement, fraction: number) => 
 }
 
 // Keeps the button down, as when a drag rests on a row, until the test lets
-// go with the returned release.
+// go with the returned release. The drag can move on to other rows first.
 export const dragTreeItemOver = async (
   item: HTMLElement,
   target: HTMLElement,
@@ -60,7 +60,11 @@ export const dragTreeItemOver = async (
 ) => {
   const user = userEvent.setup()
   await user.pointer(dragMoves(item, target, fraction))
-  return { release: () => user.pointer({ keys: "[/MouseLeft]" }) }
+  return {
+    moveOver: (nextTarget: HTMLElement, nextFraction: number) =>
+      user.pointer({ coords: pointOnRow(nextTarget, nextFraction) }),
+    release: () => user.pointer({ keys: "[/MouseLeft]" }),
+  }
 }
 
 export const dragTreeItemOnto = async (

@@ -7,16 +7,15 @@ import { useRunFolderMove } from "./use-run-folder-move"
 const destinationFolderId = (move: FolderMove) =>
   move._tag === "MoveFolder" ? move.request.parentFolderId : move.request.targetFolderId
 
-// Says where the entry went in the same words as the keyboard moves: up or
-// down among the same siblings, or the folder it went to.
-const dropMessage = ({ dragged, target, position }: TreeDrop<PlacedEntry>, move: FolderMove) => {
-  const entryName = dragged.entry.name
+// Where the entry went, as the keyboard moves say it: up or down among the
+// same siblings, or to the folder it went to.
+const newPlace = ({ dragged, target, position }: TreeDrop<PlacedEntry>, move: FolderMove) => {
   if (destinationFolderId(move) === (dragged.parent?.id ?? null)) {
-    return `Moved ${entryName} ${move.request.position < dragged.position ? "up" : "down"}`
+    return move.request.position < dragged.position ? "up" : "down"
   }
   const destination =
     position === "inside" ? target.entry.name : (target.parent?.name ?? "the top level")
-  return `Moved ${entryName} to ${destination}`
+  return `to ${destination}`
 }
 
 // Rearranges the sidebar folder tree by dragging its rows.
@@ -27,7 +26,7 @@ export function useDropFolderEntry(): TreeDropRules<PlacedEntry> {
     onDrop: (drop) => {
       const move = dropMove(drop)
       if (move === undefined) return
-      runFolderMove(move, drop.dragged.entry.name, dropMessage(drop, move))
+      runFolderMove(move, drop.dragged.entry.name, newPlace(drop, move))
     },
   }
 }

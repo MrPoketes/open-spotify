@@ -66,11 +66,28 @@ export const moveToTopLevel = (placed: PlacedFolder, tree: FolderTree): FolderMo
 const areSiblings = (first: PlacedEntry, second: PlacedEntry) =>
   first.parent?.id === second.parent?.id
 
+// The entry of the new parent that the move takes out: the dragged entry when
+// it stays in its parent, or a copy of a dragged Spotify item that the new
+// parent already holds, since a folder keeps one copy of each item.
+const indexTakenOut = (dragged: PlacedEntry, target: PlacedEntry) => {
+  if (areSiblings(dragged, target)) {
+    return dragged.position
+  }
+  if (dragged._tag === "PlacedFolder" || target.parent === null) {
+    return -1
+  }
+  return target.parent.entries.findIndex(
+    (entry) => entry._tag === "SpotifyItem" && entry.uri === dragged.entry.uri,
+  )
+}
+
 // The main process counts the position among the parent's other entries, so
-// an entry that moves down within its parent lands one place higher than the
+// a drop below the entry the move takes out lands one place higher than the
 // line it was dropped on.
-const positionAmongOthers = (dragged: PlacedEntry, target: PlacedEntry, lineIndex: number) =>
-  areSiblings(dragged, target) && dragged.position < lineIndex ? lineIndex - 1 : lineIndex
+const positionAmongOthers = (dragged: PlacedEntry, target: PlacedEntry, lineIndex: number) => {
+  const takenOut = indexTakenOut(dragged, target)
+  return takenOut !== -1 && takenOut < lineIndex ? lineIndex - 1 : lineIndex
+}
 
 // The top level holds only folders.
 const placeIn = (

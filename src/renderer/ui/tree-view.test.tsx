@@ -185,6 +185,17 @@ describe("Dragging in a TreeView", () => {
     expect(item("Running")).toHaveAttribute("aria-expanded", "true")
   })
 
+  // A drop on a branch's edge goes beside it, and opening the branch would
+  // move the line the drop goes to.
+  it("leaves a collapsed branch closed while a drag rests on its edge", async () => {
+    render(<Tree initiallyExpanded={[]} />)
+
+    await dragTreeItemOver(item("Loose track"), item("Running"), 0.1)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 1000)))
+
+    expect(item("Running")).toHaveAttribute("aria-expanded", "false")
+  })
+
   // The children of an expanded branch sit right below it, so a line drawn
   // below the branch would look like the line above its first child.
   it("drops above the first child when let go at the bottom edge of an expanded branch", async () => {

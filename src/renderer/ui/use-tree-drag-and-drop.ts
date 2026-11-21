@@ -1,4 +1,5 @@
 import {
+  type CollisionDetection,
   type DragEndEvent,
   type DragMoveEvent,
   type DragStartEvent,
@@ -69,19 +70,17 @@ const cancelClickAfterDrag = () => {
 const isSameIndicator = (first: DropIndicator | null, second: DropIndicator | null) =>
   first?.targetKey === second?.targetKey && first?.position === second?.position
 
-// Opens a collapsed branch once a drag has rested on it for a moment, so an
-// item can be dropped among its children.
-function useExpandWhileHovered<Value>(
-  hoveredRow: VisibleTreeRow<Value> | undefined,
-  draggedKey: string | null,
-  { expandedKeys, onToggleExpanded }: TreeDragAndDropOptions<Value>,
+// Opens a collapsed branch once a drop inside it has been on offer for a
+// moment, so the item can be dropped among its children instead. The branch
+// row stays where it is as it opens, so the drop it offers stays the same.
+function useExpandWhileDropInside(
+  dropIndicator: DropIndicator | null,
+  expandedKeys: ReadonlySet<string>,
+  onToggleExpanded: (key: string) => void,
 ) {
   const keyToExpand =
-    hoveredRow !== undefined &&
-    hoveredRow.node.key !== draggedKey &&
-    hoveredRow.node.children !== null &&
-    !expandedKeys.has(hoveredRow.node.key)
-      ? hoveredRow.node.key
+    dropIndicator?.position === "inside" && !expandedKeys.has(dropIndicator.targetKey)
+      ? dropIndicator.targetKey
       : null
   const expand = useEffectEvent(onToggleExpanded)
   useEffect(() => {
@@ -89,6 +88,22 @@ function useExpandWhileHovered<Value>(
     const timer = setTimeout(() => expand(keyToExpand), expandDelayMilliseconds)
     return () => clearTimeout(timer)
   }, [keyToExpand])
+}
+
+// dnd-kit's drag events say how far the dragged row has moved, which also
+// counts scrolling and shifts of the row itself, such as when a branch above
+// it opens. Only collision detection sees where the pointer is, so it passes
+// that on with the row under the pointer.
+const rowUnderPointer: CollisionDetection = (args) =>
+  pointerWithin(args).map((collision) => ({
+    ...collision,
+    data: { ...collision.data, pointerY: args.pointerCoordinates?.y },
+  }))
+
+const pointerYOf = ({ collisions }: DragMoveEvent) => {
+  const collisionData: Record<string, unknown> | undefined = collisions?.[0]?.data
+  const pointerY = collisionData?.["pointerY"]
+  return typeof pointerY === "number" ? pointerY : undefined
 }
 
 // Rearranges a tree with the mouse. Keyboard users have the owner's own
@@ -100,7 +115,6 @@ export function useTreeDragAndDrop<Value>(options: TreeDragAndDropOptions<Value>
     useSensor(RowPointerSensor, { activationConstraint: { distance: dragStartDistance } }),
   )
   const [draggedKey, setDraggedKey] = useState<string | null>(null)
-  const [hoveredKey, setHoveredKey] = useState<string | null>(null)
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
   // dnd-kit's live region and its instructions for picking items up with the
   // keyboard would tell screen reader users about drags they cannot make, so
@@ -108,17 +122,19 @@ export function useTreeDragAndDrop<Value>(options: TreeDragAndDropOptions<Value>
   // each drop in its own words.
   const [offPageContainer] = useState(() => document.createElement("div"))
   const findRow = (key: unknown) => rows.find((row) => row.node.key === key)
-  useExpandWhileHovered(findRow(hoveredKey), draggedKey, options)
+  useExpandWhileDropInside(dropIndicator, expandedKeys, options.onToggleExpanded)
 
   // The rows can change under a drag, for example when the tree is read
   // again, so the dragged row or the one under the pointer may be gone.
-  const dropAt = ({ active, over, activatorEvent, delta }: DragMoveEvent) => {
-    if (over === null || !(activatorEvent instanceof MouseEvent)) return undefined
+  const dropAt = (event: DragMoveEvent) => {
+    const { active, over } = event
+    const pointerY = pointerYOf(event)
+    if (over === null || pointerY === undefined) return undefined
     const draggedRow = findRow(active.id)
     const overRow = findRow(over.id)
     if (draggedRow === undefined || overRow === undefined) return undefined
     const { target, position } = dropPlaceAt(overRow.node, expandedKeys, {
-      pointerY: activatorEvent.clientY + delta.y,
+      pointerY,
       rowTop: over.rect.top,
       rowHeight: over.rect.height,
     })
@@ -130,7 +146,6 @@ export function useTreeDragAndDrop<Value>(options: TreeDragAndDropOptions<Value>
   // dnd-kit reports a move before it finds the row under the pointer, and
   // reports that row in a later drag over event.
   const showDropAt = (event: DragMoveEvent) => {
-    setHoveredKey(event.over === null ? null : String(event.over.id))
     const indicator = dropAt(event)?.indicator ?? null
     setDropIndicator((current) => (isSameIndicator(current, indicator) ? current : indicator))
   }
@@ -138,7 +153,6 @@ export function useTreeDragAndDrop<Value>(options: TreeDragAndDropOptions<Value>
   const endDrag = () => {
     cancelClickAfterDrag()
     setDraggedKey(null)
-    setHoveredKey(null)
     setDropIndicator(null)
   }
 
@@ -147,7 +161,7 @@ export function useTreeDragAndDrop<Value>(options: TreeDragAndDropOptions<Value>
     dropIndicator,
     contextProps: {
       sensors,
-      collisionDetection: pointerWithin,
+      collisionDetection: rowUnderPointer,
       // An expanding branch puts new rows under the pointer mid-drag.
       measuring: { droppable: { strategy: MeasuringStrategy.Always } },
       accessibility: { container: offPageContainer },

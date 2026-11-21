@@ -27,12 +27,13 @@ const runOnMainProcess = (move: FolderMove) =>
   })
 
 // Carries out a move of a folder tree entry and says in the status message
-// what it did, or why it failed.
+// where it went ("Moved Warm-up up", "Moved Warm-up to Focus"), or why it
+// failed. Every way of moving an entry reports it in these same words.
 export function useRunFolderMove() {
   const changeFolders = useChangeFolders()
-  return (move: FolderMove, entryName: string, success: string) =>
+  return (move: FolderMove, entryName: string, newPlace: string) =>
     changeFolders(runOnMainProcess(move), {
-      success,
+      success: `Moved ${entryName} ${newPlace}`,
       failure: (error) => moveFailureMessage(entryName, error),
       failureLog: "Could not move a folder entry",
     })

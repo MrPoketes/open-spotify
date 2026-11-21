@@ -14,7 +14,7 @@ export function useMoveFolderEntry(placed: PlacedEntry, tree: FolderTree) {
   const moveDownShortcut = useRowShortcut("moveFolderEntryDown")
   const entryName = placed.entry.name
 
-  const runMove = (move: FolderMove, success: string) => runFolderMove(move, entryName, success)
+  const runMove = (move: FolderMove, newPlace: string) => runFolderMove(move, entryName, newPlace)
 
   const stepForKey = (event: KeyboardEvent) => {
     if (moveUpShortcut.isPressed(event)) return -1
@@ -29,11 +29,11 @@ export function useMoveFolderEntry(placed: PlacedEntry, tree: FolderTree) {
       event.preventDefault()
       const move = stepMove(placed, step)
       if (move === undefined) return
-      runMove(move, `Moved ${entryName} ${step === -1 ? "up" : "down"}`)
+      runMove(move, step === -1 ? "up" : "down")
     },
     ariaKeyShortcuts: `${moveUpShortcut.ariaKeyShortcuts} ${moveDownShortcut.ariaKeyShortcuts}`,
     moveToFolderItem: moveToFolderItem(placed, tree, (move, destination) =>
-      runMove(move, `Moved ${entryName} to ${destination}`),
+      runMove(move, `to ${destination}`),
     ),
   }
 }
