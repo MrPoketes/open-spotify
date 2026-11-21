@@ -12,7 +12,7 @@ import {
   RenameFolderRequest,
 } from "../../shared/folders"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
-import { locateFolder } from "../features/folders/folder-location"
+import { holdsFolder, locateFolder } from "../features/folders/folder-location"
 
 type FolderChange = (folder: Folder) => Folder
 
@@ -29,12 +29,6 @@ const folderNotFound = (folderId: string) => ({
   _tag: "IpcFailed",
   error: { _tag: "FolderNotFound", folderId },
 })
-
-const holdsFolder = (entries: ReadonlyArray<FolderEntry>, folderId: string): boolean =>
-  entries.some(
-    (entry) =>
-      entry._tag === "Folder" && (entry.id === folderId || holdsFolder(entry.entries, folderId)),
-  )
 
 const changeFolder = (folder: Folder, folderId: string, change: FolderChange): Folder => {
   const changed = withEntries(
@@ -82,7 +76,7 @@ const makeFolderStore = (initialTree: FolderTree) => {
 type FolderStore = ReturnType<typeof makeFolderStore>
 
 // Like the real main process, puts a moved entry at its position among the
-// new parent's other entries.
+// new parent's other entries, and refuses to put a folder inside itself.
 const moveChannels = (store: FolderStore) => ({
   [ipcChannels.moveFolder]: (request: unknown) => {
     const { folderId, parentFolderId, position } =
@@ -92,6 +86,12 @@ const moveChannels = (store: FolderStore) => ({
     if (parentFolderId === null) {
       store.replace(store.withoutFolder(folderId).toSpliced(position, 0, moved))
       return succeeded(undefined)
+    }
+    if (parentFolderId === folderId || holdsFolder(moved.entries, parentFolderId)) {
+      return {
+        _tag: "IpcFailed",
+        error: { _tag: "FolderMovedIntoOwnSubtree", folderId, parentFolderId },
+      }
     }
     if (!holdsFolder(store.read(), parentFolderId)) return folderNotFound(parentFolderId)
     store.replace(store.withoutFolder(folderId))

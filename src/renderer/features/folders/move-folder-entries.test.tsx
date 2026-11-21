@@ -102,17 +102,18 @@ describe("Moving folder entries", () => {
     expect(await treeItem("Running")).toHaveAttribute("tabindex", "0")
   })
 
-  it("moves the focused item up within its folder with Alt+Up", async () => {
+  it("moves a focused Spotify item down within its folder with Alt+Down", async () => {
     renderTree()
     await expandRunning()
-    await focusTreeItem("Warm-up")
+    await focusTreeItem("Easy Start")
 
-    await userEvent.keyboard("{Alt>}{ArrowUp}{/Alt}")
+    await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}")
 
     await waitFor(async () =>
       expect(await treeItem("Easy Start")).toHaveAttribute("aria-posinset", "2"),
     )
-    expect(await treeItem("Warm-up")).toHaveFocus()
+    expect(await treeItem("Warm-up")).toHaveAttribute("aria-posinset", "1")
+    expect(await treeItem("Easy Start")).toHaveFocus()
   })
 
   it("offers to move a folder to the top level and into folders outside it, never into itself or its descendants", async () => {

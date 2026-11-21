@@ -1,5 +1,11 @@
 import type { Folder, FolderEntry, FolderTree } from "../../../shared/folders"
 
+export const holdsFolder = (entries: ReadonlyArray<FolderEntry>, folderId: string): boolean =>
+  entries.some(
+    (entry) =>
+      entry._tag === "Folder" && (entry.id === folderId || holdsFolder(entry.entries, folderId)),
+  )
+
 export interface FolderLocation {
   readonly folder: Folder
   // From the top level down to the folder's parent.

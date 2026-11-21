@@ -24,7 +24,7 @@ export const moveToFolderItem = (
     ? [
         {
           label: "Top level",
-          onSelect: () => runMove(moveToTopLevel(placed.entry, tree), "the top level"),
+          onSelect: () => runMove(moveToTopLevel(placed, tree), "the top level"),
         },
       ]
     : []
