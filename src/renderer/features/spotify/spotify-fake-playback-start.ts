@@ -55,7 +55,7 @@ const startPosition = (items: ReadonlyArray<unknown>, offset: PlaybackStartBody[
   return position >= 0 && position < items.length ? position : undefined
 }
 
-export interface FakePlaybackStart {
+interface FakePlaybackStart {
   readonly context: { readonly uri: string } | null
   readonly items: ReadonlyArray<unknown>
   readonly position: number
