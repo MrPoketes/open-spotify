@@ -116,6 +116,9 @@ const startPlayback = (
   player.context = context
   player.playOrder = (playPosition) => items[playPosition]
   player.playPosition = position
+  if (player.shuffledAfter !== null) {
+    player.shuffledAfter = position
+  }
   player.isPlaying = true
   return accepted
 }

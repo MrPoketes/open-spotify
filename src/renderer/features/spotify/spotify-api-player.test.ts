@@ -108,6 +108,21 @@ describe("SpotifyApi player", () => {
     }).pipe(Effect.provide(spotifyApiFake)),
   )
 
+  // Shuffle reorders only what follows the item the user chose, so component
+  // tests that play a track with shuffle on still hear that track.
+  it.effect("starts at the chosen item while shuffle is on", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+      const playlistUri = "spotify:playlist:fake-playlist-late-night-drive"
+
+      yield* spotify.setShuffle(true)
+      yield* spotify.startPlayback({ contextUri: playlistUri, offset: { position: 7 } })
+      const playback = Option.getOrThrow(yield* spotify.getPlaybackState)
+
+      assert.strictEqual(playback.item?.name, fakeTrack(7).name)
+    }).pipe(Effect.provide(spotifyApiFake)),
+  )
+
   // Spotify answers a player command with 404 and this reason when no device
   // is active, which the bar explains instead of showing a generic failure.
   it.effect("fails with NoActiveDevice when a command finds no active device", () => {
