@@ -1,7 +1,6 @@
 import { Schema } from "effect"
 import { Device } from "./spotify-device"
-import { Episode } from "./spotify-episode"
-import { Track } from "./spotify-track"
+import { PlayableItem } from "./spotify-playable-item"
 
 export const RepeatMode = Schema.Literals(["off", "context", "track"])
 
@@ -35,7 +34,7 @@ export const PlaybackState = Schema.Struct({
   repeat: RepeatMode,
   actions: Schema.Struct({ disallows: Schema.optionalKey(DisallowedActions) }),
   // Null while an ad plays or when Spotify cannot say what is playing.
-  item: Schema.NullOr(Schema.Union([Track, Episode])),
+  item: Schema.NullOr(PlayableItem),
 }).pipe(
   Schema.encodeKeys({ isPlaying: "is_playing", shuffle: "shuffle_state", repeat: "repeat_state" }),
 )

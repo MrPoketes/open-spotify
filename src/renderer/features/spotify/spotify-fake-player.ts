@@ -1,14 +1,21 @@
 import { Option, Schema } from "effect"
 import type { HttpClientRequest } from "effect/http"
-import { fakeDevices, fakePlaybackState, fakeTrack } from "./spotify-fixtures"
+import { fakeDevices, fakeEpisode, fakePlaybackState, fakeTrack } from "./spotify-fixtures"
 import { RepeatMode } from "./spotify-playback-state"
+
+const fakePlayOrderStart = [fakeTrack(0), fakeTrack(1), fakeEpisode, fakeTrack(2), fakeTrack(1)]
+
+// What the fake player plays, in order: a podcast episode third and the
+// second track again fifth, so the queue holds both kinds and one item twice.
+export const fakePlayOrder = (position: number) =>
+  fakePlayOrderStart[position] ?? fakeTrack(position - 2)
 
 interface FakePlayerState {
   activeDevice: (typeof fakeDevices)[number]
   isPlaying: boolean
   shuffle: boolean
   repeat: RepeatMode
-  trackIndex: number
+  playPosition: number
 }
 
 type FakeResponse = readonly [number, unknown]
@@ -69,11 +76,11 @@ const playerCommands: Record<string, (player: FakePlayerState, url: URL) => Fake
     return accepted
   },
   "POST /v1/me/player/next": (player) => {
-    player.trackIndex += 1
+    player.playPosition += 1
     return accepted
   },
   "POST /v1/me/player/previous": (player) => {
-    player.trackIndex = Math.max(0, player.trackIndex - 1)
+    player.playPosition = Math.max(0, player.playPosition - 1)
     return accepted
   },
   "PUT /v1/me/player/shuffle": withState(ShuffleState, (player, state) => {
@@ -89,7 +96,16 @@ const playbackState = (player: FakePlayerState) => ({
   is_playing: player.isPlaying,
   shuffle_state: player.shuffle,
   repeat_state: player.repeat,
-  item: fakeTrack(player.trackIndex),
+  item: fakePlayOrder(player.playPosition),
+})
+
+const upNextCount = 10
+
+const queue = (player: FakePlayerState) => ({
+  currently_playing: fakePlayOrder(player.playPosition),
+  queue: Array.from({ length: upNextCount }, (_, offset) =>
+    fakePlayOrder(player.playPosition + 1 + offset),
+  ),
 })
 
 const availableDevices = (player: FakePlayerState) => ({
@@ -108,7 +124,7 @@ export const fakePlayer = () => {
     isPlaying: true,
     shuffle: false,
     repeat: "off",
-    trackIndex: 0,
+    playPosition: 0,
   }
 
   return (request: HttpClientRequest.HttpClientRequest, url: URL): FakeResponse | undefined => {
@@ -118,6 +134,9 @@ export const fakePlayer = () => {
     }
     if (url.pathname === "/v1/me/player/devices") {
       return [200, availableDevices(player)]
+    }
+    if (url.pathname === "/v1/me/player/queue") {
+      return [200, queue(player)]
     }
     if (url.pathname !== "/v1/me/player") {
       return undefined

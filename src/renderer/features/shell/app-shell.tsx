@@ -10,6 +10,8 @@ import { saveSetting } from "../../lib/saved-setting"
 import { PaneDivider } from "../../ui/pane-divider"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { NowPlayingBar } from "../playback/now-playing-bar"
+import { QueuePane } from "../queue/queue-pane"
+import { useQueuePane } from "../queue/use-queue-pane"
 import { TrackListDensityProvider } from "../track-list/track-list-density-provider"
 import { Sidebar } from "./sidebar"
 import { TopBar } from "./top-bar"
@@ -30,6 +32,7 @@ export function AppShell({
 }: AppShellProps) {
   const runtime = use(RendererRuntimeContext)
   const [sidebarWidth, setSidebarWidth] = useState(savedSidebarWidth)
+  const { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef } = useQueuePane()
   useHistoryShortcuts(platform)
 
   return (
@@ -54,8 +57,13 @@ export function AppShell({
               </TrackListDensityProvider>
             </main>
           </div>
+          {isQueueOpen && <QueuePane ref={queuePaneRef} onClose={closeQueue} />}
         </div>
-        <NowPlayingBar />
+        <NowPlayingBar
+          isQueueOpen={isQueueOpen}
+          onQueueToggle={toggleQueue}
+          queueButtonRef={queueButtonRef}
+        />
       </div>
     </StatusMessageProvider>
   )

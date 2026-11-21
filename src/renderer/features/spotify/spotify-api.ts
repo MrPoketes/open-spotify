@@ -24,6 +24,7 @@ import { type TimeRange, listeningHistoryRequests } from "./spotify-listening-hi
 import { Paging, streamPages } from "./spotify-paging"
 import type { PlayHistory } from "./spotify-play-history"
 import { PlaybackState, type RepeatMode } from "./spotify-playback-state"
+import { PlayerQueue } from "./spotify-player-queue"
 import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
 import { SearchResults, type SearchType, searchPageSize } from "./spotify-search"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
@@ -231,6 +232,7 @@ export class SpotifyApi extends Context.Service<
     ) => Effect.Effect<ReadonlyArray<Track>, SpotifyApiError>
     readonly getPlaybackState: Effect.Effect<Option.Option<PlaybackState>, SpotifyApiError>
     readonly getAvailableDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
+    readonly getQueue: Effect.Effect<PlayerQueue, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => Effect.Effect<void, SpotifyApiError>
     readonly play: Effect.Effect<void, SpotifyApiError>
     readonly pause: Effect.Effect<void, SpotifyApiError>
@@ -323,6 +325,7 @@ export class SpotifyApi extends Context.Service<
         getAvailableDevices: getJson(`${playerUrl}/devices`, AvailableDevices).pipe(
           Effect.map(({ devices }) => devices),
         ),
+        getQueue: getJson(`${playerUrl}/queue`, PlayerQueue),
         ...playerCommands((request) => send(request).pipe(Effect.asVoid)),
       })
     }),

@@ -12,7 +12,11 @@ import { NowPlayingBar } from "./now-playing-bar"
 const renderNowPlayingBar = (spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake) => {
   render(
     <RendererRuntimeContext value={fakeRendererRuntime({ spotifyApi })}>
-      <NowPlayingBar />
+      <NowPlayingBar
+        isQueueOpen={false}
+        onQueueToggle={() => undefined}
+        queueButtonRef={{ current: null }}
+      />
     </RendererRuntimeContext>,
   )
 }

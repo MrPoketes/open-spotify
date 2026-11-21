@@ -25,7 +25,7 @@ export function DevicePicker({ deviceLabel, isOpen, onOpenChange }: DevicePicker
   const close = useCallback(() => onOpenChange(false), [onOpenChange])
 
   return (
-    <div ref={pickerRef} className="relative ml-auto">
+    <div ref={pickerRef} className="relative">
       <button
         ref={buttonRef}
         type="button"

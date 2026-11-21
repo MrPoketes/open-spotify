@@ -213,8 +213,9 @@ Pins are the `pinnedLibraryEntries` setting and the section order and states are
 ### Now-playing bar and device picker
 
 The bar has three columns: what is playing on the left, the playback controls in the middle,
-and the device picker on the right. The left column shows 40 px artwork, as in library rows,
-then the title in `text-sm` and the artists in `text-xs` `muted`.
+and the queue button and device picker on the right. The left column shows 40 px artwork, as in
+library rows, then the title in `text-sm` and the artists in `text-xs` `muted` ("Podcast
+episode" for an episode).
 
 The controls are, in order: shuffle, previous, play or pause, next, repeat. They are 32 px
 round icon buttons; play or pause is `accent` with `on-accent` icons, and the others are
@@ -231,10 +232,10 @@ a device that other apps cannot control, or an action Spotify disallows right no
 `aria-disabled` at 50 % opacity and keeps its focus, and its `title` says why, which also
 makes it the accessible description.
 
-The bar's right end always holds the device picker button, labelled with the playing device
-("Playing on Kitchen Speaker") or "No active device". With no active device, the bar's left
-side says that audio plays in the Spotify app or on another device, next to a "Choose a device"
-button that opens the picker.
+The bar's right end holds the queue button (`ListMusic`, a toggle drawn like shuffle) and always
+the device picker button, labelled with the playing device ("Playing on Kitchen Speaker") or
+"No active device". With no active device, the bar's left side says that audio plays in the
+Spotify app or on another device, next to a "Choose a device" button that opens the picker.
 
 The picker is a non-modal popover above its button: `surface-overlay`, `shadow-overlay`,
 `rounded-large`, 320 px wide. Each device is a row with a 20 px Lucide icon for its type, the
@@ -245,6 +246,29 @@ Opening the picker moves focus into it. The active device is listed first. The d
 one tab stop, starting on the first device, and moves like any other list (see Keyboard).
 `Escape` or choosing a device closes the picker and returns focus to its button; clicking or
 tabbing outside closes it.
+
+### Queue pane
+
+The queue opens in the right pane from the bar's queue button or `Alt+Shift+Q` (`Option+Shift+Q`
+on macOS), and either one closes it again. The pane is 320 px wide; resizing it is not built
+yet. Its header holds the "Queue" heading and a close button. Opening the pane moves focus into
+it, and closing it while focus is inside returns focus to the queue button.
+
+The pane shows a "Now playing" section with the playing item and a "Next up" list, both in the
+now-playing bar's layout: 40 px artwork, the title, and the artists or "Podcast episode". Each
+upcoming item is a row button, and the list is one tab stop with roving focus. Pressing a row
+plays that item. Spotify has no endpoint for that, so the app reads the queue again, finds the
+item, and skips to the next item once for every item before it; if the item has left the queue,
+an alert under the list says so. A row points into the list it was shown in, so from the moment
+a row is pressed until the queue read after that press arrives, the list ignores presses and is
+`aria-busy`. A double-click therefore plays the item once. When the new list arrives, focus goes
+to the row at the pressed row's position (or the last row, if the list got shorter), because the
+pressed row has moved to "Now playing". Spotify cannot remove or reorder queued items, so the
+pane offers neither.
+
+The queue is read again whenever the playing item changes and after every press; after a shuffle
+change, "Next up" keeps the old order until the next track (ARM-87). With no active device the
+pane asks the user to choose one in the bar, and a queue with nothing in it says so.
 
 ### Settings and the theme picker
 

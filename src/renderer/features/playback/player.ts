@@ -1,8 +1,9 @@
-import { Clock, Context, Effect, Layer, Option, PubSub, Ref, Stream } from "effect"
+import { Clock, Context, Effect, Layer, Option, PubSub, Ref, Schema, Stream } from "effect"
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { Device } from "../spotify/spotify-device"
 import type { PlaybackState, RepeatMode } from "../spotify/spotify-playback-state"
 import { makePendingPlaybackChanges } from "./pending-playback-changes"
+import { type QueuedItem, positionInQueue } from "./queued-item"
 
 export type PlayerState =
   | { readonly status: "active"; readonly playback: PlaybackState }
@@ -10,6 +11,8 @@ export type PlayerState =
   | { readonly status: "unreachable" }
 
 type PlayerCommand = Effect.Effect<void, SpotifyApiError>
+
+export class QueuedItemGone extends Schema.TaggedError<QueuedItemGone>()("QueuedItemGone", {}) {}
 
 // Spotify rate-limits each Client ID over a rolling 30-second window, and all
 // users of a development-mode Client ID share it.
@@ -44,12 +47,19 @@ export class Player extends Context.Service<
   Player,
   {
     readonly state: Stream.Stream<PlayerState>
+    // Emits after each attempt to play a queued item. Playing a later copy of
+    // the item that is playing moves the queue on without changing the
+    // playback state, so a queue on screen cannot rely on the state alone.
+    readonly queueChanges: Stream.Stream<void>
     readonly listDevices: Effect.Effect<ReadonlyArray<Device>, SpotifyApiError>
     readonly transferPlayback: (deviceId: string) => PlayerCommand
     readonly play: PlayerCommand
     readonly pause: PlayerCommand
     readonly skipToNext: PlayerCommand
     readonly skipToPrevious: PlayerCommand
+    readonly playQueuedItem: (
+      queuedItem: QueuedItem,
+    ) => Effect.Effect<void, SpotifyApiError | QueuedItemGone>
     readonly setShuffle: (isOn: boolean) => PlayerCommand
     readonly setRepeat: (mode: RepeatMode) => PlayerCommand
   }
@@ -59,6 +69,7 @@ export class Player extends Context.Service<
     Effect.gen(function* () {
       const spotify = yield* SpotifyApi
       const refreshRequests = yield* PubSub.unbounded<void>()
+      const queueChanges = yield* PubSub.unbounded<void>()
       const pendingChanges = yield* makePendingPlaybackChanges
       const polledState = yield* Ref.make(Option.none<PlayerState>())
 
@@ -113,12 +124,31 @@ export class Player extends Context.Service<
 
       return Player.of({
         state,
+        queueChanges: Stream.fromPubSub(queueChanges),
         listDevices: spotify.getAvailableDevices,
         transferPlayback: (deviceId) => sendThenRefresh(spotify.transferPlayback(deviceId)),
         play: pendingChanges.showWhileSending({ isPlaying: true }, send(spotify.play)),
         pause: pendingChanges.showWhileSending({ isPlaying: false }, send(spotify.pause)),
         skipToNext: sendThenRefresh(spotify.skipToNext),
         skipToPrevious: sendThenRefresh(spotify.skipToPrevious),
+        playQueuedItem: (queuedItem) =>
+          Effect.gen(function* () {
+            // The queue on screen can be out of date, so the item is looked
+            // up in a fresh copy.
+            const { upNext } = yield* spotify.getQueue
+            const position = positionInQueue(upNext, queuedItem)
+            if (Option.isNone(position)) {
+              return yield* new QueuedItemGone()
+            }
+            // Spotify has no endpoint that plays an item from the queue, so
+            // the player skips past every item before it, one request each.
+            return yield* spotify.skipToNext.pipe(
+              Effect.replicateEffect(position.value + 1, { discard: true }),
+            )
+          }).pipe(
+            Effect.ensuring(refresh),
+            Effect.ensuring(PubSub.publish(queueChanges, undefined)),
+          ),
         setShuffle: (isOn) =>
           pendingChanges.showWhileSending({ shuffle: isOn }, send(spotify.setShuffle(isOn))),
         setRepeat: (mode) =>

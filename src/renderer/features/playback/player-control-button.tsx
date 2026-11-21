@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react"
+import type { Ref } from "react"
 
 interface PlayerControlButtonProps {
   readonly label: string
@@ -9,6 +10,7 @@ interface PlayerControlButtonProps {
   // Set only on toggles, such as shuffle.
   readonly isOn?: boolean
   readonly isPrimary?: boolean
+  readonly ref?: Ref<HTMLButtonElement>
 }
 
 const appearance = (isOn: boolean | undefined, isPrimary: boolean | undefined) => {
@@ -31,10 +33,12 @@ export function PlayerControlButton({
   onPress,
   isOn,
   isPrimary,
+  ref,
 }: PlayerControlButtonProps) {
   const isUnavailable = unavailableReason !== null
   return (
     <button
+      ref={ref}
       type="button"
       aria-label={label}
       title={unavailableReason ?? label}

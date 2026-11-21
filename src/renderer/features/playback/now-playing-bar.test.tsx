@@ -26,7 +26,11 @@ const noActiveDevice = { getPlaybackState: Effect.succeedNone }
 const renderNowPlayingBar = (spotifyApi: Layer.Layer<SpotifyApi> = SpotifyApi.layerFake) => {
   render(
     <RendererRuntimeContext value={fakeRendererRuntime({ spotifyApi })}>
-      <NowPlayingBar />
+      <NowPlayingBar
+        isQueueOpen={false}
+        onQueueToggle={() => undefined}
+        queueButtonRef={{ current: null }}
+      />
     </RendererRuntimeContext>,
   )
 }

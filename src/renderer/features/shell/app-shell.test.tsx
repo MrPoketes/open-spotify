@@ -188,6 +188,30 @@ describe("AppShell", () => {
     expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument()
   })
 
+  it("opens the queue from the now-playing bar and moves focus into it", async () => {
+    await renderAppShell()
+
+    await userEvent.click(await screen.findByRole("button", { name: "Queue" }))
+
+    const queuePane = screen.getByRole("complementary", { name: "Queue" })
+    expect(queuePane).toHaveFocus()
+    expect(screen.getByRole("button", { name: "Queue" })).toHaveAttribute("aria-pressed", "true")
+  })
+
+  // Closing the pane removes the element that had focus, which would drop
+  // keyboard users back at the start of the page.
+  it("toggles the queue with Alt+Shift+Q and returns focus to the queue button", async () => {
+    await renderAppShell()
+
+    await userEvent.keyboard("{Alt>}{Shift>}Q{/Shift}{/Alt}")
+    const queuePane = screen.getByRole("complementary", { name: "Queue" })
+    expect(queuePane).toHaveFocus()
+    await userEvent.keyboard("{Alt>}{Shift>}Q{/Shift}{/Alt}")
+
+    expect(screen.queryByRole("complementary", { name: "Queue" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Queue" })).toHaveFocus()
+  })
+
   it("goes back when the mouse's back button is released", async () => {
     await renderAppShell()
 

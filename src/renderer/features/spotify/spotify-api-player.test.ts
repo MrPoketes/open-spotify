@@ -32,6 +32,24 @@ describe("SpotifyApi player", () => {
     }).pipe(Effect.provide(SpotifyApi.layerFake)),
   )
 
+  it.effect("decodes a queue that holds both tracks and podcast episodes", () =>
+    Effect.gen(function* () {
+      const spotify = yield* SpotifyApi
+
+      const { currentlyPlaying, upNext } = yield* spotify.getQueue
+
+      assert.strictEqual(currentlyPlaying?.name, fakePlayingTrack.name)
+      assert.deepStrictEqual(
+        upNext.slice(0, 3).map(({ type, name }) => [type, name]),
+        [
+          ["track", fakeTrack(1).name],
+          ["episode", fakeEpisode.name],
+          ["track", fakeTrack(2).name],
+        ],
+      )
+    }).pipe(Effect.provide(SpotifyApi.layerFake)),
+  )
+
   it.effect("moves playback to the device it transfers to", () =>
     Effect.gen(function* () {
       const spotify = yield* SpotifyApi
