@@ -4,7 +4,7 @@ import { Player, type PlayerState } from "./player"
 
 export type PlayerStateOrLoading = { readonly status: "loading" } | PlayerState
 
-const playerStates = Stream.unwrap(
+export const playerStates = Stream.unwrap(
   Effect.gen(function* () {
     const player = yield* Player
     return player.state
