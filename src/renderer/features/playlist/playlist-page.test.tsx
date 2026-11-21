@@ -158,13 +158,13 @@ describe("PlaylistPage", () => {
   it("plays a double-clicked track within the playlist and marks its row as playing", async () => {
     await renderPlaylistPage("fake-playlist-late-night-drive")
     const firstRow = await screen.findByRole("row", { name: "Quiet Rivers by Northbound Static" })
-    await within(firstRow).findByText("Playing")
+    await waitFor(() => expect(firstRow).toHaveAccessibleDescription("Playing"))
     const fifthRow = screen.getByRole("row", { name: "Restless Rivers by Kite Theory" })
 
     await userEvent.dblClick(fifthRow)
 
-    expect(await within(fifthRow).findByText("Playing")).toBeInTheDocument()
-    expect(within(firstRow).queryByText("Playing")).toBeNull()
+    await waitFor(() => expect(fifthRow).toHaveAccessibleDescription("Playing"))
+    expect(firstRow).toHaveAccessibleDescription("")
     expect(screen.getByRole("button", { name: "Pause Late Night Drive" })).toBeInTheDocument()
   })
 
@@ -177,7 +177,7 @@ describe("PlaylistPage", () => {
     await user.keyboard("{ArrowDown}{Enter}")
 
     const secondRow = screen.getByRole("row", { name: "Electric Rivers by Lena Varga" })
-    expect(await within(secondRow).findByText("Playing")).toBeInTheDocument()
+    await waitFor(() => expect(secondRow).toHaveAccessibleDescription("Playing"))
   })
 
   it("starts the playlist from its play button, and pauses it from the same button", async () => {
@@ -188,7 +188,7 @@ describe("PlaylistPage", () => {
 
     expect(await screen.findByRole("button", { name: "Play Late Night Drive" })).toBeInTheDocument()
     const firstRow = screen.getByRole("row", { name: "Quiet Rivers by Northbound Static" })
-    expect(within(firstRow).getByText("Playing")).toBeInTheDocument()
+    expect(firstRow).toHaveAccessibleDescription("Playing")
   })
 
   // Tab must leave a long list after one row, not walk every link in it.

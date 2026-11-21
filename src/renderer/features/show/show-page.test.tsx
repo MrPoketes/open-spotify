@@ -110,7 +110,7 @@ describe("ShowPage", () => {
 
     await userEvent.dblClick(thirdEpisode)
 
-    expect(await within(thirdEpisode).findByText("Playing")).toBeInTheDocument()
+    await waitFor(() => expect(thirdEpisode).toHaveAccessibleDescription("Playing"))
     expect(screen.getByRole("button", { name: "Pause Slow Science" })).toBeInTheDocument()
   })
 
@@ -121,7 +121,7 @@ describe("ShowPage", () => {
     await tabToEpisodes()
     await userEvent.keyboard("{j}{Enter}")
 
-    expect(await within(secondEpisode).findByText("Playing")).toBeInTheDocument()
+    await waitFor(() => expect(secondEpisode).toHaveAccessibleDescription("Playing"))
   })
 
   it("moves between episodes with the arrow keys and j and k", async () => {

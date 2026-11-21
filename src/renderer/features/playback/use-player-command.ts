@@ -6,10 +6,12 @@ import { Player, type QueuedItemGone } from "./player"
 
 type PlayerCommandError = SpotifyApiError | QueuedItemGone
 
+export const noActiveDeviceFailure = "No device is playing. Choose a device, then try again."
+
 // Failures the user can fix or understand, said the same way whichever
 // command hit them.
 const failuresByTag: Partial<Record<PlayerCommandError["_tag"], string>> = {
-  NoActiveDevice: "No device is playing. Choose a device, then try again.",
+  NoActiveDevice: noActiveDeviceFailure,
   QueuedItemGone: "That item is no longer in the queue.",
 }
 

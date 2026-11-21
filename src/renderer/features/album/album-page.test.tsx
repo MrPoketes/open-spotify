@@ -108,11 +108,11 @@ describe("AlbumPage", () => {
 
     await userEvent.dblClick(track)
 
-    expect(await within(track).findByText("Playing")).toBeInTheDocument()
+    await waitFor(() => expect(track).toHaveAccessibleDescription("Playing"))
     const sameNumberOnFirstDisc = screen.getByRole("row", {
       name: "Low Orbit, part 1.3 by Kite Theory",
     })
-    expect(within(sameNumberOnFirstDisc).queryByText("Playing")).toBeNull()
+    expect(sameNumberOnFirstDisc).toHaveAccessibleDescription("")
     expect(screen.getByRole("button", { name: "Pause Low Orbit" })).toBeInTheDocument()
   })
 

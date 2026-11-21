@@ -1,12 +1,7 @@
 import { Option, Schema } from "effect"
 import type { HttpClientRequest } from "effect/http"
-import { fakeAlbums, fakeLikedSongs, fakePlaylists, fakeShows } from "./spotify-fixtures"
-
-// An album's tracks leave out the album, which a track on its own carries.
-export const fakeTracks = [
-  ...fakeAlbums.flatMap(({ tracks, ...album }) => tracks.map((track) => ({ ...track, album }))),
-  ...fakeLikedSongs.map(({ track }) => track),
-]
+import { fakeTracks } from "./spotify-fake-tracks"
+import { fakePlaylists, fakeShows } from "./spotify-fixtures"
 
 const hasUri = Schema.is(Schema.Struct({ uri: Schema.String }))
 

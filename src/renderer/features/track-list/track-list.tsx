@@ -130,7 +130,7 @@ export function TrackList({
               index,
               tabIndex: index === tabStopIndex ? 0 : -1,
               isHighlighted: index === highlightedIndex,
-              isPlaying: playback.isPlaying(entry),
+              isCurrentItem: playback.isCurrentItem(entry),
               offset: start - rowsOffset,
               onFocus: () => rowFocus.setFocusedIndex(index),
               onKeyDown: rowFocus.onKeyDown,

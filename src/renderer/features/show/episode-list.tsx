@@ -56,7 +56,7 @@ export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
             <li key={episode.id}>
               <EpisodeRow
                 episode={episode}
-                isPlaying={episode.id === playingItemId}
+                isCurrentItem={episode.id === playingItemId}
                 rovingProps={rowProps(index)}
                 onPlay={() => playEpisode(episode)}
               />
