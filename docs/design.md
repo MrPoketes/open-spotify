@@ -623,21 +623,21 @@ changes. Window shortcuts work anywhere in the window; row shortcuts act on the 
 list, which matches its keys through the same registry. Where Windows and Linux use Ctrl and
 Alt, macOS uses Cmd and Option.
 
-| Windows and Linux    | macOS               | Action                                  |
-| -------------------- | ------------------- | --------------------------------------- |
-| `Space`              | `Space`             | Play or pause                           |
-| `Ctrl+→` / `Ctrl+←`  | `Cmd+→` / `Cmd+←`   | Next / previous track                   |
-| `Ctrl+S`             | `Cmd+S`             | Turn shuffle on or off                  |
-| `Ctrl+L`             | `Cmd+L`             | Change repeat (off, the context, track) |
-| `Ctrl+Shift+→` / `←` | `Cmd+Shift+→` / `←` | Seek forward / back 5 seconds           |
-| `Ctrl+↑` / `Ctrl+↓`  | `Cmd+↑` / `Cmd+↓`   | Volume up / down by 10                  |
-| `/`                  | `/`                 | Search                                  |
-| `Alt+←` / `Alt+→`    | `Cmd+[` / `Cmd+]`   | Go back / forward                       |
-| `Alt+Shift+Q`        | `Option+Shift+Q`    | Show or hide the queue                  |
-| `?`                  | `?`                 | Show the shortcuts dialog               |
-| `P` on a row         | `P` on a row        | Pin or unpin a library entry            |
-| `F2` on a row        | `F2` on a row       | Rename a folder in the sidebar          |
-| `Delete` on a row    | `Delete` on a row   | Delete an imported theme                |
+| Windows and Linux               | macOS                         | Action                                  |
+| ------------------------------- | ----------------------------- | --------------------------------------- |
+| `Space`                         | `Space`                       | Play or pause                           |
+| `Ctrl+→` / `Ctrl+←`             | `Cmd+→` / `Cmd+←`             | Next / previous track                   |
+| `Ctrl+S`                        | `Cmd+S`                       | Turn shuffle on or off                  |
+| `Ctrl+L`                        | `Cmd+L`                       | Change repeat (off, the context, track) |
+| `Ctrl+Shift+→` / `Ctrl+Shift+←` | `Cmd+Shift+→` / `Cmd+Shift+←` | Seek forward / back 5 seconds           |
+| `Ctrl+↑` / `Ctrl+↓`             | `Cmd+↑` / `Cmd+↓`             | Volume up / down by 10                  |
+| `/`                             | `/`                           | Search                                  |
+| `Alt+←` / `Alt+→`               | `Cmd+[` / `Cmd+]`             | Go back / forward                       |
+| `Alt+Shift+Q`                   | `Option+Shift+Q`              | Show or hide the queue                  |
+| `?`                             | `?`                           | Show the shortcuts dialog               |
+| `P` on a row                    | `P` on a row                  | Pin or unpin a library entry            |
+| `F2` on a row                   | `F2` on a row                 | Rename a folder in the sidebar          |
+| `Delete` on a row               | `Delete` on a row             | Delete an imported theme                |
 
 The Mac `Delete` key is the one other keyboards label `Backspace`, since most Mac keyboards have
 no forward Delete key.

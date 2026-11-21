@@ -11,6 +11,7 @@ import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import { nowPlayingBarAlone } from "./now-playing-bar-alone"
 import { lastingMs, pausedPlaybackRecordingSeeks } from "./paused-playback-fake"
+import { seekBar, showsPosition } from "./seek-bar-queries"
 
 interface RenderOptions {
   readonly isMac?: boolean
@@ -36,14 +37,6 @@ const renderNowPlayingBar = async ({ isMac = false, spotifyApi }: RenderOptions 
 }
 
 const control = (name: string) => screen.findByRole("button", { name })
-
-const seekBarShows = (position: string) =>
-  waitFor(() =>
-    expect(screen.getByRole("slider", { name: "Playback position" })).toHaveAttribute(
-      "aria-valuetext",
-      position,
-    ),
-  )
 
 describe("playback shortcuts", () => {
   it("pauses with Space and plays again", async () => {
@@ -170,7 +163,7 @@ describe("playback shortcuts", () => {
   it("seeks forward 5 seconds with Ctrl+Shift+→ and back with Ctrl+Shift+←", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
     await renderNowPlayingBar({ spotifyApi })
-    await seekBarShows("0:42 of 2:30")
+    await showsPosition(await seekBar(), "0:42 of 2:30")
 
     await userEvent.keyboard("{Control>}{Shift>}{ArrowRight}{/Shift}{/Control}")
     await waitFor(() => expect(seekPositions).toEqual([47_000]))
@@ -184,7 +177,7 @@ describe("playback shortcuts", () => {
   it("adds up quick seek presses before Spotify reports the new position", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
     await renderNowPlayingBar({ spotifyApi })
-    await seekBarShows("0:42 of 2:30")
+    await showsPosition(await seekBar(), "0:42 of 2:30")
 
     await userEvent.keyboard(
       "{Control>}{Shift>}{ArrowRight}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
@@ -199,13 +192,29 @@ describe("playback shortcuts", () => {
       progressMs: 3_000,
     }))
     await renderNowPlayingBar({ spotifyApi })
-    await seekBarShows("0:03 of 0:07")
+    await showsPosition(await seekBar(), "0:03 of 0:07")
 
     await userEvent.keyboard(
       "{Control>}{Shift>}{ArrowLeft}{ArrowLeft}{ArrowRight}{ArrowRight}{ArrowRight}{/Shift}{/Control}",
     )
 
     await waitFor(() => expect(seekPositions).toEqual([0, 5_000, 7_000]))
+  })
+
+  it("says why and sends nothing when Spotify does not allow seeking", async () => {
+    const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks((playback) => ({
+      ...playback,
+      actions: { disallows: { seeking: true } },
+    }))
+    await renderNowPlayingBar({ spotifyApi })
+    await showsPosition(await seekBar(), "0:42 of 2:30")
+
+    await userEvent.keyboard("{Control>}{Shift>}{ArrowRight}{/Shift}{/Control}")
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Spotify doesn't allow this right now.",
+    )
+    expect(seekPositions).toEqual([])
   })
 
   // The reason is in the control's tooltip, which a keyboard user may never

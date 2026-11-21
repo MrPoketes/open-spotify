@@ -13,6 +13,7 @@ import {
   pausedPlaybackRecordingSeeks,
   pausedPlaybackWithSeek,
 } from "./paused-playback-fake"
+import { seekBar, showsPosition } from "./seek-bar-queries"
 
 const control = (name: string) => screen.findByRole("button", { name })
 
@@ -128,11 +129,6 @@ describe("NowPlayingBar controls", () => {
     expect(await seekBar()).toHaveAttribute("aria-disabled", "true")
   })
 })
-
-const seekBar = () => screen.findByRole("slider", { name: "Playback position" })
-
-const showsPosition = (slider: HTMLElement, position: string) =>
-  waitFor(() => expect(slider).toHaveAttribute("aria-valuetext", position))
 
 describe("NowPlayingBar seek bar", () => {
   it("steps with the arrow and page keys and jumps to the start and end with Home and End", async () => {

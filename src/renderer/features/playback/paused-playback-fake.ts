@@ -3,13 +3,13 @@ import type { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
 
-// Paused playback keeps the position still, so the times a test reads do not
-// move on while it runs. The fake's first track stays at 0:42 of 2:30, and
-// 2:30 divides evenly into the seek bar's page steps.
 type PlaybackChange = (playback: PlaybackState) => PlaybackState
 
 const unchanged: PlaybackChange = (playback) => playback
 
+// Paused playback keeps the position still, so the times a test reads do not
+// move on while it runs. The fake's first track stays at 0:42 of 2:30, and
+// 2:30 divides evenly into the seek bar's page steps.
 export const pausedPlaybackWithSeek = (
   seek: (spotify: SpotifyApi["Service"]) => SpotifyApi["Service"]["seek"],
   change: PlaybackChange = unchanged,
