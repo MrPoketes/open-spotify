@@ -179,7 +179,7 @@ describe("NowPlayingBar seek bar", () => {
   // before the bar renders the shortcut's seek.
   it("steps from where the last seek went before the bar shows it", async () => {
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
-    renderNowPlayingBarAlone(spotifyApi)
+    await renderNowPlayingBarAlone(spotifyApi)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
