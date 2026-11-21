@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
-import { ContextMenu, type ContextMenuItem } from "./context-menu"
+import { ContextMenu } from "./context-menu"
+import type { MenuItem } from "./menu-list"
 import { useContextMenu } from "./use-context-menu"
 
-function MenuTarget({ items }: { readonly items: ReadonlyArray<ContextMenuItem> }) {
+function MenuTarget({ items }: { readonly items: ReadonlyArray<MenuItem> }) {
   const menu = useContextMenu()
   return (
     <>
