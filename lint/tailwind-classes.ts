@@ -1,18 +1,36 @@
 import type { ESTree, Visitor } from "@oxlint/plugins"
 
+interface ParsedTailwindClass {
+  readonly className: string
+  readonly variants: ReadonlyArray<string>
+  readonly utility: string
+}
+
 // Tailwind 3 writes the important flag before the utility (`!bg-red-500`) and
 // Tailwind 4 after it (`bg-red-500!`); both still apply the class. Variants
 // are separated by top-level colons only, so colons inside an arbitrary value
-// (`font-[family-name:Inter]`) stay part of the utility.
-export function tailwindUtilityName(className: string): string {
-  const splitAt = lastTopLevelColon(className)
-  const withoutVariants = className.slice(splitAt + 1)
-  return withoutVariants.replace(/^!|!$/g, "")
+// (`font-[family-name:Inter]` or `data-[state=open]:ring-offset-2`) stay intact.
+export function tailwindClasses(text: string): ReadonlyArray<ParsedTailwindClass> {
+  const parsed: Array<ParsedTailwindClass> = []
+  for (const className of text.split(/\s+/)) {
+    if (className.length === 0) {
+      continue
+    }
+    const segments = splitOnTopLevelColons(className)
+    const rawUtility = segments.pop() ?? ""
+    parsed.push({
+      className,
+      variants: segments,
+      utility: rawUtility.replace(/^!|!$/g, ""),
+    })
+  }
+  return parsed
 }
 
-function lastTopLevelColon(className: string): number {
+function splitOnTopLevelColons(className: string): Array<string> {
+  const segments: Array<string> = []
   let bracketDepth = 0
-  let lastColon = -1
+  let start = 0
   for (let index = 0; index < className.length; index += 1) {
     const character = className[index]
     if (character === "[") {
@@ -20,14 +38,18 @@ function lastTopLevelColon(className: string): number {
     } else if (character === "]" && bracketDepth > 0) {
       bracketDepth -= 1
     } else if (character === ":" && bracketDepth === 0) {
-      lastColon = index
+      segments.push(className.slice(start, index))
+      start = index + 1
     }
   }
-  return lastColon
+  segments.push(className.slice(start))
+  return segments
 }
 
 // Interpolated expressions become a single placeholder token so dynamic
 // arbitrary values such as `rounded-[${radius}px]` stay one class name.
+export const interpolationPlaceholder = "${…}"
+
 export function stringTextVisitor(onText: (node: ESTree.Node, text: string) => void): Visitor {
   return {
     Literal(node) {
@@ -36,7 +58,7 @@ export function stringTextVisitor(onText: (node: ESTree.Node, text: string) => v
       }
     },
     TemplateLiteral(node) {
-      const text = node.quasis.map((quasi) => quasi.value.raw).join("${…}")
+      const text = node.quasis.map((quasi) => quasi.value.raw).join(interpolationPlaceholder)
       onText(node, text)
     },
   }

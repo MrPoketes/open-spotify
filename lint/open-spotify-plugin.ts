@@ -9,6 +9,7 @@ import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
 import { requireDisableReason } from "./rules/require-disable-reason.ts"
+import { requireRingOffsetColor } from "./rules/require-ring-offset-color.ts"
 
 // Project-specific lint rules. Each one exists because an agent produced the
 // pattern it forbids; see docs/agents/slop-log.md for the history.
@@ -25,5 +26,6 @@ export default definePlugin({
     "no-stale-file-references": noStaleFileReferences,
     "no-try-catch": noTryCatch,
     "require-disable-reason": requireDisableReason,
+    "require-ring-offset-color": requireRingOffsetColor,
   },
 })

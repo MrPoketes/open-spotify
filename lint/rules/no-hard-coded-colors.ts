@@ -1,6 +1,6 @@
 import { defineRule } from "@oxlint/plugins"
 import type { ESTree } from "@oxlint/plugins"
-import { stringTextVisitor, tailwindUtilityName } from "../tailwind-classes.ts"
+import { stringTextVisitor, tailwindClasses } from "../tailwind-classes.ts"
 
 // Hex colors and CSS color functions, including inside Tailwind arbitrary
 // values such as `bg-[#123456]`. The `&` lookbehind keeps HTML character
@@ -93,8 +93,8 @@ export const noHardCodedColors = defineRule({
       for (const [color] of text.matchAll(colorLiteral)) {
         context.report({ node, messageId: "colorLiteral", data: { color } })
       }
-      for (const className of text.split(/\s+/)) {
-        if (paletteClass.test(tailwindUtilityName(className))) {
+      for (const { className, utility } of tailwindClasses(text)) {
+        if (paletteClass.test(utility)) {
           context.report({ node, messageId: "paletteClass", data: { className } })
         }
       }

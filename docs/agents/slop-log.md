@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 2026-11-22 | Tailwind `ring-offset-<width>` classes falling back to hard-coded `#fff`                          | Custom rule `open-spotify/require-ring-offset-color`   |
 | 2026-11-22 | Hand-written `Effect.withSpan` calls instead of `Effect.fn("name")`                               | Custom rule `open-spotify/no-effect-with-span`         |
 | 2026-11-22 | Component tests querying or walking DOM nodes instead of using Testing Library role/label queries | Custom rule `open-spotify/no-dom-node-access`          |
 | 2026-11-22 | Tailwind arbitrary font, radius, and shadow classes that bypass the theme                         | Custom rule `open-spotify/no-arbitrary-theme-values`   |
