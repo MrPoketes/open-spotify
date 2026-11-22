@@ -3,6 +3,7 @@ import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
 import { noArbitraryThemeValues } from "./rules/no-arbitrary-theme-values.ts"
 import { noConstructedContextValues } from "./rules/no-constructed-context-values.ts"
 import { noDomNodeAccess } from "./rules/no-dom-node-access.ts"
+import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
@@ -18,6 +19,7 @@ export default definePlugin({
     "no-arbitrary-theme-values": noArbitraryThemeValues,
     "no-constructed-context-values": noConstructedContextValues,
     "no-dom-node-access": noDomNodeAccess,
+    "no-effect-with-span": noEffectWithSpan,
     "no-hard-coded-colors": noHardCodedColors,
     "no-junk-drawer-modules": noJunkDrawerModules,
     "no-stale-file-references": noStaleFileReferences,

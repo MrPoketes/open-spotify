@@ -5,6 +5,7 @@ import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
 import { noArbitraryThemeValues } from "./rules/no-arbitrary-theme-values.ts"
 import { noConstructedContextValues } from "./rules/no-constructed-context-values.ts"
 import { noDomNodeAccess } from "./rules/no-dom-node-access.ts"
+import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
@@ -29,6 +30,20 @@ ruleTester.run("no-junk-drawer-modules", noJunkDrawerModules, {
 ruleTester.run("no-try-catch", noTryCatch, {
   valid: ["Effect.tryPromise(() => fetch(url))"],
   invalid: [{ code: "try { run() } catch { recover() }", errors: 1 }],
+})
+
+ruleTester.run("no-effect-with-span", noEffectWithSpan, {
+  valid: [
+    'const get = Effect.fn("Settings.get")(function* (key) { return key })',
+    'tracer.withSpan("Settings.get")',
+    'Effect[withSpan]("Settings.get")',
+  ],
+  invalid: [
+    {
+      code: 'Effect.gen(function* () { return 1 }).pipe(Effect.withSpan("Settings.get"))',
+      errors: [{ message: 'Use Effect.fn("name") instead of Effect.withSpan.' }],
+    },
+  ],
 })
 
 ruleTester.run("require-disable-reason", requireDisableReason, {
