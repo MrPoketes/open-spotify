@@ -4,6 +4,7 @@ import { describe, it } from "vitest"
 import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
 import { noArbitraryThemeValues } from "./rules/no-arbitrary-theme-values.ts"
 import { noConstructedContextValues } from "./rules/no-constructed-context-values.ts"
+import { noDomNodeAccess } from "./rules/no-dom-node-access.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
@@ -156,5 +157,22 @@ ruleTester.run("no-constructed-context-values", noConstructedContextValues, {
       filename: "view.tsx",
       errors: 1,
     },
+  ],
+})
+
+ruleTester.run("no-dom-node-access", noDomNodeAccess, {
+  valid: [
+    'within(secondRow).queryAllByRole("presentation")',
+    {
+      code: "function Wrapper({ children }: { readonly children: ReactNode }) { return <div>{children}</div> }",
+      filename: "view.test.tsx",
+    },
+  ],
+  invalid: [
+    { code: 'secondRow.querySelectorAll("img")', errors: [{ messageId: "domNodeAccess" }] },
+    { code: 'document.getElementsByClassName("row")', errors: [{ messageId: "domNodeAccess" }] },
+    { code: "title.parentElement", errors: [{ messageId: "domNodeAccess" }] },
+    { code: "row?.firstChild", errors: [{ messageId: "domNodeAccess" }] },
+    { code: 'row["children"]', errors: [{ messageId: "domNodeAccess" }] },
   ],
 })

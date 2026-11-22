@@ -67,8 +67,11 @@ describe("ArtistPage", () => {
   it("shows the artist's name and genres", async () => {
     await renderArtistPage("fake-artist-0")
 
-    const title = await screen.findByRole("heading", { name: "Northbound Static", level: 1 })
-    expect(title.parentElement).toHaveTextContent("dream pop, shoegaze")
+    const header = await screen.findByRole("group", { name: "Northbound Static" })
+    expect(
+      within(header).getByRole("heading", { name: "Northbound Static", level: 1 }),
+    ).toBeInTheDocument()
+    expect(within(header).getByText("dream pop, shoegaze")).toBeInTheDocument()
   })
 
   it("plays the artist from the play button, and pauses them from the same button", async () => {

@@ -137,6 +137,12 @@ export default defineConfig({
       },
     },
     {
+      // Component tests check what a user can reach through the accessibility
+      // tree instead of querying or walking the DOM directly.
+      files: ["src/renderer/**/*.test.tsx"],
+      rules: { "open-spotify/no-dom-node-access": "error" },
+    },
+    {
       files: ["src/main/**", "src/preload/**", "src/shared/**"],
       rules: {
         "no-restricted-imports": [

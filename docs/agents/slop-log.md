@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 2026-11-22 | Component tests querying or walking DOM nodes instead of using Testing Library role/label queries | Custom rule `open-spotify/no-dom-node-access`          |
 | 2026-11-22 | Tailwind arbitrary font, radius, and shadow classes that bypass the theme                         | Custom rule `open-spotify/no-arbitrary-theme-values`   |
 | 2026-11-21 | Context values built anew on each render, so every track row re-rendered with the shell           | `no-constructed-context-values` rule; ARM-137 test     |
 | 2026-11-21 | Copies of the status message test query and the drop indicator check                              | Shared helpers in ARM-136; rule 9 covers new copies    |
