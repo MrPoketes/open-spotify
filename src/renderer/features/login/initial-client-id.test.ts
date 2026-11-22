@@ -5,11 +5,10 @@ import { desktopBridgeOver } from "../../lib/desktop-bridge-fakes"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { loadInitialClientId } from "./initial-client-id"
 
-const saveClientId = (clientId: string) =>
-  Effect.gen(function* () {
-    const bridge = yield* DesktopBridge
-    yield* bridge.setSetting("spotifyClientId", clientId)
-  })
+const saveClientId = Effect.fn("saveClientId")(function* (clientId: string) {
+  const bridge = yield* DesktopBridge
+  yield* bridge.setSetting("spotifyClientId", clientId)
+})
 
 describe("loadInitialClientId", () => {
   it.effect("prefers the saved Client ID over OPEN_SPOTIFY_CLIENT_ID", () =>

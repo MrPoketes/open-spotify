@@ -109,33 +109,33 @@ const isShuffleChange = (previous: Option.Option<PlayerState>, next: PlayerState
 
 type PendingPlaybackChanges = Effect.Success<typeof makePendingPlaybackChanges>
 
-const shownStateOf = (
+const shownStateOf = Effect.fn("Player.shownStateOf")(function* (
   polledState: Ref.Ref<Option.Option<PlayerState>>,
   pendingChanges: PendingPlaybackChanges,
-) =>
-  Effect.gen(function* () {
-    const latest = yield* Ref.get(polledState)
-    if (Option.isNone(latest) || latest.value.status !== "active") {
-      return latest
-    }
-    const timedPlayback = yield* pendingChanges.applyTo(latest.value)
-    return Option.some<PlayerState>({ status: "active", ...timedPlayback })
-  })
+) {
+  const latest = yield* Ref.get(polledState)
+  if (Option.isNone(latest) || latest.value.status !== "active") {
+    return latest
+  }
+  const timedPlayback = yield* pendingChanges.applyTo(latest.value)
+  return Option.some<PlayerState>({ status: "active", ...timedPlayback })
+})
 
-const positionShownBy = (shownState: Effect.Effect<Option.Option<PlayerState>>) =>
-  Effect.gen(function* () {
-    const shown = yield* shownState
-    const now = yield* Clock.currentTimeMillis
-    if (Option.isNone(shown) || shown.value.status !== "active") {
-      return null
-    }
-    const { item } = shown.value.playback
-    const progress = progressAt(shown.value, now)
-    if (item === null || progress === null) {
-      return null
-    }
-    return { itemUri: item.uri, ...progress }
-  })
+const positionShownBy = Effect.fn("Player.positionShownBy")(function* (
+  shownState: Effect.Effect<Option.Option<PlayerState>>,
+) {
+  const shown = yield* shownState
+  const now = yield* Clock.currentTimeMillis
+  if (Option.isNone(shown) || shown.value.status !== "active") {
+    return null
+  }
+  const { item } = shown.value.playback
+  const progress = progressAt(shown.value, now)
+  if (item === null || progress === null) {
+    return null
+  }
+  return { itemUri: item.uri, ...progress }
+})
 
 // A seek shows at once at the position it goes to, which Spotify reports only
 // on the next poll.
@@ -153,17 +153,16 @@ const seekCommands = (
   return {
     seek: (positionMs: number) =>
       shownPosition.pipe(Effect.flatMap((shown) => seekInItem(shown?.itemUri ?? null, positionMs))),
-    seekBy: (offsetMs: number) =>
-      Effect.gen(function* () {
-        const shown = yield* shownPosition
-        if (shown === null) {
-          return
-        }
-        const targetMs = clamp(shown.positionMs + offsetMs, 0, shown.durationMs)
-        if (targetMs !== shown.positionMs) {
-          yield* seekInItem(shown.itemUri, targetMs)
-        }
-      }),
+    seekBy: Effect.fn("Player.seekBy")(function* (offsetMs: number) {
+      const shown = yield* shownPosition
+      if (shown === null) {
+        return
+      }
+      const targetMs = clamp(shown.positionMs + offsetMs, 0, shown.durationMs)
+      if (targetMs !== shown.positionMs) {
+        yield* seekInItem(shown.itemUri, targetMs)
+      }
+    }),
   }
 }
 
