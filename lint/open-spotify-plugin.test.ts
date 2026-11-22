@@ -2,6 +2,7 @@ import path from "node:path"
 import { RuleTester } from "oxlint/plugins-dev"
 import { describe, it } from "vitest"
 import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
+import { noArbitraryThemeValues } from "./rules/no-arbitrary-theme-values.ts"
 import { noConstructedContextValues } from "./rules/no-constructed-context-values.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
@@ -88,6 +89,50 @@ ruleTester.run("no-hard-coded-colors", noHardCodedColors, {
     {
       code: "const classes = `${base} hover:text-red-500/50 !border-white`",
       errors: [{ messageId: "paletteClass" }, { messageId: "paletteClass" }],
+    },
+  ],
+})
+
+ruleTester.run("no-arbitrary-theme-values", noArbitraryThemeValues, {
+  valid: [
+    {
+      code: '<div className="font-body font-display rounded-small rounded-medium rounded-large rounded-t-medium shadow-raised shadow-overlay" />',
+      filename: "view.tsx",
+    },
+    'const classes = "rounded-full rounded-none font-normal font-semibold font-bold shadow-none inset-shadow-none drop-shadow-none text-shadow-none"',
+    'const layout = "grid-cols-[1fr_auto_1fr] transition-[opacity,translate] w-[320px] font-stretch-[50%]"',
+  ],
+  invalid: [
+    {
+      code: '<div className="rounded-[3px] hover:rounded-t-[4px] rounded-tl-[0.5rem] !rounded-ss-[6px]" />',
+      filename: "view.tsx",
+      errors: [
+        { messageId: "arbitraryRadius" },
+        { messageId: "arbitraryRadius" },
+        { messageId: "arbitraryRadius" },
+        { messageId: "arbitraryRadius" },
+      ],
+    },
+    {
+      code: "const classes = \"font-[Inter] focus:font-[family-name:Inter] font-['Open_Sans']!\"",
+      errors: [
+        { messageId: "arbitraryFont" },
+        { messageId: "arbitraryFont" },
+        { messageId: "arbitraryFont" },
+      ],
+    },
+    {
+      code: 'const classes = "shadow-[0_0_4px_black] inset-shadow-[0_1px_2px_black]/50 drop-shadow-[0_2px_4px_black] text-shadow-[0_1px_2px_black]"',
+      errors: [
+        { messageId: "arbitraryShadow" },
+        { messageId: "arbitraryShadow" },
+        { messageId: "arbitraryShadow" },
+        { messageId: "arbitraryShadow" },
+      ],
+    },
+    {
+      code: "const classes = `${base} data-[state=open]:rounded-[${radius}px]`",
+      errors: [{ messageId: "arbitraryRadius" }],
     },
   ],
 })
