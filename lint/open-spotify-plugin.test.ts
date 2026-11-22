@@ -11,6 +11,7 @@ import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
 import { requireDisableReason } from "./rules/require-disable-reason.ts"
+import { requireRingOffsetColor } from "./rules/require-ring-offset-color.ts"
 
 // These rules are the automated half of the no-slop policy. If one stops
 // reporting, slop gets merged silently, so each rule is pinned to examples.
@@ -149,6 +150,46 @@ ruleTester.run("no-arbitrary-theme-values", noArbitraryThemeValues, {
     {
       code: "const classes = `${base} data-[state=open]:rounded-[${radius}px]`",
       errors: [{ messageId: "arbitraryRadius" }],
+    },
+  ],
+})
+
+ruleTester.run("require-ring-offset-color", requireRingOffsetColor, {
+  valid: [
+    {
+      code: '<button className="ring-2 ring-offset-2 ring-offset-surface ring-focus" />',
+      filename: "view.tsx",
+    },
+    'const classes = "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised/80"',
+    'const classes = "ring-offset-canvas focus-visible:ring-offset-2"',
+    'const classes = "hover:focus-visible:ring-offset-2 focus-visible:hover:ring-offset-surface"',
+    'const classes = "ring-2 ring-focus ring-offset-0 ring-offset-[0px]"',
+  ],
+  invalid: [
+    {
+      code: '<button className="ring-2 ring-offset-2 ring-focus" />',
+      filename: "view.tsx",
+      errors: [{ messageId: "missingRingOffsetColor" }],
+    },
+    {
+      code: 'const classes = "focus-visible:ring-2 focus-visible:ring-offset-2 hover:ring-offset-surface"',
+      errors: [{ messageId: "missingRingOffsetColor" }],
+    },
+    {
+      code: 'const classes = "ring-offset-2 focus-visible:ring-offset-surface"',
+      errors: [{ messageId: "missingRingOffsetColor" }],
+    },
+    {
+      code: 'const classes = "ring-offset-2 ring-offset-white hover:ring-offset-4 hover:ring-offset-unknown"',
+      errors: [{ messageId: "missingRingOffsetColor" }, { messageId: "missingRingOffsetColor" }],
+    },
+    {
+      code: "const classes = `${base} !ring-offset-1 focus-visible:ring-offset-[3px]! data-[state=open]:ring-offset-[${width}px]`",
+      errors: [
+        { messageId: "missingRingOffsetColor" },
+        { messageId: "missingRingOffsetColor" },
+        { messageId: "missingRingOffsetColor" },
+      ],
     },
   ],
 })

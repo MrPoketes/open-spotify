@@ -135,6 +135,7 @@ export default defineConfig({
       rules: {
         "open-spotify/no-arbitrary-theme-values": "error",
         "open-spotify/no-hard-coded-colors": "error",
+        "open-spotify/require-ring-offset-color": "error",
       },
     },
     {

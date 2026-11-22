@@ -1,6 +1,6 @@
 import { defineRule } from "@oxlint/plugins"
 import type { ESTree } from "@oxlint/plugins"
-import { stringTextVisitor, tailwindUtilityName } from "../tailwind-classes.ts"
+import { stringTextVisitor, tailwindClasses } from "../tailwind-classes.ts"
 
 const arbitraryValueGroups = [
   {
@@ -38,8 +38,7 @@ export const noArbitraryThemeValues = defineRule({
   },
   create(context) {
     function reportArbitraryThemeValues(node: ESTree.Node, text: string) {
-      for (const className of text.split(/\s+/)) {
-        const utility = tailwindUtilityName(className)
+      for (const { className, utility } of tailwindClasses(text)) {
         const matchedGroup = arbitraryValueGroups.find(({ pattern }) => pattern.test(utility))
         if (matchedGroup !== undefined) {
           context.report({ node, messageId: matchedGroup.messageId, data: { className } })
