@@ -1,5 +1,6 @@
 import { definePlugin } from "@oxlint/plugins"
 import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
+import { noArbitraryThemeValues } from "./rules/no-arbitrary-theme-values.ts"
 import { noConstructedContextValues } from "./rules/no-constructed-context-values.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
@@ -13,6 +14,7 @@ export default definePlugin({
   meta: { name: "open-spotify" },
   rules: {
     "descriptive-test-names": descriptiveTestNames,
+    "no-arbitrary-theme-values": noArbitraryThemeValues,
     "no-constructed-context-values": noConstructedContextValues,
     "no-hard-coded-colors": noHardCodedColors,
     "no-junk-drawer-modules": noJunkDrawerModules,

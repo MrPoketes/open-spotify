@@ -129,9 +129,12 @@ export default defineConfig({
     },
     {
       // A theme restyles only what reads a theme token, so renderer code takes
-      // every color from the theme tokens in src/shared/theme.ts.
+      // every color, font, radius, and shadow from the theme tokens in src/shared/theme.ts.
       files: ["src/renderer/**"],
-      rules: { "open-spotify/no-hard-coded-colors": "error" },
+      rules: {
+        "open-spotify/no-arbitrary-theme-values": "error",
+        "open-spotify/no-hard-coded-colors": "error",
+      },
     },
     {
       files: ["src/main/**", "src/preload/**", "src/shared/**"],

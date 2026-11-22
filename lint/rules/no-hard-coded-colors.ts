@@ -1,5 +1,6 @@
 import { defineRule } from "@oxlint/plugins"
 import type { ESTree } from "@oxlint/plugins"
+import { stringTextVisitor, tailwindUtilityName } from "../tailwind-classes.ts"
 
 // Hex colors and CSS color functions, including inside Tailwind arbitrary
 // values such as `bg-[#123456]`. The `&` lookbehind keeps HTML character
@@ -93,27 +94,11 @@ export const noHardCodedColors = defineRule({
         context.report({ node, messageId: "colorLiteral", data: { color } })
       }
       for (const className of text.split(/\s+/)) {
-        if (paletteClass.test(utilityName(className))) {
+        if (paletteClass.test(tailwindUtilityName(className))) {
           context.report({ node, messageId: "paletteClass", data: { className } })
         }
       }
     }
-    return {
-      Literal(node) {
-        if (typeof node.value === "string") {
-          reportHardCodedColors(node, node.value)
-        }
-      },
-      TemplateElement(node) {
-        reportHardCodedColors(node, node.value.raw)
-      },
-    }
+    return stringTextVisitor(reportHardCodedColors)
   },
 })
-
-// Tailwind 3 writes the important flag before the utility (`!bg-red-500`)
-// and Tailwind 4 after it (`bg-red-500!`); both still apply the class.
-function utilityName(className: string): string {
-  const withoutVariants = className.slice(className.lastIndexOf(":") + 1)
-  return withoutVariants.replaceAll("!", "")
-}
