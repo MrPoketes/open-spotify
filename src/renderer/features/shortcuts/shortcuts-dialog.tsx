@@ -4,6 +4,7 @@ import { IconButton } from "../../ui/icon-button"
 import { IsMacContext } from "./is-mac-context"
 import { keyComboLabels } from "./key-combo"
 import {
+  type KeyboardShortcut,
   rowShortcuts,
   type ShortcutGroupName,
   shortcutGroups,
@@ -19,6 +20,32 @@ interface ShortcutGroupProps {
   readonly isMac: boolean
 }
 
+interface ShortcutEntryProps {
+  readonly shortcut: KeyboardShortcut
+  readonly isMac: boolean
+}
+
+function ShortcutEntry({ shortcut, isMac }: ShortcutEntryProps) {
+  const termId = useId()
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <dt id={termId} className="text-sm">
+        {shortcut.description}
+      </dt>
+      <dd aria-labelledby={termId} className="flex gap-1">
+        {keyComboLabels(shortcutKeys(shortcut, isMac), isMac).map((label) => (
+          <kbd
+            key={label}
+            className="min-w-6 rounded-small bg-surface-raised px-2 text-center text-xs font-semibold"
+          >
+            {label}
+          </kbd>
+        ))}
+      </dd>
+    </div>
+  )
+}
+
 function ShortcutGroup({ group, isMac }: ShortcutGroupProps) {
   const shortcuts = allShortcuts.filter((shortcut) => shortcut.group === group)
   return (
@@ -26,19 +53,7 @@ function ShortcutGroup({ group, isMac }: ShortcutGroupProps) {
       <h3 className="text-sm font-semibold text-muted">{group}</h3>
       <dl className="flex flex-col gap-2">
         {shortcuts.map((shortcut) => (
-          <div key={shortcut.description} className="flex items-center justify-between gap-4">
-            <dt className="text-sm">{shortcut.description}</dt>
-            <dd className="flex gap-1">
-              {keyComboLabels(shortcutKeys(shortcut, isMac), isMac).map((label) => (
-                <kbd
-                  key={label}
-                  className="min-w-6 rounded-small bg-surface-raised px-2 text-center text-xs font-semibold"
-                >
-                  {label}
-                </kbd>
-              ))}
-            </dd>
-          </div>
+          <ShortcutEntry key={shortcut.description} shortcut={shortcut} isMac={isMac} />
         ))}
       </dl>
     </section>

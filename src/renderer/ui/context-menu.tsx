@@ -48,18 +48,14 @@ export function ContextMenu({ label, items, anchor, onClose }: ContextMenuProps)
   useCloseWhenOpenerScrolls(anchor.opener, closeAndFocusOpener)
 
   return createPortal(
-    // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- The wrapper only stops a right-click inside the menu from reopening it; the menu inside handles every interaction.
-    <div
+    <MenuList
+      label={label}
+      items={items}
+      closeAll={closeAndFocusOpener}
+      tabReturnsToOpener
+      position={{ left: anchor.x, top: anchor.y }}
       onBlur={closeWhenFocusLeaves(onClose)}
-      onContextMenu={(event) => {
-        event.preventDefault()
-        event.stopPropagation()
-      }}
-      style={{ position: "fixed", left: anchor.x, top: anchor.y }}
-      className="z-20"
-    >
-      <MenuList label={label} items={items} closeAll={closeAndFocusOpener} tabReturnsToOpener />
-    </div>,
+    />,
     document.body,
   )
 }

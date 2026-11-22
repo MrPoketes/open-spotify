@@ -100,7 +100,7 @@ describe("ContextMenu", () => {
 
     await userEvent.pointer({ keys: "[MouseRight]", target, coords: { clientX: 40, clientY: 60 } })
 
-    expect(screen.getByRole("menu").parentElement).toHaveStyle({ left: "40px", top: "60px" })
+    expect(screen.getByRole("menu")).toHaveStyle({ left: "40px", top: "60px" })
     expect(menuItem("First")).toHaveFocus()
   })
 

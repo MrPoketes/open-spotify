@@ -17,7 +17,7 @@ const openShortcutsDialog = async (isMac: boolean) => {
 
 // The keys listed beside a shortcut's description.
 const keysFor = (dialog: HTMLElement, description: string) =>
-  within(dialog).getByText(description).nextElementSibling
+  within(dialog).getByRole("definition", { name: description })
 
 describe("ShortcutsDialog", () => {
   it("lists every shortcut when ? is pressed", async () => {

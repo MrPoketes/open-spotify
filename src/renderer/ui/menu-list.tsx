@@ -1,6 +1,9 @@
 import { Check, ChevronRight } from "lucide-react"
 import {
+  type CSSProperties,
+  type FocusEvent,
   type KeyboardEvent,
+  type MouseEvent,
   type Ref,
   type RefObject,
   useLayoutEffect,
@@ -63,6 +66,22 @@ function useShiftIntoWindow(menuRef: RefObject<HTMLElement | null>) {
 const scrollClassNames = (items: ReadonlyArray<MenuItem>) =>
   items.some(isSubmenu) ? "" : "max-h-[calc(100dvh-1rem)] overflow-y-auto"
 
+interface MenuPosition {
+  readonly left: number
+  readonly top: number
+}
+
+const menuStyle = (
+  position: MenuPosition | undefined,
+  shift: { readonly marginLeft: number; readonly marginTop: number },
+): CSSProperties => (position === undefined ? shift : { position: "fixed", ...position, ...shift })
+
+// Right-clicking inside a context menu must not reopen it underneath the pointer.
+const preventContextMenu = (event: MouseEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+}
+
 interface MenuListProps {
   readonly label: string
   readonly items: ReadonlyArray<MenuItem>
@@ -75,6 +94,10 @@ interface MenuListProps {
   readonly tabReturnsToOpener?: boolean
   // Only a submenu has an item to go back to.
   readonly backToParent?: () => void
+  // Set by a portalled context menu, which pins the menu to the pointer and
+  // catches its own blur.
+  readonly position?: MenuPosition
+  readonly onBlur?: (event: FocusEvent) => void
 }
 
 // Follows the WAI-ARIA menu pattern: arrow keys move between items and in
@@ -87,6 +110,8 @@ export function MenuList({
   focusOnOpen = "first",
   tabReturnsToOpener = false,
   backToParent,
+  position,
+  onBlur,
 }: MenuListProps) {
   const menuRef = useRef<HTMLUListElement>(null)
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([])
@@ -104,30 +129,13 @@ export function MenuList({
     item.onSelect()
   }
 
-  const onKeyDown = (event: KeyboardEvent) => {
-    // App-wide shortcuts listen on the window, so they must get past the menu.
-    if (hasShortcutModifier(event)) return
-    // A submenu sits inside its parent menu, and the whole menu sits inside
-    // the element that opened it in the React tree. Neither may act on a key
-    // meant for this menu.
-    event.stopPropagation()
-    const focusedIndex = itemRefs.current.findIndex((item) => item === document.activeElement)
-    const targetIndex = menuItemTargetForKey(event.key, focusedIndex, items.length)
-    if (targetIndex !== undefined) {
-      event.preventDefault()
-      itemRefs.current[targetIndex]?.focus()
-      return
-    }
-    const focusedItem = items[focusedIndex]
-    if (event.key === "ArrowRight" && focusedItem !== undefined && isSubmenu(focusedItem)) {
-      event.preventDefault()
-      setOpenSubmenuIndex(focusedIndex)
-      return
-    }
-    if (closeWithKey(event, { closeAll, tabReturnsToOpener, backToParent })) {
-      event.preventDefault()
-    }
-  }
+  const onKeyDown = (event: KeyboardEvent) =>
+    applyMenuKey(event, {
+      items,
+      itemRefs,
+      openSubmenu: setOpenSubmenuIndex,
+      closeActions: { closeAll, tabReturnsToOpener, backToParent },
+    })
 
   const backToItem = (index: number) => () => {
     setOpenSubmenuIndex(null)
@@ -142,9 +150,11 @@ export function MenuList({
       aria-label={label}
       // Clicking the menu's padding must not move focus out and close it.
       tabIndex={-1}
+      onBlur={onBlur}
+      onContextMenu={position === undefined ? undefined : preventContextMenu}
       onKeyDown={onKeyDown}
-      style={shift}
-      className={`flex min-w-48 flex-col rounded-large bg-surface-overlay p-1 shadow-overlay transition-[opacity,translate] duration-200 ease-out starting:-translate-y-2 starting:opacity-0 ${scrollClassNames(items)}`}
+      style={menuStyle(position, shift)}
+      className={`${position === undefined ? "" : "z-20 "}flex min-w-48 flex-col rounded-large bg-surface-overlay p-1 shadow-overlay transition-[opacity,translate] duration-200 ease-out starting:-translate-y-2 starting:opacity-0 ${scrollClassNames(items)}`}
     >
       {items.map((item, index) => (
         <li key={menuItemKey(item)} role="none" className="relative">
@@ -225,6 +235,40 @@ interface CloseActions {
   readonly closeAll: () => void
   readonly tabReturnsToOpener: boolean
   readonly backToParent: (() => void) | undefined
+}
+
+interface MenuNavigation {
+  readonly items: ReadonlyArray<MenuItem>
+  readonly itemRefs: RefObject<Array<HTMLButtonElement | null>>
+  readonly openSubmenu: (index: number) => void
+  readonly closeActions: CloseActions
+}
+
+function applyMenuKey(event: KeyboardEvent, navigation: MenuNavigation) {
+  // App-wide shortcuts listen on the window, so they must get past the menu.
+  if (hasShortcutModifier(event)) return
+  // A submenu sits inside its parent menu, and the whole menu sits inside
+  // the element that opened it in the React tree. Neither may act on a key
+  // meant for this menu.
+  event.stopPropagation()
+  const focusedIndex = navigation.itemRefs.current.findIndex(
+    (item) => item === document.activeElement,
+  )
+  const targetIndex = menuItemTargetForKey(event.key, focusedIndex, navigation.items.length)
+  if (targetIndex !== undefined) {
+    event.preventDefault()
+    navigation.itemRefs.current[targetIndex]?.focus()
+    return
+  }
+  const focusedItem = navigation.items[focusedIndex]
+  if (event.key === "ArrowRight" && focusedItem !== undefined && isSubmenu(focusedItem)) {
+    event.preventDefault()
+    navigation.openSubmenu(focusedIndex)
+    return
+  }
+  if (closeWithKey(event, navigation.closeActions)) {
+    event.preventDefault()
+  }
 }
 
 // Escape and the left arrow close a submenu and go back to its item; Escape

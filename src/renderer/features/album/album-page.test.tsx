@@ -20,11 +20,7 @@ const renderAlbumPage = (albumId: string, spotifyApi?: Layer.Layer<SpotifyApi>) 
     spotifyApi,
   )
 
-// The lines under the title sit beside it, in the element that holds both.
-const albumHeader = async (albumName: string) => {
-  const title = await screen.findByRole("heading", { name: albumName, level: 1 })
-  return title.parentElement ?? title
-}
+const albumHeader = (albumName: string) => screen.findByRole("group", { name: albumName })
 
 const spotifyFailingFirstAlbumRequest = spotifyApiFakeWith((spotify) => {
   const failFirst = failingFirstTime()
@@ -36,6 +32,9 @@ describe("AlbumPage", () => {
     await renderAlbumPage("fake-album-0")
 
     const header = await albumHeader("Glass Harbour")
+    expect(
+      within(header).getByRole("heading", { name: "Glass Harbour", level: 1 }),
+    ).toBeInTheDocument()
     expect(header).toHaveTextContent("Northbound Static · 2019 · 10 tracks · 30 min")
   })
 
