@@ -105,10 +105,11 @@ writing Effect code, and grep `node_modules/effect/dist/*.d.ts` when unsure.
 
 - Define services with `Context.Service` and give them a static `layer`. See
   `DesktopBridge` for the house style.
-- Define errors with `Schema.TaggedError`. Never `throw`, never `try`/`catch` (lint enforces
-  the second). Use `Effect.try` / `Effect.tryPromise` at the boundary with a tagged error. The
-  one exception is `throw redirect(...)` in a route's `beforeLoad`, which TanStack Router
-  requires (see `src/renderer/features/login/require-login.ts`).
+- Define errors with `Schema.TaggedError`. Never `throw` errors, never use `try`/`catch` (lint
+  enforces both). Use `Effect.try` / `Effect.tryPromise` at the boundary with a tagged error. The
+  only exception is TanStack Router route control flow (`throw redirect(...)` and
+  `throw notFound(...)` imported from `@tanstack/react-router`), which the router requires (see
+  `src/renderer/features/login/require-login.ts`); errors are never thrown.
 - Use `Effect.fn("name")` for reusable effectful functions and `Effect.gen` inline.
 - Access a service with `const x = yield* Service` inside `Effect.gen`. Do not use
   `Service.use(...)`: the React hooks lint rule mistakes it for a hook.

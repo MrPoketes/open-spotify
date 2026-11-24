@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-11-24 | `throw` statements bypassing typed Effect errors (unchecked by lint)                              | Custom rule `open-spotify/no-throw`                         |
 | 2026-11-24 | Component tests using `fireEvent` instead of interacting through `user-event`                     | Built-in `no-restricted-imports` rule in `oxlint.config.ts` |
 | 2026-11-24 | Fallible promises wrapped in `Effect.promise`, turning rejections into untyped defects            | Custom rule `open-spotify/no-effect-promise`                |
 | 2026-11-22 | Parameterised functions wrapping `Effect.gen` instead of `Effect.fn("name")`                      | Custom rule `open-spotify/require-effect-fn`                |

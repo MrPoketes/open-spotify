@@ -8,6 +8,7 @@ import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
+import { noThrow } from "./rules/no-throw.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
 import { requireDisableReason } from "./rules/require-disable-reason.ts"
 import { requireEffectFn } from "./rules/require-effect-fn.ts"
@@ -27,6 +28,7 @@ export default definePlugin({
     "no-hard-coded-colors": noHardCodedColors,
     "no-junk-drawer-modules": noJunkDrawerModules,
     "no-stale-file-references": noStaleFileReferences,
+    "no-throw": noThrow,
     "no-try-catch": noTryCatch,
     "require-disable-reason": requireDisableReason,
     "require-effect-fn": requireEffectFn,

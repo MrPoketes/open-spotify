@@ -88,6 +88,7 @@ export default defineConfig({
     "open-spotify/no-effect-with-span": "error",
     "open-spotify/no-junk-drawer-modules": "error",
     "open-spotify/no-stale-file-references": "error",
+    "open-spotify/no-throw": "error",
     "open-spotify/no-try-catch": "error",
     "open-spotify/require-disable-reason": "error",
     "open-spotify/require-effect-fn": "error",
