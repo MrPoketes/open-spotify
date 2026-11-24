@@ -7,6 +7,7 @@ import { noEffectPromise } from "./rules/no-effect-promise.ts"
 import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
+import { noRendererRuntimeImport } from "./rules/no-renderer-runtime-import.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noThrow } from "./rules/no-throw.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
@@ -27,6 +28,7 @@ export default definePlugin({
     "no-effect-with-span": noEffectWithSpan,
     "no-hard-coded-colors": noHardCodedColors,
     "no-junk-drawer-modules": noJunkDrawerModules,
+    "no-renderer-runtime-import": noRendererRuntimeImport,
     "no-stale-file-references": noStaleFileReferences,
     "no-throw": noThrow,
     "no-try-catch": noTryCatch,

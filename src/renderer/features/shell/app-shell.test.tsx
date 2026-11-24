@@ -3,14 +3,12 @@ import { userEvent } from "@testing-library/user-event"
 import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
-import { rendererRuntime } from "../../lib/renderer-runtime"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { ContextPlayButton } from "../playback/context-play-button"
 import { NoActiveDevice } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
-// Importing it also installs the fake main process as window.desktop, which
-// rendererRuntime and these tests read.
-import { openQueue, renderAppShell } from "./render-app-shell"
+// Importing it also installs the fake main process as window.desktop.
+import { appShellRuntime, openQueue, renderAppShell } from "./render-app-shell"
 
 const sidebarDivider = () => screen.getByRole("separator", { name: "Resize sidebar" })
 const queueDivider = () => screen.getByRole("separator", { name: "Resize queue" })
@@ -110,11 +108,11 @@ describe.each(resizablePanes)("the $name divider", (resizablePane) => {
     const firstLaunch = await resizablePane.renderWithWidth(300)
     await dragDivider(50)
     await waitFor(async () => {
-      expect(await rendererRuntime.runPromise(loadSavedWidth)).toBe(350)
+      expect(await appShellRuntime.runPromise(loadSavedWidth)).toBe(350)
     })
     firstLaunch.unmount()
 
-    await resizablePane.renderWithWidth(await rendererRuntime.runPromise(loadSavedWidth))
+    await resizablePane.renderWithWidth(await appShellRuntime.runPromise(loadSavedWidth))
 
     expect(divider()).toHaveAttribute("aria-valuenow", "350")
   })
