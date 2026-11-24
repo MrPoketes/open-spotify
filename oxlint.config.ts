@@ -157,6 +157,17 @@ export default defineConfig({
       rules: { "open-spotify/no-dom-node-access": "error" },
     },
     {
+      // Incoming date strings belong in Schema.DateFromString at the boundary;
+      // new Date(value) skips validation and throws while formatting.
+      files: ["src/renderer/**", "src/shared/**"],
+      rules: { "open-spotify/no-new-date-with-arguments": "error" },
+    },
+    {
+      // Tests and Spotify wire-format fixtures build synthetic dates directly.
+      files: ["**/*.test.ts", "**/*.test.tsx", "src/renderer/features/spotify/**/*-fixtures.ts"],
+      rules: { "open-spotify/no-new-date-with-arguments": "off" },
+    },
+    {
       files: ["src/main/**", "src/preload/**", "src/shared/**"],
       rules: {
         "no-restricted-imports": [
