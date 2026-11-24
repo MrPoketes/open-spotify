@@ -60,7 +60,7 @@ export default defineConfig({
     "typescript/no-unsafe-return": "error",
     "typescript/no-unnecessary-condition": "error",
     "typescript/no-unnecessary-type-assertion": "error",
-    "typescript/no-floating-promises": "error",
+    "typescript/no-floating-promises": ["error", { ignoreVoid: false }],
     "typescript/no-misused-promises": "error",
     "typescript/switch-exhaustiveness-check": "error",
 

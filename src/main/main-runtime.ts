@@ -20,12 +20,14 @@ const storageLayer = Layer.mergeAll(Settings.layer, Folders.layer, ImportedTheme
   Layer.provide(databaseLayer(databaseFile)),
 )
 
+const systemBrowserLayer = SystemBrowser.layer((url) => shell.openExternal(url))
+
 const spotifySessionLayer = SpotifySession.layer.pipe(
   Layer.provide([
     storageLayer,
     SpotifyTokenEndpoint.layer,
     TokenStore.layer(safeStorage, spotifySessionFile),
-    SystemBrowser.layer((url) => shell.openExternal(url)),
+    systemBrowserLayer,
   ]),
 )
 
@@ -35,6 +37,7 @@ export const mainRuntime = ManagedRuntime.make(
   Layer.mergeAll(
     storageLayer,
     spotifySessionLayer,
+    systemBrowserLayer,
     ThemeFileDialogs.layer(dialog),
     FoldersFileDialogs.layer(dialog),
   ).pipe(Layer.provideMerge(NodeFileSystem.layer)),
