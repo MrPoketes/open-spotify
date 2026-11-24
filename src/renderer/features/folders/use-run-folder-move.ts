@@ -17,14 +17,13 @@ const moveFailureMessage = (entryName: string, error: FolderChangeFailure) => {
   return reason === undefined ? failure : `${failure} ${reason}`
 }
 
-const runOnMainProcess = (move: FolderMove) =>
-  Effect.gen(function* () {
-    const bridge = yield* DesktopBridge
-    if (move._tag === "MoveFolder") {
-      return yield* bridge.moveFolder(move.request)
-    }
-    return yield* bridge.moveFolderItem(move.request)
-  })
+const runOnMainProcess = Effect.fn("runOnMainProcess")(function* (move: FolderMove) {
+  const bridge = yield* DesktopBridge
+  if (move._tag === "MoveFolder") {
+    return yield* bridge.moveFolder(move.request)
+  }
+  return yield* bridge.moveFolderItem(move.request)
+})
 
 // Carries out a move of a folder tree entry and says in the status message
 // where it went ("Moved Warm-up up", "Moved Warm-up to Focus"), or why it

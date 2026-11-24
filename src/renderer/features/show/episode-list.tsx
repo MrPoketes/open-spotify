@@ -16,11 +16,10 @@ interface EpisodeListProps {
 // Later pages load as the end of the list scrolls into view.
 export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
   const headingId = useId()
-  const loadPage = (offset: number) =>
-    Effect.gen(function* () {
-      const spotify = yield* SpotifyApi
-      return yield* spotify.getShowEpisodePage(showId, offset)
-    })
+  const loadPage = Effect.fn("EpisodeList.loadPage")(function* (offset: number) {
+    const spotify = yield* SpotifyApi
+    return yield* spotify.getShowEpisodePage(showId, offset)
+  })
   const { items, nextOffset, nextPage, loadNextPage } = useNextPages({ firstPage, loadPage })
   const episodes = items.filter((episode) => episode !== null)
   const hasMoreEpisodes = nextOffset !== null

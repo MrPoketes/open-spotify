@@ -4,9 +4,8 @@ import { Effect, Queue, Stream } from "effect"
 // from the fake Spotify server resolve through real promises, so a test takes
 // each value from the queue instead of expecting it to arrive within a clock
 // adjustment.
-export const collectStream = <A>(stream: Stream.Stream<A>) =>
-  Effect.gen(function* () {
-    const values = yield* Queue.unbounded<A>()
-    yield* Stream.runForEach(stream, (value) => Queue.offer(values, value)).pipe(Effect.forkScoped)
-    return values
-  })
+export const collectStream = Effect.fn("collectStream")(function* <A>(stream: Stream.Stream<A>) {
+  const values = yield* Queue.unbounded<A>()
+  yield* Stream.runForEach(stream, (value) => Queue.offer(values, value)).pipe(Effect.forkScoped)
+  return values
+})

@@ -11,6 +11,7 @@ import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
 import { requireDisableReason } from "./rules/require-disable-reason.ts"
+import { requireEffectFn } from "./rules/require-effect-fn.ts"
 import { requireRingOffsetColor } from "./rules/require-ring-offset-color.ts"
 
 // These rules are the automated half of the no-slop policy. If one stops
@@ -50,6 +51,36 @@ ruleTester.run("no-effect-with-span", noEffectWithSpan, {
 ruleTester.run("require-disable-reason", requireDisableReason, {
   valid: ["// oxlint-disable-next-line no-console -- the CLI prints to stdout\nconsole.log(1)"],
   invalid: [{ code: "// oxlint-disable-next-line no-console\nconsole.log(1)", errors: 1 }],
+})
+
+const requireEffectFnMessage =
+  'Use Effect.fn("name")(function* ...) instead of returning Effect.gen.'
+
+ruleTester.run("require-effect-fn", requireEffectFn, {
+  valid: [
+    'it.effect("runs the effect", () => Effect.gen(function* () { return 1 }))',
+    "const get = (key) => { const trimmed = key.trim(); return Effect.gen(function* () { return trimmed }) }",
+    "const get = (key) => other.gen(function* () { return key })",
+    "const get = (key) => Effect[gen](function* () { return key })",
+  ],
+  invalid: [
+    {
+      code: "const get = (key) => Effect.gen(function* () { return key })",
+      errors: [{ message: requireEffectFnMessage }],
+    },
+    {
+      code: "const get = (key) => { return Effect.gen(function* () { return key }) }",
+      errors: [{ message: requireEffectFnMessage }],
+    },
+    {
+      code: "const get = function (key) { return Effect.gen(function* () { return key }) }",
+      errors: [{ message: requireEffectFnMessage }],
+    },
+    {
+      code: "function get(key) { return Effect.gen(function* () { return key }) }",
+      errors: [{ message: requireEffectFnMessage }],
+    },
+  ],
 })
 
 // Comments name files by their path from the repository root.

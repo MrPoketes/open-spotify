@@ -41,11 +41,10 @@ export function DiscographySection({
   const [isExpanded, setIsExpanded] = useState(false)
   const { gridRef, columnCount } = useCardGridColumnCount()
   const withFolderMenu = useWithFolderMenu()
-  const loadPage = (offset: number) =>
-    Effect.gen(function* () {
-      const spotify = yield* SpotifyApi
-      return yield* spotify.getArtistAlbumsPage(artistId, albumGroup, offset)
-    })
+  const loadPage = Effect.fn("DiscographySection.loadPage")(function* (offset: number) {
+    const spotify = yield* SpotifyApi
+    return yield* spotify.getArtistAlbumsPage(artistId, albumGroup, offset)
+  })
   const {
     items: albums,
     nextOffset,

@@ -15,15 +15,14 @@ const writeShell = Effect.gen(function* () {
   return shellPath
 })
 
-const readNonces = (response: Response) =>
-  Effect.gen(function* () {
-    const policy = response.headers.get("Content-Security-Policy") ?? ""
-    const html = yield* Effect.promise(() => response.text())
-    return {
-      policyNonce: /'nonce-([^']+)'/.exec(policy)?.[1],
-      scriptNonces: [...html.matchAll(/nonce="([^"]*)"/g)].map((match) => match[1]),
-    }
-  })
+const readNonces = Effect.fn("readNonces")(function* (response: Response) {
+  const policy = response.headers.get("Content-Security-Policy") ?? ""
+  const html = yield* Effect.promise(() => response.text())
+  return {
+    policyNonce: /'nonce-([^']+)'/.exec(policy)?.[1],
+    scriptNonces: [...html.matchAll(/nonce="([^"]*)"/g)].map((match) => match[1]),
+  }
+})
 
 layer(NodeFileSystem.layer)("respondWithRendererShell", (it) => {
   // If the nonces disagree, the policy blocks the bootstrap scripts and the

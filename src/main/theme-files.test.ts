@@ -14,45 +14,44 @@ const themeFile = (name: string, tokens: Record<string, string> = {}) =>
 
 // Works in a temporary folder and answers the dialogs the way the user would:
 // the file chosen in either file dialog is the one the test last named.
-const setUp = ({ replacesTheme = true } = {}) =>
-  Effect.gen(function* () {
-    const fileSystem = yield* FileSystem.FileSystem
-    const folder = yield* fileSystem.makeTempDirectoryScoped()
-    const chosenFile = yield* Ref.make(Option.none<string>())
-    const suggestedFileNames = yield* Ref.make<ReadonlyArray<string>>([])
-    const dialogs = ThemeFileDialogs.of({
-      chooseFileToImport: () => Ref.get(chosenFile),
-      chooseExportFile: (_parentWindow, suggestedFileName) =>
-        Ref.update(suggestedFileNames, (names) => [...names, suggestedFileName]).pipe(
-          Effect.andThen(Ref.get(chosenFile)),
-        ),
-      confirmReplace: () => Effect.succeed(replacesTheme),
-    })
-    const chooseFile = (fileName: string) =>
-      Ref.set(chosenFile, Option.some(path.join(folder, fileName)))
+const setUp = Effect.fn("setUp")(function* ({ replacesTheme = true } = {}) {
+  const fileSystem = yield* FileSystem.FileSystem
+  const folder = yield* fileSystem.makeTempDirectoryScoped()
+  const chosenFile = yield* Ref.make(Option.none<string>())
+  const suggestedFileNames = yield* Ref.make<ReadonlyArray<string>>([])
+  const dialogs = ThemeFileDialogs.of({
+    chooseFileToImport: () => Ref.get(chosenFile),
+    chooseExportFile: (_parentWindow, suggestedFileName) =>
+      Ref.update(suggestedFileNames, (names) => [...names, suggestedFileName]).pipe(
+        Effect.andThen(Ref.get(chosenFile)),
+      ),
+    confirmReplace: () => Effect.succeed(replacesTheme),
+  })
+  const chooseFile = (fileName: string) =>
+    Ref.set(chosenFile, Option.some(path.join(folder, fileName)))
 
-    const importFile = (fileName: string, contents: string) =>
-      fileSystem
-        .writeFileString(path.join(folder, fileName), contents)
-        .pipe(
-          Effect.andThen(chooseFile(fileName)),
-          Effect.andThen(importThemeFile(null)),
-          Effect.provideService(ThemeFileDialogs, dialogs),
-        )
-    const exportTo = (fileName: string) =>
-      chooseFile(fileName).pipe(
-        Effect.andThen(exportCurrentTheme(null)),
-        Effect.andThen(fileSystem.readFileString(path.join(folder, fileName))),
+  const importFile = (fileName: string, contents: string) =>
+    fileSystem
+      .writeFileString(path.join(folder, fileName), contents)
+      .pipe(
+        Effect.andThen(chooseFile(fileName)),
+        Effect.andThen(importThemeFile(null)),
         Effect.provideService(ThemeFileDialogs, dialogs),
       )
-    const importAndChoose = Effect.fn("importAndChoose")(function* (contents: string) {
-      const settings = yield* Settings
-      const importedTheme = Option.getOrThrow(yield* importFile("theme.json", contents))
-      yield* settings.set("themeId", importedTheme.id)
-      return importedTheme
-    })
-    return { importFile, importAndChoose, exportTo, suggestedFileNames }
+  const exportTo = (fileName: string) =>
+    chooseFile(fileName).pipe(
+      Effect.andThen(exportCurrentTheme(null)),
+      Effect.andThen(fileSystem.readFileString(path.join(folder, fileName))),
+      Effect.provideService(ThemeFileDialogs, dialogs),
+    )
+  const importAndChoose = Effect.fn("importAndChoose")(function* (contents: string) {
+    const settings = yield* Settings
+    const importedTheme = Option.getOrThrow(yield* importFile("theme.json", contents))
+    yield* settings.set("themeId", importedTheme.id)
+    return importedTheme
   })
+  return { importFile, importAndChoose, exportTo, suggestedFileNames }
+})
 
 const freshStorage = () => freshThemeStorage().pipe(Layer.provideMerge(NodeFileSystem.layer))
 

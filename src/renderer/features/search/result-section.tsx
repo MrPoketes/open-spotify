@@ -32,11 +32,10 @@ const loadControlFor = (nextPage: NextPageStatus, hasMore: boolean): LoadControl
 export function ResultSection<A>(props: ResultSectionProps<A>) {
   const { query, type, title, firstPage, pageOf, children } = props
   const headingId = useId()
-  const loadPage = (offset: number) =>
-    Effect.gen(function* () {
-      const spotify = yield* SpotifyApi
-      return pageOf(yield* spotify.search(query, [type], offset))
-    })
+  const loadPage = Effect.fn("ResultSection.loadPage")(function* (offset: number) {
+    const spotify = yield* SpotifyApi
+    return pageOf(yield* spotify.search(query, [type], offset))
+  })
   const { items, nextOffset, nextPage, loadNextPage } = useNextPages({ firstPage, loadPage })
   const results = items.filter((item) => item !== null)
   const loadControl = loadControlFor(nextPage, nextOffset !== null)
