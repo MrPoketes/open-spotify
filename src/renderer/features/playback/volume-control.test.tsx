@@ -1,7 +1,8 @@
+// oxlint-disable-next-line no-restricted-imports -- user-event cannot drag or step a native range input in jsdom
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Option } from "effect"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, onTestFinished } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { type StatusMessage, StatusMessageContext } from "../../ui/status-message-context"
@@ -95,9 +96,23 @@ describe("NowPlayingBar volume", () => {
     const slider = await volumeSlider()
     slider.focus()
 
-    expect(fireEvent.keyDown(slider, { key: "ArrowRight" })).toBe(true)
-    expect(fireEvent.keyDown(slider, { key: "ArrowRight", ctrlKey: true })).toBe(false)
-    expect(fireEvent.keyDown(slider, { key: "ArrowLeft", altKey: true })).toBe(false)
+    const keyDowns: Array<readonly [string, boolean]> = []
+    const recordKeyDown = (event: KeyboardEvent) => {
+      keyDowns.push([event.key, event.defaultPrevented])
+    }
+    // Runs after React's root handler and before window shortcut listeners.
+    document.addEventListener("keydown", recordKeyDown)
+    onTestFinished(() => document.removeEventListener("keydown", recordKeyDown))
+
+    await userEvent.keyboard("{ArrowRight}{Control>}{ArrowRight}{/Control}{Alt>}{ArrowLeft}{/Alt}")
+
+    expect(keyDowns).toEqual([
+      ["ArrowRight", false],
+      ["Control", false],
+      ["ArrowRight", true],
+      ["Alt", false],
+      ["ArrowLeft", true],
+    ])
   })
 
   it("turns the volume up 10 with Ctrl+↑ and down 10 with Ctrl+↓", async () => {

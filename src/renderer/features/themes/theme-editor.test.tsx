@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- user-event cannot pick a color in a native color input
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Option } from "effect"

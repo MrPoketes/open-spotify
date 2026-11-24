@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- userEvent.keyboard flushes React between key presses, so rapid presses before re-render need fireEvent inside act()
 import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, type Layer } from "effect"

@@ -1,5 +1,13 @@
 import { defineConfig } from "oxlint"
 
+// The renderer is sandboxed: it reaches the main process only through
+// DesktopBridge, never through Electron or Node APIs. Shared across overrides
+// because an override replaces `no-restricted-imports` instead of merging it.
+const rendererRestrictedImportPatterns = [
+  { group: ["electron", "node:*"], message: "Use DesktopBridge instead." },
+  { group: ["**/main/**"], message: "Use DesktopBridge instead." },
+]
+
 // Lint rules are the first line of defence against unreadable code. When a
 // reviewer finds the same problem twice, the fix is a rule here (or in
 // lint/open-spotify-plugin.ts), not another review comment.
@@ -115,17 +123,12 @@ export default defineConfig({
       },
     },
     {
-      // The renderer is sandboxed: it reaches the main process only through
-      // the DesktopBridge, never through Electron or Node APIs.
       files: ["src/renderer/**"],
       rules: {
         "no-restricted-imports": [
           "error",
           {
-            patterns: [
-              { group: ["electron", "node:*"], message: "Use DesktopBridge instead." },
-              { group: ["**/main/**"], message: "Use DesktopBridge instead." },
-            ],
+            patterns: rendererRestrictedImportPatterns,
           },
         ],
       },
@@ -142,9 +145,25 @@ export default defineConfig({
     },
     {
       // Component tests check what a user can reach through the accessibility
-      // tree instead of querying or walking the DOM directly.
+      // tree and interact through user-event instead of querying DOM nodes or
+      // firing raw events directly.
       files: ["src/renderer/**/*.test.tsx"],
-      rules: { "open-spotify/no-dom-node-access": "error" },
+      rules: {
+        "open-spotify/no-dom-node-access": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: rendererRestrictedImportPatterns,
+            paths: [
+              {
+                name: "@testing-library/react",
+                importNames: ["fireEvent"],
+                message: "Use userEvent from @testing-library/user-event instead.",
+              },
+            ],
+          },
+        ],
+      },
     },
     {
       files: ["src/main/**", "src/preload/**", "src/shared/**"],
