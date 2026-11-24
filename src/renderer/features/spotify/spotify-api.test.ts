@@ -8,6 +8,7 @@ import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
 import { spotifyErrorBody } from "./spotify-fake-error-body"
 import {
   fakeCurrentUser,
+  fakeEpisode,
   fakeFollowedArtists,
   fakeLikedSongs,
   fakePlaylists,
@@ -218,6 +219,23 @@ describe("SpotifyApi responses", () => {
       const api = yield* SpotifyApi
 
       const error = yield* Effect.flip(api.getPlaylistItemsPage("fake-playlist", 0))
+
+      assert.strictEqual(error._tag, "SpotifyDecodeError")
+    }).pipe(Effect.provide(spotify.layer))
+  })
+
+  it.effect("fails with SpotifyDecodeError when an episode's release date is malformed", () => {
+    const episodeWithBadDate = { ...fakeEpisode, release_date: "not a date" }
+    const spotify = scriptedSpotify([
+      {
+        status: 200,
+        body: JSON.stringify({ items: [episodeWithBadDate], next: null, total: 1 }),
+      },
+    ])
+    return Effect.gen(function* () {
+      const api = yield* SpotifyApi
+
+      const error = yield* Effect.flip(api.getShowEpisodePage("fake-show", 0))
 
       assert.strictEqual(error._tag, "SpotifyDecodeError")
     }).pipe(Effect.provide(spotify.layer))

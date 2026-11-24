@@ -10,7 +10,7 @@ const SimplifiedEpisode = Schema.Struct({
   durationMs: Schema.Number,
   // Plain text: Spotify strips the HTML that `html_description` keeps.
   description: Schema.String,
-  releaseDate: Schema.String,
+  releaseDate: Schema.DateFromString,
   releaseDatePrecision: Schema.Literals(["year", "month", "day"]),
 })
 

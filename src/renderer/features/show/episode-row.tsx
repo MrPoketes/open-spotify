@@ -3,7 +3,7 @@ import { useId, useState } from "react"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import type { Episode } from "../spotify/spotify-episode"
 import { formatEpisodeDuration } from "./format-episode-duration"
-import { formatReleaseDate } from "./format-release-date"
+import { formatReleaseDate, formatReleaseDateAttribute } from "./format-release-date"
 
 interface EpisodeRowProps {
   readonly episode: Episode
@@ -53,7 +53,7 @@ export function EpisodeRow({ episode, isCurrentItem, rovingProps, onPlay }: Epis
         </p>
       ) : null}
       <p className="text-xs text-muted tabular-nums">
-        <time dateTime={episode.releaseDate}>{formatReleaseDate(episode)}</time>
+        <time dateTime={formatReleaseDateAttribute(episode)}>{formatReleaseDate(episode)}</time>
         <span aria-hidden> · </span>
         {formatEpisodeDuration(episode.durationMs)}
       </p>
