@@ -22,6 +22,7 @@ function restrictWebPermissions(): void {
 }
 
 const start = Effect.gen(function* () {
+  // oxlint-disable-next-line open-spotify/no-effect-promise -- Electron's app.whenReady() resolves on the ready event and never rejects.
   yield* Effect.promise(() => app.whenReady())
   restrictWebPermissions()
   serveRendererFiles()

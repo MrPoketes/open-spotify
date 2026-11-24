@@ -1,9 +1,13 @@
 import path from "node:path"
 import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
 import { assert, layer } from "@effect/vitest"
-import { Effect, FileSystem } from "effect"
+import { Effect, FileSystem, Schema } from "effect"
 import { scriptNoncePlaceholder } from "../shared/content-security-policy"
 import { respondWithRendererShell } from "./renderer-shell-response"
+
+class ResponseReadError extends Schema.TaggedError<ResponseReadError>()("ResponseReadError", {
+  cause: Schema.Defect(),
+}) {}
 
 // The inline bootstrap scripts the build writes into `_shell.html`.
 const builtShell = `<html><body><script nonce="${scriptNoncePlaceholder}">boot()</script><script nonce="${scriptNoncePlaceholder}">hydrate()</script></body></html>`
@@ -17,7 +21,10 @@ const writeShell = Effect.gen(function* () {
 
 const readNonces = Effect.fn("readNonces")(function* (response: Response) {
   const policy = response.headers.get("Content-Security-Policy") ?? ""
-  const html = yield* Effect.promise(() => response.text())
+  const html = yield* Effect.tryPromise({
+    try: () => response.text(),
+    catch: (cause) => new ResponseReadError({ cause }),
+  })
   return {
     policyNonce: /'nonce-([^']+)'/.exec(policy)?.[1],
     scriptNonces: [...html.matchAll(/nonce="([^"]*)"/g)].map((match) => match[1]),

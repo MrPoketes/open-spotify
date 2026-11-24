@@ -5,6 +5,7 @@ import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
 import { noArbitraryThemeValues } from "./rules/no-arbitrary-theme-values.ts"
 import { noConstructedContextValues } from "./rules/no-constructed-context-values.ts"
 import { noDomNodeAccess } from "./rules/no-dom-node-access.ts"
+import { noEffectPromise } from "./rules/no-effect-promise.ts"
 import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
@@ -32,6 +33,27 @@ ruleTester.run("no-junk-drawer-modules", noJunkDrawerModules, {
 ruleTester.run("no-try-catch", noTryCatch, {
   valid: ["Effect.tryPromise(() => fetch(url))"],
   invalid: [{ code: "try { run() } catch { recover() }", errors: 1 }],
+})
+
+const noEffectPromiseMessage =
+  "Use Effect.tryPromise with a Schema.TaggedError instead of Effect.promise, or disable this rule with a reason explaining why the promise cannot reject."
+
+ruleTester.run("no-effect-promise", noEffectPromise, {
+  valid: [
+    "Effect.tryPromise({ try: () => fetch(url), catch: (cause) => new FetchError({ cause }) })",
+    "other.promise(() => fetch(url))",
+    "Effect[promise](() => fetch(url))",
+  ],
+  invalid: [
+    {
+      code: "Effect.promise(() => fetch(url))",
+      errors: [{ message: noEffectPromiseMessage }],
+    },
+    {
+      code: 'Effect["promise"](() => fetch(url))',
+      errors: [{ message: noEffectPromiseMessage }],
+    },
+  ],
 })
 
 ruleTester.run("no-effect-with-span", noEffectWithSpan, {

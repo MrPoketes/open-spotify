@@ -5,13 +5,18 @@ import {
   type Route,
   expect,
 } from "@playwright/test"
-import { Effect } from "effect"
+import { Effect, Schema } from "effect"
 import { HttpBody, HttpClient, HttpClientRequest, HttpMethod } from "effect/http"
 import {
   fakeAccessToken,
   spotifyFakeServer,
 } from "../src/renderer/features/spotify/spotify-fake-server"
 import { spotifyRedirectUri } from "../src/shared/spotify-redirect-uri"
+
+class FakeSpotifyFulfillError extends Schema.TaggedError<FakeSpotifyFulfillError>()(
+  "FakeSpotifyFulfillError",
+  { url: Schema.String, cause: Schema.Defect() },
+) {}
 
 const answerFromFakeServer = Effect.fn("answerFromFakeServer")(function* (
   fakeServer: HttpClient.HttpClient,
@@ -30,9 +35,10 @@ const answerFromFakeServer = Effect.fn("answerFromFakeServer")(function* (
     }),
   )
   const body = yield* response.text
-  return yield* Effect.promise(() =>
-    route.fulfill({ status: response.status, headers: response.headers, body }),
-  )
+  return yield* Effect.tryPromise({
+    try: () => route.fulfill({ status: response.status, headers: response.headers, body }),
+    catch: (cause) => new FakeSpotifyFulfillError({ url: request.url(), cause }),
+  })
 })
 
 // Serves api.spotify.com from the same fixtures the renderer's unit tests

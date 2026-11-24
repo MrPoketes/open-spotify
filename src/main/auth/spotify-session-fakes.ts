@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto"
 import path from "node:path"
 import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
-import { Deferred, Effect, FileSystem, Layer } from "effect"
+import { Deferred, Effect, FileSystem, Layer, Schema } from "effect"
 import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
 import { Settings } from "../settings"
 import { freshSettings } from "../settings-fakes"
@@ -124,21 +124,28 @@ export const makeFakeSpotifyAccounts = () => {
 
 export type FakeSpotifyAccounts = ReturnType<typeof makeFakeSpotifyAccounts>
 
+class FakeCallbackError extends Schema.TaggedError<FakeCallbackError>()("FakeCallbackError", {
+  cause: Schema.Defect(),
+}) {}
+
 // Sends the browser to the redirect URI in the authorize URL the way Spotify
 // redirects it, and returns the text of the page the browser shows.
 export const callBack = (authorizeUrl: URL, query: Record<string, string>) =>
-  Effect.promise(async () => {
-    const callbackUrl = new URL(authorizeUrl.searchParams.get("redirect_uri") ?? "")
-    callbackUrl.search = new URLSearchParams(query).toString()
-    // Node's fetch would reuse its connection to an earlier login's server,
-    // which has closed it by now. A browser retries such a connection.
-    const response = await fetch(callbackUrl, { headers: { connection: "close" } })
-    return response.text()
+  Effect.tryPromise({
+    try: async () => {
+      const callbackUrl = new URL(authorizeUrl.searchParams.get("redirect_uri") ?? "")
+      callbackUrl.search = new URLSearchParams(query).toString()
+      // Node's fetch would reuse its connection to an earlier login's server,
+      // which has closed it by now. A browser retries such a connection.
+      const response = await fetch(callbackUrl, { headers: { connection: "close" } })
+      return response.text()
+    },
+    catch: (cause) => new FakeCallbackError({ cause }),
   })
 
-export const fakeBrowser = (onOpen: (authorizeUrl: URL) => Effect.Effect<unknown>) =>
+export const fakeBrowser = <E>(onOpen: (authorizeUrl: URL) => Effect.Effect<unknown, E>) =>
   Layer.succeed(SystemBrowser, {
-    open: (url) => Effect.asVoid(onOpen(new URL(url))),
+    open: (url) => onOpen(new URL(url)).pipe(Effect.asVoid, Effect.orDie),
   })
 
 // Like Spotify, sends back the state the login put in the authorize URL.

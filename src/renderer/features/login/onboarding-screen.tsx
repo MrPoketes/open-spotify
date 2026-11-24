@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router"
 import { Effect, Option, Schema } from "effect"
 import { type FormEvent, use, useState } from "react"
 import { settingSchemas } from "../../../shared/settings"
+import { attemptNavigation } from "../../lib/attempt-navigation"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { AccentButton } from "../../ui/pill-button"
@@ -33,7 +34,7 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
     runtime.runFork(
       saveClientId(decodedClientId.value).pipe(
         Effect.matchEffect({
-          onSuccess: () => Effect.promise(() => navigate({ to: "/" })),
+          onSuccess: () => attemptNavigation(() => navigate({ to: "/" })),
           onFailure: () => Effect.sync(() => setSaveFailed(true)),
         }),
       ),
