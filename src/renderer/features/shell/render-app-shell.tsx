@@ -16,16 +16,15 @@ import { RendererRuntimeContext, type RendererServices } from "../../lib/rendere
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { AppShell } from "./app-shell"
 
-// Installed on import, before any test file's code runs, because
-// rendererRuntime reads window.desktop when a test uses it. The sidebar and
-// the now-playing bar must load from the fake Spotify API, and pane widths
-// must be saved where rendererRuntime reads them back.
+// Installed on import so pane widths saved during a drag can be read back from
+// the same fake main process, and so tests that override the Spotify API can
+// build a runtime over it too.
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 
 // The library is left empty because no test of the shell reads it, and
 // rendering the fixtures' sixty-odd entries in the sidebar ran the first test
 // past its timeout on a busy machine.
-const runtimeWithFakeSpotify = fakeRendererRuntime({
+export const appShellRuntime = fakeRendererRuntime({
   mainProcess: window.desktop,
   spotifyApi: spotifyApiFakeWith(() => ({
     currentUserPlaylists: Stream.empty,
@@ -49,7 +48,7 @@ export const renderAppShell = async ({
   savedSidebarWidth = 280,
   savedRightPaneWidth = 320,
   platform = "win32",
-  runtime = runtimeWithFakeSpotify,
+  runtime = appShellRuntime,
   albumPageContent = null,
 }: ShellOptions = {}) => {
   const rootRoute = createRootRoute({

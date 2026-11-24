@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-11-24 | Components importing `rendererRuntime` directly instead of reading `RendererRuntimeContext`       | Custom rule `open-spotify/no-renderer-runtime-import`       |
 | 2026-11-24 | Promises discarded with `void`, turning rejections into unhandled promise rejections              | `typescript/no-floating-promises` with `ignoreVoid: false`  |
 | 2026-11-24 | `throw` statements bypassing typed Effect errors (unchecked by lint)                              | Custom rule `open-spotify/no-throw`                         |
 | 2026-11-24 | Component tests using `fireEvent` instead of interacting through `user-event`                     | Built-in `no-restricted-imports` rule in `oxlint.config.ts` |
