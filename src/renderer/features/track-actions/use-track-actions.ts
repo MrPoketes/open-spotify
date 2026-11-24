@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router"
 import { Effect } from "effect"
 import { use } from "react"
+import { attemptNavigation } from "../../lib/attempt-navigation"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { writeClipboardText } from "../../lib/write-clipboard-text"
 import { useShowStatusMessage } from "../../ui/status-message-context"
@@ -67,12 +68,12 @@ export function useTrackActions(): TrackActions {
       ),
     goToArtist: (artistId) => {
       runtime.runFork(
-        Effect.promise(() => navigate({ to: "/artist/$artistId", params: { artistId } })),
+        attemptNavigation(() => navigate({ to: "/artist/$artistId", params: { artistId } })),
       )
     },
     goToAlbum: (albumId) => {
       runtime.runFork(
-        Effect.promise(() => navigate({ to: "/album/$albumId", params: { albumId } })),
+        attemptNavigation(() => navigate({ to: "/album/$albumId", params: { albumId } })),
       )
     },
     copyLink: (trackId) =>

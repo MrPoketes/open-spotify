@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router"
 import { Effect } from "effect"
 import { use, useState } from "react"
+import { attemptNavigation } from "../../lib/attempt-navigation"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 
@@ -19,7 +20,7 @@ export function LogOutButton() {
     runtime.runFork(
       logOut.pipe(
         Effect.matchEffect({
-          onSuccess: () => Effect.promise(() => navigate({ to: "/login" })),
+          onSuccess: () => attemptNavigation(() => navigate({ to: "/login" })),
           onFailure: () => Effect.sync(() => setLogOutFailed(true)),
         }),
       ),

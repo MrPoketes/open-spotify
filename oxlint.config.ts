@@ -84,6 +84,7 @@ export default defineConfig({
 
     "open-spotify/descriptive-test-names": "error",
     "open-spotify/no-constructed-context-values": "error",
+    "open-spotify/no-effect-promise": "error",
     "open-spotify/no-effect-with-span": "error",
     "open-spotify/no-junk-drawer-modules": "error",
     "open-spotify/no-stale-file-references": "error",

@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router"
 import { Effect } from "effect"
 import { use, useEffect, useRef, useState } from "react"
 import type { LogInError } from "../../../shared/spotify-auth-replies"
+import { attemptNavigation } from "../../lib/attempt-navigation"
 import { DesktopBridge, type DesktopBridgeError } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { LoginButtons } from "./login-buttons"
@@ -51,7 +52,7 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
       logInThroughBrowser.pipe(
         Effect.ensuring(Effect.sync(() => (isLogInPending.current = false))),
         Effect.matchEffect({
-          onSuccess: () => Effect.promise(() => navigate({ to: "/" })),
+          onSuccess: () => attemptNavigation(() => navigate({ to: "/" })),
           onFailure: (error) => Effect.sync(() => setStatus(statusAfterFailure(error))),
         }),
       ),
