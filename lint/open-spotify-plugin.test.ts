@@ -10,6 +10,7 @@ import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
+import { noThrow } from "./rules/no-throw.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
 import { requireDisableReason } from "./rules/require-disable-reason.ts"
 import { requireEffectFn } from "./rules/require-effect-fn.ts"
@@ -33,6 +34,31 @@ ruleTester.run("no-junk-drawer-modules", noJunkDrawerModules, {
 ruleTester.run("no-try-catch", noTryCatch, {
   valid: ["Effect.tryPromise(() => fetch(url))"],
   invalid: [{ code: "try { run() } catch { recover() }", errors: 1 }],
+})
+
+const invalidThrows = [
+  'throw new Error("boom")',
+  'throw redirect({ to: "/login" })',
+  'import { redirect } from "./router"; throw redirect({ to: "/login" })',
+  'import { Link } from "@tanstack/react-router"; throw Link()',
+  'import { redirect } from "@tanstack/react-router"; throw redirect',
+  'import { redirect } from "@tanstack/react-router"; function run(redirect) { throw redirect({ to: "/login" }) }',
+  'import * as router from "@tanstack/react-router"; throw router.Link()',
+  'import { type redirect } from "@tanstack/react-router"; throw redirect({ to: "/login" })',
+]
+
+ruleTester.run("no-throw", noThrow, {
+  valid: [
+    'import { redirect } from "@tanstack/react-router"; function check() { throw redirect({ to: "/login" }) }',
+    'import { notFound } from "@tanstack/react-router"; throw notFound()',
+    'import { redirect as go } from "@tanstack/react-router"; throw go({ to: "/login" })',
+    'import * as router from "@tanstack/react-router"; throw router.notFound()',
+  ],
+  invalid: invalidThrows.map((code) => ({
+    code,
+    filename: "route.ts",
+    errors: [{ messageId: "noThrow" }],
+  })),
 })
 
 const noEffectPromiseMessage =
