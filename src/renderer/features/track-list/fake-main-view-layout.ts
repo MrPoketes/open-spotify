@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- user-event has no scroll action and jsdom does no layout
 import { fireEvent } from "@testing-library/react"
 import { trackRowHeight } from "./track-row-height"
 

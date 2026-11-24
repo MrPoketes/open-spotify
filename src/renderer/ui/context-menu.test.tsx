@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-restricted-imports -- user-event has no scroll action and jsdom does no layout
 import { fireEvent, render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"

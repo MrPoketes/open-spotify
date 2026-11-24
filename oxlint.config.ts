@@ -116,7 +116,8 @@ export default defineConfig({
     },
     {
       // The renderer is sandboxed: it reaches the main process only through
-      // the DesktopBridge, never through Electron or Node APIs.
+      // DesktopBridge, never through Electron or Node APIs. Tests and their
+      // helpers interact through user-event instead of firing raw events.
       files: ["src/renderer/**"],
       rules: {
         "no-restricted-imports": [
@@ -125,6 +126,13 @@ export default defineConfig({
             patterns: [
               { group: ["electron", "node:*"], message: "Use DesktopBridge instead." },
               { group: ["**/main/**"], message: "Use DesktopBridge instead." },
+            ],
+            paths: [
+              {
+                name: "@testing-library/react",
+                importNames: ["fireEvent"],
+                message: "Use userEvent from @testing-library/user-event instead.",
+              },
             ],
           },
         ],
