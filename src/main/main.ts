@@ -64,7 +64,7 @@ function startPrimaryInstance(): void {
   })
   app.on("second-instance", focusMainWindow)
   app.on("will-quit", () => {
-    void mainRuntime.dispose()
+    Effect.runFork(mainRuntime.disposeEffect)
   })
 
   // The runtime builds its layers, including opening and migrating the

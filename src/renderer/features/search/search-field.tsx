@@ -1,7 +1,9 @@
 import { type ParsedLocation, useRouter } from "@tanstack/react-router"
 import { Option, Schema } from "effect"
 import { Search } from "lucide-react"
-import { type KeyboardEvent, useEffect, useRef, useState } from "react"
+import { type KeyboardEvent, use, useEffect, useRef, useState } from "react"
+import { attemptNavigation } from "../../lib/attempt-navigation"
+import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useKeyboardShortcut } from "../shortcuts/use-keyboard-shortcut"
 import { SearchParams } from "./search-params"
 
@@ -23,6 +25,7 @@ const queryShownAt = ({ pathname, search }: ParsedLocation) => {
 }
 
 export function SearchField() {
+  const runtime = use(RendererRuntimeContext)
   const router = useRouter()
   const [text, setText] = useState(() => queryShownAt(router.state.location) ?? "")
   const input = useRef<HTMLInputElement>(null)
@@ -63,11 +66,15 @@ export function SearchField() {
       return
     }
     sentQuery.current = query
-    void router.navigate({
-      to: "/search",
-      search: query === "" ? {} : { q: query },
-      replace: isOnSearchPage,
-    })
+    runtime.runFork(
+      attemptNavigation(() =>
+        router.navigate({
+          to: "/search",
+          search: query === "" ? {} : { q: query },
+          replace: isOnSearchPage,
+        }),
+      ),
+    )
   }
 
   const changeText = (nextText: string) => {

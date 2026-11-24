@@ -1,8 +1,10 @@
 import path from "node:path"
-import { BrowserWindow, shell } from "electron"
+import { BrowserWindow } from "electron"
 import { Effect, Schedule, Schema } from "effect"
 import appIconPath from "../../build/icons/256x256.png?asset"
 import { rendererDevServerUrl } from "../shared/dev-server"
+import { SystemBrowser } from "./auth/system-browser"
+import { mainRuntime } from "./main-runtime"
 import { decideNavigation } from "./navigation-decision"
 import { rendererEntryUrl } from "./renderer-protocol"
 import { loadSavedTheme } from "./saved-theme"
@@ -12,6 +14,14 @@ const rendererUrl = import.meta.env.DEV ? rendererDevServerUrl : rendererEntryUr
 class RendererLoadError extends Schema.TaggedError<RendererLoadError>()("RendererLoadError", {
   cause: Schema.Defect(),
 }) {}
+
+const openInSystemBrowser = Effect.fn("openInSystemBrowser")(
+  function* (url: string) {
+    const browser = yield* SystemBrowser
+    yield* browser.open(url)
+  },
+  Effect.catch((error) => Effect.logError("Could not open link in system browser", error)),
+)
 
 export const createMainWindow = Effect.gen(function* () {
   const savedTheme = yield* loadSavedTheme
@@ -38,7 +48,7 @@ export const createMainWindow = Effect.gen(function* () {
   window.once("ready-to-show", () => window.show())
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (decideNavigation(url, rendererUrl) === "browser") {
-      void shell.openExternal(url)
+      mainRuntime.runFork(openInSystemBrowser(url))
     }
     return { action: "deny" }
   })
@@ -49,7 +59,7 @@ export const createMainWindow = Effect.gen(function* () {
     }
     event.preventDefault()
     if (decision === "browser") {
-      void shell.openExternal(event.url)
+      mainRuntime.runFork(openInSystemBrowser(event.url))
     }
   })
 
