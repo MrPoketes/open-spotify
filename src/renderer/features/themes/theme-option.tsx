@@ -1,6 +1,7 @@
 import { Check, Trash2 } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import type { Theme } from "../../../shared/theme"
+import { rowActionClassName } from "../../ui/row-action-class-name"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import { ThemeSwatch } from "./theme-swatch"
@@ -76,7 +77,7 @@ export function ThemeOption(props: ThemeOptionProps) {
           aria-label={deleteLabel}
           title={`${deleteLabel} (${deleteShortcut.label})`}
           onClick={() => onDelete("pointer")}
-          className="mr-3 flex size-8 shrink-0 items-center justify-center rounded-full text-muted opacity-0 transition-opacity duration-120 ease-out group-focus-within:opacity-100 group-hover:opacity-100 hover:text-foreground"
+          className={`mr-3 ${rowActionClassName}`}
         >
           <Trash2 aria-hidden size={20} />
         </button>

@@ -2,7 +2,7 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect } from "effect"
-import { describe, expect, it, onTestFinished } from "vitest"
+import { describe, expect, it } from "vitest"
 import { NoActiveDevice } from "../spotify/spotify-api"
 import { spotifyApiFakeWith, spotifyApiFakeWithPlayback } from "../spotify/spotify-api-fake"
 import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
@@ -14,6 +14,7 @@ import {
   pausedPlaybackRecordingSeeks,
   pausedPlaybackWithSeek,
 } from "./paused-playback-fake"
+import { recordDocumentKeyDowns } from "./record-document-key-downs"
 import { seekBar, showsPosition } from "./seek-bar-queries"
 
 const control = (name: string) => screen.findByRole("button", { name })
@@ -216,13 +217,7 @@ describe("NowPlayingBar seek bar", () => {
     await showsPosition(slider, "0:42 of 2:30")
 
     slider.focus()
-    const keyDowns: Array<readonly [string, boolean]> = []
-    const recordKeyDown = (event: KeyboardEvent) => {
-      keyDowns.push([event.key, event.defaultPrevented])
-    }
-    // Runs after React's root handler and before window shortcut listeners.
-    document.addEventListener("keydown", recordKeyDown)
-    onTestFinished(() => document.removeEventListener("keydown", recordKeyDown))
+    const keyDowns = recordDocumentKeyDowns()
     // jsdom does not step a range input, so this checks that Chromium's own
     // step is held back too.
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}")

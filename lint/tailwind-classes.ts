@@ -27,6 +27,42 @@ export function tailwindClasses(text: string): ReadonlyArray<ParsedTailwindClass
   return parsed
 }
 
+const bareTailwindUtilities = new Set(
+  "absolute block border capitalize fixed flex grid grow hidden inline italic lowercase outline relative ring rounded select-none shadow shrink sr-only sticky transform transition truncate underline uppercase".split(
+    " ",
+  ),
+)
+
+function isTailwindClass(className: string, variants: ReadonlyArray<string>, utility: string) {
+  if (/[.,;!?]$/.test(className) || className.startsWith("/") || className.includes("://")) {
+    return false
+  }
+  return (
+    variants.length > 0 ||
+    utility.includes("-") ||
+    utility.includes("/") ||
+    utility.includes("[") ||
+    bareTailwindUtilities.has(utility)
+  )
+}
+
+// Rejects prose sentences and URLs so duplicate-code checks compare only real
+// utility-class strings.
+export function tailwindClassSet(text: string, minClasses: number): ReadonlySet<string> | null {
+  const parsed = tailwindClasses(text)
+  if (parsed.length < minClasses) {
+    return null
+  }
+  const unique = new Set<string>()
+  for (const entry of parsed) {
+    if (!isTailwindClass(entry.className, entry.variants, entry.utility)) {
+      return null
+    }
+    unique.add(entry.className)
+  }
+  return unique.size >= minClasses ? unique : null
+}
+
 function splitOnTopLevelColons(className: string): Array<string> {
   const segments: Array<string> = []
   let bracketDepth = 0

@@ -4,6 +4,7 @@ import { type KeyboardEvent, use, useState } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useLoad } from "../../lib/use-load"
 import { LoadingMessage } from "../../ui/loading-message"
+import { menuRowClassName } from "../../ui/menu-row-class-name"
 import { AccentButton } from "../../ui/pill-button"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { type RovingRowProps, useRovingFocus } from "../../ui/use-roving-focus"
@@ -125,7 +126,7 @@ function DeviceChoice({ device, rovingProps, onKeyDown, onChoose }: DeviceChoice
       aria-current={device.isActive}
       onClick={id === null ? undefined : () => onChoose(id)}
       onKeyDown={onKeyDown}
-      className="flex w-full items-center gap-3 rounded-small px-3 py-2 text-left transition-colors duration-120 ease-out hover:bg-surface-raised aria-disabled:opacity-50"
+      className={`${menuRowClassName} aria-disabled:opacity-50`}
     >
       <Icon aria-hidden size={20} className={device.isActive ? "text-accent" : "text-muted"} />
       <span className="flex min-w-0 flex-1 flex-col">

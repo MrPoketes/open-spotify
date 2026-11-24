@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router"
 import { Pin, PinOff } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import { ArtworkSummary } from "../../ui/artwork-summary"
+import { rowActionClassName } from "../../ui/row-action-class-name"
 import { useContextMenu } from "../../ui/use-context-menu"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { toSpotifyItem, useAddToFolder } from "../folders/use-add-to-folder"
@@ -83,7 +84,7 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
         aria-label={pinLabel}
         title={`${pinLabel} (${pinShortcut.label})`}
         onClick={() => actions.togglePin(entry)}
-        className="mr-2 flex size-8 shrink-0 items-center justify-center rounded-full text-muted opacity-0 transition-opacity duration-120 ease-out group-focus-within:opacity-100 group-hover:opacity-100 hover:text-foreground"
+        className={`mr-2 ${rowActionClassName}`}
       >
         {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}
       </button>

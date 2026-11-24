@@ -15,6 +15,18 @@ const failuresByTag: Partial<Record<PlayerCommandError["_tag"], string>> = {
   QueuedItemGone: "That item is no longer in the queue.",
 }
 
+export const runPlayerCommand = Effect.fn("runPlayerCommand")(function* <E>(
+  command: (player: Player["Service"]) => Effect.Effect<void, E>,
+  failureMessage: string,
+  onFailure: (error: E) => void,
+) {
+  const player = yield* Player
+  yield* command(player).pipe(
+    Effect.tapError((error) => Effect.logError(failureMessage, error)),
+    Effect.catch((error) => Effect.sync(() => onFailure(error))),
+  )
+})
+
 // Sends commands to the Player and keeps the message for the last one that
 // failed, until the next command is sent.
 export function usePlayerCommand() {
@@ -29,16 +41,9 @@ export function usePlayerCommand() {
     setFailure(null)
     setSending(true)
     runtime.runFork(
-      Effect.gen(function* () {
-        const player = yield* Player
-        yield* command(player)
-      }).pipe(
-        Effect.tapError((error) => Effect.logError(failureMessage, error)),
-        Effect.catch((error) =>
-          Effect.sync(() => setFailure(failuresByTag[error._tag] ?? failureMessage)),
-        ),
-        Effect.ensuring(Effect.sync(() => setSending(false))),
-      ),
+      runPlayerCommand(command, failureMessage, (error) =>
+        setFailure(failuresByTag[error._tag] ?? failureMessage),
+      ).pipe(Effect.ensuring(Effect.sync(() => setSending(false)))),
     )
   }
 
