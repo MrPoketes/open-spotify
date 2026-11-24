@@ -258,12 +258,9 @@ function visitChildValue(context: WalkContext, value: unknown, relation: NodeRel
   }
 }
 
-function visitChildren(context: WalkContext, node: SyntaxNode, type: string) {
+function visitChildren(context: WalkContext, node: SyntaxNode) {
   for (const [key, value] of Object.entries(node)) {
     if (skippedChildKeys.has(key)) {
-      continue
-    }
-    if (key === "expression" && type === "ArrowFunctionExpression") {
       continue
     }
     visitChildValue(context, value, { parent: node, key })
@@ -293,7 +290,7 @@ function visitNode(context: WalkContext, node: SyntaxNode, relation: NodeRelatio
     recordClassList(context, templateStaticText(node), line)
   }
   context.tokens.push({ kind: "syntax", exact: syntaxTag(node), line })
-  visitChildren(context, node, type)
+  visitChildren(context, node)
   if (isTestBlock) {
     pushBoundary(context, line)
   }

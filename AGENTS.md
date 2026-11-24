@@ -91,7 +91,9 @@ technically correct but hard to read gets rejected. These rules are not suggesti
 9. **Reuse before you write.** Before writing a helper, hook, component, test fake, or long
    class string, search the codebase for one that does the job (`grep` for the logic, not
    just the name you would give it) and use or extend it. Copies drift apart: one count
-   formatter gained thousands separators while its copy did not.
+   formatter gained thousands separators while its copy did not. A test
+   (`lint/duplicate-code.test.ts`) fails on copied code blocks and long Tailwind class strings
+   across files in `src/` and `lint/`.
 
 A lint rule may be disabled only with a written reason
 (`// oxlint-disable-next-line rule-name -- reason`), and the reviewer will check the reason.

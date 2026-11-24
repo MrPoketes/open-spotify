@@ -18,15 +18,21 @@ const minSharedTailwindClasses = 11
 interface TokenLocation {
   readonly file: string
   readonly start: number
+  readonly startLine: number
+  readonly endLine: number
 }
 
 interface CloneSpan {
   readonly fileA: string
-  startA: number
+  readonly startA: number
   endA: number
+  readonly startLineA: number
+  endLineA: number
   readonly fileB: string
-  startB: number
+  readonly startB: number
   endB: number
+  readonly startLineB: number
+  endLineB: number
 }
 
 interface ReportedClone {
@@ -106,15 +112,27 @@ function indexWindows(
   const index = new Map<string, Array<TokenLocation>>()
   for (const [file, { tokens }] of analyses) {
     for (let start = 0; start <= tokens.length - windowSize; start += 1) {
-      if (windowContainsBoundary(tokens, start, windowSize)) {
+      const firstToken = tokens[start]
+      const lastToken = tokens[start + windowSize - 1]
+      if (
+        firstToken === undefined ||
+        lastToken === undefined ||
+        windowContainsBoundary(tokens, start, windowSize)
+      ) {
         continue
+      }
+      const location: TokenLocation = {
+        file,
+        start,
+        startLine: firstToken.line,
+        endLine: lastToken.line,
       }
       const key = encode(tokens, start, windowSize)
       const list = index.get(key)
       if (list === undefined) {
-        index.set(key, [{ file, start }])
+        index.set(key, [location])
       } else {
-        list.push({ file, start })
+        list.push(location)
       }
     }
   }
@@ -132,9 +150,13 @@ function recordPairMatch(
     fileA: left.file,
     startA: left.start,
     endA: left.start + windowSize,
+    startLineA: left.startLine,
+    endLineA: left.endLine,
     fileB: right.file,
     startB: right.start,
     endB: right.start + windowSize,
+    startLineB: right.startLine,
+    endLineB: right.endLine,
   }
   const existing = diagonals.get(key)
   if (existing === undefined) {
@@ -151,7 +173,9 @@ function mergeContiguousSpans(spans: ReadonlyArray<CloneSpan>): ReadonlyArray<Cl
     const previous = merged.at(-1)
     if (previous !== undefined && span.startA <= previous.endA) {
       previous.endA = Math.max(previous.endA, span.endA)
+      previous.endLineA = Math.max(previous.endLineA, span.endLineA)
       previous.endB = Math.max(previous.endB, span.endB)
+      previous.endLineB = Math.max(previous.endLineB, span.endLineB)
     } else {
       merged.push({ ...span })
     }
@@ -191,41 +215,26 @@ function collectCloneSpans(
   return [...diagonals.values()].flatMap(mergeContiguousSpans)
 }
 
-function lineBounds(tokens: ReadonlyArray<CodeToken> | undefined, start: number, end: number) {
-  const startLine = tokens?.[start]?.line ?? 0
-  const endLine = tokens?.[end - 1]?.line ?? 0
-  return { startLine, endLine, span: endLine - startLine + 1 }
-}
-
-function toReportedClone(
-  analyses: ReadonlyMap<string, FileAnalysis>,
-  span: CloneSpan,
-  minLines: number,
-): ReportedClone | null {
-  const boundsA = lineBounds(analyses.get(span.fileA)?.tokens, span.startA, span.endA)
-  const boundsB = lineBounds(analyses.get(span.fileB)?.tokens, span.startB, span.endB)
-  if (boundsA.span < minLines || boundsB.span < minLines) {
-    return null
-  }
-  return {
-    fileA: span.fileA,
-    startLineA: boundsA.startLine,
-    endLineA: boundsA.endLine,
-    fileB: span.fileB,
-    startLineB: boundsB.startLine,
-    endLineB: boundsB.endLine,
-    tokenCount: span.endA - span.startA,
-  }
-}
-
 function findTokenClones(
   analyses: ReadonlyMap<string, FileAnalysis>,
   config: { readonly minTokens: number; readonly minLines: number; readonly encode: WindowEncoder },
 ): ReadonlyArray<ReportedClone> {
   const index = indexWindows(analyses, config.minTokens, config.encode)
   return collectCloneSpans(index, config.minTokens)
-    .map((span) => toReportedClone(analyses, span, config.minLines))
-    .filter((clone): clone is ReportedClone => clone !== null)
+    .filter(
+      (span) =>
+        span.endLineA - span.startLineA + 1 >= config.minLines &&
+        span.endLineB - span.startLineB + 1 >= config.minLines,
+    )
+    .map((span) => ({
+      fileA: span.fileA,
+      startLineA: span.startLineA,
+      endLineA: span.endLineA,
+      fileB: span.fileB,
+      startLineB: span.startLineB,
+      endLineB: span.endLineB,
+      tokenCount: span.endA - span.startA,
+    }))
 }
 
 const spansOverlap = (first: ReportedClone, second: ReportedClone) =>
