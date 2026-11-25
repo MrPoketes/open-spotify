@@ -779,6 +779,12 @@ are removed. Named classes such as `bg-red-500` or `drop-shadow-md` do not exist
 cannot bypass the theme. Arbitrary values such as `bg-[#fff]` still would: never use them for
 colors, fonts, radii, or shadows.
 
+Native controls that the browser partly draws (`<input type="range">`, `<input type="checkbox">`,
+`<input type="radio">`, `<progress>`, and `<meter>`) bypass the theme too: `accent-color` styles
+only part of them, leaving the rest in browser colors from `color-scheme`. Give each one
+`appearance-none` and style its parts (such as `::-webkit-slider-runnable-track` and
+`::-webkit-slider-thumb`) with theme tokens.
+
 The full list of tokens, with the class each one drives and what it is for, is the
 [token reference in themes.md](themes.md#token-reference). Use each token only for the purpose
 listed there.

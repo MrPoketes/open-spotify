@@ -42,12 +42,13 @@ export function ThemeEditor({ savedTheme, onSave, onCancel }: ThemeEditorProps) 
       <fieldset className="flex gap-4 text-sm">
         <legend className={legendStyle}>Color scheme</legend>
         {colorSchemes.map(({ colorScheme, label }) => (
-          <label key={colorScheme} className="flex items-center gap-2">
+          <label key={colorScheme} className="flex cursor-pointer items-center gap-2">
             <input
               type="radio"
               name="colorScheme"
               checked={editor.colorScheme === colorScheme}
               onChange={() => editor.setColorScheme(colorScheme)}
+              className="grid size-4 shrink-0 cursor-pointer appearance-none place-content-center rounded-full border border-border bg-surface-raised transition-colors duration-120 ease-out before:size-2 before:rounded-full before:bg-on-accent before:opacity-0 checked:border-accent checked:bg-accent checked:before:opacity-100"
             />
             {label}
           </label>
