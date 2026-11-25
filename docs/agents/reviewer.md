@@ -50,6 +50,9 @@ Read every changed line. For each file, ask:
 - Does the code do what the issue asks? Is anything missing?
 - Are errors handled as typed Effect errors, and can a user actually recover from them?
 - Are inputs from outside (IPC, Spotify, files, user input) decoded with a Schema?
+- If the PR adds or changes shell commands in `docs/agents/*.md`, run or spot-check the
+  read-only commands against the repo to confirm they work as described, and verify the PR's
+  `Tests` section lists the commands the author ran.
 
 **Readability (the no-slop rules)**
 
