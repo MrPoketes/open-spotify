@@ -10,8 +10,10 @@ describe("findUnexplainedOverrideDisables", () => {
       files: ["*.config.ts"],
       rules: {
         "import/no-default-export": "off",
-        "no-console": 0,
+        "no-console": "allow",
+        "no-debugger": 0,
         "max-lines": ["off", { max: 300 }],
+        "max-params": ["allow"],
       },
     },
   ],
@@ -20,7 +22,9 @@ describe("findUnexplainedOverrideDisables", () => {
     expect(findUnexplainedOverrideDisables(source)).toEqual([
       'oxlint.config.ts:6: "import/no-default-export" is turned off without a reason comment',
       'oxlint.config.ts:7: "no-console" is turned off without a reason comment',
-      'oxlint.config.ts:8: "max-lines" is turned off without a reason comment',
+      'oxlint.config.ts:8: "no-debugger" is turned off without a reason comment',
+      'oxlint.config.ts:9: "max-lines" is turned off without a reason comment',
+      'oxlint.config.ts:10: "max-params" is turned off without a reason comment',
     ])
   })
 
@@ -124,6 +128,21 @@ describe("findUnexplainedOverrideDisables", () => {
         "export default defineConfig({ overrides: sharedOverrides })",
       ),
     ).toEqual(["oxlint.config.ts: expected overrides to be an array literal"])
+    expect(
+      findUnexplainedOverrideDisables(
+        "export default defineConfig({ overrides: [...sharedOverrides] })",
+      ),
+    ).toEqual(["oxlint.config.ts:1: expected an override object literal"])
+    expect(
+      findUnexplainedOverrideDisables(
+        "export default defineConfig({ overrides: [{ files: ['a.ts'], rules: sharedRules }] })",
+      ),
+    ).toEqual(["oxlint.config.ts:1: expected rules to be an object literal"])
+    expect(
+      findUnexplainedOverrideDisables(
+        "export default defineConfig({ overrides: [{ files: ['a.ts'], rules: { ...sharedRules } }] })",
+      ),
+    ).toEqual(["oxlint.config.ts:1: expected rule entries to be explicit properties"])
   })
 
   // Turning a rule off in oxlint.config.ts overrides counts as disabling it

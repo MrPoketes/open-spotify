@@ -80,11 +80,12 @@ function findConfigObject(program: ESTree.Program): ESTree.ObjectExpression | nu
   return null
 }
 
+// Oxlint accepts "off", "allow", and 0 as disabling severities.
 const isOffLiteral = (node: ESTree.Expression | ESTree.SpreadElement | null | undefined): boolean =>
   node !== null &&
   node !== undefined &&
   node.type === "Literal" &&
-  (node.value === "off" || node.value === 0)
+  (node.value === "off" || node.value === "allow" || node.value === 0)
 
 function isOffSeverity(node: ESTree.Expression): boolean {
   if (isOffLiteral(node)) {
@@ -138,7 +139,12 @@ function unexplainedRulesInObject(
     const after = previousEnd ?? rulesObject.start
     const afterNewline = previousEnd !== null
     previousEnd = entry.end
-    if (entry.type !== "Property" || !isOffSeverity(entry.value)) {
+    if (entry.type !== "Property") {
+      const line = lineAt(parsed.source, entry.start)
+      violations.push(`${configPath}:${line}: expected rule entries to be explicit properties`)
+      continue
+    }
+    if (!isOffSeverity(entry.value)) {
       continue
     }
     if (hasCommentBetween(parsed, { after, before: entry.start, afterNewline })) {
@@ -157,8 +163,12 @@ function unexplainedRulesInOverride(
   previousOverrideEnd: number,
 ): ReadonlyArray<string> {
   const rulesProperty = findProperty(override, "rules")
-  if (rulesProperty === null || rulesProperty.property.value.type !== "ObjectExpression") {
+  if (rulesProperty === null) {
     return []
+  }
+  if (rulesProperty.property.value.type !== "ObjectExpression") {
+    const line = lineAt(parsed.source, rulesProperty.property.value.start)
+    return [`${configPath}:${line}: expected rules to be an object literal`]
   }
   if (overrideHasReasonComment(parsed, override, { previousOverrideEnd, rulesProperty })) {
     return []
@@ -194,7 +204,11 @@ export function findUnexplainedOverrideDisables(source: string): ReadonlyArray<s
     if (element === null) {
       continue
     }
-    if (element.type === "ObjectExpression") {
+    if (element.type !== "ObjectExpression") {
+      violations.push(
+        `${configPath}:${lineAt(source, element.start)}: expected an override object literal`,
+      )
+    } else {
       violations.push(...unexplainedRulesInOverride(parsed, element, previousEnd))
     }
     previousEnd = element.end
