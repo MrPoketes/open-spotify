@@ -15,7 +15,7 @@ Work through the steps in order. Be brief: most runs change little.
 - Linear: issues in project `Open Spotify` in `Todo`, `In Progress`, and `In Review`
   (`list_issues` with `project` and `state`). Note each issue's priority, `blocked by` links,
   and `gitBranchName`.
-- GitHub: `gh pr list --state open --json number,title,headRefName,headRefOid,isCrossRepository,statusCheckRollup,mergeable`
+- GitHub: `gh pr list --state open --json number,title,headRefName,headRefOid,isCrossRepository,statusCheckRollup,mergeable,mergeStateStatus`
   and `gh pr list --state merged --limit 20 --json number,title,mergedAt`. A PR with
   `isCrossRepository: true` comes from an outside contributor's fork and is outside the
   pipeline: do not review, fix, or merge it. The owner starts its reviews by hand, as
@@ -42,22 +42,32 @@ An active worker is **stuck** when its `pendingBackgroundTasks` is empty and eit
 
 - its thread's `updatedAt` is more than 2 hours old, or
 - its thread's `updatedAt` is more than an hour old and one of its watched open PRs has failed
-  checks, has conflicts, or has a CI run unfinished for more than an hour: for the PR's
-  `headRefOid`, `gh run list --commit <headRefOid> --json status,createdAt` lists a run whose
-  `status` is not `completed` and whose `createdAt` is more than an hour old.
+  checks, has conflicts, is behind `main` (`mergeStateStatus` is `BEHIND`), or has a CI run
+  unfinished for more than an hour: for the PR's `headRefOid`,
+  `gh run list --commit <headRefOid> --json status,createdAt` lists a run whose `status` is not
+  `completed` and whose `createdAt` is more than an hour old.
 
 With 2 slots, a stuck worker blocks half the pipeline, so it gets one nudge and is then stopped:
 
 - **Nudge it:** comment on the issue `Nudged by the orchestrator: <thread link>`, then send the
   thread: `You have made no progress for over an hour. Continue, following docs/agents/worker.md.`
-  Add why it counts as stuck: no update since `<updatedAt>`; CI failed or the PR has conflicts on
-  #<n> (fix it, following worker.md step 5); or CI pending on #<n> since `<createdAt>`. It keeps
-  its slot.
+  Add why it counts as stuck: no update since `<updatedAt>`; CI failed, the PR has conflicts, or
+  the PR is behind `main` on #<n> (fix it, following worker.md step 5); or CI pending on #<n>
+  since `<createdAt>`. It keeps its slot.
 - **Stop it:** comment on the issue `Stopped by the orchestrator: <thread link>` with why it
   counts as stuck. Then `t3_thread_interrupt` the thread and `unwatch_pull_request` (with its
   `threadId`) every open PR it watches. Nothing can now restart it but a resume in step 3, which
   counts it as active again, so stopping never lets more than 2 workers run. Check it with
   `t3_thread_list`: once it is paused, it holds no slot; if it is still active, it keeps its slot.
+
+An active worker waiting on an auto-merge PR that fell behind `main` (`mergeStateStatus` is
+`BEHIND`) will not be woken by `watch_pull_request` once its checks have finished. When its
+thread status is `idle` or `completed` and `pendingBackgroundTasks` is empty, **wake it for a
+branch update**: read its recent messages with `t3_thread_read`; if it has not already been asked
+to update `<headRefOid>`, call `t3_thread_send` with:
+`PR #<n> (commit <headRefOid>) is behind main and cannot auto-merge. Rebase on origin/main, re-run pnpm check, push with --force-with-lease, and get a fresh agent-review, following docs/agents/worker.md step 5.`
+Checking `<headRefOid>` avoids waking it in a loop if it fails to push; if it stays behind for
+over an hour, the stuck-worker rule handles it.
 
 For each issue in `In Progress` or `In Review`, take the first row that applies:
 
@@ -69,6 +79,7 @@ For each issue in `In Progress` or `In Review`, take the first row that applies:
 | Its worker is paused otherwise                                                                                                                                         | Leave it. Step 3 resumes it when a slot is free.                                           |
 | Its worker is stuck and no `Nudged by the orchestrator` comment links this worker's thread (read every comment page as in 3.2)                                         | Nudge it.                                                                                  |
 | Its worker is stuck otherwise                                                                                                                                          | Stop it.                                                                                   |
+| Its worker is `idle` or `completed`, `pendingBackgroundTasks` is empty, and its watched open PR has `mergeStateStatus` of `BEHIND`                                     | Wake it for a branch update.                                                               |
 
 Then delete the backups (see 3.1) that nobody needs any more. For each branch that
 `git ls-remote --heads origin "refs/heads/backup/*"` lists, find its issue from the `arm-<n>`
@@ -84,9 +95,10 @@ each one:
 1. `t3_thread_read` the thread to see where it stopped.
 2. Comment on the issue: `Resumed by the orchestrator: <thread link>`.
 3. `t3_thread_send` it a message telling it to continue from there, following
-   `docs/agents/worker.md`. If its open PR has failed checks or conflicts, say so. If a
-   `Stopped by the orchestrator` comment links this thread, give its reason and tell the worker
-   to watch its open PR again (worker.md step 5), because the stop removed the watch.
+   `docs/agents/worker.md`. If its open PR has failed checks, has conflicts, or is behind
+   `main`, say so. If a `Stopped by the orchestrator` comment links this thread, give its reason
+   and tell the worker to watch its open PR again (worker.md step 5), because the stop removed
+   the watch.
 
 When no paused worker is left and a slot is still free:
 
@@ -227,7 +239,7 @@ first case that applies, then go to step 6.
 Release nothing else. Read the PR's state:
 
 ```sh
-gh pr view <n> --json state,headRefOid,mergeable,autoMergeRequest
+gh pr view <n> --json state,headRefOid,mergeable,mergeStateStatus,autoMergeRequest
 gh run list --commit <headRefOid> --json databaseId,workflowName,status,conclusion,attempt
 gh pr view <n> --json statusCheckRollup --jq '.statusCheckRollup[] | select(.context == "agent-review") | .state'
 gh pr view <n> --json comments --jq '[.comments[] | select(.body | startswith("## Agent review: CHANGES REQUESTED"))] | length'
@@ -245,7 +257,7 @@ has passed):
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Its milestone is no longer finished (an issue was added or reopened) | Close the PR.                                                             |
 | A run failed on attempt 2, or there are three `CHANGES REQUESTED`    | Close the PR and file a Bug titled `Release v<version> blocked`.          |
-| `mergeable` is `CONFLICTING`                                         | Close the PR and go to 5.3, which opens a fresh one for the same version. |
+| `mergeable` is `CONFLICTING` or `mergeStateStatus` is `BEHIND`       | Close the PR and go to 5.3, which opens a fresh one for the same version. |
 | A run failed on attempt 1                                            | `gh run rerun <databaseId> --failed`                                      |
 | `agent-review` is not `SUCCESS`                                      | Get it reviewed.                                                          |
 | `autoMergeRequest` is `null`                                         | `gh pr merge <n> --squash --auto`                                         |

@@ -66,14 +66,29 @@ unresolved, move it to `Todo`, and stop.
 
 ## 5. Merge
 
-1. Enable auto-merge: `gh pr merge <number> --squash --auto`. Do not add `--delete-branch`:
-   it tries to check out `main`, which fails in a worktree because the main checkout holds
-   it. GitHub deletes the branch on merge by itself.
-2. Call `watch_pull_request` for the PR and end your turn. You will be woken when checks finish.
+1. Check the PR state with
+   `gh pr view <number> --json state,mergeable,mergeStateStatus,autoMergeRequest`.
+   - If `state` is `MERGED`, go to step 5.5.
+   - If `mergeable` is `CONFLICTING` or `mergeStateStatus` is `BEHIND`, update the branch now
+     (step 5.4) instead of waiting on a PR that cannot merge.
+   - If `autoMergeRequest` is `null`, enable auto-merge: `gh pr merge <number> --squash --auto`.
+     Do not add `--delete-branch`: it tries to check out `main`, which fails in a worktree
+     because the main checkout holds it. GitHub deletes the branch on merge by itself.
+2. Call `watch_pull_request` for the PR (skip if you are already watching it) and end your turn.
+   You will be woken when checks finish, on conflicts, on merge, or by the orchestrator if the
+   PR falls behind `main`. When woken on an unmerged PR, re-check its state as in step 5.1.
 3. If a check fails, read its log (`gh run view --log-failed`), fix the cause, push, and get a
-   new review (any push invalidates the `agent-review` status). Then watch again.
-4. If the PR has merge conflicts, rebase on `origin/main`, re-run `pnpm check`, push with
-   `--force-with-lease`, and get a new review.
+   new review (step 4: any push invalidates the per-commit `agent-review` status). Then return
+   to step 5.1.
+4. If the PR has merge conflicts (`mergeable` is `CONFLICTING`) or is behind `main`
+   (`mergeStateStatus` is `BEHIND`):
+   - run `git fetch origin` and `git rebase origin/main`, resolving any conflicts;
+   - re-run `pnpm check` (and `pnpm package:dir` and `pnpm test:e2e` if step 2.4 applies);
+   - push with `git push --force-with-lease`;
+   - get a new review (step 4): updating the branch creates a new commit, which clears the
+     per-commit `agent-review` status, so even a clean rebase needs a fresh review before
+     auto-merge can run;
+   - return to step 5.1.
 5. When the PR is merged:
    - move the Linear issue to `Done` and comment with the PR link;
    - call `unwatch_pull_request`;

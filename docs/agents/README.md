@@ -39,5 +39,6 @@ pull request from an outside contributor's fork: the owner starts its review and
 - Linear: team `Armintas` (key `ARM`), project `Open Spotify`, label `Open-Spotify`.
   Statuses: Backlog → Todo → In Progress → In Review → Done (or Canceled).
 - Required checks on `main`: `check`, `package (ubuntu-latest)`, `package (windows-latest)`,
-  `package (macos-latest)`, `agent-review`.
+  `package (macos-latest)`, `agent-review`, with `strict: true` (a PR must be up to date with
+  `main` before it merges).
 - Nobody pushes to `main` directly. Every change, including docs, goes through a PR.
