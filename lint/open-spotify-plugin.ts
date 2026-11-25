@@ -7,6 +7,7 @@ import { noEffectPromise } from "./rules/no-effect-promise.ts"
 import { noEffectRun } from "./rules/no-effect-run.ts"
 import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
+import { noInlineModifierCheck } from "./rules/no-inline-modifier-check.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noNewDateWithArguments } from "./rules/no-new-date-with-arguments.ts"
 import { noRawInvisibleCharacters } from "./rules/no-raw-invisible-characters.ts"
@@ -32,6 +33,7 @@ export default definePlugin({
     "no-effect-run": noEffectRun,
     "no-effect-with-span": noEffectWithSpan,
     "no-hard-coded-colors": noHardCodedColors,
+    "no-inline-modifier-check": noInlineModifierCheck,
     "no-junk-drawer-modules": noJunkDrawerModules,
     "no-new-date-with-arguments": noNewDateWithArguments,
     "no-raw-invisible-characters": noRawInvisibleCharacters,

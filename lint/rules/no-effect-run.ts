@@ -1,4 +1,5 @@
 import { defineRule, type ESTree } from "@oxlint/plugins"
+import { memberPropertyName } from "../member-property-name.ts"
 
 const effectModule = "effect"
 const effectSubpathModule = "effect/Effect"
@@ -93,16 +94,6 @@ function isForbiddenEffectMember(
   }
   const propertyName = memberPropertyName(node)
   return propertyName !== undefined && forbiddenRunners.has(propertyName)
-}
-
-function memberPropertyName(node: ESTree.MemberExpression): string | undefined {
-  if (!node.computed) {
-    return node.property.type === "Identifier" ? node.property.name : undefined
-  }
-  if (node.property.type === "Literal" && typeof node.property.value === "string") {
-    return node.property.value
-  }
-  return undefined
 }
 
 function importedName(imported: ESTree.ImportSpecifier["imported"]): string {

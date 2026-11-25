@@ -1,5 +1,6 @@
 import path from "node:path"
 import { defineRule, type ESTree } from "@oxlint/plugins"
+import { repoRelativePath } from "../repo-relative-path.ts"
 
 // Components read the runtime from RendererRuntimeContext so tests can render
 // them over a fake main process. Importing rendererRuntime directly bypasses
@@ -25,7 +26,7 @@ export const noRendererRuntimeImport = defineRule({
   },
   create(context) {
     const importerPath = path.resolve(context.cwd, context.filename)
-    const relativeImporter = toPosixPath(path.relative(context.cwd, importerPath))
+    const relativeImporter = repoRelativePath(context.cwd, importerPath)
     if (isAllowedImporter(relativeImporter)) {
       return {}
     }
@@ -92,7 +93,7 @@ function resolvesToRendererRuntime(cwd: string, importerPath: string, specifier:
     return false
   }
   const targetPath = path.resolve(path.dirname(importerPath), specifier)
-  const relativeTarget = toPosixPath(path.relative(cwd, targetPath)).replace(moduleExtension, "")
+  const relativeTarget = repoRelativePath(cwd, targetPath).replace(moduleExtension, "")
   return relativeTarget === rendererRuntimeModule
 }
 
@@ -112,8 +113,4 @@ function isForbiddenImportSpecifier(
 
 function moduleExportName(node: ESTree.ImportSpecifier["imported"]): string {
   return node.type === "Identifier" ? node.name : node.value
-}
-
-function toPosixPath(filePath: string): string {
-  return filePath.replaceAll("\\", "/")
 }
