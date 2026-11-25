@@ -1,5 +1,5 @@
-import type { TimeRange } from "./spotify-listening-history"
 import { fakeFollowedArtists, fakeTrack } from "./spotify-fixtures"
+import type { TimeRange } from "./spotify-listening-history"
 
 const play = (trackIndex: number, contextUri: string | null) => ({
   track: fakeTrack(trackIndex),

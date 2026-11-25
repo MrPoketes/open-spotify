@@ -1,7 +1,7 @@
 import path from "node:path"
 import { pathToFileURL } from "node:url"
-import { app, net, protocol } from "electron"
 import { Effect, Schema } from "effect"
+import { app, net, protocol } from "electron"
 import { contentSecurityPolicy } from "../shared/content-security-policy"
 import { mainRuntime } from "./main-runtime"
 import { rendererShellFile, resolveRendererFile } from "./renderer-files"

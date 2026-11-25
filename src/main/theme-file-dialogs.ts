@@ -1,5 +1,5 @@
-import type { BaseWindow, Dialog } from "electron"
 import { Context, Effect, Layer, type Option } from "effect"
+import type { BaseWindow, Dialog } from "electron"
 import type { Theme } from "../shared/theme"
 import {
   chooseMessageBoxButton,

@@ -1,9 +1,9 @@
 import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from "lucide-react"
 import { PlayerControlButton } from "./player-control-button"
+import { SeekBar } from "./seek-bar"
 import { useMediaSession } from "./use-media-session"
 import { usePlaybackActions } from "./use-playback-actions"
 import { usePlaybackShortcuts } from "./use-playback-shortcuts"
-import { SeekBar } from "./seek-bar"
 import type { PlayerStateOrLoading } from "./use-player-state"
 
 interface PlaybackControlsProps {

@@ -8,6 +8,7 @@ import {
 } from "effect/http"
 import { type AccessTokenError, SessionExpired } from "../../../shared/spotify-auth-replies"
 import type { DesktopBridgeError } from "../../lib/desktop-bridge"
+import { SpotifyAccessToken } from "./spotify-access-token"
 import {
   Album,
   AlbumTracksPage,
@@ -15,10 +16,9 @@ import {
   type ArtistAlbumsPage,
   SavedAlbum,
 } from "./spotify-album"
+import { spotifyApiBaseUrl } from "./spotify-api-url"
 import { Artist } from "./spotify-artist"
 import { type AlbumGroup, artistRequests } from "./spotify-artist-requests"
-import { SpotifyAccessToken } from "./spotify-access-token"
-import { spotifyApiBaseUrl } from "./spotify-api-url"
 import type { Device } from "./spotify-device"
 import { type TimeRange, listeningHistoryRequests } from "./spotify-listening-history"
 import { Paging, streamPages } from "./spotify-paging"

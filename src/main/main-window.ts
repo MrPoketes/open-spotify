@@ -1,6 +1,6 @@
 import path from "node:path"
-import { BrowserWindow } from "electron"
 import { Effect, Schedule, Schema } from "effect"
+import { BrowserWindow } from "electron"
 import appIconPath from "../../build/icons/256x256.png?asset"
 import { rendererDevServerUrl } from "../shared/dev-server"
 import { SystemBrowser } from "./auth/system-browser"

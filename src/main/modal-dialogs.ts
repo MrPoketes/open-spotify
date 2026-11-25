@@ -1,3 +1,4 @@
+import { Effect, Option, Schema } from "effect"
 import type {
   BaseWindow,
   Dialog,
@@ -5,7 +6,6 @@ import type {
   OpenDialogOptions,
   SaveDialogOptions,
 } from "electron"
-import { Effect, Option, Schema } from "effect"
 
 export class ModalDialogError extends Schema.TaggedError<ModalDialogError>()("ModalDialogError", {
   cause: Schema.Defect(),

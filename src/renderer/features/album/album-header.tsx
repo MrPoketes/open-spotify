@@ -1,3 +1,4 @@
+import { formatCount } from "../../ui/format-count"
 import { PageHeader } from "../../ui/page-header"
 import { ArtistLinks } from "../artist/artist-links"
 import { useAddToFolder } from "../folders/use-add-to-folder"
@@ -5,7 +6,6 @@ import { ContextPlayButton } from "../playback/context-play-button"
 import type { Album } from "../spotify/spotify-album"
 import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import { formatTotalDuration } from "../track-list/format-duration"
-import { formatCount } from "../../ui/format-count"
 
 interface AlbumHeaderProps {
   readonly album: Album

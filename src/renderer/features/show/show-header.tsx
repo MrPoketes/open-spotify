@@ -1,8 +1,8 @@
 import { PageHeader } from "../../ui/page-header"
 import { useAddToFolder } from "../folders/use-add-to-folder"
 import { ContextPlayButton } from "../playback/context-play-button"
-import type { Show } from "../spotify/spotify-show"
 import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
+import type { Show } from "../spotify/spotify-show"
 
 export function ShowHeader({ show }: { readonly show: Show }) {
   const addToFolder = useAddToFolder()

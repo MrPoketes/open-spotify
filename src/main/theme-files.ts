@@ -1,6 +1,6 @@
 import path from "node:path"
-import type { BaseWindow } from "electron"
 import { Effect, FileSystem, Option, Schema } from "effect"
+import type { BaseWindow } from "electron"
 import { builtInThemes } from "../shared/built-in-themes"
 import { type Theme, ThemeFile, decodeThemeFile } from "../shared/theme"
 import { ThemeImportFailed } from "../shared/theme-file-replies"

@@ -6,13 +6,6 @@ import { fakeDiscography } from "./spotify-discography-fixtures"
 import { spotifyErrorBody } from "./spotify-fake-error-body"
 import { fakePlayer } from "./spotify-fake-player"
 import { fakeTracks } from "./spotify-fake-tracks"
-import { searchPageSize } from "./spotify-search"
-import type { TimeRange } from "./spotify-listening-history"
-import {
-  fakeRecentlyPlayed,
-  fakeTopArtists,
-  fakeTopTracks,
-} from "./spotify-listening-history-fixtures"
 import {
   type FakePlaylist,
   fakeAlbums,
@@ -26,6 +19,13 @@ import {
   fakeSavedShows,
   fakeShows,
 } from "./spotify-fixtures"
+import type { TimeRange } from "./spotify-listening-history"
+import {
+  fakeRecentlyPlayed,
+  fakeTopArtists,
+  fakeTopTracks,
+} from "./spotify-listening-history-fixtures"
+import { searchPageSize } from "./spotify-search"
 
 export const fakeAccessToken = "fake-access-token"
 

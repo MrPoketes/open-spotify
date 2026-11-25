@@ -1,7 +1,7 @@
 import type { Effect, Schema } from "effect"
 import { ArtistAlbumsPage } from "./spotify-album"
-import { Artist } from "./spotify-artist"
 import { spotifyApiBaseUrl } from "./spotify-api-url"
+import { Artist } from "./spotify-artist"
 
 // Spotify caps a page of an artist's albums at 10.
 const artistAlbumsPageSize = 10
