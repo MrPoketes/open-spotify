@@ -51,10 +51,7 @@ const nothingAdded = async () => {
 }
 
 describe("Dragging library entries onto folders", () => {
-  beforeEach(() => {
-    const layout = layOutTreeRows()
-    return () => layout.mockRestore()
-  })
+  beforeEach(layOutTreeRows)
 
   it("highlights the folder a library entry would go into, then adds the entry last", async () => {
     await renderSidebar()

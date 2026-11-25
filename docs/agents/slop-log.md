@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-11-25 | Renderer tests spying on DOM prototypes with `vi.spyOn` without restoring them between tests      | `restoreMocks: true` in `vitest.config.ts` (renderer)       |
 | 2026-11-25 | Raw invisible characters (such as U+FEFF) hidden inside string literals, templates, and JSX text  | Custom rule `open-spotify/no-raw-invisible-characters`      |
 | 2026-11-25 | Relative imports placed above third-party imports and inconsistent import order across files      | `sortImports` in `.oxfmtrc.json` (`oxfmt`)                  |
 | 2026-11-25 | Copy-pasted code blocks, renamed copies, and long Tailwind `className` strings across files       | Cross-file duplicate check `lint/duplicate-code.test.ts`    |

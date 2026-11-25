@@ -29,6 +29,9 @@ export default defineConfig({
           environment: "jsdom",
           include: ["src/renderer/**/*.test.{ts,tsx}"],
           setupFiles: ["src/renderer/test-setup.ts"],
+          // Renderer tests spy on DOM prototypes for layout; without this, a
+          // spy leaks into later tests in the same file.
+          restoreMocks: true,
           // Vitest replaces CSS with empty strings by default. The design
           // token test reads the stylesheets themselves.
           css: { include: [/src\/renderer\/styles\/.+\.css/] },
