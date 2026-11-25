@@ -1,10 +1,10 @@
 import { Effect } from "effect"
 import type { GridCard } from "../../ui/card-grid"
+import { artistCard } from "../artist/artist-card"
 import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
 import { SpotifyApi } from "../spotify/spotify-api"
-import type { PlayHistory } from "../spotify/spotify-play-history"
 import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
-import { artistCard } from "../artist/artist-card"
+import type { PlayHistory } from "../spotify/spotify-play-history"
 
 const jumpBackInLimit = 8
 

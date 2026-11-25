@@ -2,9 +2,9 @@ import { assert, describe, it, layer } from "@effect/vitest"
 import { Effect, Fiber, Stream } from "effect"
 import { HttpClient, HttpClientError } from "effect/http"
 import { TestClock } from "effect/testing"
+import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
 import { SpotifyApi } from "./spotify-api"
 import { spotifyApiFake } from "./spotify-api-fake"
-import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
 import { spotifyErrorBody } from "./spotify-fake-error-body"
 import {
   fakeCurrentUser,

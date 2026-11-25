@@ -7,8 +7,8 @@ import {
   useRef,
 } from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
-import { type RovingRowProps, type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
 import { Expander, TreeRow } from "./tree-row"
+import { type RovingRowProps, type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
 import { type TreeDropRules, useTreeDragAndDrop } from "./use-tree-drag-and-drop"
 import { type TreeNode, type VisibleTreeRow, visibleTreeRows } from "./visible-tree-rows"
 

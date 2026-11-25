@@ -1,6 +1,6 @@
 import { Effect, type Schema } from "effect"
-import { Artist } from "./spotify-artist"
 import { spotifyApiBaseUrl } from "./spotify-api-url"
+import { Artist } from "./spotify-artist"
 import { Paging } from "./spotify-paging"
 import { RecentlyPlayedPage } from "./spotify-play-history"
 import { Track } from "./spotify-track"

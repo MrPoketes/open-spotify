@@ -1,11 +1,11 @@
 import { afterEach, assert, describe, it } from "@effect/vitest"
 import { Effect, Fiber, Layer, Option, Queue, Stream } from "effect"
 import { TestClock } from "effect/testing"
+import { collectStream } from "../../lib/collect-stream"
+import { setWindowVisibility } from "../../lib/fake-window-visibility"
 import { NoActiveDevice, SpotifyApi, SpotifyRequestError } from "../spotify/spotify-api"
 import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { fakeDevices, fakeTrack } from "../spotify/spotify-fixtures"
-import { collectStream } from "../../lib/collect-stream"
-import { setWindowVisibility } from "../../lib/fake-window-visibility"
 import { Player, type PlayerState } from "./player"
 import { playerOver } from "./player-over"
 

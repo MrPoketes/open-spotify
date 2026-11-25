@@ -6,9 +6,9 @@ import type { SavedAlbum } from "../spotify/spotify-album"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { Artist } from "../spotify/spotify-artist"
 import type { Image } from "../spotify/spotify-image"
+import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"
 import type { SavedShow } from "../spotify/spotify-show"
-import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
 import type { LibraryPlaylistsLoad } from "./library-playlists"
 
 export interface LibraryEntry {

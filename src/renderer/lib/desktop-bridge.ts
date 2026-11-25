@@ -1,4 +1,5 @@
 import { Context, Effect, Layer, Option, Schema } from "effect"
+import type { DesktopApi } from "../../preload/desktop-api"
 import { AppInfo } from "../../shared/app-info"
 import {
   type AddFolderItemRequest,
@@ -33,14 +34,13 @@ import {
   type LogInError,
   LogInReply,
 } from "../../shared/spotify-auth-replies"
+import { Theme } from "../../shared/theme"
 import {
   ExportThemeReply,
   ImportThemeReply,
   type ThemeImportFailed,
 } from "../../shared/theme-file-replies"
-import { Theme } from "../../shared/theme"
 import { LibraryTheme, type ThemeId } from "../../shared/theme-library"
-import type { DesktopApi } from "../../preload/desktop-api"
 
 export class DesktopBridgeError extends Schema.TaggedError<DesktopBridgeError>()(
   "DesktopBridgeError",

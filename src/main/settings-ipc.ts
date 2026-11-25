@@ -1,5 +1,6 @@
 import { Effect, Schema } from "effect"
 import { ipcChannels } from "../shared/ipc-channels"
+import { MalformedIpcRequest } from "../shared/malformed-ipc-request"
 import {
   GetSettingRequest,
   SetSettingRequest,
@@ -8,7 +9,6 @@ import {
   type SettingValue,
   settingSchemas,
 } from "../shared/settings"
-import { MalformedIpcRequest } from "../shared/malformed-ipc-request"
 import { decodeIpcRequest } from "./decode-ipc-request"
 import { replyWithTaggedFailures } from "./reply-with-tagged-failures"
 import { Settings } from "./settings"

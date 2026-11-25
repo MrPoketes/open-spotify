@@ -1,7 +1,7 @@
 import { CardGrid } from "../../ui/card-grid"
-import type { Artist } from "../spotify/spotify-artist"
 import { artistCard } from "../artist/artist-card"
 import { useWithFolderMenu } from "../folders/use-with-folder-menu"
+import type { Artist } from "../spotify/spotify-artist"
 import { TopItemsSection } from "./top-items-section"
 import type { TopItems } from "./use-top-items"
 

@@ -1,8 +1,8 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Option } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
-import { LoginFailed, SessionExpired } from "../../shared/spotify-auth-replies"
 import { type Folder, FolderNotFound, type FolderTree } from "../../shared/folders"
+import { LoginFailed, SessionExpired } from "../../shared/spotify-auth-replies"
 import { DesktopBridge } from "./desktop-bridge"
 import { fakeMainProcess } from "./fake-main-process"
 

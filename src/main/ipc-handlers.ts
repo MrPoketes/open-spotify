@@ -1,5 +1,5 @@
-import { BrowserWindow, app, ipcMain } from "electron"
 import type { Effect } from "effect"
+import { BrowserWindow, app, ipcMain } from "electron"
 import type { AppInfo } from "../shared/app-info"
 import { ipcChannels } from "../shared/ipc-channels"
 import {

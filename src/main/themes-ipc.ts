@@ -1,5 +1,5 @@
-import type { BaseWindow } from "electron"
 import { Effect, Option, Schema } from "effect"
+import type { BaseWindow } from "electron"
 import { ipcChannels } from "../shared/ipc-channels"
 import { Theme } from "../shared/theme"
 import { ExportThemeReply, ImportThemeReply } from "../shared/theme-file-replies"

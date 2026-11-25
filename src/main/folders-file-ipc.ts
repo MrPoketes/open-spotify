@@ -1,9 +1,9 @@
-import type { BaseWindow } from "electron"
 import { Effect, FileSystem, Option, Schema } from "effect"
+import type { BaseWindow } from "electron"
 import { ExportFoldersReply, ImportFoldersReply } from "../shared/folders-file-replies"
-import { FoldersFileDialogs } from "./folders-file-dialogs"
 import { Folders } from "./folders"
 import { decodeFoldersFile, encodeFoldersFile, type PortableFolderEntry } from "./folders-file"
+import { FoldersFileDialogs } from "./folders-file-dialogs"
 
 const fileDialogCanceled = { _tag: "FileDialogCanceled" } as const
 

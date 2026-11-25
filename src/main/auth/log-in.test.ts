@@ -2,6 +2,7 @@ import { createServer } from "node:net"
 import { assert, describe, it } from "@effect/vitest"
 import { Deferred, Effect, Fiber, Layer, Schema } from "effect"
 import { TestClock } from "effect/testing"
+import { SpotifySession } from "./spotify-session"
 import {
   type FakeSpotifyAccounts,
   approveLogin,
@@ -14,7 +15,6 @@ import {
   restoreFakeSession,
   saveFakeClientId,
 } from "./spotify-session-fakes"
-import { SpotifySession } from "./spotify-session"
 import type { SystemBrowser } from "./system-browser"
 
 const ListeningAddress = Schema.Struct({ port: Schema.Number })

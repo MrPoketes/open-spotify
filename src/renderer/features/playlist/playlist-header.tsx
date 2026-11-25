@@ -1,9 +1,9 @@
+import { formatCount } from "../../ui/format-count"
 import { PageHeader } from "../../ui/page-header"
 import { useAddToFolder } from "../folders/use-add-to-folder"
 import { ContextPlayButton } from "../playback/context-play-button"
-import type { Playlist } from "../spotify/spotify-playlist"
 import { spotifyItemKinds } from "../spotify/spotify-item-kinds"
-import { formatCount } from "../../ui/format-count"
+import type { Playlist } from "../spotify/spotify-playlist"
 
 // Spotify sends descriptions HTML-escaped and sometimes with links in them.
 // A parsed document is inert, so reading its text runs nothing.

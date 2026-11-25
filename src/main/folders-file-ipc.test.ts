@@ -3,9 +3,9 @@ import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
 import { assert, layer } from "@effect/vitest"
 import { Effect, FileSystem, Layer, Option } from "effect"
 import type { FolderEntry } from "../shared/folders"
-import { FoldersFileDialogs } from "./folders-file-dialogs"
 import { Folders } from "./folders"
 import { album, freshFolders, playlist } from "./folders-fakes"
+import { FoldersFileDialogs } from "./folders-file-dialogs"
 import { exportFoldersFromIpc, importFoldersFromIpc } from "./folders-file-ipc"
 
 // Both dialogs answer as if the user had chosen this path, or cancelled.

@@ -1,5 +1,5 @@
-import { BrowserWindow, app, session } from "electron"
 import { type Cause, Effect, Exit } from "effect"
+import { BrowserWindow, app, session } from "electron"
 import { registerIpcHandlers } from "./ipc-handlers"
 import { mainRuntime } from "./main-runtime"
 import { createMainWindow } from "./main-window"
