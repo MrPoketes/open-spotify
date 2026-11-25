@@ -64,6 +64,7 @@ function startPrimaryInstance(): void {
   })
   app.on("second-instance", focusMainWindow)
   app.on("will-quit", () => {
+    // oxlint-disable-next-line open-spotify/no-effect-run -- Disposing mainRuntime cannot run on mainRuntime itself; disposal interrupts its own fibers.
     Effect.runFork(mainRuntime.disposeEffect)
   })
 
@@ -73,6 +74,7 @@ function startPrimaryInstance(): void {
   mainRuntime.runCallback(start, {
     onExit: (exit) => {
       if (Exit.isFailure(exit)) {
+        // oxlint-disable-next-line open-spotify/no-effect-run -- Layer construction may have failed, so mainRuntime cannot run the startup failure handler.
         Effect.runFork(exitAfterStartupFailure(exit.cause))
       }
     },

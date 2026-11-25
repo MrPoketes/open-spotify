@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-11-25 | Running effects directly with `Effect.run*` instead of through a `ManagedRuntime`                 | Custom rule `open-spotify/no-effect-run`                    |
 | 2026-11-24 | Parsing incoming date strings with `new Date(value)` instead of `Schema.DateFromString`           | Custom rule `open-spotify/no-new-date-with-arguments`       |
 | 2026-11-24 | Components importing `rendererRuntime` directly instead of reading `RendererRuntimeContext`       | Custom rule `open-spotify/no-renderer-runtime-import`       |
 | 2026-11-24 | Promises discarded with `void`, turning rejections into unhandled promise rejections              | `typescript/no-floating-promises` with `ignoreVoid: false`  |
