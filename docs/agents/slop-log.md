@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                          |
 | ---------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 2026-11-25 | Shell commands added to `docs/agents/*.md` without running them against the repo (PR #3)          | Worker and reviewer playbooks require running shell commands |
 | 2026-11-25 | Shortcuts written as string literals in `aria-keyshortcuts`, bypassing the shortcut registry      | Custom rule `open-spotify/no-literal-aria-keyshortcuts`      |
 | 2026-11-25 | Parameterised functions wrapping `Effect.gen(...).pipe(...)` instead of `Effect.fn("name")`       | Extended `open-spotify/require-effect-fn` to unwrap `.pipe`  |
 | 2026-11-25 | Keyboard handlers calling `stopPropagation()` without returning early on `hasShortcutModifier`    | Custom rule `open-spotify/no-unguarded-key-stop-propagation` |

@@ -29,7 +29,11 @@ with the reason, add `blocked by` links where they apply, move it back to `Todo`
 4. Run `pnpm check`. It must pass. If you changed `src/main`, `src/preload`, `e2e/`, or the
    packaging files (`electron-builder.yml`, `electron.vite.config.ts`, `build/`), also run
    `pnpm package:dir` and `pnpm test:e2e`; otherwise CI runs them on all three platforms.
-5. Read your own diff (`git diff origin/main`) against the no-slop rules as if someone else
+5. If you added or changed a shell command in an agent playbook (`docs/agents/*.md`), run it
+   once against the real repo (read-only where possible, substituting real arguments for
+   placeholders) to confirm it returns what the playbook expects, and list the commands you ran
+   in the PR's `Tests` section.
+6. Read your own diff (`git diff origin/main`) against the no-slop rules as if someone else
    wrote it. Remove anything speculative, any comment that restates code, any unused export.
 
 ## 3. Open the pull request
