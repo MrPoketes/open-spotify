@@ -11,8 +11,8 @@ interface ThemeFileMessage {
 
 const errorMessage = (text: string): ThemeFileMessage => ({ kind: "error", text })
 
-const importThemeFile = (onImport: (importedTheme: LibraryTheme) => void) =>
-  Effect.gen(function* () {
+const importThemeFile = Effect.fn("importThemeFile")(
+  function* (onImport: (importedTheme: LibraryTheme) => void) {
     const bridge = yield* DesktopBridge
     const importedTheme = yield* bridge.importThemeFile
     if (Option.isNone(importedTheme)) {
@@ -21,14 +21,14 @@ const importThemeFile = (onImport: (importedTheme: LibraryTheme) => void) =>
     yield* Effect.sync(() => onImport(importedTheme.value))
     const text = `Imported ${importedTheme.value.theme.name}. Choose it in the list to use it.`
     return { kind: "status", text } satisfies ThemeFileMessage
-  }).pipe(
-    Effect.catchTag("ThemeImportFailed", (error) => Effect.succeed(errorMessage(error.message))),
-    Effect.catchTag("DesktopBridgeError", (error) =>
-      Effect.logWarning("Could not import a theme", error).pipe(
-        Effect.as(errorMessage("Could not import the theme.")),
-      ),
+  },
+  Effect.catchTag("ThemeImportFailed", (error) => Effect.succeed(errorMessage(error.message))),
+  Effect.catchTag("DesktopBridgeError", (error) =>
+    Effect.logWarning("Could not import a theme", error).pipe(
+      Effect.as(errorMessage("Could not import the theme.")),
     ),
-  )
+  ),
+)
 
 const exportCurrentTheme = Effect.gen(function* () {
   const bridge = yield* DesktopBridge

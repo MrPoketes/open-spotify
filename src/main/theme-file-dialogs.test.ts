@@ -9,11 +9,16 @@ const pressingDialogModule = (messageBoxResponse: number) => ({
   showMessageBox: () => Promise.resolve({ response: messageBoxResponse, checkboxChecked: false }),
 })
 
-const confirmReplacePressing = (messageBoxResponse: number) =>
-  Effect.gen(function* () {
-    const dialogs = yield* ThemeFileDialogs
-    return yield* dialogs.confirmReplace(null, builtInThemes.dark)
-  }).pipe(Effect.provide(ThemeFileDialogs.layer(pressingDialogModule(messageBoxResponse))))
+const confirmReplace = Effect.gen(function* () {
+  const dialogs = yield* ThemeFileDialogs
+  return yield* dialogs.confirmReplace(null, builtInThemes.dark)
+})
+
+const confirmReplacePressing = Effect.fn("confirmReplacePressing")((messageBoxResponse: number) =>
+  confirmReplace.pipe(
+    Effect.provide(ThemeFileDialogs.layer(pressingDialogModule(messageBoxResponse))),
+  ),
+)
 
 describe("ThemeFileDialogs", () => {
   // The buttons are ["Replace", "Cancel"]; only the first replaces a theme.

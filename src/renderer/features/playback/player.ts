@@ -64,21 +64,21 @@ const pollRequests = (
     Stream.fromPubSub(refreshRequests),
   )
 
-const readState = (spotify: SpotifyApi["Service"]) =>
-  Effect.gen(function* () {
+const readState = Effect.fn("Player.readState")(
+  function* (spotify: SpotifyApi["Service"]) {
     const polledPlayback = yield* spotify.getPlaybackState
     const progressReadAt = yield* Clock.currentTimeMillis
     return Option.match(polledPlayback, {
       onNone: (): PlayerState => ({ status: "noActiveDevice" }),
       onSome: (playback): PlayerState => ({ status: "active", playback, progressReadAt }),
     })
-  }).pipe(
-    Effect.catch((error) =>
-      Effect.logWarning("The playback state failed to load", error).pipe(
-        Effect.as<PlayerState>({ status: "unreachable" }),
-      ),
+  },
+  Effect.catch((error) =>
+    Effect.logWarning("The playback state failed to load", error).pipe(
+      Effect.as<PlayerState>({ status: "unreachable" }),
     ),
-  )
+  ),
+)
 
 const skipToQueuedItem = Effect.fn("Player.skipToQueuedItem")(function* (
   spotify: SpotifyApi["Service"],
