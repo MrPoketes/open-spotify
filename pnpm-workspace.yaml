@@ -1,8 +1,9 @@
-# Install scripts are blocked unless listed here. Electron downloads its binary
-# on first launch, and electron-winstaller is only needed for Squirrel
-# installers, which we do not build.
+# Install scripts are blocked unless listed here. electron-winstaller is only
+# needed for Squirrel installers, which we do not build. Electron is not listed
+# because it has no install script: `pnpm dev` downloads its binary with
+# `install-electron`, since electron-vite looks for the binary without
+# downloading it.
 allowBuilds:
-  electron: false
   electron-winstaller: false
 
 # pnpm holds back versions published very recently. These were adopted on
