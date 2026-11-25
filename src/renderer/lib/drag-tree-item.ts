@@ -12,7 +12,7 @@ const rowTop = (element: Element) =>
 
 // jsdom does no layout, so a test lays the rows of a tree out one below the
 // other, each 48 px tall. Everything else takes no space.
-export const layOutTreeRows = () =>
+export const layOutTreeRows = (): void => {
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
     this: HTMLElement,
   ) {
@@ -31,6 +31,7 @@ export const layOutTreeRows = () =>
       toJSON: () => ({}),
     }
   })
+}
 
 // A point on an item's row: a fraction of 0.1 is near its top edge, 0.5 its
 // middle, and 0.9 its bottom edge.

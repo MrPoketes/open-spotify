@@ -172,10 +172,7 @@ describe("TreeView", () => {
 })
 
 describe("Dragging in a TreeView", () => {
-  beforeEach(() => {
-    const layout = layOutTreeRows()
-    return () => layout.mockRestore()
-  })
+  beforeEach(layOutTreeRows)
 
   it("expands a collapsed branch that a drag rests on", async () => {
     render(<Tree initiallyExpanded={[]} />)

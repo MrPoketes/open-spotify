@@ -1,7 +1,7 @@
 import { screen, within } from "@testing-library/react"
 import { Effect, type Layer, Option } from "effect"
 import { Profiler } from "react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { resizeObservedElements } from "../../lib/fake-resize-observer"
@@ -95,10 +95,6 @@ const placeRowsAt = (top: number) =>
     height: 0,
     toJSON: () => ({}),
   })
-
-afterEach(() => {
-  vi.restoreAllMocks()
-})
 
 describe("TrackList", () => {
   // Rows are positioned absolutely, so a row height that differs from the

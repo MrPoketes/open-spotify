@@ -36,10 +36,7 @@ const treeWithCopyInFocus: FolderTree = folderTree.map((folder) =>
 )
 
 describe("Dragging folder entries", () => {
-  beforeEach(() => {
-    const layout = layOutTreeRows()
-    return () => layout.mockRestore()
-  })
+  beforeEach(layOutTreeRows)
 
   it("reorders a folder dropped on the line above another one", async () => {
     await renderTree()
