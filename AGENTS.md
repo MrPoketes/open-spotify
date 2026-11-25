@@ -96,7 +96,9 @@ technically correct but hard to read gets rejected. These rules are not suggesti
    across files in `src/` and `lint/`.
 
 A lint rule may be disabled only with a written reason
-(`// oxlint-disable-next-line rule-name -- reason`), and the reviewer will check the reason.
+(`// oxlint-disable-next-line rule-name -- reason`), and the reviewer will check the reason. Turning
+a rule off in `oxlint.config.ts` overrides counts as disabling it: the override needs a written
+reason in a comment, and it is not allowed when a rename or a small refactor removes the need.
 
 ## Effect
 

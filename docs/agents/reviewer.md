@@ -79,7 +79,8 @@ Read every changed line. For each file, ask:
 - Renderer code does not reach Node or Electron except through `DesktopBridge`.
 - Styling uses theme tokens only, with no hard-coded colors.
 - Every new dependency is pinned and justified in the PR description.
-- Every lint disable comment carries a reason you accept.
+- Every lint disable comment and every `oxlint.config.ts` override that turns a rule off carries a
+  written reason you accept, and could not be avoided with a rename or a small refactor.
 
 ## Verdict
 
