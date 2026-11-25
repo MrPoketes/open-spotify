@@ -66,7 +66,8 @@ Read every changed line. For each file, ask:
   abstractions, wrappers that only forward, "for later" hooks?
 - Is there defensive code against states the types already rule out?
 - Is anything duplicated that already exists in the codebase? Search before you accept a new
-  helper.
+  helper. If a PR adds a third copy of existing code, require it to extract the abstraction and
+  update the existing copies rather than deferring to a follow-up issue.
 
 **Tests**
 
