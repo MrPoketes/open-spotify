@@ -177,6 +177,10 @@ cannot fail for a meaningful reason should not exist.
   something that only the loaded state shows (for example the playing track's name). A
   `findBy*` query on the control itself resolves while data is still loading, making the test
   depend on timing.
+- **Wait for values that effects write outside the DOM.** When a component test checks state a
+  React effect writes outside the DOM (such as a fake service's state or `navigator.mediaSession`),
+  assert it inside `waitFor` instead of right after a `findBy*` query: `findBy*` resolves as soon
+  as the DOM commits, before passive `useEffect`s have necessarily run.
 - Effect code is tested with `@effect/vitest` (`it.effect`, `layer(...)`). See
   `src/main/renderer-files.test.ts`.
 - `e2e/app.test.ts` is a smoke test of the packaged app (run `pnpm package:dir` first): it
