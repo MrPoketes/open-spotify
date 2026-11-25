@@ -9,6 +9,7 @@ import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noNewDateWithArguments } from "./rules/no-new-date-with-arguments.ts"
+import { noRawInvisibleCharacters } from "./rules/no-raw-invisible-characters.ts"
 import { noRendererRuntimeImport } from "./rules/no-renderer-runtime-import.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noThrow } from "./rules/no-throw.ts"
@@ -32,6 +33,7 @@ export default definePlugin({
     "no-hard-coded-colors": noHardCodedColors,
     "no-junk-drawer-modules": noJunkDrawerModules,
     "no-new-date-with-arguments": noNewDateWithArguments,
+    "no-raw-invisible-characters": noRawInvisibleCharacters,
     "no-renderer-runtime-import": noRendererRuntimeImport,
     "no-stale-file-references": noStaleFileReferences,
     "no-throw": noThrow,
