@@ -162,6 +162,11 @@ export default defineConfig({
       rules: { "open-spotify/no-literal-aria-keyshortcuts": "error" },
     },
     {
+      // Unavailable roving-focus rows stay focusable with aria-disabled (docs/design.md).
+      files: ["src/renderer/**"],
+      rules: { "open-spotify/no-disabled-roving-row": "error" },
+    },
+    {
       // Component tests and their helpers check what a user can reach through
       // the accessibility tree instead of querying or walking the DOM directly.
       files: ["src/renderer/**"],
