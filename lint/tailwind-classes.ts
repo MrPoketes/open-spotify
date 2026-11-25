@@ -29,8 +29,13 @@ export function tailwindClasses(text: string): ReadonlyArray<ParsedTailwindClass
 
 const validClassOutsideBrackets = /^[!@a-z0-9:/._-]+$/
 
+// Real Tailwind class lists mix at most a few bare utilities (like `flex` or
+// `invisible`) with prefixed or hyphenated ones, whereas plain prose consists
+// mostly of bare words.
+const minTailwindSyntaxShare = 0.5
+
 function isPlausibleTailwindToken(className: string): boolean {
-  if (/[.,;!?]$/.test(className) || className.startsWith("/") || className.includes("://")) {
+  if (/[.,;?]$/.test(className) || className.startsWith("/") || className.includes("://")) {
     return false
   }
   const withoutArbitrary = className.replace(/\[[^\]]*\]/g, "")
@@ -60,7 +65,7 @@ export function tailwindClassSet(text: string, minClasses: number): ReadonlySet<
       }
     }
   }
-  if (unique.size < minClasses || syntaxCount * 2 < unique.size) {
+  if (unique.size < minClasses || syntaxCount / unique.size < minTailwindSyntaxShare) {
     return null
   }
   return unique

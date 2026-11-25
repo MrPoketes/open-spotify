@@ -146,9 +146,46 @@ describe("findDuplicateCode", () => {
     expect(findDuplicateCode(sources)).toEqual([])
   })
 
+  it("ignores arrays of same-shaped literal test cases across files", () => {
+    const sources = new Map([
+      [
+        "lint/first-rule.test.ts",
+        `ruleTester.run("first-rule", firstRule, {
+          invalid: [
+            { code: "firstCaseA()", errors: [{ messageId: "firstRule" }] },
+            { code: "firstCaseB()", errors: [{ messageId: "firstRule" }] },
+            { code: "firstCaseC()", errors: [{ messageId: "firstRule" }] },
+            { code: "firstCaseD()", errors: [{ messageId: "firstRule" }] },
+            { code: "firstCaseE()", errors: [{ messageId: "firstRule" }] },
+            { code: "firstCaseF()", errors: [{ messageId: "firstRule" }] },
+            { code: "firstCaseG()", errors: [{ messageId: "firstRule" }] },
+            { code: "firstCaseH()", errors: [{ messageId: "firstRule" }] },
+          ],
+        })`,
+      ],
+      [
+        "lint/second-rule.test.ts",
+        `ruleTester.run("second-rule", secondRule, {
+          invalid: [
+            { code: "secondCaseA()", errors: [{ messageId: "secondRule" }] },
+            { code: "secondCaseB()", errors: [{ messageId: "secondRule" }] },
+            { code: "secondCaseC()", errors: [{ messageId: "secondRule" }] },
+            { code: "secondCaseD()", errors: [{ messageId: "secondRule" }] },
+            { code: "secondCaseE()", errors: [{ messageId: "secondRule" }] },
+            { code: "secondCaseF()", errors: [{ messageId: "secondRule" }] },
+            { code: "secondCaseG()", errors: [{ messageId: "secondRule" }] },
+            { code: "secondCaseH()", errors: [{ messageId: "secondRule" }] },
+          ],
+        })`,
+      ],
+    ])
+
+    expect(findDuplicateCode(sources)).toEqual([])
+  })
+
   it("reports duplicated long Tailwind class strings across files", () => {
     const buttonClasses =
-      "rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity duration-120 ease-out hover:opacity-90 active:opacity-75"
+      "rounded-full bg-accent! px-4 py-2 text-sm font-semibold text-on-accent transition-opacity duration-120 ease-out hover:opacity-90 active:opacity-75"
     const sources = new Map([
       [
         "src/a.tsx",

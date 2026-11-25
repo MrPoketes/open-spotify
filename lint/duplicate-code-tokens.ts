@@ -19,6 +19,7 @@ export interface FileAnalysis {
 
 interface WalkContext {
   readonly lineStarts: ReadonlyArray<number>
+  readonly minTailwindClasses: number
   readonly tokens: Array<CodeToken>
   readonly classLists: Array<ClassListOccurrence>
   boundaryCount: number
@@ -56,7 +57,6 @@ const skippedChildKeys = new Set([
   "closingFragment",
 ])
 
-const minTrackedTailwindClasses = 6
 const testFunctionNames = new Set(["it", "test"])
 
 const isEstreeNode = (value: unknown): value is ESTree.Node =>
@@ -76,7 +76,7 @@ const lineOf = (context: WalkContext, node: ESTree.Node): number =>
   context.lineStarts.findLastIndex((start) => start <= node.start) + 1
 
 function recordClassList(context: WalkContext, text: string, line: number) {
-  const classes = tailwindClassSet(text, minTrackedTailwindClasses)
+  const classes = tailwindClassSet(text, context.minTailwindClasses)
   if (classes !== null) {
     context.classLists.push({ line, classes })
   }
@@ -218,6 +218,44 @@ function visitChildren(context: WalkContext, node: ESTree.Node) {
   }
 }
 
+type TableEntry = NonNullable<ESTree.ArrayExpressionElement>
+
+const isTableEntry = (element: ESTree.ArrayExpressionElement): element is TableEntry =>
+  element !== null &&
+  (element.type === "Literal" ||
+    element.type === "TemplateLiteral" ||
+    element.type === "ObjectExpression")
+
+// Separates elements of literal/object data tables (such as lint rule test
+// cases) so long lists of same-shaped entries do not match unrelated tables.
+function dataTableEntries(node: ESTree.ArrayExpression): ReadonlyArray<TableEntry> | null {
+  if (node.elements.length < 2) {
+    return null
+  }
+  const entries: Array<TableEntry> = []
+  for (const element of node.elements) {
+    if (!isTableEntry(element)) {
+      return null
+    }
+    entries.push(element)
+  }
+  return entries
+}
+
+function visitDataTableArray(
+  context: WalkContext,
+  node: ESTree.ArrayExpression,
+  entries: ReadonlyArray<TableEntry>,
+) {
+  const line = lineOf(context, node)
+  context.tokens.push({ kind: "syntax", text: node.type, line })
+  for (const entry of entries) {
+    pushBoundary(context, lineOf(context, entry))
+    visitNode(context, entry, { parent: node, key: "elements" })
+  }
+  pushBoundary(context, line)
+}
+
 function visitNode(context: WalkContext, node: ESTree.Node, relation: NodeRelation) {
   if (skippedNodeTypes.has(node.type)) {
     return
@@ -232,6 +270,13 @@ function visitNode(context: WalkContext, node: ESTree.Node, relation: NodeRelati
   }
   if (recordLeafToken(context, node, relation)) {
     return
+  }
+  if (node.type === "ArrayExpression") {
+    const entries = dataTableEntries(node)
+    if (entries !== null) {
+      visitDataTableArray(context, node, entries)
+      return
+    }
   }
 
   const line = lineOf(context, node)
@@ -249,10 +294,15 @@ function visitNode(context: WalkContext, node: ESTree.Node, relation: NodeRelati
   }
 }
 
-export function analyzeSourceFile(file: string, source: string): FileAnalysis {
+export function analyzeSourceFile(
+  file: string,
+  source: string,
+  minTailwindClasses: number,
+): FileAnalysis {
   const parsed = parseSync(file, source)
   const context: WalkContext = {
     lineStarts: lineStartsOf(source),
+    minTailwindClasses,
     tokens: [],
     classLists: [],
     boundaryCount: 0,

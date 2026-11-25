@@ -168,16 +168,30 @@ function collectCloneSpans(
   return [...diagonals.values()].flatMap(mergeContiguousSpans)
 }
 
+function keepLongestNonOverlapping(spans: ReadonlyArray<CloneSpan>): ReadonlyArray<CloneSpan> {
+  const kept: Array<CloneSpan> = []
+  const byLength = spans.toSorted(
+    (left, right) => right.endA - right.startA - (left.endA - left.startA),
+  )
+  for (const span of byLength) {
+    if (!kept.some((existing) => spansOverlap(span, existing))) {
+      kept.push(span)
+    }
+  }
+  return kept
+}
+
 function findTokenClones(
   analyses: ReadonlyMap<string, FileAnalysis>,
   config: { readonly minTokens: number; readonly minLines: number; readonly encode: WindowEncoder },
 ): ReadonlyArray<CloneSpan> {
   const index = indexWindows(analyses, config.minTokens, config.encode)
-  return collectCloneSpans(index, config.minTokens).filter(
+  const qualifying = collectCloneSpans(index, config.minTokens).filter(
     (span) =>
       span.endLineA - span.startLineA + 1 >= config.minLines &&
       span.endLineB - span.startLineB + 1 >= config.minLines,
   )
+  return keepLongestNonOverlapping(qualifying)
 }
 
 const spansOverlap = (first: CloneSpan, second: CloneSpan) =>
@@ -236,7 +250,10 @@ const formatClone = (label: string, span: CloneSpan) =>
 // across distinct files.
 export function findDuplicateCode(sources: ReadonlyMap<string, string>): ReadonlyArray<string> {
   const analyses = new Map(
-    [...sources].map(([file, source]) => [file, analyzeSourceFile(file, source)]),
+    [...sources].map(([file, source]) => [
+      file,
+      analyzeSourceFile(file, source, minExactTailwindClasses),
+    ]),
   )
 
   const exactClones = findTokenClones(analyses, {
