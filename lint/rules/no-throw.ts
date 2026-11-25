@@ -1,4 +1,5 @@
 import { defineRule, type ESTree, type Scope, type Variable } from "@oxlint/plugins"
+import { findVariable } from "../find-variable.ts"
 
 // Errors belong in typed Effect failures so callers handle them through the
 // type system. TanStack Router is the only exception: it signals redirects and
@@ -45,18 +46,6 @@ function isTanStackRouteControlCall(argument: ESTree.Expression, scope: Scope): 
     return isRouterNamespaceImport(findVariable(scope, callee.object.name))
   }
   return false
-}
-
-function findVariable(scope: Scope, name: string): Variable | undefined {
-  let current: Scope | null = scope
-  while (current !== null) {
-    const variable = current.set.get(name)
-    if (variable !== undefined) {
-      return variable
-    }
-    current = current.upper
-  }
-  return undefined
 }
 
 function isRouterControlImport(variable: Variable | undefined): boolean {
