@@ -1,5 +1,6 @@
 import { defineRule, type ESTree } from "@oxlint/plugins"
-import { findJsxAttribute, jsxAttributeStrings, tailwindClasses } from "../tailwind-classes.ts"
+import { findJsxAttribute, jsxAttributeStrings } from "../jsx-attribute-strings.ts"
+import { tailwindClasses } from "../tailwind-classes.ts"
 
 const headingElements = new Set(["h1", "h2", "h3"])
 const headingSizeUtilities = new Set(["text-xl", "text-3xl", "text-5xl"])

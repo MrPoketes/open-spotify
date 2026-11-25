@@ -1,5 +1,6 @@
 import { defineRule, type ESTree } from "@oxlint/plugins"
-import { findJsxAttribute, jsxAttributeStrings, tailwindClasses } from "../tailwind-classes.ts"
+import { findJsxAttribute, jsxAttributeStrings } from "../jsx-attribute-strings.ts"
+import { tailwindClasses } from "../tailwind-classes.ts"
 
 const browserDrawnElements = new Set(["progress", "meter"])
 const browserDrawnInputTypes = new Set(["range", "checkbox", "radio"])
