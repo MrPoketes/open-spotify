@@ -1,4 +1,5 @@
-import { defineRule, type ESTree } from "@oxlint/plugins"
+import { defineRule } from "@oxlint/plugins"
+import { memberPropertyName } from "../member-property-name.ts"
 
 // Direct DOM queries and tree-walking properties bypass the accessibility tree
 // that users rely on. Component tests should reach elements through Testing
@@ -39,7 +40,7 @@ export const noDomNodeAccess = defineRule({
   create(context) {
     return {
       MemberExpression(node) {
-        const property = accessedPropertyName(node)
+        const property = memberPropertyName(node)
         if (property !== undefined && domAccessMembers.has(property)) {
           context.report({ node, messageId: "domNodeAccess", data: { property } })
         }
@@ -47,17 +48,3 @@ export const noDomNodeAccess = defineRule({
     }
   },
 })
-
-function accessedPropertyName(node: ESTree.MemberExpression): string | undefined {
-  if (!node.computed && node.property.type === "Identifier") {
-    return node.property.name
-  }
-  if (
-    node.computed &&
-    node.property.type === "Literal" &&
-    typeof node.property.value === "string"
-  ) {
-    return node.property.value
-  }
-  return undefined
-}
