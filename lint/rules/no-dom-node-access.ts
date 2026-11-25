@@ -31,9 +31,7 @@ const domAccessMembers = new Set([
 const testFilePattern = /\.test\.tsx?$/
 
 const isTestPackage = (specifier: string) =>
-  specifier.startsWith("@testing-library/") ||
-  specifier === "vitest" ||
-  specifier === "@effect/vitest"
+  specifier.startsWith("@testing-library/") || specifier === "vitest"
 
 export const noDomNodeAccess = defineRule({
   meta: {
@@ -51,19 +49,10 @@ export const noDomNodeAccess = defineRule({
     const accesses: Array<{ readonly node: ESTree.MemberExpression; readonly property: string }> =
       []
 
-    const markIfTestPackage = (specifier: string) => {
-      if (isTestPackage(specifier)) {
-        inTestModule = true
-      }
-    }
-
     return {
       ImportDeclaration(node) {
-        markIfTestPackage(node.source.value)
-      },
-      ImportExpression(node) {
-        if (node.source.type === "Literal" && typeof node.source.value === "string") {
-          markIfTestPackage(node.source.value)
+        if (isTestPackage(node.source.value)) {
+          inTestModule = true
         }
       },
       MemberExpression(node) {

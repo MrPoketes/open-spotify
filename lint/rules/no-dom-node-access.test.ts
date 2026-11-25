@@ -64,17 +64,12 @@ ruleTester.run("no-dom-node-access", noDomNodeAccess, {
     },
     {
       code: 'import { userEvent } from "@testing-library/user-event"\nexport const rows = () => [...document.querySelectorAll("[role=none]")]',
-      filename: "src/renderer/lib/drag-tree-item.ts",
+      filename: "src/renderer/lib/pointer-helper.ts",
       errors: [{ messageId: "domNodeAccess" }],
     },
     {
       code: 'import { onTestFinished } from "vitest"\nexport const find = () => document.querySelector("main")',
       filename: "src/renderer/lib/helper.ts",
-      errors: [{ messageId: "domNodeAccess" }],
-    },
-    {
-      code: 'export const parent = (el: Element) => el.parentElement\nexport const load = () => import("@testing-library/react")',
-      filename: "src/renderer/lib/lazy-helper.ts",
       errors: [{ messageId: "domNodeAccess" }],
     },
   ],
