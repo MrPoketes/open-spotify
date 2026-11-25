@@ -55,7 +55,7 @@ export function QueuePane({ ref, isOpen, savedWidth, onClose }: QueuePaneProps) 
         className="flex shrink-0 flex-col overflow-hidden rounded-medium bg-surface"
       >
         <div className="flex h-14 shrink-0 items-center justify-between px-4">
-          <h2 id={headingId} className="text-xl font-bold">
+          <h2 id={headingId} className="font-display text-xl font-bold">
             Queue
           </h2>
           <IconButton label="Close queue" icon={X} onClick={onClose} />
