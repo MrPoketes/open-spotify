@@ -16,6 +16,7 @@ import { noThrow } from "./rules/no-throw.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
 import { requireDisableReason } from "./rules/require-disable-reason.ts"
 import { requireEffectFn } from "./rules/require-effect-fn.ts"
+import { requireHeadingFontDisplay } from "./rules/require-heading-font-display.ts"
 import { requireRingOffsetColor } from "./rules/require-ring-offset-color.ts"
 
 // Project-specific lint rules. Each one exists because an agent produced the
@@ -40,6 +41,7 @@ export default definePlugin({
     "no-try-catch": noTryCatch,
     "require-disable-reason": requireDisableReason,
     "require-effect-fn": requireEffectFn,
+    "require-heading-font-display": requireHeadingFontDisplay,
     "require-ring-offset-color": requireRingOffsetColor,
   },
 })
