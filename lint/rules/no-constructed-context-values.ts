@@ -1,5 +1,5 @@
 import { defineRule } from "@oxlint/plugins"
-import { findJsxAttribute } from "../jsx-attribute-strings.ts"
+import { findJsxAttribute } from "../jsx-attributes.ts"
 
 // Every reader of a context re-renders when the value changes identity, so a
 // value built during render re-renders all of them each time the provider

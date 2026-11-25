@@ -1,5 +1,5 @@
 import { defineRule, type ESTree } from "@oxlint/plugins"
-import { findJsxAttribute, jsxAttributeStrings } from "../jsx-attribute-strings.ts"
+import { findJsxAttribute, jsxAttributeStrings } from "../jsx-attributes.ts"
 import { tailwindClasses } from "../tailwind-classes.ts"
 
 const headingElements = new Set(["h1", "h2", "h3"])
