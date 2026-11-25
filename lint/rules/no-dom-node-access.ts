@@ -1,5 +1,4 @@
-import { defineRule } from "@oxlint/plugins"
-import type { ESTree } from "@oxlint/plugins"
+import { defineRule, type ESTree } from "@oxlint/plugins"
 
 // Direct DOM queries and tree-walking properties bypass the accessibility tree
 // that users rely on. Component tests should reach elements through Testing

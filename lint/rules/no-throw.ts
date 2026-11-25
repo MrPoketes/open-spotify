@@ -1,5 +1,4 @@
-import { defineRule } from "@oxlint/plugins"
-import type { ESTree, Scope, Variable } from "@oxlint/plugins"
+import { defineRule, type ESTree, type Scope, type Variable } from "@oxlint/plugins"
 
 // Errors belong in typed Effect failures so callers handle them through the
 // type system. TanStack Router is the only exception: it signals redirects and

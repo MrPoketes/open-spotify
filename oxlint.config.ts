@@ -45,7 +45,7 @@ export default defineConfig({
     "oxc/no-barrel-file": "error",
     "import/no-default-export": "error",
     "import/no-cycle": "error",
-    "import/no-duplicates": "error",
+    "import/no-duplicates": ["error", { preferInline: true }],
 
     // The type system only helps if nothing opts out of it.
     "typescript/no-explicit-any": "error",
