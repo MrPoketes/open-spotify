@@ -58,7 +58,8 @@ Read every changed line. For each file, ask:
 
 - Could the owner understand each function on first read? If you had to re-read it, say why.
 - Do names say what things are? Flag `data`, `info`, `item`, `result`, `handle`, `manager`,
-  abbreviations.
+  abbreviations, and Spotify domain nouns (`track`, `album`, `artist`, `playlist`, `show`,
+  `episode`, `device`, `queue`) used for unrelated functions, variables, or helpers.
 - Does each comment explain _why_? Flag comments that restate code, banners, JSDoc that repeats
   the signature, commented-out code.
 - Is there speculative code: unused options or parameters, single-implementation
