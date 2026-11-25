@@ -24,7 +24,7 @@ export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
   const episodes = items.filter((episode) => episode !== null)
   const hasMoreEpisodes = nextOffset !== null
   const { retryRef, resultRowsRef } = useLoadControlFocus(
-    scrollLoadedListControls[nextPage],
+    scrollLoadedListControls[nextPage.status],
     episodes.length,
   )
 

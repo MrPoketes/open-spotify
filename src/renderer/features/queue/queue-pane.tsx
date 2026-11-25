@@ -8,11 +8,11 @@ import {
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { saveSetting } from "../../lib/saved-setting"
 import { useStreamValue } from "../../lib/use-stream-value"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { IconButton } from "../../ui/icon-button"
 import { LoadingMessage } from "../../ui/loading-message"
 import { PaneDivider } from "../../ui/pane-divider"
 import { PlayableItemSummary } from "../playback/playable-item-summary"
+import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { PlayerQueue } from "../spotify/spotify-player-queue"
 import { makeQueueContents } from "./queue-contents"
 import { UpNextList } from "./up-next-list"
@@ -84,7 +84,8 @@ const QueueBody = memo(function QueueBody() {
   if (contents.status === "failed") {
     return (
       <div className="px-2">
-        <ErrorWithRetry
+        <SpotifyLoadFailure
+          error={contents.error}
           message="The queue didn't load."
           onRetry={() => setContentsStream(makeQueueContents())}
         />

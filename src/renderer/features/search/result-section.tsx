@@ -1,14 +1,14 @@
 import { Effect } from "effect"
 import { type ReactNode, type Ref, useId } from "react"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { LoadingMessage } from "../../ui/loading-message"
 import { SecondaryButton } from "../../ui/pill-button"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import { SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { Page } from "../spotify/spotify-paging"
 import type { SearchResults, SearchType } from "../spotify/spotify-search"
 import { type LoadControl, useLoadControlFocus } from "../spotify/use-load-control-focus"
-import { type NextPageStatus, useNextPages } from "../spotify/use-next-pages"
+import { type NextPageState, useNextPages } from "../spotify/use-next-pages"
 
 interface ResultSectionProps<A> {
   readonly query: string
@@ -20,8 +20,8 @@ interface ResultSectionProps<A> {
   readonly children: (results: ReadonlyArray<A>, rowFocusRef: Ref<RowFocusHandle>) => ReactNode
 }
 
-const loadControlFor = (nextPage: NextPageStatus, hasMore: boolean): LoadControl => {
-  if (nextPage === "failed") {
+const loadControlFor = (nextPage: NextPageState, hasMore: boolean): LoadControl => {
+  if (nextPage.status === "failed") {
     return "retry"
   }
   return hasMore ? "load-more" : "none"
@@ -51,8 +51,9 @@ export function ResultSection<A>(props: ResultSectionProps<A>) {
         {title}
       </h2>
       {children(results, resultRowsRef)}
-      {loadControl === "retry" ? (
-        <ErrorWithRetry
+      {nextPage.status === "failed" ? (
+        <SpotifyLoadFailure
+          error={nextPage.error}
           message={`More ${kind} didn't load.`}
           onRetry={loadNextPage}
           retryRef={retryRef}
@@ -64,11 +65,11 @@ export function ResultSection<A>(props: ResultSectionProps<A>) {
           <SecondaryButton
             label="Load more"
             aria-label={`Load more ${kind}`}
-            aria-disabled={nextPage === "loading"}
+            aria-disabled={nextPage.status === "loading"}
             onClick={loadNextPage}
             ref={loadMoreRef}
           />
-          {nextPage === "loading" ? (
+          {nextPage.status === "loading" ? (
             <LoadingMessage>{`Loading more ${kind}…`}</LoadingMessage>
           ) : null}
         </div>

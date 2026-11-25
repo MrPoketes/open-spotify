@@ -48,7 +48,9 @@ export function PlaylistTracks({ playlist, firstPage }: PlaylistTracksProps) {
         playbackStartAt={(index) => ({ contextUri: playlist.uri, offset: { position: index } })}
         onRowsRendered={tracks.loadRange}
       />
-      {tracks.pageFailed ? <PageFailedAlert onRetry={tracks.retry} /> : null}
+      {tracks.pageError !== null ? (
+        <PageFailedAlert error={tracks.pageError} onRetry={tracks.retry} />
+      ) : null}
     </div>
   )
 }

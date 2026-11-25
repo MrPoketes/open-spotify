@@ -1,12 +1,15 @@
 import { Effect, Fiber } from "effect"
 import { use, useCallback, useEffect, useRef, useState } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
-import type { SpotifyApi } from "../spotify/spotify-api"
+import { loginDestinationFor } from "../login/login-destination"
+import type { SpotifyApi, SpotifyApiError } from "../spotify/spotify-api"
 
 interface PagedItemsOptions<A> {
   readonly firstPage: ReadonlyArray<A>
   readonly pageSize: number
-  readonly loadPage: (offset: number) => Effect.Effect<ReadonlyArray<A>, unknown, SpotifyApi>
+  readonly loadPage: (
+    offset: number,
+  ) => Effect.Effect<ReadonlyArray<A>, SpotifyApiError, SpotifyApi>
 }
 
 // Assumes the first page ends on a page boundary or at the end of the list,
@@ -15,12 +18,31 @@ interface PagedItemsOptions<A> {
 const offsetsCoveredBy = (itemCount: number, pageSize: number) =>
   new Set(Array.from({ length: Math.ceil(itemCount / pageSize) }, (_, page) => page * pageSize))
 
-const withOffset = (offsets: ReadonlySet<number>, offset: number) => new Set(offsets).add(offset)
+const withFailure = (
+  failures: ReadonlyMap<number, SpotifyApiError>,
+  offset: number,
+  error: SpotifyApiError,
+) => new Map(failures).set(offset, error)
 
-const withoutOffset = (offsets: ReadonlySet<number>, offset: number) => {
-  const remaining = new Set(offsets)
+const withoutFailure = (failures: ReadonlyMap<number, SpotifyApiError>, offset: number) => {
+  const remaining = new Map(failures)
   remaining.delete(offset)
   return remaining
+}
+
+// Prefer an auth error so Retry never hides an expired session behind an
+// earlier recoverable page failure.
+const failureToReport = (
+  failures: ReadonlyMap<number, SpotifyApiError>,
+): SpotifyApiError | null => {
+  let first: SpotifyApiError | null = null
+  for (const error of failures.values()) {
+    if (loginDestinationFor(error) !== null) {
+      return error
+    }
+    first ??= error
+  }
+  return first
 }
 
 // Keeps the items loaded so far and loads the pages that cover a range of
@@ -28,7 +50,9 @@ const withoutOffset = (offsets: ReadonlySet<number>, offset: number) => {
 export function usePagedItems<A>({ firstPage, pageSize, loadPage }: PagedItemsOptions<A>) {
   const runtime = use(RendererRuntimeContext)
   const [items, setItems] = useState<ReadonlyArray<A | undefined>>(firstPage)
-  const [failedOffsets, setFailedOffsets] = useState<ReadonlySet<number>>(new Set())
+  const [failedOffsets, setFailedOffsets] = useState<ReadonlyMap<number, SpotifyApiError>>(
+    () => new Map(),
+  )
   const requestedOffsets = useRef(offsetsCoveredBy(firstPage.length, pageSize))
   const pageLoads = useRef(new Set<Fiber.Fiber<void>>())
 
@@ -53,17 +77,18 @@ export function usePagedItems<A>({ firstPage, pageSize, loadPage }: PagedItemsOp
             }
             return next
           })
-          setFailedOffsets((current) => withoutOffset(current, offset))
+          setFailedOffsets((current) => withoutFailure(current, offset))
         })
       // A failed page is forgotten, so scrolling to it again or Retry asks
       // for it once more.
-      const showFailure = Effect.sync(() => {
-        requestedOffsets.current.delete(offset)
-        setFailedOffsets((current) => withOffset(current, offset))
-      })
+      const showFailure = (error: SpotifyApiError) =>
+        Effect.sync(() => {
+          requestedOffsets.current.delete(offset)
+          setFailedOffsets((current) => withFailure(current, offset, error))
+        })
       const load = loadPage(offset).pipe(
         Effect.tapError((error) => Effect.logError("A page of tracks failed to load", error)),
-        Effect.matchEffect({ onFailure: () => showFailure, onSuccess: showPage }),
+        Effect.matchEffect({ onFailure: showFailure, onSuccess: showPage }),
       )
       const pageLoad = runtime.runFork(load)
       pageLoads.current.add(pageLoad)
@@ -86,12 +111,12 @@ export function usePagedItems<A>({ firstPage, pageSize, loadPage }: PagedItemsOp
 
   // A failed page may already be asked for again by scrolling back to it.
   const retry = () => {
-    for (const offset of failedOffsets) {
+    for (const offset of failedOffsets.keys()) {
       if (!requestedOffsets.current.has(offset)) {
         requestPage(offset)
       }
     }
   }
 
-  return { items, pageFailed: failedOffsets.size > 0, loadRange, retry }
+  return { items, pageError: failureToReport(failedOffsets), loadRange, retry }
 }

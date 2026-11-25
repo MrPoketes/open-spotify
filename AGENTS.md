@@ -177,6 +177,10 @@ cannot fail for a meaningful reason should not exist.
 - **Users bring their own Client ID**, entered on first launch. See
   [decision 0003](docs/decisions/0003-bring-your-own-client-id.md).
 - Auth is OAuth PKCE with the loopback redirect `http://127.0.0.1:43821/callback`.
+- **Auth failures go to login, never Retry.** Render every failed Spotify load through
+  `SpotifyLoadFailure` (`src/renderer/features/spotify/spotify-load-failure.tsx`), which sends
+  `NotLoggedIn` and `SessionExpired` to `/login` and shows a Retry button only for failures a
+  retry can fix (network, 5xx, decode, temporary token-refresh failure).
 - Agents cannot log in to Spotify. Every feature must be buildable and testable against fake
   data.
 

@@ -1,13 +1,13 @@
 import type { Ref } from "react"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { LoadingMessage } from "../../ui/loading-message"
 import { useScrolledIntoView } from "../../ui/use-scrolled-into-view"
-import type { NextPageStatus } from "./use-next-pages"
+import { SpotifyLoadFailure } from "./spotify-load-failure"
+import type { NextPageState } from "./use-next-pages"
 
 interface NextPageFooterProps {
   // Plural, such as "episodes".
   readonly kind: string
-  readonly nextPage: NextPageStatus
+  readonly nextPage: NextPageState
   readonly loadNextPage: () => void
   // Whether the list has another page it should show once the footer scrolls
   // into view.
@@ -22,12 +22,16 @@ export function NextPageFooter({
   wantsNextPage,
   retryRef,
 }: NextPageFooterProps) {
-  const scrollEndRef = useScrolledIntoView(loadNextPage, wantsNextPage && nextPage === "idle")
+  const scrollEndRef = useScrolledIntoView(
+    loadNextPage,
+    wantsNextPage && nextPage.status === "idle",
+  )
   return (
     <>
-      {nextPage === "loading" && <LoadingMessage>{`Loading more ${kind}…`}</LoadingMessage>}
-      {nextPage === "failed" && (
-        <ErrorWithRetry
+      {nextPage.status === "loading" && <LoadingMessage>{`Loading more ${kind}…`}</LoadingMessage>}
+      {nextPage.status === "failed" && (
+        <SpotifyLoadFailure
+          error={nextPage.error}
           message={`More ${kind} didn't load.`}
           onRetry={loadNextPage}
           retryRef={retryRef}

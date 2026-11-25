@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "react"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
-import type { NextPageStatus } from "./use-next-pages"
+import type { NextPageState } from "./use-next-pages"
 
 // What ends a list of pages: Load more, Retry after a page failed to load,
 // a loading message with no button, or nothing once no button is needed.
@@ -8,7 +8,7 @@ export type LoadControl = "load-more" | "retry" | "loading" | "none"
 
 // A list that loads its next page as its end scrolls into view has no Load
 // more button. Only Retry, after a page failed, can take focus.
-export const scrollLoadedListControls: Record<NextPageStatus, LoadControl> = {
+export const scrollLoadedListControls: Record<NextPageState["status"], LoadControl> = {
   idle: "none",
   loading: "loading",
   failed: "retry",

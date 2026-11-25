@@ -332,4 +332,19 @@ describe("PlaylistPage", () => {
     expect(await screen.findByRole("row", { name: "Quiet Echoes by Juniper Hollow" })).toBeVisible()
     expect(screen.queryByRole("alert")).toBeNull()
   })
+
+  it("goes to the login screen when a later page of tracks finds the session has expired", async () => {
+    const { mainView, router } = await renderPlaylistPage(
+      "fake-playlist-late-night-drive",
+      spotifyApiFakeWith(() => ({
+        getPlaylistItemsPage: () => Effect.fail(new SessionExpired()),
+      })),
+    )
+    await screen.findByRole("table", { name: "Tracks" })
+
+    scrollMainViewToRow(mainView, 120)
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
+  })
 })
