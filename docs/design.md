@@ -828,10 +828,13 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
   focused from the keyboard (`:focus-visible`). `app.css` sets this globally. Never remove it;
   if a component needs a different shape, change the outline, not its visibility.
 - **Keyboard.** Every action works from the keyboard. Lists use one tab stop and arrow keys
-  inside (roving focus, `src/renderer/ui/use-roving-focus.ts`). Dialogs and the command
-  palette trap focus and return it on close. Pane dividers are focusable: the arrow keys move
-  the divider 16 px, `Home` and `End` jump to the narrowest and widest size, and a double-click
-  restores the default size.
+  inside (roving focus, `src/renderer/ui/use-roving-focus.ts`). An unavailable row in a list
+  keeps its focus and is marked with `aria-disabled`, not `disabled`, following the WAI-ARIA
+  guidance for composite widgets: a `disabled` element cannot take focus, which stalls arrow
+  navigation and drops the list from the tab order when that row holds the tab stop. Dialogs
+  and the command palette trap focus and return it on close. Pane dividers are focusable: the
+  arrow keys move the divider 16 px, `Home` and `End` jump to the narrowest and widest size,
+  and a double-click restores the default size.
 - **Targets.** Interactive elements are at least 24 × 24 px. Dense rows are 32 px tall.
 - **Not color alone.** State is never shown by color only. The playing track also shows an
   icon, and errors carry text.

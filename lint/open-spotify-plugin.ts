@@ -2,6 +2,7 @@ import { definePlugin } from "@oxlint/plugins"
 import { descriptiveTestNames } from "./rules/descriptive-test-names.ts"
 import { noArbitraryThemeValues } from "./rules/no-arbitrary-theme-values.ts"
 import { noConstructedContextValues } from "./rules/no-constructed-context-values.ts"
+import { noDisabledRovingRow } from "./rules/no-disabled-roving-row.ts"
 import { noDomNodeAccess } from "./rules/no-dom-node-access.ts"
 import { noEffectPromise } from "./rules/no-effect-promise.ts"
 import { noEffectRun } from "./rules/no-effect-run.ts"
@@ -31,6 +32,7 @@ export default definePlugin({
     "descriptive-test-names": descriptiveTestNames,
     "no-arbitrary-theme-values": noArbitraryThemeValues,
     "no-constructed-context-values": noConstructedContextValues,
+    "no-disabled-roving-row": noDisabledRovingRow,
     "no-dom-node-access": noDomNodeAccess,
     "no-effect-promise": noEffectPromise,
     "no-effect-run": noEffectRun,
