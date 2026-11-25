@@ -39,7 +39,13 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
   useEffect(
     () => () => {
       if (isLogInPending.current) {
-        runtime.runFork(cancelLogIn)
+        runtime.runFork(
+          cancelLogIn.pipe(
+            Effect.catchTag("DesktopBridgeError", (error) =>
+              Effect.logWarning("Could not cancel the pending login", error),
+            ),
+          ),
+        )
       }
     },
     [runtime],
