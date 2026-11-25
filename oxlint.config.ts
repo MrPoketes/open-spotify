@@ -87,6 +87,7 @@ export default defineConfig({
     "open-spotify/no-effect-promise": "error",
     "open-spotify/no-effect-with-span": "error",
     "open-spotify/no-junk-drawer-modules": "error",
+    "open-spotify/no-raw-invisible-characters": "error",
     "open-spotify/no-renderer-runtime-import": "error",
     "open-spotify/no-stale-file-references": "error",
     "open-spotify/no-throw": "error",
