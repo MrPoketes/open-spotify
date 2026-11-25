@@ -10,7 +10,7 @@ import { isWebPermissionGranted } from "./web-permission-decision"
 const openMainWindow = openWindowIfNone(
   createMainWindow,
   () => BrowserWindow.getAllWindows().length,
-)
+).pipe(Effect.catch((error) => Effect.logError("Could not reopen the main window", error)))
 
 function restrictWebPermissions(): void {
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, grant) =>

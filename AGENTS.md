@@ -119,6 +119,10 @@ writing Effect code, and grep `node_modules/effect/dist/*.d.ts` when unsure.
   (lint forbids importing it elsewhere), the runtime from `RendererRuntimeContext` in components
   and hooks (so component tests can swap it), and `mainRuntime` in Electron callbacks. Provide
   every layer in those two runtime files.
+- Every effect forked with `runFork` must handle its typed errors (log, show to the user, or
+  recover) before `runFork`. A forked fiber has no caller to receive its failure, so an unhandled
+  typed error disappears. Both runtimes' `runFork` types reject effects whose error type is not
+  `never`.
 - Import Node platform modules by subpath, e.g. `@effect/platform-node/NodeFileSystem`. The
   package root also loads optional modules (Redis) that break the packaged app.
 

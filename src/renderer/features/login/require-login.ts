@@ -27,7 +27,8 @@ const findLoginState = Effect.gen(function* () {
 // documents, because TanStack Start's types reject a returned one: whatever
 // beforeLoad returns becomes route context, which must be serializable.
 export const redirectUnlessLoggedIn =
-  (runtime: ManagedRuntime.ManagedRuntime<DesktopBridge, never>) => async () => {
+  (runtime: Pick<ManagedRuntime.ManagedRuntime<DesktopBridge, never>, "runPromise">) =>
+  async () => {
     const loginState = await runtime.runPromise(findLoginState)
     switch (loginState) {
       case "no-client-id":

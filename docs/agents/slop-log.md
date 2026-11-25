@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 2026-11-25 | Forking an effect with `runFork` without handling its typed errors, silently dropping failures    | `AGENTS.md` rule; `runFork` on app runtimes requires `E = never`            |
 | 2026-11-25 | Test helpers outside `*.test.tsx` walking DOM nodes to bypass `no-dom-node-access`                | Extended `open-spotify/no-dom-node-access` to renderer test-support modules |
 | 2026-11-25 | Shell commands added to `docs/agents/*.md` without running them against the repo (PR #3)          | Worker and reviewer playbooks require running shell commands                |
 | 2026-11-25 | Shortcuts written as string literals in `aria-keyshortcuts`, bypassing the shortcut registry      | Custom rule `open-spotify/no-literal-aria-keyshortcuts`                     |

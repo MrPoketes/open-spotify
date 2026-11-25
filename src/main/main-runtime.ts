@@ -1,6 +1,6 @@
 import path from "node:path"
 import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
-import { Layer, ManagedRuntime } from "effect"
+import { type Effect, type Fiber, Layer, ManagedRuntime } from "effect"
 import { app, dialog, safeStorage, shell } from "electron"
 import { SpotifySession } from "./auth/spotify-session"
 import { SpotifyTokenEndpoint } from "./auth/spotify-token-endpoint"
@@ -31,14 +31,26 @@ const spotifySessionLayer = SpotifySession.layer.pipe(
   ]),
 )
 
+const mainLayer = Layer.mergeAll(
+  storageLayer,
+  spotifySessionLayer,
+  systemBrowserLayer,
+  ThemeFileDialogs.layer(dialog),
+  FoldersFileDialogs.layer(dialog),
+).pipe(Layer.provideMerge(NodeFileSystem.layer))
+
+type MainServices = Layer.Success<typeof mainLayer>
+type MainLayerError = Layer.Error<typeof mainLayer>
+
+// Forked fibers have no caller to receive a failure, so every typed error must
+// be handled before runFork.
+type MainRuntime = Omit<ManagedRuntime.ManagedRuntime<MainServices, MainLayerError>, "runFork"> & {
+  readonly runFork: <A>(
+    self: Effect.Effect<A, never, MainServices>,
+    options?: Effect.RunOptions,
+  ) => Fiber.Fiber<A, MainLayerError>
+}
+
 // Runs Effect programs from Electron callbacks. Every service the main
 // process depends on is provided here, in one place.
-export const mainRuntime = ManagedRuntime.make(
-  Layer.mergeAll(
-    storageLayer,
-    spotifySessionLayer,
-    systemBrowserLayer,
-    ThemeFileDialogs.layer(dialog),
-    FoldersFileDialogs.layer(dialog),
-  ).pipe(Layer.provideMerge(NodeFileSystem.layer)),
-)
+export const mainRuntime: MainRuntime = ManagedRuntime.make(mainLayer)
