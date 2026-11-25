@@ -6,6 +6,7 @@ import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { writeClipboardText } from "../../lib/write-clipboard-text"
 import { useShowStatusMessage } from "../../ui/status-message-context"
 import { useRunAnnounced } from "../../ui/use-run-announced"
+import { loginDestinationFor } from "../login/login-destination"
 import { Player } from "../playback/player"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { useEditablePlaylists } from "./editable-playlists"
@@ -28,6 +29,11 @@ export function useTrackActions(): TrackActions {
 
   const explainMissingPlaylists = () => {
     if (editablePlaylists.state.status === "failed") {
+      const loginDestination = loginDestinationFor(editablePlaylists.state.error)
+      if (loginDestination !== null) {
+        runtime.runFork(attemptNavigation(() => navigate(loginDestination)))
+        return
+      }
       editablePlaylists.retry()
       showStatusMessage({ text: "Your playlists didn't load. Trying again.", isFailure: true })
       return

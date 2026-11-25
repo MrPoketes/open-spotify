@@ -1,12 +1,12 @@
 import { Effect, Stream } from "effect"
 import { Player, type PlayerState } from "../playback/player"
-import { SpotifyApi } from "../spotify/spotify-api"
+import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { PlayerQueue } from "../spotify/spotify-player-queue"
 
 type QueueContents =
   | { readonly status: "loading" }
   | { readonly status: "loaded"; readonly queue: PlayerQueue }
-  | { readonly status: "failed" }
+  | { readonly status: "failed"; readonly error: SpotifyApiError }
   | { readonly status: "noActiveDevice" }
   | { readonly status: "unreachable" }
 
@@ -24,7 +24,7 @@ const readQueue = (spotify: SpotifyApi["Service"]) =>
       Effect.succeed<QueueContents>({ status: "noActiveDevice" }),
     ),
     Effect.tapError((error) => Effect.logError("The queue failed to load", error)),
-    Effect.orElseSucceed((): QueueContents => ({ status: "failed" })),
+    Effect.catch((error) => Effect.succeed<QueueContents>({ status: "failed", error })),
   )
 
 // A new stream each time, so a component can start over after a failure.

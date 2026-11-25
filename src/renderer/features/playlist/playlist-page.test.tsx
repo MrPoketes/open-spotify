@@ -7,7 +7,7 @@ import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import { type SpotifyApi, SpotifyResponseError } from "../spotify/spotify-api"
+import { type SpotifyApi, SpotifyRequestError, SpotifyResponseError } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { FakeMainView } from "../track-list/fake-main-view"
 import { scrollMainViewToRow } from "../track-list/fake-main-view-layout"
@@ -25,6 +25,15 @@ const spotifyFailingFirstPageRequest = spotifyApiFakeWith((spotify) => {
       failFirst(spotify.getPlaylistItemsPage(playlistId, offset)),
   }
 })
+
+// Fails offset 100 with a recoverable network error and any later page with
+// SessionExpired, so the test proves an auth failure wins over an earlier Retry.
+const spotifyRecoverableThenExpiredPages = spotifyApiFakeWith(() => ({
+  getPlaylistItemsPage: (_playlistId, offset) =>
+    Effect.fail(
+      offset === 100 ? new SpotifyRequestError({ cause: "offline" }) : new SessionExpired(),
+    ),
+}))
 
 const renderPlaylistPage = async (playlistId: string, spotifyApi?: Layer.Layer<SpotifyApi>) => {
   const router = await renderScreen(
@@ -331,5 +340,21 @@ describe("PlaylistPage", () => {
 
     expect(await screen.findByRole("row", { name: "Quiet Echoes by Juniper Hollow" })).toBeVisible()
     expect(screen.queryByRole("alert")).toBeNull()
+  })
+
+  it("goes to the login screen when a later page of tracks finds the session has expired, even after an earlier page failed", async () => {
+    const { mainView, router } = await renderPlaylistPage(
+      "fake-playlist-big-archive",
+      spotifyRecoverableThenExpiredPages,
+    )
+    await screen.findByRole("table", { name: "Tracks" })
+
+    scrollMainViewToRow(mainView, 120)
+    expect(await screen.findByRole("alert")).toHaveTextContent("Some tracks didn't load.")
+
+    scrollMainViewToRow(mainView, 520)
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
   })
 })

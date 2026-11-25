@@ -2,7 +2,10 @@ import { act, render, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Deferred, Effect, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
+import { SessionExpired } from "../../../shared/spotify-auth-replies"
+import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
+import { renderScreen } from "../../lib/render-screen"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { Player } from "../playback/player"
 import { failingFirstTime } from "../spotify/failing-first-time"
@@ -321,5 +324,16 @@ describe("QueuePane", () => {
     await userEvent.click(within(failure).getByRole("button", { name: "Retry" }))
 
     expect(await section("Now playing")).toHaveTextContent(fakeTrack(0).name)
+  })
+
+  it("goes to the login screen when loading the queue finds the session has expired", async () => {
+    const router = await renderScreen(
+      <QueuePane ref={{ current: null }} isOpen savedWidth={320} onClose={() => undefined} />,
+      fakeMainProcess(),
+      spotifyApiFakeWith(() => ({ getQueue: Effect.fail(new SessionExpired()) })),
+    )
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
   })
 })

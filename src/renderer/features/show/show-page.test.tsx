@@ -63,6 +63,11 @@ const loadEpisodesUntilRetry = async (spotify: ReturnType<typeof spotifyWithConn
   return screen.findByRole("button", { name: "Retry" })
 }
 
+const spotifyExpiringOnLaterEpisodePages = spotifyApiFakeWith((spotify) => ({
+  getShowEpisodePage: (showId, offset) =>
+    offset === 0 ? spotify.getShowEpisodePage(showId, offset) : Effect.fail(new SessionExpired()),
+}))
+
 describe("ShowPage", () => {
   it("shows the show's header and the first page of its episodes", async () => {
     await renderShowPage("fake-show-slow-science")
@@ -240,6 +245,19 @@ describe("ShowPage", () => {
       "fake-show-slow-science",
       spotifyApiFakeWith(() => ({ getShow: () => Effect.fail(new SessionExpired()) })),
     )
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
+  })
+
+  it("goes to the login screen when loading the next page of episodes finds the session has expired", async () => {
+    const router = await renderShowPage(
+      "fake-show-slow-science",
+      spotifyExpiringOnLaterEpisodePages,
+    )
+    await screen.findByRole("heading", { level: 1 })
+
+    scrollObservedElementsIntoView()
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
     expect(router.state.location.search).toEqual({ sessionExpired: true })

@@ -55,7 +55,9 @@ export function LikedSongsTracks({ firstPage }: { readonly firstPage: SavedTrack
         playbackStartAt={(index) => likedSongsPlaybackAt(songs.items, index)}
         onRowsRendered={songs.loadRange}
       />
-      {songs.pageFailed ? <PageFailedAlert onRetry={songs.retry} /> : null}
+      {songs.pageError !== null ? (
+        <PageFailedAlert error={songs.pageError} onRetry={songs.retry} />
+      ) : null}
     </div>
   )
 }

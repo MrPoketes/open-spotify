@@ -1,8 +1,9 @@
-import { screen, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, type Layer, Schema } from "effect"
 import { useState } from "react"
 import { describe, expect, it } from "vitest"
+import { SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
@@ -181,6 +182,19 @@ describe("NowPlayingBar", () => {
     await userEvent.click(within(failure).getByRole("button", { name: "Retry" }))
 
     expect(await within(picker).findByText("No devices found.")).toBeInTheDocument()
+  })
+
+  it("goes to the login screen when loading devices finds the session has expired", async () => {
+    const router = await renderNowPlayingBar(
+      spotifyApiFakeWith(() => ({
+        getAvailableDevices: Effect.fail(new SessionExpired()),
+      })),
+    )
+
+    await userEvent.click(await pickerButton("Playing on Mira's Laptop"))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
   })
 
   it("explains how to start the Spotify app when there are no devices", async () => {

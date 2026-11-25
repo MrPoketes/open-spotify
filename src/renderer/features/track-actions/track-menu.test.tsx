@@ -3,6 +3,7 @@ import { userEvent } from "@testing-library/user-event"
 import { Effect, type Layer } from "effect"
 import { type ReactNode, useState } from "react"
 import { describe, expect, it } from "vitest"
+import { SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
@@ -82,6 +83,14 @@ function PlaylistsFailingUntilRetried({ children }: { readonly children: ReactNo
   })
   const retry = () => setState({ status: "loaded", value: [ideasForLater] })
   return <EditablePlaylistsContext value={{ state, retry }}>{children}</EditablePlaylistsContext>
+}
+
+function PlaylistsFailedWithExpiredSession({ children }: { readonly children: ReactNode }) {
+  const failed: EditablePlaylists = {
+    state: { status: "failed", error: new SessionExpired() },
+    retry: () => undefined,
+  }
+  return <EditablePlaylistsContext value={failed}>{children}</EditablePlaylistsContext>
 }
 
 const renderTracks = async (
@@ -264,6 +273,18 @@ describe("Track menu changes in Spotify", () => {
     const submenu = await openPlaylistSubmenu(user, row)
 
     expect(within(submenu).getByRole("menuitem", { name: "Ideas for Later" })).toBeInTheDocument()
+  })
+
+  it("goes to the login screen when Add to playlist failed because the session expired", async () => {
+    const { user, router, row } = await renderTracks(
+      spotifyApiFake,
+      PlaylistsFailedWithExpiredSession,
+    )
+
+    await chooseFromMenu(user, row, "Add to playlist")
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
   })
 
   it("adds the track to the queue and says so", async () => {

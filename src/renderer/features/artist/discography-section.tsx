@@ -55,7 +55,7 @@ export function DiscographySection({
   // Collapsed, the grid loads a page only to fill its one row, so the first
   // album a page adds is always shown.
   const { retryRef, resultRowsRef } = useLoadControlFocus(
-    scrollLoadedListControls[nextPage],
+    scrollLoadedListControls[nextPage.status],
     shownAlbums.length,
   )
   // A wide pane can fit more cards on a row than one page holds.

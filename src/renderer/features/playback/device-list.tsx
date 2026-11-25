@@ -3,12 +3,12 @@ import { Volume2 } from "lucide-react"
 import { type KeyboardEvent, use, useState } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useLoad } from "../../lib/use-load"
-import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { LoadingMessage } from "../../ui/loading-message"
 import { menuRowClassName } from "../../ui/menu-row-class-name"
 import { AccentButton } from "../../ui/pill-button"
 import { type RovingRowProps, useRovingFocus } from "../../ui/use-roving-focus"
 import type { Device } from "../spotify/spotify-device"
+import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { describeDeviceType } from "./device-type"
 import { Player } from "./player"
 
@@ -32,7 +32,13 @@ export function DeviceList({ onDeviceChosen }: DeviceListProps) {
   }
 
   if (availableDevices.status === "failed") {
-    return <ErrorWithRetry message="Your devices didn't load." onRetry={retry} />
+    return (
+      <SpotifyLoadFailure
+        error={availableDevices.error}
+        message="Your devices didn't load."
+        onRetry={retry}
+      />
+    )
   }
 
   if (availableDevices.value.length === 0) {

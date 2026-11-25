@@ -11,6 +11,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Latch, Schema } from "effect"
 import { describe, expect, it } from "vitest"
+import { SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
@@ -58,6 +59,14 @@ const recordingSpotify = ({
   }))
   return { searches, releaseSlowSearch: () => Latch.openUnsafe(slowSearchLatch), layer }
 }
+
+const spotifyExpiringOnLaterSearchPages = () => ({
+  ...recordingSpotify(),
+  layer: spotifyApiFakeWith((spotify) => ({
+    search: (query, types, offset) =>
+      offset === 0 ? spotify.search(query, types, offset) : Effect.fail(new SessionExpired()),
+  })),
+})
 
 const SearchRoute = () => {
   const { q } = useSearch({ strict: false })
@@ -180,6 +189,17 @@ describe("Search", () => {
     await userEvent.click(within(alert).getByRole("button", { name: "Retry" }))
 
     await waitFor(() => expect(trackRows()).toHaveLength(20))
+  })
+
+  it("goes to the login screen when Load more finds the session has expired", async () => {
+    const { router } = await renderSearch(spotifyExpiringOnLaterSearchPages())
+    await typeSearch("quiet")
+    const tracks = await screen.findByRole("region", { name: "Tracks" })
+
+    await userEvent.click(within(tracks).getByRole("button", { name: "Load more tracks" }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
   })
 
   it("moves focus to Retry when the page Load more asked for fails", async () => {
