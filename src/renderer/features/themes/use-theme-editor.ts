@@ -11,27 +11,24 @@ import { tokenValueProblem } from "./theme-token-fields"
 
 // A theme with the same name and author is replaced only if the user
 // confirms, so declining leaves the editor open with nothing to report.
-const saveAndChoose = (
-  editedTheme: Theme,
-  onSave: (libraryTheme: LibraryTheme) => void,
-  showProblem: (problem: string) => void,
-) =>
-  Effect.gen(function* () {
+const saveAndChoose = Effect.fn("saveAndChoose")(
+  function* (editedTheme: Theme, onSave: (libraryTheme: LibraryTheme) => void) {
     const bridge = yield* DesktopBridge
     const savedTheme = yield* bridge.saveEditedTheme(editedTheme)
     if (Option.isNone(savedTheme)) {
-      return
+      return null
     }
     yield* selectTheme(savedTheme.value)
     yield* Effect.sync(() => onSave(savedTheme.value))
-  }).pipe(
-    Effect.catchTag("ThemeImportFailed", (error) => Effect.sync(() => showProblem(error.message))),
-    Effect.catchTag("DesktopBridgeError", (error) =>
-      Effect.logWarning("Could not save the edited theme", error).pipe(
-        Effect.andThen(Effect.sync(() => showProblem("Could not save the theme."))),
-      ),
+    return null
+  },
+  Effect.catchTag("ThemeImportFailed", (error) => Effect.succeed(error.message)),
+  Effect.catchTag("DesktopBridgeError", (error) =>
+    Effect.logWarning("Could not save the edited theme", error).pipe(
+      Effect.as("Could not save the theme."),
     ),
-  )
+  ),
+)
 
 // The editor starts from a copy of the saved theme. Every valid change
 // previews across the app at once; an invalid one keeps the last valid value
@@ -71,7 +68,13 @@ export function useThemeEditor(savedTheme: Theme, onSave: (libraryTheme: Library
       return
     }
     setSaveProblem(null)
-    runtime.runFork(saveAndChoose(editedTheme, onSave, setSaveProblem))
+    runtime.runFork(
+      saveAndChoose(editedTheme, onSave).pipe(
+        Effect.tap((problem) =>
+          problem === null ? Effect.void : Effect.sync(() => setSaveProblem(problem)),
+        ),
+      ),
+    )
   }
 
   return {

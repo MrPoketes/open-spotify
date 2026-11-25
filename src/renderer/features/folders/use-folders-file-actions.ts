@@ -28,34 +28,34 @@ const exportFolders = Effect.gen(function* () {
   ),
 )
 
-const importFolders = (readTreeAgain: Effect.Effect<void, never, DesktopBridge>) =>
-  Effect.gen(function* () {
+const importFolders = Effect.fn("importFolders")(
+  function* (readTreeAgain: Effect.Effect<void, never, DesktopBridge>) {
     const bridge = yield* DesktopBridge
     const reply = yield* bridge.importFolders
     if (reply._tag === "FileDialogCanceled") return null
     yield* readTreeAgain
     return success(`Imported ${formatCount(reply.folderCount, "folder", "folders")}.`)
-  }).pipe(
-    Effect.catchTags({
-      FoldersFileNotJson: () => Effect.succeed(failure(`That file isn't JSON. ${nothingImported}`)),
-      FoldersFileUnsupportedVersion: (error) =>
-        Effect.succeed(
-          failure(
-            `That file uses folders format version ${error.version}, which this version of Open Spotify can't read. ${nothingImported}`,
-          ),
+  },
+  Effect.catchTags({
+    FoldersFileNotJson: () => Effect.succeed(failure(`That file isn't JSON. ${nothingImported}`)),
+    FoldersFileUnsupportedVersion: (error) =>
+      Effect.succeed(
+        failure(
+          `That file uses folders format version ${error.version}, which this version of Open Spotify can't read. ${nothingImported}`,
         ),
-      FoldersFileInvalid: () =>
-        Effect.succeed(failure(`That file isn't an Open Spotify folders file. ${nothingImported}`)),
-      FoldersFileDamaged: () =>
-        Effect.succeed(
-          failure(
-            `That folders file is damaged: a folder or item in it isn't valid. ${nothingImported}`,
-          ),
+      ),
+    FoldersFileInvalid: () =>
+      Effect.succeed(failure(`That file isn't an Open Spotify folders file. ${nothingImported}`)),
+    FoldersFileDamaged: () =>
+      Effect.succeed(
+        failure(
+          `That folders file is damaged: a folder or item in it isn't valid. ${nothingImported}`,
         ),
-      DesktopBridgeError: () =>
-        Effect.succeed(failure(`The file couldn't be imported. ${nothingImported}`)),
-    }),
-  )
+      ),
+    DesktopBridgeError: () =>
+      Effect.succeed(failure(`The file couldn't be imported. ${nothingImported}`)),
+  }),
+)
 
 export function useFoldersFileActions() {
   const runtime = use(RendererRuntimeContext)

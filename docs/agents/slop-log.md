@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                          |
 | ---------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 2026-11-25 | Parameterised functions wrapping `Effect.gen(...).pipe(...)` instead of `Effect.fn("name")`       | Extended `open-spotify/require-effect-fn` to unwrap `.pipe`  |
 | 2026-11-25 | Keyboard handlers calling `stopPropagation()` without returning early on `hasShortcutModifier`    | Custom rule `open-spotify/no-unguarded-key-stop-propagation` |
 | 2026-11-25 | Browser-drawn native controls missing `appearance-none`, letting browser colors bypass the theme  | Custom rule `open-spotify/require-appearance-none`           |
 | 2026-11-25 | Headings at `text-xl` and larger missing `font-display`, skipping the theme's heading font        | Custom rule `open-spotify/require-heading-font-display`      |

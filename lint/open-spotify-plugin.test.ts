@@ -104,31 +104,28 @@ ruleTester.run("require-disable-reason", requireDisableReason, {
 const requireEffectFnMessage =
   'Use Effect.fn("name")(function* ...) instead of returning Effect.gen.'
 
+const invalidEffectFns = [
+  "const get = (key) => Effect.gen(function* () { return key })",
+  "const get = (key) => Effect.gen(function* () { return key }).pipe(Effect.as(1))",
+  "const get = (key) => { return Effect.gen(function* () { return key }).pipe(Effect.as(1)) }",
+  "const get = (key) => Effect.gen(function* () { return key }).pipe(Effect.as(1)).pipe(Effect.as(2))",
+  "const get = (key) => { return Effect.gen(function* () { return key }) }",
+  "const get = function (key) { return Effect.gen(function* () { return key }) }",
+  "function get(key) { return Effect.gen(function* () { return key }) }",
+]
+
 ruleTester.run("require-effect-fn", requireEffectFn, {
   valid: [
     'it.effect("runs the effect", () => Effect.gen(function* () { return 1 }))',
+    "() => Effect.gen(function* () { return 1 }).pipe(Effect.as(2))",
     "const get = (key) => { const trimmed = key.trim(); return Effect.gen(function* () { return trimmed }) }",
     "const get = (key) => other.gen(function* () { return key })",
     "const get = (key) => Effect[gen](function* () { return key })",
   ],
-  invalid: [
-    {
-      code: "const get = (key) => Effect.gen(function* () { return key })",
-      errors: [{ message: requireEffectFnMessage }],
-    },
-    {
-      code: "const get = (key) => { return Effect.gen(function* () { return key }) }",
-      errors: [{ message: requireEffectFnMessage }],
-    },
-    {
-      code: "const get = function (key) { return Effect.gen(function* () { return key }) }",
-      errors: [{ message: requireEffectFnMessage }],
-    },
-    {
-      code: "function get(key) { return Effect.gen(function* () { return key }) }",
-      errors: [{ message: requireEffectFnMessage }],
-    },
-  ],
+  invalid: invalidEffectFns.map((code) => ({
+    code,
+    errors: [{ message: requireEffectFnMessage }],
+  })),
 })
 
 // Comments name files by their path from the repository root.

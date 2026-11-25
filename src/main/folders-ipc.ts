@@ -14,18 +14,16 @@ import { decodeIpcRequest } from "./decode-ipc-request"
 import { Folders } from "./folders"
 import { replyWithTaggedFailures } from "./reply-with-tagged-failures"
 
-const decodedFolderOperation =
-  <Request, Reply, E>(
-    channel: IpcChannel,
-    requestSchema: Schema.Decoder<Request>,
-    operation: (folders: Folders["Service"], request: Request) => Effect.Effect<Reply, E>,
-  ) =>
-  (request: unknown) =>
-    Effect.gen(function* () {
-      const decodedRequest = yield* decodeIpcRequest(channel, requestSchema, request)
-      const folders = yield* Folders
-      return yield* operation(folders, decodedRequest)
-    }).pipe(replyWithTaggedFailures(FolderChangeError))
+const decodedFolderOperation = <Request, Reply, E>(
+  channel: IpcChannel,
+  requestSchema: Schema.Decoder<Request>,
+  operation: (folders: Folders["Service"], request: Request) => Effect.Effect<Reply, E>,
+) =>
+  Effect.fn(channel)(function* (request: unknown) {
+    const decodedRequest = yield* decodeIpcRequest(channel, requestSchema, request)
+    const folders = yield* Folders
+    return yield* operation(folders, decodedRequest)
+  }, replyWithTaggedFailures(FolderChangeError))
 
 export const folderIpcOperations = {
   [ipcChannels.getFolderTree]: () =>

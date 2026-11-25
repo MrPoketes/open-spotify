@@ -1,4 +1,5 @@
 import { defineRule, type ESTree } from "@oxlint/plugins"
+import { memberPropertyName } from "../member-property-name.ts"
 
 // Wrapping Effect.gen in a parameterised function skips the tracing span and
 // call-site stack trace that Effect.fn("name")(function* ...) provides.
@@ -15,7 +16,7 @@ export const requireEffectFn = defineRule({
         return
       }
       const expression = returnedExpression(node.body)
-      if (expression !== undefined && isEffectGenCall(expression)) {
+      if (expression !== undefined && isEffectGenCall(unwrapPipe(expression))) {
         context.report({
           node,
           message: 'Use Effect.fn("name")(function* ...) instead of returning Effect.gen.',
@@ -50,14 +51,33 @@ function returnedExpression(
   return undefined
 }
 
+function pipeTarget(expression: ESTree.Expression): ESTree.Expression | undefined {
+  if (
+    expression.type !== "CallExpression" ||
+    expression.callee.type !== "MemberExpression" ||
+    expression.callee.object.type === "Super"
+  ) {
+    return undefined
+  }
+  return memberPropertyName(expression.callee) === "pipe" ? expression.callee.object : undefined
+}
+
+function unwrapPipe(expression: ESTree.Expression): ESTree.Expression {
+  let current = expression
+  let target = pipeTarget(current)
+  while (target !== undefined) {
+    current = target
+    target = pipeTarget(current)
+  }
+  return current
+}
+
 function isEffectGenCall(expression: ESTree.Expression): boolean {
   return (
     expression.type === "CallExpression" &&
     expression.callee.type === "MemberExpression" &&
-    !expression.callee.computed &&
     expression.callee.object.type === "Identifier" &&
     expression.callee.object.name === "Effect" &&
-    expression.callee.property.type === "Identifier" &&
-    expression.callee.property.name === "gen"
+    memberPropertyName(expression.callee) === "gen"
   )
 }
