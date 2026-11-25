@@ -1,6 +1,7 @@
 import type { ESTree, Scope, SourceCode, Variable } from "@oxlint/plugins"
 import { findVariable } from "./find-variable.ts"
 import { memberPropertyName } from "./member-property-name.ts"
+import { propertyKeyName } from "./property-key-name.ts"
 
 export type FunctionNode = ESTree.ArrowFunctionExpression | ESTree.Function
 
@@ -91,12 +92,6 @@ export function isKeyboardHandler(
   return sourceCode
     .getDeclaredVariables(binding)
     .some((variable) => collected.variables.has(variable))
-}
-
-function propertyKeyName(node: ESTree.ObjectProperty): string | undefined {
-  if (!node.computed && node.key.type === "Identifier") return node.key.name
-  if (node.key.type === "Literal" && typeof node.key.value === "string") return node.key.value
-  return undefined
 }
 
 function keyboardListenerArgument(call: ESTree.CallExpression): ESTree.Expression | undefined {
