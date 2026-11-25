@@ -2,7 +2,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Option } from "effect"
-import { describe, expect, it, onTestFinished } from "vitest"
+import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { type StatusMessage, StatusMessageContext } from "../../ui/status-message-context"
@@ -11,6 +11,7 @@ import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
 import type { Device } from "../spotify/spotify-device"
 import { fakeTrack } from "../spotify/spotify-fixtures"
 import { nowPlayingBarAlone, renderNowPlayingBarAlone } from "./now-playing-bar-alone"
+import { recordDocumentKeyDowns } from "./record-document-key-downs"
 
 // The fake devices play at 60 %.
 const fakeVolume = "60"
@@ -95,14 +96,7 @@ describe("NowPlayingBar volume", () => {
     await renderNowPlayingBarAlone()
     const slider = await volumeSlider()
     slider.focus()
-
-    const keyDowns: Array<readonly [string, boolean]> = []
-    const recordKeyDown = (event: KeyboardEvent) => {
-      keyDowns.push([event.key, event.defaultPrevented])
-    }
-    // Runs after React's root handler and before window shortcut listeners.
-    document.addEventListener("keydown", recordKeyDown)
-    onTestFinished(() => document.removeEventListener("keydown", recordKeyDown))
+    const keyDowns = recordDocumentKeyDowns()
 
     await userEvent.keyboard("{ArrowRight}{Control>}{ArrowRight}{/Control}{Alt>}{ArrowLeft}{/Alt}")
 

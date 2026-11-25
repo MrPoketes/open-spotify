@@ -27,6 +27,50 @@ export function tailwindClasses(text: string): ReadonlyArray<ParsedTailwindClass
   return parsed
 }
 
+const validClassOutsideBrackets = /^[!@a-z0-9:/._-]+$/
+
+// Real Tailwind class lists mix at most a few bare utilities (like `flex` or
+// `invisible`) with prefixed or hyphenated ones, whereas plain prose consists
+// mostly of bare words.
+const minTailwindSyntaxShare = 0.5
+
+function isPlausibleTailwindToken(className: string): boolean {
+  if (/[.,;?]$/.test(className) || className.startsWith("/") || className.includes("://")) {
+    return false
+  }
+  const withoutArbitrary = className.replace(/\[[^\]]*\]/g, "")
+  return withoutArbitrary.length > 0 && validClassOutsideBrackets.test(withoutArbitrary)
+}
+
+const hasTailwindSyntax = (variants: ReadonlyArray<string>, utility: string) =>
+  variants.length > 0 || utility.includes("-") || utility.includes("/") || utility.includes("[")
+
+// Rejects prose sentences and URLs so duplicate-code checks compare only real
+// utility-class strings, without hard-coding a finite list of bare utilities.
+export function tailwindClassSet(text: string, minClasses: number): ReadonlySet<string> | null {
+  const parsed = tailwindClasses(text)
+  if (parsed.length < minClasses) {
+    return null
+  }
+  const unique = new Set<string>()
+  let syntaxCount = 0
+  for (const entry of parsed) {
+    if (!isPlausibleTailwindToken(entry.className)) {
+      return null
+    }
+    if (!unique.has(entry.className)) {
+      unique.add(entry.className)
+      if (hasTailwindSyntax(entry.variants, entry.utility)) {
+        syntaxCount += 1
+      }
+    }
+  }
+  if (unique.size < minClasses || syntaxCount / unique.size < minTailwindSyntaxShare) {
+    return null
+  }
+  return unique
+}
+
 function splitOnTopLevelColons(className: string): Array<string> {
   const segments: Array<string> = []
   let bracketDepth = 0

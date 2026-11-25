@@ -1,13 +1,6 @@
-import { globSync, readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
+import { sourcesIn } from "./repository-sources.ts"
 import { findUnusedExports } from "./unused-exports.ts"
-
-const sourcesIn = (patterns: ReadonlyArray<string>) =>
-  new Map(
-    globSync(patterns, { exclude: ["**/node_modules/**", "**/*.gen.ts", "**/*.d.ts"] }).map(
-      (file) => [file.replaceAll("\\", "/"), readFileSync(file, "utf8")],
-    ),
-  )
 
 describe("findUnusedExports", () => {
   it("lists an export that no other module imports", () => {

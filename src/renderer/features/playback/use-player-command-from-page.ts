@@ -1,11 +1,11 @@
-import { Effect } from "effect"
+import type { Effect } from "effect"
 import { use } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useShowStatusMessage } from "../../ui/status-message-context"
 import type { SpotifyApiError } from "../spotify/spotify-api"
 import { OpenDevicePickerContext } from "./open-device-picker-context"
-import { Player } from "./player"
-import { noActiveDeviceFailure } from "./use-player-command"
+import type { Player } from "./player"
+import { noActiveDeviceFailure, runPlayerCommand } from "./use-player-command"
 
 // Sends a player command from a page, such as playing a track from a list.
 // A page has no room for the failure, so it shows as a status message. With
@@ -30,13 +30,7 @@ export function usePlayerCommandFromPage() {
     failureMessage: string,
   ) => {
     runtime.runFork(
-      Effect.gen(function* () {
-        const player = yield* Player
-        yield* command(player)
-      }).pipe(
-        Effect.tapError((error) => Effect.logError(failureMessage, error)),
-        Effect.catch((error) => Effect.sync(() => showFailure(error, failureMessage))),
-      ),
+      runPlayerCommand(command, failureMessage, (error) => showFailure(error, failureMessage)),
     )
   }
 }

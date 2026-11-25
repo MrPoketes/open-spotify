@@ -12,6 +12,7 @@ import {
 } from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { menuItemTargetForKey } from "./menu-item-target"
+import { menuRowClassName } from "./menu-row-class-name"
 
 export interface MenuAction {
   // Tells apart actions with the same label, such as two playlists that
@@ -201,7 +202,7 @@ function MenuItemButton({ ref, item, isSubmenuOpen, onClick }: MenuItemButtonPro
       aria-haspopup={isSubmenu(item) ? "menu" : undefined}
       aria-expanded={isSubmenu(item) ? isSubmenuOpen : undefined}
       onClick={onClick}
-      className="flex w-full items-center justify-between gap-3 rounded-small px-3 py-2 text-left text-sm transition-colors duration-120 ease-out hover:bg-surface-raised focus:bg-surface-raised"
+      className={`${menuRowClassName} justify-between text-sm focus:bg-surface-raised`}
     >
       {item.label}
       {isSubmenu(item) ? <ChevronRight aria-hidden size={16} /> : null}

@@ -1,10 +1,6 @@
 import { Effect, Stream } from "effect"
-import { useLoad } from "../../lib/use-load"
-import { LoadingMessage } from "../../ui/loading-message"
-import { isUnknownSpotifyId } from "../spotify/is-unknown-spotify-id"
+import { LoadedSpotifyItem } from "../spotify/loaded-spotify-item"
 import { SpotifyApi } from "../spotify/spotify-api"
-import { SpotifyItemNotFound } from "../spotify/spotify-item-not-found"
-import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { AlbumHeader } from "./album-header"
 import { AlbumTracks } from "./album-tracks"
 
@@ -27,25 +23,17 @@ interface AlbumPageProps {
 }
 
 export function AlbumPage({ albumId, highlightedTrackId }: AlbumPageProps) {
-  const { state, retry } = useLoad(loadAlbum(albumId), "The album failed to load")
-
-  if (state.status === "loading") {
-    return <LoadingMessage>Loading album…</LoadingMessage>
-  }
-  if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
-    return <SpotifyItemNotFound kind="album" />
-  }
-  if (state.status === "failed") {
-    return (
-      <SpotifyLoadFailure error={state.error} message="This album didn't load." onRetry={retry} />
-    )
-  }
-  const { album, tracks } = state.value
-  const totalDurationMs = tracks.reduce((total, track) => total + track.durationMs, 0)
   return (
-    <div className="flex flex-col gap-8">
-      <AlbumHeader album={album} totalDurationMs={totalDurationMs} />
-      <AlbumTracks album={album} tracks={tracks} highlightedTrackId={highlightedTrackId} />
-    </div>
+    <LoadedSpotifyItem kind="album" load={loadAlbum(albumId)}>
+      {({ album, tracks }) => {
+        const totalDurationMs = tracks.reduce((total, track) => total + track.durationMs, 0)
+        return (
+          <div className="flex flex-col gap-8">
+            <AlbumHeader album={album} totalDurationMs={totalDurationMs} />
+            <AlbumTracks album={album} tracks={tracks} highlightedTrackId={highlightedTrackId} />
+          </div>
+        )
+      }}
+    </LoadedSpotifyItem>
   )
 }
