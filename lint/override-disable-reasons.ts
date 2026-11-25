@@ -1,11 +1,13 @@
 import { type ESTree, type ParseResult, parseSync } from "vite"
+import { propertyKeyName } from "./property-key-name.ts"
+import { lineAtOffset, lineStartsOf } from "./source-lines.ts"
 
 const configPath = "oxlint.config.ts"
 
 type SourceComment = ParseResult["comments"][number]
 
 interface ParsedConfig {
-  readonly source: string
+  readonly lineStarts: ReadonlyArray<number>
   readonly comments: ReadonlyArray<SourceComment>
 }
 
@@ -22,38 +24,23 @@ interface CommentBounds {
 
 const hasReasonText = (comment: SourceComment): boolean => /[^\s*]/.test(comment.value)
 
-const lineAt = (source: string, offset: number): number =>
-  source.slice(0, offset).split("\n").length
-
 function hasCommentBetween(parsed: ParsedConfig, bounds: CommentBounds): boolean {
+  const afterLine = lineAtOffset(parsed.lineStarts, bounds.after)
   return parsed.comments.some((comment) => {
     if (comment.start <= bounds.after || comment.end >= bounds.before) {
       return false
     }
-    if (bounds.afterNewline && !parsed.source.slice(bounds.after, comment.start).includes("\n")) {
+    if (bounds.afterNewline && lineAtOffset(parsed.lineStarts, comment.start) <= afterLine) {
       return false
     }
     return hasReasonText(comment)
   })
 }
 
-function propertyName(property: ESTree.ObjectProperty): string | null {
-  if (property.computed) {
-    return null
-  }
-  if (property.key.type === "Identifier") {
-    return property.key.name
-  }
-  if (property.key.type === "Literal" && typeof property.key.value === "string") {
-    return property.key.value
-  }
-  return null
-}
-
 function findProperty(object: ESTree.ObjectExpression, name: string): FoundProperty | null {
   let previousEnd: number | null = null
   for (const entry of object.properties) {
-    if (entry.type === "Property" && propertyName(entry) === name) {
+    if (entry.type === "Property" && propertyKeyName(entry) === name) {
       return { property: entry, previousEnd }
     }
     previousEnd = entry.end
@@ -63,15 +50,11 @@ function findProperty(object: ESTree.ObjectExpression, name: string): FoundPrope
 
 function findConfigObject(program: ESTree.Program): ESTree.ObjectExpression | null {
   for (const statement of program.body) {
-    if (statement.type !== "ExportDefaultDeclaration") {
-      continue
-    }
-    const { declaration } = statement
-    if (declaration.type === "ObjectExpression") {
-      return declaration
-    }
-    if (declaration.type === "CallExpression") {
-      const firstArgument = declaration.arguments[0]
+    if (
+      statement.type === "ExportDefaultDeclaration" &&
+      statement.declaration.type === "CallExpression"
+    ) {
+      const firstArgument = statement.declaration.arguments[0]
       if (firstArgument !== undefined && firstArgument.type === "ObjectExpression") {
         return firstArgument
       }
@@ -140,7 +123,7 @@ function unexplainedRulesInObject(
     const afterNewline = previousEnd !== null
     previousEnd = entry.end
     if (entry.type !== "Property") {
-      const line = lineAt(parsed.source, entry.start)
+      const line = lineAtOffset(parsed.lineStarts, entry.start)
       violations.push(`${configPath}:${line}: expected rule entries to be explicit properties`)
       continue
     }
@@ -150,8 +133,8 @@ function unexplainedRulesInObject(
     if (hasCommentBetween(parsed, { after, before: entry.start, afterNewline })) {
       continue
     }
-    const ruleName = propertyName(entry) ?? "<computed>"
-    const line = lineAt(parsed.source, entry.start)
+    const ruleName = propertyKeyName(entry) ?? "<computed>"
+    const line = lineAtOffset(parsed.lineStarts, entry.start)
     violations.push(`${configPath}:${line}: "${ruleName}" is turned off without a reason comment`)
   }
   return violations
@@ -167,7 +150,7 @@ function unexplainedRulesInOverride(
     return []
   }
   if (rulesProperty.property.value.type !== "ObjectExpression") {
-    const line = lineAt(parsed.source, rulesProperty.property.value.start)
+    const line = lineAtOffset(parsed.lineStarts, rulesProperty.property.value.start)
     return [`${configPath}:${line}: expected rules to be an object literal`]
   }
   if (overrideHasReasonComment(parsed, override, { previousOverrideEnd, rulesProperty })) {
@@ -187,7 +170,7 @@ export function findUnexplainedOverrideDisables(source: string): ReadonlyArray<s
   }
   const config = findConfigObject(parsedFile.program)
   if (config === null) {
-    return [`${configPath}: expected a default-exported config object`]
+    return [`${configPath}: expected a default-exported defineConfig call`]
   }
   const overridesEntry = findProperty(config, "overrides")
   if (overridesEntry === null) {
@@ -197,7 +180,10 @@ export function findUnexplainedOverrideDisables(source: string): ReadonlyArray<s
     return [`${configPath}: expected overrides to be an array literal`]
   }
 
-  const parsed: ParsedConfig = { source, comments: parsedFile.comments }
+  const parsed: ParsedConfig = {
+    lineStarts: lineStartsOf(source),
+    comments: parsedFile.comments,
+  }
   const violations: Array<string> = []
   let previousEnd = overridesEntry.property.value.start
   for (const element of overridesEntry.property.value.elements) {
@@ -205,9 +191,8 @@ export function findUnexplainedOverrideDisables(source: string): ReadonlyArray<s
       continue
     }
     if (element.type !== "ObjectExpression") {
-      violations.push(
-        `${configPath}:${lineAt(source, element.start)}: expected an override object literal`,
-      )
+      const line = lineAtOffset(parsed.lineStarts, element.start)
+      violations.push(`${configPath}:${line}: expected an override object literal`)
     } else {
       violations.push(...unexplainedRulesInOverride(parsed, element, previousEnd))
     }

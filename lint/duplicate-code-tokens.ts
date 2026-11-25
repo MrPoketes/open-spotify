@@ -1,4 +1,5 @@
 import { type ESTree, parseSync } from "vite"
+import { lineAtOffset, lineStartsOf } from "./source-lines.ts"
 import { tailwindClassSet } from "./tailwind-classes.ts"
 
 export interface CodeToken {
@@ -62,18 +63,8 @@ const testFunctionNames = new Set(["it", "test"])
 const isEstreeNode = (value: unknown): value is ESTree.Node =>
   typeof value === "object" && value !== null && "type" in value && typeof value.type === "string"
 
-function lineStartsOf(source: string): ReadonlyArray<number> {
-  const starts = [0]
-  for (let index = 0; index < source.length; index += 1) {
-    if (source.charCodeAt(index) === 10) {
-      starts.push(index + 1)
-    }
-  }
-  return starts
-}
-
 const lineOf = (context: WalkContext, node: ESTree.Node): number =>
-  context.lineStarts.findLastIndex((start) => start <= node.start) + 1
+  lineAtOffset(context.lineStarts, node.start)
 
 function recordClassList(context: WalkContext, text: string, line: number) {
   const classes = tailwindClassSet(text, context.minTailwindClasses)

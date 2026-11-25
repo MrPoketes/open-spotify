@@ -116,33 +116,41 @@ describe("findUnexplainedOverrideDisables", () => {
     ])
   })
 
-  it("reports a config it cannot parse instead of passing silently", () => {
-    expect(findUnexplainedOverrideDisables("export default defineConfig({")).toEqual([
-      "oxlint.config.ts: could not parse config",
-    ])
-    expect(findUnexplainedOverrideDisables("export const config = {}")).toEqual([
-      "oxlint.config.ts: expected a default-exported config object",
-    ])
-    expect(
-      findUnexplainedOverrideDisables(
-        "export default defineConfig({ overrides: sharedOverrides })",
-      ),
-    ).toEqual(["oxlint.config.ts: expected overrides to be an array literal"])
-    expect(
-      findUnexplainedOverrideDisables(
-        "export default defineConfig({ overrides: [...sharedOverrides] })",
-      ),
-    ).toEqual(["oxlint.config.ts:1: expected an override object literal"])
-    expect(
-      findUnexplainedOverrideDisables(
+  it.each([
+    {
+      label: "a syntax error",
+      source: "export default defineConfig({",
+      expected: "oxlint.config.ts: could not parse config",
+    },
+    {
+      label: "a missing default defineConfig call",
+      source: "export const config = {}",
+      expected: "oxlint.config.ts: expected a default-exported defineConfig call",
+    },
+    {
+      label: "overrides that are not an array literal",
+      source: "export default defineConfig({ overrides: sharedOverrides })",
+      expected: "oxlint.config.ts: expected overrides to be an array literal",
+    },
+    {
+      label: "a spread in overrides",
+      source: "export default defineConfig({ overrides: [...sharedOverrides] })",
+      expected: "oxlint.config.ts:1: expected an override object literal",
+    },
+    {
+      label: "rules that are not an object literal",
+      source:
         "export default defineConfig({ overrides: [{ files: ['a.ts'], rules: sharedRules }] })",
-      ),
-    ).toEqual(["oxlint.config.ts:1: expected rules to be an object literal"])
-    expect(
-      findUnexplainedOverrideDisables(
+      expected: "oxlint.config.ts:1: expected rules to be an object literal",
+    },
+    {
+      label: "a spread inside rules",
+      source:
         "export default defineConfig({ overrides: [{ files: ['a.ts'], rules: { ...sharedRules } }] })",
-      ),
-    ).toEqual(["oxlint.config.ts:1: expected rule entries to be explicit properties"])
+      expected: "oxlint.config.ts:1: expected rule entries to be explicit properties",
+    },
+  ])("reports $label instead of passing silently", ({ source, expected }) => {
+    expect(findUnexplainedOverrideDisables(source)).toEqual([expected])
   })
 
   // Turning a rule off in oxlint.config.ts overrides counts as disabling it
