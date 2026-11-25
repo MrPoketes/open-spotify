@@ -4,6 +4,9 @@ import { Search } from "lucide-react"
 import { type KeyboardEvent, use, useEffect, useRef, useState } from "react"
 import { attemptNavigation } from "../../lib/attempt-navigation"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { IsMacContext } from "../shortcuts/is-mac-context"
+import { ariaKeyShortcut } from "../shortcuts/key-combo"
+import { shortcutKeys, windowShortcuts } from "../shortcuts/keyboard-shortcuts"
 import { useKeyboardShortcut } from "../shortcuts/use-keyboard-shortcut"
 import { SearchParams } from "./search-params"
 
@@ -26,6 +29,7 @@ const queryShownAt = ({ pathname, search }: ParsedLocation) => {
 
 export function SearchField() {
   const runtime = use(RendererRuntimeContext)
+  const isMac = use(IsMacContext)
   const router = useRouter()
   const [text, setText] = useState(() => queryShownAt(router.state.location) ?? "")
   const input = useRef<HTMLInputElement>(null)
@@ -101,7 +105,7 @@ export function SearchField() {
         ref={input}
         type="search"
         aria-label="Search"
-        aria-keyshortcuts="/"
+        aria-keyshortcuts={ariaKeyShortcut(shortcutKeys(windowShortcuts.focusSearch, isMac), isMac)}
         placeholder="Search"
         value={text}
         onChange={(event) => changeText(event.target.value)}

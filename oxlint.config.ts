@@ -156,6 +156,12 @@ export default defineConfig({
       },
     },
     {
+      // Every shortcut announced in aria-keyshortcuts belongs in the shortcut
+      // registry so the shortcuts dialog lists it too.
+      files: ["src/renderer/**"],
+      rules: { "open-spotify/no-literal-aria-keyshortcuts": "error" },
+    },
+    {
       // Component tests check what a user can reach through the accessibility
       // tree instead of querying or walking the DOM directly, and render bare
       // unstyled native controls in jsdom to test behaviour.
