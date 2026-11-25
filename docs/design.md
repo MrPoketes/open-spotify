@@ -831,10 +831,13 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
   inside (roving focus, `src/renderer/ui/use-roving-focus.ts`). An unavailable row in a list
   keeps its focus and is marked with `aria-disabled`, not `disabled`, following the WAI-ARIA
   guidance for composite widgets: a `disabled` element cannot take focus, which stalls arrow
-  navigation and drops the list from the tab order when that row holds the tab stop. Dialogs
-  and the command palette trap focus and return it on close. Pane dividers are focusable: the
-  arrow keys move the divider 16 px, `Home` and `End` jump to the narrowest and widest size,
-  and a double-click restores the default size.
+  navigation and drops the list from the tab order when that row holds the tab stop. When an
+  action moves or removes the focused control, focus follows instead of dropping to `<body>`:
+  the control's section in this document says where it goes (for example, the moved control,
+  the row now at the same index, the list's first row, or the section heading), and a test
+  checks it. Dialogs and the command palette trap focus and return it on close. Pane dividers
+  are focusable: the arrow keys move the divider 16 px, `Home` and `End` jump to the narrowest
+  and widest size, and a double-click restores the default size.
 - **Targets.** Interactive elements are at least 24 × 24 px. Dense rows are 32 px tall.
 - **Not color alone.** State is never shown by color only. The playing track also shows an
   icon, and errors carry text.
