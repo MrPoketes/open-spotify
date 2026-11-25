@@ -55,7 +55,10 @@ technically correct but hard to read gets rejected. These rules are not suggesti
 
 1. **Names carry the meaning.** Name things after what they are or do: `playlistFolders`,
    `refreshAccessToken`. Never `data`, `info`, `item`, `result`, `handle`, `manager`, `util`,
-   or abbreviations like `pl`, `cfg`, `btn`.
+   or abbreviations like `pl`, `cfg`, `btn`. Do not use a Spotify domain noun (`track`, `album`,
+   `artist`, `playlist`, `show`, `episode`, `device`, `queue`) as the name of an unrelated
+   function, variable, or helper (for example, `pendingChanges.track(...)` to mean "keep track
+   of").
 2. **One module, one concept.** Name files in kebab-case after that concept
    (`format-duration.ts`). No `utils.ts`, `helpers.ts`, `types.ts`, or `constants.ts`. Put a
    type next to the code that owns it. No barrel `index.ts` files.
