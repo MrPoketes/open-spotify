@@ -7,6 +7,7 @@ import {
   useRef,
 } from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
+import type { TreeDropPosition } from "./tree-drop"
 import { Expander, TreeRow } from "./tree-row"
 import { type RovingRowProps, type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
 import { type TreeDropRules, useTreeDragAndDrop } from "./use-tree-drag-and-drop"
@@ -18,6 +19,7 @@ export interface TreeItemProps extends RovingRowProps {
   readonly "aria-setsize": number
   readonly "aria-posinset": number
   readonly "aria-expanded": boolean | undefined
+  readonly "data-drop-position": TreeDropPosition | undefined
   readonly onKeyDown: (event: KeyboardEvent) => void
 }
 
@@ -136,6 +138,8 @@ export function TreeView<Value>({
   const rememberFocusedRow = useFocusFollowsRow(rows, focusRow)
 
   const expandOrCollapseWithKey = arrowKeyExpansion(expandedKeys, onToggleExpanded, focusRow)
+  const dropPositionFor = (key: string) =>
+    dropIndicator?.targetKey === key ? dropIndicator.position : undefined
 
   const itemProps = (row: VisibleTreeRow<Value>, index: number): TreeItemProps => {
     const rovingProps = rowProps(index)
@@ -150,6 +154,7 @@ export function TreeView<Value>({
       "aria-setsize": row.setSize,
       "aria-posinset": row.positionInSet,
       "aria-expanded": row.node.children === null ? undefined : expandedKeys.has(row.node.key),
+      "data-drop-position": dropPositionFor(row.node.key),
       onKeyDown: (event) => expandOrCollapseWithKey(event, row, index),
     }
   }
@@ -168,9 +173,7 @@ export function TreeView<Value>({
           rowKey={row.node.key}
           level={row.level}
           isDragged={row.node.key === draggedKey}
-          dropPosition={
-            dropIndicator?.targetKey === row.node.key ? dropIndicator.position : undefined
-          }
+          dropPosition={dropPositionFor(row.node.key)}
           expander={
             <Expander
               isBranch={row.node.children !== null}

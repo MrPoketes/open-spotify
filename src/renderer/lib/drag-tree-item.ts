@@ -4,6 +4,7 @@ import { vi } from "vitest"
 const rowHeight = 48
 const treeRowSelector = '[role="tree"] > [role="none"]'
 
+// oxlint-disable-next-line open-spotify/no-dom-node-access -- jsdom does no layout, so this helper finds the tree's role="none" row wrappers to fake their bounding rects
 const treeRows = () => [...document.querySelectorAll(treeRowSelector)]
 
 // The top of the row that holds an element, or of the row itself.

@@ -55,10 +55,9 @@ export const renderTree = (mainProcess: DesktopApi = fakeMainProcess({ folderTre
 export const treeItem = (name: string) =>
   screen.findByRole("treeitem", { name: new RegExp(`^${name}`) })
 
-// Where a drop on the item's row would land, or null while the row shows no
-// drop indicator.
+// Where a drop on the item would land, or null while it shows no drop indicator.
 export const dropPositionOn = async (name: string) =>
-  (await treeItem(name)).parentElement?.getAttribute("data-drop-position") ?? null
+  (await treeItem(name)).getAttribute("data-drop-position")
 
 export const focusTreeItem = async (name: string) => {
   const item = await treeItem(name)
