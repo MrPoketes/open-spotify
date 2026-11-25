@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "pnpm run --parallel \"/^dev:/\"",
     "dev:renderer": "vite dev",
-    "dev:electron": "electron-vite dev",
+    "dev:electron": "install-electron && electron-vite dev",
     "build": "vite build && electron-vite build",
     "package": "pnpm build && electron-builder --config electron-builder.yml",
     "package:dir": "pnpm build && electron-builder --config electron-builder.yml --dir",
