@@ -160,6 +160,11 @@ cannot fail for a meaningful reason should not exist.
   (bad data, empty states, an expired session), and tests at decoding boundaries.
 - Components are tested with Testing Library: query by role or label, interact with
   `user-event`.
+- **Wait for the loaded state before pressing a control.** Before pressing a control that also
+  renders while loading (for example as `aria-disabled` with no click handler), wait for
+  something that only the loaded state shows (for example the playing track's name). A
+  `findBy*` query on the control itself resolves while data is still loading, making the test
+  depend on timing.
 - Effect code is tested with `@effect/vitest` (`it.effect`, `layer(...)`). See
   `src/main/renderer-files.test.ts`.
 - `e2e/app.test.ts` is a smoke test of the packaged app (run `pnpm package:dir` first): it
