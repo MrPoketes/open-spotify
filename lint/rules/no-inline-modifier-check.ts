@@ -1,6 +1,6 @@
-import path from "node:path"
 import { defineRule, type ESTree } from "@oxlint/plugins"
 import { memberPropertyName } from "../member-property-name.ts"
+import { repoRelativePath } from "../repo-relative-path.ts"
 
 // Key handlers outside src/renderer/ui/has-shortcut-modifier.ts should not
 // check Ctrl, Alt, and Cmd inline: copied checks drift apart when one copy
@@ -22,9 +22,7 @@ export const noInlineModifierCheck = defineRule({
     },
   },
   create(context) {
-    const filePath = path.resolve(context.cwd, context.filename)
-    const relativePath = path.relative(context.cwd, filePath).replaceAll("\\", "/")
-    if (relativePath === sharedHelperPath) {
+    if (repoRelativePath(context.cwd, context.filename) === sharedHelperPath) {
       return {}
     }
 
@@ -49,7 +47,7 @@ function isNestedInLogicalExpression(node: ESTree.LogicalExpression): boolean {
     if (current.type === "LogicalExpression") {
       return true
     }
-    if (!isLogicalWrapper(current)) {
+    if (!isWalkedByModifierCheck(current)) {
       return false
     }
     current = current.parent
@@ -57,7 +55,7 @@ function isNestedInLogicalExpression(node: ESTree.LogicalExpression): boolean {
   return false
 }
 
-function isLogicalWrapper(node: ESTree.Node): boolean {
+function isWalkedByModifierCheck(node: ESTree.Node): boolean {
   if (unwrapExpression(node) !== undefined) {
     return true
   }

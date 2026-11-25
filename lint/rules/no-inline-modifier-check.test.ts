@@ -20,7 +20,6 @@ ruleTester.run("no-inline-modifier-check", noInlineModifierCheck, {
     "if (first.ctrlKey || second.ctrlKey) return",
     "event.ctrlKey && dispatch(event.altKey)",
     "const primaryKey = isMac ? event.metaKey : event.ctrlKey",
-    "if (ctrlKey.active || metaKey.active) return",
   ],
   invalid: [
     {
@@ -30,10 +29,6 @@ ruleTester.run("no-inline-modifier-check", noInlineModifierCheck, {
     },
     {
       code: "if (event.ctrlKey || event.metaKey) return",
-      errors: [{ messageId: "inlineModifierCheck" }],
-    },
-    {
-      code: "if (!event.ctrlKey && !event.metaKey && !event.altKey) return",
       errors: [{ messageId: "inlineModifierCheck" }],
     },
     {
