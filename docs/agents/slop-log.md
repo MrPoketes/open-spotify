@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 2026-11-25 | Component tests pressing a control that also renders while loading before data arrives (PR #31)   | `AGENTS.md` "Tests" rule (no lint: static check cannot see loading state)   |
 | 2026-11-25 | Actions that move or remove the focused control dropping keyboard focus to `<body>`               | General rule in `docs/design.md` (Accessibility → Keyboard)                 |
 | 2026-11-25 | Parallel PRs passing CI on stale `main` and breaking `main` once both merge (PR #32 + PR #36)     | `strict: true` on `main` status checks; branch-update flow in playbooks     |
 | 2026-11-25 | Turning a lint rule off in `oxlint.config.ts` overrides without a reason comment                  | Check `lint/override-disable-reasons.test.ts`                               |
