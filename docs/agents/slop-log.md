@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 2026-11-25 | Turning a lint rule off in `oxlint.config.ts` overrides instead of renaming or refactoring        | Rule in `AGENTS.md` and `docs/agents/reviewer.md`                           |
 | 2026-11-25 | Spotify loads showing Retry on auth failures instead of going to `/login`                         | Rule in `AGENTS.md`/`docs/design.md`; `SpotifyLoadFailure` everywhere       |
 | 2026-11-25 | Forking an effect with `runFork` without handling its typed errors, silently dropping failures    | `AGENTS.md` rule; `runFork` on app runtimes requires `E = never`            |
 | 2026-11-25 | Test helpers outside `*.test.tsx` walking DOM nodes to bypass `no-dom-node-access`                | Extended `open-spotify/no-dom-node-access` to renderer test-support modules |

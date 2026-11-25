@@ -91,8 +91,9 @@ unresolved, move it to `Todo`, and stop.
   suite in a loop or several copies at once. To reproduce a flaky test, repeat only that file
   (`pnpm vitest run <path> --repeats <n>`). Run `pnpm check` before opening the PR and again
   after review fixes or a rebase, not after every edit.
-- Never disable a lint rule to get green, unless the disable comment carries a reason that a
-  reviewer would accept.
+- Never disable a lint rule to get green, whether with a disable comment or an `oxlint.config.ts`
+  override, unless it carries a written reason a reviewer would accept and no rename or small
+  refactor removes the need.
 - Never edit files outside the scope of your issue, except to fix something that blocks you.
   Mention it in the PR.
 - If you find slop that is not yours, fix it in a separate issue: create it in Linear in `Todo`, in
