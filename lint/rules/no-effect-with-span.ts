@@ -1,5 +1,4 @@
-import { defineRule } from "@oxlint/plugins"
-import type { ESTree } from "@oxlint/plugins"
+import { defineRule, type ESTree } from "@oxlint/plugins"
 
 // Effect.fn("name") attaches a span and captures the call-site stack trace,
 // whereas Effect.withSpan only wraps a body and encourages plain arrow

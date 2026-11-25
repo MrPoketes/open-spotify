@@ -1,5 +1,4 @@
-import { defineRule } from "@oxlint/plugins"
-import type { ESTree } from "@oxlint/plugins"
+import { defineRule, type ESTree } from "@oxlint/plugins"
 
 // Raw invisible and format characters vanish in editors and diffs and can be
 // stripped on copy-paste without warning. Built-in no-irregular-whitespace
