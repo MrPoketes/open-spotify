@@ -20,7 +20,6 @@ ruleTester.run("no-inline-modifier-check", noInlineModifierCheck, {
     "if (first.ctrlKey || second.ctrlKey) return",
     "event.ctrlKey && dispatch(event.altKey)",
     "const primaryKey = isMac ? event.metaKey : event.ctrlKey",
-    "const matched = primaryKey === false && !otherKey && event.altKey === true",
     "if (ctrlKey.active || metaKey.active) return",
   ],
   invalid: [

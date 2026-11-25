@@ -100,11 +100,8 @@ function collectModifierKeys(node: ESTree.Node, modifiers: Set<string>): void {
 function unwrapExpression(node: ESTree.Node): ESTree.Node | undefined {
   if (
     node.type === "ChainExpression" ||
-    node.type === "ParenthesizedExpression" ||
     node.type === "TSAsExpression" ||
-    node.type === "TSNonNullExpression" ||
-    node.type === "TSSatisfiesExpression" ||
-    node.type === "TSTypeAssertion"
+    node.type === "TSNonNullExpression"
   ) {
     return node.expression
   }
