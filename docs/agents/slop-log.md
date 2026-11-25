@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-11-25 | Browser-drawn native controls missing `appearance-none`, letting browser colors bypass the theme  | Custom rule `open-spotify/require-appearance-none`          |
 | 2026-11-25 | Headings at `text-xl` and larger missing `font-display`, skipping the theme's heading font        | Custom rule `open-spotify/require-heading-font-display`     |
 | 2026-11-25 | Type and value imports from the same module split into separate import statements                 | `import/no-duplicates` with `preferInline: true`            |
 | 2026-11-25 | Renderer tests spying on DOM prototypes with `vi.spyOn` without restoring them between tests      | `restoreMocks: true` in `vitest.config.ts` (renderer)       |

@@ -1,4 +1,5 @@
 import { defineRule } from "@oxlint/plugins"
+import { findJsxAttribute } from "../jsx-attributes.ts"
 
 // Every reader of a context re-renders when the value changes identity, so a
 // value built during render re-renders all of them each time the provider
@@ -24,19 +25,16 @@ export const noConstructedContextValues = defineRule({
         if (element.name.type !== "JSXIdentifier" || !element.name.name.endsWith("Context")) {
           return
         }
-        for (const attribute of element.attributes) {
-          if (
-            attribute.type === "JSXAttribute" &&
-            attribute.name.name === "value" &&
-            attribute.value?.type === "JSXExpressionContainer" &&
-            constructedValueTypes.has(attribute.value.expression.type)
-          ) {
-            context.report({
-              node: attribute,
-              message:
-                "This value is new on every render, so every reader of the context re-renders. Keep it the same with useMemo or useCallback.",
-            })
-          }
+        const valueAttribute = findJsxAttribute(element, "value")
+        if (
+          valueAttribute?.value?.type === "JSXExpressionContainer" &&
+          constructedValueTypes.has(valueAttribute.value.expression.type)
+        ) {
+          context.report({
+            node: valueAttribute,
+            message:
+              "This value is new on every render, so every reader of the context re-renders. Keep it the same with useMemo or useCallback.",
+          })
         }
       },
     }

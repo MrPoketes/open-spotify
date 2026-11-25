@@ -15,6 +15,7 @@ import { noRendererRuntimeImport } from "./rules/no-renderer-runtime-import.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noThrow } from "./rules/no-throw.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
+import { requireAppearanceNone } from "./rules/require-appearance-none.ts"
 import { requireDisableReason } from "./rules/require-disable-reason.ts"
 import { requireEffectFn } from "./rules/require-effect-fn.ts"
 import { requireHeadingFontDisplay } from "./rules/require-heading-font-display.ts"
@@ -41,6 +42,7 @@ export default definePlugin({
     "no-stale-file-references": noStaleFileReferences,
     "no-throw": noThrow,
     "no-try-catch": noTryCatch,
+    "require-appearance-none": requireAppearanceNone,
     "require-disable-reason": requireDisableReason,
     "require-effect-fn": requireEffectFn,
     "require-heading-font-display": requireHeadingFontDisplay,

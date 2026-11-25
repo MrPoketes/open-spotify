@@ -1,5 +1,6 @@
 import { defineRule, type ESTree } from "@oxlint/plugins"
-import { interpolationPlaceholder, tailwindClasses } from "../tailwind-classes.ts"
+import { findJsxAttribute, jsxAttributeStrings } from "../jsx-attributes.ts"
+import { tailwindClasses } from "../tailwind-classes.ts"
 
 const headingElements = new Set(["h1", "h2", "h3"])
 const headingSizeUtilities = new Set(["text-xl", "text-3xl", "text-5xl"])
@@ -24,7 +25,7 @@ export const requireHeadingFontDisplay = defineRule({
         if (element.name.type !== "JSXIdentifier" || !headingElements.has(element.name.name)) {
           return
         }
-        const classNameAttribute = findClassNameAttribute(element)
+        const classNameAttribute = findJsxAttribute(element, "className")
         if (classNameAttribute === undefined) {
           return
         }
@@ -41,70 +42,14 @@ export const requireHeadingFontDisplay = defineRule({
   },
 })
 
-function findClassNameAttribute(
-  element: ESTree.JSXOpeningElement,
-): ESTree.JSXAttribute | undefined {
-  for (const attribute of element.attributes) {
-    if (
-      attribute.type === "JSXAttribute" &&
-      attribute.name.type === "JSXIdentifier" &&
-      attribute.name.name === "className"
-    ) {
-      return attribute
-    }
-  }
-  return undefined
-}
-
 function findMissingDisplayClass(attribute: ESTree.JSXAttribute): string | undefined {
-  for (const classList of attributeClassLists(attribute)) {
+  for (const classList of jsxAttributeStrings(attribute)) {
     const offendingClass = firstUncoveredHeadingSize(classList)
     if (offendingClass !== undefined) {
       return offendingClass
     }
   }
   return undefined
-}
-
-function attributeClassLists(attribute: ESTree.JSXAttribute): ReadonlyArray<string> {
-  if (attribute.value === null) {
-    return []
-  }
-  if (attribute.value.type === "Literal") {
-    return typeof attribute.value.value === "string" ? [attribute.value.value] : []
-  }
-  if (attribute.value.type === "JSXExpressionContainer") {
-    return expressionClassLists(attribute.value.expression)
-  }
-  return []
-}
-
-function expressionClassLists(
-  expression: ESTree.Expression | ESTree.JSXEmptyExpression,
-): ReadonlyArray<string> {
-  if (expression.type === "Literal") {
-    return typeof expression.value === "string" ? [expression.value] : [interpolationPlaceholder]
-  }
-  if (expression.type === "TemplateLiteral") {
-    return templateClassLists(expression)
-  }
-  if (expression.type === "ConditionalExpression") {
-    return [
-      ...expressionClassLists(expression.consequent),
-      ...expressionClassLists(expression.alternate),
-    ]
-  }
-  return [interpolationPlaceholder]
-}
-
-function templateClassLists(template: ESTree.TemplateLiteral): ReadonlyArray<string> {
-  let lists: ReadonlyArray<string> = [template.quasis[0]?.value.raw ?? ""]
-  for (const [index, expression] of template.expressions.entries()) {
-    const parts = expressionClassLists(expression)
-    const nextQuasi = template.quasis[index + 1]?.value.raw ?? ""
-    lists = lists.flatMap((prefix) => parts.map((part) => `${prefix}${part}${nextQuasi}`))
-  }
-  return lists
 }
 
 function firstUncoveredHeadingSize(classList: string): string | undefined {
