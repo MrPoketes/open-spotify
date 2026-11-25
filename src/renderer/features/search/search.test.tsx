@@ -323,6 +323,7 @@ describe("Search", () => {
   it("focuses the search field when / is pressed outside a text field", async () => {
     await renderSearch()
 
+    expect(searchField()).toHaveAttribute("aria-keyshortcuts", "/")
     await userEvent.keyboard("/")
 
     expect(searchField()).toHaveFocus()
