@@ -162,14 +162,16 @@ export default defineConfig({
       rules: { "open-spotify/no-literal-aria-keyshortcuts": "error" },
     },
     {
-      // Component tests check what a user can reach through the accessibility
-      // tree instead of querying or walking the DOM directly, and render bare
-      // unstyled native controls in jsdom to test behaviour.
+      // Component tests and their helpers check what a user can reach through
+      // the accessibility tree instead of querying or walking the DOM directly.
+      files: ["src/renderer/**"],
+      rules: { "open-spotify/no-dom-node-access": "error" },
+    },
+    {
+      // Component tests render bare unstyled native controls in jsdom to test
+      // behaviour.
       files: ["src/renderer/**/*.test.tsx"],
-      rules: {
-        "open-spotify/no-dom-node-access": "error",
-        "open-spotify/require-appearance-none": "off",
-      },
+      rules: { "open-spotify/require-appearance-none": "off" },
     },
     {
       // Effects run at the edges through a ManagedRuntime so every call gets

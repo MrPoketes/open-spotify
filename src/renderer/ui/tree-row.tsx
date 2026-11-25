@@ -6,7 +6,7 @@ import type { TreeDropPosition } from "./tree-drop"
 const levelIndent = 16
 
 const highlightWhenDroppedInside =
-  "data-[drop-position=inside]:bg-surface-raised data-[drop-position=inside]:outline-2 data-[drop-position=inside]:-outline-offset-2 data-[drop-position=inside]:outline-accent"
+  "has-data-[drop-position=inside]:bg-surface-raised has-data-[drop-position=inside]:outline-2 has-data-[drop-position=inside]:-outline-offset-2 has-data-[drop-position=inside]:outline-accent"
 
 interface TreeRowProps {
   readonly rowKey: string
@@ -39,7 +39,6 @@ export function TreeRow({
       }}
       {...draggable.listeners}
       role="none"
-      data-drop-position={dropPosition}
       style={{ paddingLeft: indent }}
       className={`relative flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised ${highlightWhenDroppedInside} ${isDragged ? "opacity-50" : ""}`}
     >
