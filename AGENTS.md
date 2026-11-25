@@ -124,6 +124,13 @@ writing Effect code, and grep `node_modules/effect/dist/*.d.ts` when unsure.
   (lint forbids importing it elsewhere), the runtime from `RendererRuntimeContext` in components
   and hooks (so component tests can swap it), and `mainRuntime` in Electron callbacks. Provide
   every layer in those two runtime files.
+- `rendererRuntime` is created once and outlives a login: logging out navigates to `/login` and
+  logging in returns to `/` without reloading the renderer. A service in `rendererRuntime` that
+  keeps a user's Spotify data must drop it on log out so it is never served to the next account:
+  clear or invalidate its state from the log-out flow
+  (`src/renderer/features/login/log-out-button.tsx`), or keep per-session caches in `AppShell`
+  (see `src/renderer/features/library/library-playlists-provider.tsx`), which unmounts on log
+  out and mounts fresh after login.
 - Every effect forked with `runFork` must handle its typed errors (log, show to the user, or
   recover) before `runFork`. A forked fiber has no caller to receive its failure, so an unhandled
   typed error disappears. Both runtimes' `runFork` types reject effects whose error type is not
