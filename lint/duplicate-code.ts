@@ -35,73 +35,32 @@ interface CloneSpan {
   endLineB: number
 }
 
-interface ReportedClone {
-  readonly fileA: string
-  readonly startLineA: number
-  readonly endLineA: number
-  readonly fileB: string
-  readonly startLineB: number
-  readonly endLineB: number
-  readonly tokenCount: number
-}
-
 interface IndexedClassList {
   readonly file: string
   readonly classList: ClassListOccurrence
 }
 
-type WindowEncoder = (tokens: ReadonlyArray<CodeToken>, start: number, length: number) => string
+type WindowEncoder = (window: ReadonlyArray<CodeToken>) => string
 
-function encodeExactWindow(
-  tokens: ReadonlyArray<CodeToken>,
-  start: number,
-  length: number,
-): string {
-  const parts: Array<string> = []
-  for (let offset = 0; offset < length; offset += 1) {
-    parts.push(tokens[start + offset]?.exact ?? "")
-  }
-  return parts.join("\x00")
-}
+const encodeExactWindow: WindowEncoder = (window) => window.map((token) => token.text).join("\x00")
 
 // Baker's parameterized encoding: each variable identifier or string literal
 // becomes its distance since its previous occurrence in the window, so
 // consistent renamings match while unrelated variable patterns do not.
-function encodeRenamedWindow(
-  tokens: ReadonlyArray<CodeToken>,
-  start: number,
-  length: number,
-): string {
+function encodeRenamedWindow(window: ReadonlyArray<CodeToken>): string {
   const lastSeen = new Map<string, number>()
   const parts: Array<string> = []
-  for (let offset = 0; offset < length; offset += 1) {
-    const token = tokens[start + offset]
-    if (token === undefined) {
-      continue
-    }
+  for (const [offset, token] of window.entries()) {
     if (token.kind === "ident" || token.kind === "string") {
       const prefix = token.kind === "ident" ? "$I" : "$S"
-      const previous = lastSeen.get(token.exact)
+      const previous = lastSeen.get(token.text)
       parts.push(previous === undefined ? `${prefix}0` : `${prefix}${offset - previous}`)
-      lastSeen.set(token.exact, offset)
+      lastSeen.set(token.text, offset)
       continue
     }
-    parts.push(token.kind === "literal" ? "$L" : token.exact)
+    parts.push(token.kind === "literal" ? "$L" : token.text)
   }
   return parts.join("\x00")
-}
-
-function windowContainsBoundary(
-  tokens: ReadonlyArray<CodeToken>,
-  start: number,
-  length: number,
-): boolean {
-  for (let offset = 0; offset < length; offset += 1) {
-    if (tokens[start + offset]?.kind === "boundary") {
-      return true
-    }
-  }
-  return false
 }
 
 function indexWindows(
@@ -111,14 +70,13 @@ function indexWindows(
 ): ReadonlyMap<string, ReadonlyArray<TokenLocation>> {
   const index = new Map<string, Array<TokenLocation>>()
   for (const [file, { tokens }] of analyses) {
-    for (let start = 0; start <= tokens.length - windowSize; start += 1) {
-      const firstToken = tokens[start]
+    for (const [start, firstToken] of tokens.entries()) {
       const lastToken = tokens[start + windowSize - 1]
-      if (
-        firstToken === undefined ||
-        lastToken === undefined ||
-        windowContainsBoundary(tokens, start, windowSize)
-      ) {
+      if (lastToken === undefined) {
+        break
+      }
+      const window = tokens.slice(start, start + windowSize)
+      if (window.some((token) => token.kind === "boundary")) {
         continue
       }
       const location: TokenLocation = {
@@ -127,7 +85,7 @@ function indexWindows(
         startLine: firstToken.line,
         endLine: lastToken.line,
       }
-      const key = encode(tokens, start, windowSize)
+      const key = encode(window)
       const list = index.get(key)
       if (list === undefined) {
         index.set(key, [location])
@@ -188,14 +146,9 @@ function recordLocationPairs(
   locations: ReadonlyArray<TokenLocation>,
   windowSize: number,
 ) {
-  for (let first = 0; first < locations.length; first += 1) {
-    const left = locations[first]
-    if (left === undefined) {
-      continue
-    }
-    for (let second = first + 1; second < locations.length; second += 1) {
-      const right = locations[second]
-      if (right !== undefined && left.file !== right.file) {
+  for (const [first, left] of locations.entries()) {
+    for (const right of locations.slice(first + 1)) {
+      if (left.file !== right.file) {
         recordPairMatch(diagonals, [left, right], windowSize)
       }
     }
@@ -218,26 +171,16 @@ function collectCloneSpans(
 function findTokenClones(
   analyses: ReadonlyMap<string, FileAnalysis>,
   config: { readonly minTokens: number; readonly minLines: number; readonly encode: WindowEncoder },
-): ReadonlyArray<ReportedClone> {
+): ReadonlyArray<CloneSpan> {
   const index = indexWindows(analyses, config.minTokens, config.encode)
-  return collectCloneSpans(index, config.minTokens)
-    .filter(
-      (span) =>
-        span.endLineA - span.startLineA + 1 >= config.minLines &&
-        span.endLineB - span.startLineB + 1 >= config.minLines,
-    )
-    .map((span) => ({
-      fileA: span.fileA,
-      startLineA: span.startLineA,
-      endLineA: span.endLineA,
-      fileB: span.fileB,
-      startLineB: span.startLineB,
-      endLineB: span.endLineB,
-      tokenCount: span.endA - span.startA,
-    }))
+  return collectCloneSpans(index, config.minTokens).filter(
+    (span) =>
+      span.endLineA - span.startLineA + 1 >= config.minLines &&
+      span.endLineB - span.startLineB + 1 >= config.minLines,
+  )
 }
 
-const spansOverlap = (first: ReportedClone, second: ReportedClone) =>
+const spansOverlap = (first: CloneSpan, second: CloneSpan) =>
   first.fileA === second.fileA &&
   first.fileB === second.fileB &&
   first.startLineA <= second.endLineA &&
@@ -274,14 +217,9 @@ function findDuplicateClassLists(
 ): ReadonlyArray<string> {
   const occurrences = flattenClassLists(analyses)
   const findings: Array<string> = []
-  for (let first = 0; first < occurrences.length; first += 1) {
-    const left = occurrences[first]
-    if (left === undefined) {
-      continue
-    }
-    for (let second = first + 1; second < occurrences.length; second += 1) {
-      const right = occurrences[second]
-      const message = right === undefined ? null : duplicateClassMessage(left, right)
+  for (const [first, left] of occurrences.entries()) {
+    for (const right of occurrences.slice(first + 1)) {
+      const message = duplicateClassMessage(left, right)
       if (message !== null) {
         findings.push(message)
       }
@@ -290,8 +228,8 @@ function findDuplicateClassLists(
   return findings
 }
 
-const formatClone = (label: string, clone: ReportedClone) =>
-  `${label} (${clone.tokenCount} tokens): ${clone.fileA}:${clone.startLineA}-${clone.endLineA} and ${clone.fileB}:${clone.startLineB}-${clone.endLineB}`
+const formatClone = (label: string, span: CloneSpan) =>
+  `${label} (${span.endA - span.startA} tokens): ${span.fileA}:${span.startLineA}-${span.endLineA} and ${span.fileB}:${span.startLineB}-${span.endLineB}`
 
 // Takes sources keyed by their path from the repository root, with forward
 // slashes, and lists duplicated code blocks and long Tailwind class strings

@@ -88,7 +88,7 @@ describe("findDuplicateCode", () => {
     ])
   })
 
-  it("ignores TypeScript interface mirrors and separate test cases", () => {
+  it("ignores TypeScript interface declarations that mirror each other across files", () => {
     const sources = new Map([
       [
         "src/main/service.ts",
@@ -98,8 +98,28 @@ describe("findDuplicateCode", () => {
           readonly renameNode: (request: RenameNode) => Effect.Effect<void, StorageError>
           readonly deleteNode: (request: DeleteNode) => Effect.Effect<void, StorageError>
           readonly moveNode: (request: MoveNode) => Effect.Effect<void, StorageError>
-        }
-        describe("first", () => {
+        }`,
+      ],
+      [
+        "src/renderer/bridge.ts",
+        `export interface BridgeService {
+          readonly getTree: Effect.Effect<Tree, BridgeError>
+          readonly createNode: (request: CreateNode) => Effect.Effect<string, BridgeError>
+          readonly renameNode: (request: RenameNode) => Effect.Effect<void, BridgeError>
+          readonly deleteNode: (request: DeleteNode) => Effect.Effect<void, BridgeError>
+          readonly moveNode: (request: MoveNode) => Effect.Effect<void, BridgeError>
+        }`,
+      ],
+    ])
+
+    expect(findDuplicateCode(sources)).toEqual([])
+  })
+
+  it("does not stitch separate test cases together across test boundaries", () => {
+    const sources = new Map([
+      [
+        "src/first.test.ts",
+        `describe("first", () => {
           it("checks login redirect", async () => {
             await waitFor(() => expect(router.location.pathname).toBe("/login"))
             expect(router.location.search).toEqual({ expired: true })
@@ -110,15 +130,8 @@ describe("findDuplicateCode", () => {
         })`,
       ],
       [
-        "src/renderer/bridge.ts",
-        `export interface BridgeService {
-          readonly getTree: Effect.Effect<Tree, BridgeError>
-          readonly createNode: (request: CreateNode) => Effect.Effect<string, BridgeError>
-          readonly renameNode: (request: RenameNode) => Effect.Effect<void, BridgeError>
-          readonly deleteNode: (request: DeleteNode) => Effect.Effect<void, BridgeError>
-          readonly moveNode: (request: MoveNode) => Effect.Effect<void, BridgeError>
-        }
-        describe("second", () => {
+        "src/second.test.ts",
+        `describe("second", () => {
           it("checks login redirect", async () => {
             await waitFor(() => expect(router.location.pathname).toBe("/login"))
             expect(router.location.search).toEqual({ expired: true })
@@ -142,7 +155,7 @@ describe("findDuplicateCode", () => {
         `export const A = () => (
           <>
             <button className="mr-3 ${buttonClasses}" />
-            <span className="flex items-center gap-2 rounded-small px-3 py-1" />
+            <span className="invisible flex items-center gap-2 rounded-small px-3" />
             <div className="flex min-h-screen items-center justify-center p-6" />
           </>
         )`,
@@ -152,7 +165,7 @@ describe("findDuplicateCode", () => {
         `export const B = () => (
           <>
             <button className="mr-2 ${buttonClasses}" />
-            <span className="py-1 px-3 rounded-small gap-2 items-center flex" />
+            <span className="px-3 rounded-small gap-2 items-center flex invisible" />
             <div className="flex min-h-screen items-center justify-center p-6" />
           </>
         )`,

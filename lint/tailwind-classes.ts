@@ -27,40 +27,43 @@ export function tailwindClasses(text: string): ReadonlyArray<ParsedTailwindClass
   return parsed
 }
 
-const bareTailwindUtilities = new Set(
-  "absolute block border capitalize fixed flex grid grow hidden inline italic lowercase outline relative ring rounded select-none shadow shrink sr-only sticky transform transition truncate underline uppercase".split(
-    " ",
-  ),
-)
+const validClassOutsideBrackets = /^[!@a-z0-9:/._-]+$/
 
-function isTailwindClass(className: string, variants: ReadonlyArray<string>, utility: string) {
+function isPlausibleTailwindToken(className: string): boolean {
   if (/[.,;!?]$/.test(className) || className.startsWith("/") || className.includes("://")) {
     return false
   }
-  return (
-    variants.length > 0 ||
-    utility.includes("-") ||
-    utility.includes("/") ||
-    utility.includes("[") ||
-    bareTailwindUtilities.has(utility)
-  )
+  const withoutArbitrary = className.replace(/\[[^\]]*\]/g, "")
+  return withoutArbitrary.length > 0 && validClassOutsideBrackets.test(withoutArbitrary)
 }
 
+const hasTailwindSyntax = (variants: ReadonlyArray<string>, utility: string) =>
+  variants.length > 0 || utility.includes("-") || utility.includes("/") || utility.includes("[")
+
 // Rejects prose sentences and URLs so duplicate-code checks compare only real
-// utility-class strings.
+// utility-class strings, without hard-coding a finite list of bare utilities.
 export function tailwindClassSet(text: string, minClasses: number): ReadonlySet<string> | null {
   const parsed = tailwindClasses(text)
   if (parsed.length < minClasses) {
     return null
   }
   const unique = new Set<string>()
+  let syntaxCount = 0
   for (const entry of parsed) {
-    if (!isTailwindClass(entry.className, entry.variants, entry.utility)) {
+    if (!isPlausibleTailwindToken(entry.className)) {
       return null
     }
-    unique.add(entry.className)
+    if (!unique.has(entry.className)) {
+      unique.add(entry.className)
+      if (hasTailwindSyntax(entry.variants, entry.utility)) {
+        syntaxCount += 1
+      }
+    }
   }
-  return unique.size >= minClasses ? unique : null
+  if (unique.size < minClasses || syntaxCount * 2 < unique.size) {
+    return null
+  }
+  return unique
 }
 
 function splitOnTopLevelColons(className: string): Array<string> {
