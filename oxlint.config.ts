@@ -157,6 +157,17 @@ export default defineConfig({
       rules: { "open-spotify/no-dom-node-access": "error" },
     },
     {
+      // Effects run at the edges through a ManagedRuntime so every call gets
+      // the app's services and component tests can swap in a fake runtime.
+      files: ["src/**"],
+      rules: { "open-spotify/no-effect-run": "error" },
+    },
+    {
+      // Tests and test fakes run Effect helpers directly without an app runtime.
+      files: ["**/*.test.ts", "**/*.test.tsx", "src/renderer/lib/desktop-bridge-fakes.ts"],
+      rules: { "open-spotify/no-effect-run": "off" },
+    },
+    {
       // Incoming date strings belong in Schema.DateFromString at the boundary;
       // new Date(value) skips validation and throws while formatting.
       files: ["src/renderer/**", "src/shared/**"],
