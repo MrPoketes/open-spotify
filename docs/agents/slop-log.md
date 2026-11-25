@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 2026-11-25 | Adding a third copy and deferring the shared abstraction to a follow-up issue (PR #82)            | Rule in `AGENTS.md` (rule 4), `docs/agents/worker.md`, and `reviewer.md`    |
 | 2026-11-25 | Services in `rendererRuntime` caching a user's Spotify data across log out (PR #51)               | `AGENTS.md` "Effect" rule (no lint: static check cannot tell user data)     |
 | 2026-11-25 | Using a Spotify domain noun (`track`) for an unrelated method (PR #31)                            | Rule in `AGENTS.md` (rule 1) and `docs/agents/reviewer.md`                  |
 | 2026-11-25 | Component tests pressing a control that also renders while loading before data arrives (PR #31)   | `AGENTS.md` "Tests" rule (no lint: static check cannot see loading state)   |

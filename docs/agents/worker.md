@@ -109,7 +109,8 @@ unresolved, move it to `Todo`, and stop.
 - Never disable a lint rule to get green, whether with a disable comment or an `oxlint.config.ts`
   override, unless it carries a written reason a reviewer would accept and no rename or small
   refactor removes the need.
-- Never edit files outside the scope of your issue, except to fix something that blocks you.
-  Mention it in the PR.
+- Never edit files outside the scope of your issue, except to fix something that blocks you or
+  to update the existing copies when your PR extracts a third-copy abstraction (`AGENTS.md` rule
+  4). Mention it in the PR.
 - If you find slop that is not yours, fix it in a separate issue: create it in Linear in `Todo`, in
   team `Armintas`, project `Open Spotify`, with the label `Open-Spotify`.

@@ -79,7 +79,9 @@ technically correct but hard to read gets rejected. These rules are not suggesti
 
 4. **No speculative code.** Build what the task needs, nothing more. No options nobody passes,
    no parameters "for later", no abstraction with one implementation, no wrapper that only
-   forwards its arguments. Abstract on the third repetition, not the first.
+   forwards its arguments. Abstract on the third repetition, not the first: the PR that would
+   create the third copy extracts the shared abstraction and updates the existing copies instead
+   of handing the abstraction to a follow-up issue.
 5. **Validate at the edges, trust types inside.** Decode everything that enters the program
    (IPC messages, Spotify responses, files, user input) with an Effect `Schema`. After that,
    do not re-check what the types already guarantee. No defensive `?.` on values that cannot
