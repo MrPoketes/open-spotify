@@ -727,10 +727,11 @@ announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 - An auth failure on a Spotify load (`NotLoggedIn` or `SessionExpired`) never shows Retry, since
   retrying cannot bring back a session. Instead it sends the user to `/login` (with
   `sessionExpired: true` for `SessionExpired`). A Retry button is only for failures a retry can
-  fix (network, 5xx, decode, temporary token-refresh failure, or local storage). Every failed
-  Spotify load goes through `SpotifyLoadFailure`
+  fix (network, 5xx, decode, temporary token-refresh failure, or local storage). Failed Spotify
+  load views go through `SpotifyLoadFailure`
   (`src/renderer/features/spotify/spotify-load-failure.tsx`), which shares the error-to-login
-  mapping (`src/renderer/features/login/login-destination.ts`) with route guards.
+  mapping (`src/renderer/features/login/login-destination.ts`) with route guards and action
+  handlers that inspect a failed Spotify load.
 - When filters match nothing, the list says so inside an `output` element. The element stays on
   the page while entries match, because screen readers only announce changes to a live region
   that already exists.
