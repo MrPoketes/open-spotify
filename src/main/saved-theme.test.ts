@@ -37,8 +37,8 @@ describe("loadSavedTheme", () => {
   it.effect("returns the default dark theme when the saved id names no theme", () =>
     Effect.gen(function* () {
       const database = yield* Database
-      yield* database.run((db) =>
-        db.insert(settingsTable).values({ key: "themeId", value: '"solarized"' }),
+      yield* database.run((drizzle) =>
+        drizzle.insert(settingsTable).values({ key: "themeId", value: '"solarized"' }),
       )
 
       assert.deepStrictEqual(yield* loadSavedTheme, builtInThemes.dark)

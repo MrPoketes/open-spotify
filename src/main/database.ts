@@ -23,7 +23,7 @@ export class Database extends Context.Service<
   Database,
   {
     readonly run: <A>(
-      buildQuery: (db: DrizzleDatabase) => Effect.Effect<A, EffectDrizzleQueryError>,
+      buildQuery: (drizzle: DrizzleDatabase) => Effect.Effect<A, EffectDrizzleQueryError>,
     ) => Effect.Effect<A, SqlError.SqlError>
     readonly withTransaction: <A, E, R>(
       effect: Effect.Effect<A, E, R>,
@@ -33,10 +33,10 @@ export class Database extends Context.Service<
   static readonly layer = Layer.effect(
     Database,
     Effect.gen(function* () {
-      const db = yield* SqliteDrizzle.makeWithDefaults()
+      const drizzle = yield* SqliteDrizzle.makeWithDefaults()
       return Database.of({
-        run: (buildQuery) => buildQuery(db).pipe(Effect.mapError(toSqlError)),
-        withTransaction: (effect) => db.transaction(() => effect),
+        run: (buildQuery) => buildQuery(drizzle).pipe(Effect.mapError(toSqlError)),
+        withTransaction: (effect) => drizzle.transaction(() => effect),
       })
     }),
   )

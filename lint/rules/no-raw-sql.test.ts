@@ -12,7 +12,7 @@ const expectedMessage =
 
 ruleTester.run("no-raw-sql", noRawSql, {
   valid: [
-    "database.run((db) => db.select().from(settingsTable).where(eq(settingsTable.key, key)))",
+    "database.run((drizzle) => drizzle.select().from(settingsTable).where(eq(settingsTable.key, key)))",
     "html`<div>ok</div>`",
     "String.raw`hello`",
     'schema.literal("ok")',
@@ -48,7 +48,7 @@ ruleTester.run("no-raw-sql", noRawSql, {
       errors: [{ messageId: "noRawSql" }],
     },
     {
-      code: 'sql["literal"]("ASC")',
+      code: 'drizzle.$client.unsafe("SELECT 1")',
       errors: [{ messageId: "noRawSql" }],
     },
     {

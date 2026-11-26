@@ -110,8 +110,8 @@ describe("Folders", () => {
 
       yield* folders.deleteFolder({ folderId: rockId })
 
-      const storedRows = yield* database.run((db) =>
-        db.select({ id: folderEntriesTable.id }).from(folderEntriesTable),
+      const storedRows = yield* database.run((drizzle) =>
+        drizzle.select({ id: folderEntriesTable.id }).from(folderEntriesTable),
       )
       assert.deepStrictEqual(namesOf(yield* folders.readTree), ["Jazz"])
       assert.strictEqual(storedRows.length, 1)
@@ -246,8 +246,11 @@ describe("Folders", () => {
       const database = yield* Database
       const folders = yield* Folders
       const folderId = yield* folders.createFolder({ name: "Rock", parentFolderId: null })
-      yield* database.run((db) =>
-        db.update(folderEntriesTable).set({ name: "" }).where(eq(folderEntriesTable.id, folderId)),
+      yield* database.run((drizzle) =>
+        drizzle
+          .update(folderEntriesTable)
+          .set({ name: "" })
+          .where(eq(folderEntriesTable.id, folderId)),
       )
 
       const error = yield* Effect.flip(folders.readTree)

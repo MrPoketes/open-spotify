@@ -17,14 +17,14 @@ layer(NodeFileSystem.layer)("databaseLayer", (it) => {
 
       yield* Effect.gen(function* () {
         const database = yield* Database
-        yield* database.run((db) =>
-          db.insert(settingsTable).values({ key: "spotifyClientId", value: '"abc"' }),
+        yield* database.run((drizzle) =>
+          drizzle.insert(settingsTable).values({ key: "spotifyClientId", value: '"abc"' }),
         )
       }).pipe(Effect.provide(firstLaunch))
 
       const rows = yield* Effect.gen(function* () {
         const database = yield* Database
-        return yield* database.run((db) => db.select().from(settingsTable))
+        return yield* database.run((drizzle) => drizzle.select().from(settingsTable))
       }).pipe(Effect.provide(secondLaunch))
 
       assert.deepStrictEqual(rows, [{ key: "spotifyClientId", value: '"abc"' }])
@@ -40,8 +40,8 @@ layer(NodeFileSystem.layer)("databaseLayer", (it) => {
       const error = yield* Effect.flip(
         database.withTransaction(
           Effect.gen(function* () {
-            yield* database.run((db) =>
-              db.insert(settingsTable).values({ key: "themeId", value: '"light"' }),
+            yield* database.run((drizzle) =>
+              drizzle.insert(settingsTable).values({ key: "themeId", value: '"light"' }),
             )
             return yield* Effect.fail("aborted")
           }),
@@ -49,7 +49,10 @@ layer(NodeFileSystem.layer)("databaseLayer", (it) => {
       )
 
       assert.strictEqual(error, "aborted")
-      assert.deepStrictEqual(yield* database.run((db) => db.select().from(settingsTable)), [])
+      assert.deepStrictEqual(
+        yield* database.run((drizzle) => drizzle.select().from(settingsTable)),
+        [],
+      )
     }).pipe(Effect.provide(databaseLayer(":memory:"))),
   )
 })

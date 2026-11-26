@@ -93,7 +93,8 @@ function isRawSqlReference(node: ESTree.Expression, sqlIdentifiers: ReadonlySet<
     return sqlIdentifiers.has(node.name)
   }
   if (node.type === "MemberExpression") {
-    return memberPropertyName(node) === "sql"
+    const property = memberPropertyName(node)
+    return property === "sql" || property === "$client"
   }
   return false
 }

@@ -143,7 +143,7 @@ writing Effect code, and grep `node_modules/effect/dist/*.d.ts` when unsure.
 ## Database
 
 SQLite tables are defined once in `src/main/database-schema.ts` with Drizzle ORM, and main-process
-queries run through the `Database` service in `src/main/database.ts` (`database.run((db) => ...)`
+queries run through the `Database` service in `src/main/database.ts` (`database.run((drizzle) => ...)`
 and `database.withTransaction(...)`). Decode stored values at the edge with Effect `Schema`. Do
 not write raw SQL (`open-spotify/no-raw-sql` forbids `` sql`...` ``, `sql.unsafe`, `sql.literal`,
 and `sql.raw`).

@@ -23,8 +23,8 @@ describe("Settings", () => {
     Effect.gen(function* () {
       const database = yield* Database
       const settings = yield* Settings
-      yield* database.run((db) =>
-        db.insert(settingsTable).values({ key: "spotifyClientId", value: '""' }),
+      yield* database.run((drizzle) =>
+        drizzle.insert(settingsTable).values({ key: "spotifyClientId", value: '""' }),
       )
 
       const error = yield* Effect.flip(settings.get("spotifyClientId"))

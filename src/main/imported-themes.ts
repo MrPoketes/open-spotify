@@ -29,8 +29,8 @@ export class ImportedThemes extends Context.Service<
 
       // An upsert keeps a row's rowid, so a replaced theme keeps its place.
       const list = database
-        .run((db) =>
-          db
+        .run((drizzle) =>
+          drizzle
             .select({ id: importedThemesTable.id, theme: importedThemesTable.theme })
             .from(importedThemesTable)
             .orderBy(asc(rowId())),
@@ -40,8 +40,8 @@ export class ImportedThemes extends Context.Service<
       const hasSameNameAndAuthor = Effect.fn("ImportedThemes.hasSameNameAndAuthor")(function* (
         theme: Theme,
       ) {
-        const rows = yield* database.run((db) =>
-          db
+        const rows = yield* database.run((drizzle) =>
+          drizzle
             .select({ id: importedThemesTable.id })
             .from(importedThemesTable)
             .where(
@@ -57,8 +57,8 @@ export class ImportedThemes extends Context.Service<
 
       const save = Effect.fn("ImportedThemes.save")(function* (theme: Theme) {
         const encodedTheme = yield* Schema.encodeEffect(ThemeFile)(theme)
-        const rows = yield* database.run((db) =>
-          db
+        const rows = yield* database.run((drizzle) =>
+          drizzle
             .insert(importedThemesTable)
             .values({
               id: crypto.randomUUID(),
@@ -82,7 +82,9 @@ export class ImportedThemes extends Context.Service<
 
       const deleteTheme = (themeId: ThemeId) =>
         database
-          .run((db) => db.delete(importedThemesTable).where(eq(importedThemesTable.id, themeId)))
+          .run((drizzle) =>
+            drizzle.delete(importedThemesTable).where(eq(importedThemesTable.id, themeId)),
+          )
           .pipe(Effect.asVoid)
 
       return ImportedThemes.of({ list, hasSameNameAndAuthor, save, delete: deleteTheme })

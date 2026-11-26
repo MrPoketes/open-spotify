@@ -26,8 +26,8 @@ export class Settings extends Context.Service<
       const database = yield* Database
 
       const get = Effect.fn("Settings.get")(function* <K extends SettingKey>(key: K) {
-        const rows = yield* database.run((db) =>
-          db
+        const rows = yield* database.run((drizzle) =>
+          drizzle
             .select({ value: settingsTable.value })
             .from(settingsTable)
             .where(eq(settingsTable.key, key))
@@ -45,8 +45,8 @@ export class Settings extends Context.Service<
         value: SettingValue<K>,
       ) {
         const encodedValue = yield* Schema.encodeEffect(storedValueSchema(key))(value)
-        yield* database.run((db) =>
-          db
+        yield* database.run((drizzle) =>
+          drizzle
             .insert(settingsTable)
             .values({ key, value: encodedValue })
             .onConflictDoUpdate({ target: settingsTable.key, set: { value: encodedValue } }),

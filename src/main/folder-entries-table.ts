@@ -29,8 +29,8 @@ const makeFolderEntryQueries = Effect.gen(function* () {
 
   const listAllInPositionOrder = () =>
     database
-      .run((db) =>
-        db
+      .run((drizzle) =>
+        drizzle
           .select({
             id: folderEntriesTable.id,
             parentId: folderEntriesTable.parentId,
@@ -45,8 +45,8 @@ const makeFolderEntryQueries = Effect.gen(function* () {
 
   const findFolder = (folderId: string) =>
     database
-      .run((db) =>
-        db
+      .run((drizzle) =>
+        drizzle
           .select({ id: folderEntriesTable.id })
           .from(folderEntriesTable)
           .where(and(eq(folderEntriesTable.id, folderId), isNull(folderEntriesTable.spotifyUri)))
@@ -56,8 +56,8 @@ const makeFolderEntryQueries = Effect.gen(function* () {
 
   const findItem = ({ folderId, uri }: { readonly folderId: string; readonly uri: string }) =>
     database
-      .run((db) =>
-        db
+      .run((drizzle) =>
+        drizzle
           .select({ id: folderEntriesTable.id })
           .from(folderEntriesTable)
           .where(
@@ -69,8 +69,8 @@ const makeFolderEntryQueries = Effect.gen(function* () {
 
   const listFolderAndAncestors = (folderId: string) =>
     database
-      .run((db) =>
-        db
+      .run((drizzle) =>
+        drizzle
           .select({ id: folderEntriesTable.id, parentId: folderEntriesTable.parentId })
           .from(folderEntriesTable)
           .where(isNull(folderEntriesTable.spotifyUri)),
@@ -78,8 +78,8 @@ const makeFolderEntryQueries = Effect.gen(function* () {
       .pipe(Effect.map((folderRows) => collectLineage(folderRows, folderId)))
 
   const listChildIds = (parentId: string | null) =>
-    database.run((db) =>
-      db
+    database.run((drizzle) =>
+      drizzle
         .select({ id: folderEntriesTable.id })
         .from(folderEntriesTable)
         .where(sameParent(parentId))
@@ -90,16 +90,16 @@ const makeFolderEntryQueries = Effect.gen(function* () {
   // highest position rather than at the number of children.
   const nextPosition = (parentId: string | null) =>
     database
-      .run((db) =>
-        db
+      .run((drizzle) =>
+        drizzle
           .select({ maxPosition: max(folderEntriesTable.position) })
           .from(folderEntriesTable)
           .where(sameParent(parentId)),
       )
       .pipe(
         Effect.map((rows) => {
-          const highestPosition = rows[0]?.maxPosition ?? null
-          return highestPosition === null ? 0 : highestPosition + 1
+          const highestPosition = rows[0]?.maxPosition
+          return typeof highestPosition === "number" ? highestPosition + 1 : 0
         }),
       )
 
@@ -113,20 +113,18 @@ const makeFolderEntryQueries = Effect.gen(function* () {
   }
 })
 
-// The reads and writes behind the Folders service. The service decides
-// whether an operation is allowed; this module only touches rows.
-export const makeFolderEntriesTable = Effect.gen(function* () {
-  const database = yield* Database
-  const queries = yield* makeFolderEntryQueries
-
+const makeFolderEntryWrites = (
+  database: Database["Service"],
+  queries: Effect.Success<typeof makeFolderEntryQueries>,
+) => {
   const insertFolder = Effect.fn("FolderEntriesTable.insertFolder")(function* (folder: {
     readonly name: string
     readonly parentId: string | null
   }) {
     const folderId = crypto.randomUUID()
     const position = yield* queries.nextPosition(folder.parentId)
-    yield* database.run((db) =>
-      db.insert(folderEntriesTable).values({
+    yield* database.run((drizzle) =>
+      drizzle.insert(folderEntriesTable).values({
         id: folderId,
         parentId: folder.parentId,
         position,
@@ -142,8 +140,8 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
     item: SpotifyItem,
   ) {
     const position = yield* queries.nextPosition(folderId)
-    yield* database.run((db) =>
-      db
+    yield* database.run((drizzle) =>
+      drizzle
         .insert(folderEntriesTable)
         .values({
           id: crypto.randomUUID(),
@@ -161,15 +159,17 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
 
   const renameFolder = (folderId: string, name: string) =>
     database
-      .run((db) =>
-        db.update(folderEntriesTable).set({ name }).where(eq(folderEntriesTable.id, folderId)),
+      .run((drizzle) =>
+        drizzle.update(folderEntriesTable).set({ name }).where(eq(folderEntriesTable.id, folderId)),
       )
       .pipe(Effect.asVoid)
 
   // Deleting a folder cascades to everything inside it.
   const deleteEntry = (entryId: string) =>
     database
-      .run((db) => db.delete(folderEntriesTable).where(eq(folderEntriesTable.id, entryId)))
+      .run((drizzle) =>
+        drizzle.delete(folderEntriesTable).where(eq(folderEntriesTable.id, entryId)),
+      )
       .pipe(Effect.asVoid)
 
   // Rewrites the positions of every child of the parent, so the result does
@@ -184,8 +184,8 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
       .filter((childId) => childId !== placement.entryId)
     const orderedIds = otherChildIds.toSpliced(placement.position, 0, placement.entryId)
     for (const [position, entryId] of orderedIds.entries()) {
-      yield* database.run((db) =>
-        db
+      yield* database.run((drizzle) =>
+        drizzle
           .update(folderEntriesTable)
           .set({ parentId: placement.parentId, position })
           .where(eq(folderEntriesTable.id, entryId)),
@@ -193,16 +193,22 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
     }
   })
 
+  return { insertFolder, insertItem, renameFolder, deleteEntry, placeEntry }
+}
+
+// The reads and writes behind the Folders service. The service decides
+// whether an operation is allowed; this module only touches rows.
+export const makeFolderEntriesTable = Effect.gen(function* () {
+  const database = yield* Database
+  const queries = yield* makeFolderEntryQueries
+  const writes = makeFolderEntryWrites(database, queries)
+
   return {
     listAllInPositionOrder: queries.listAllInPositionOrder,
     findFolder: queries.findFolder,
     findItem: queries.findItem,
     listFolderAndAncestors: queries.listFolderAndAncestors,
-    insertFolder,
-    insertItem,
-    renameFolder,
-    deleteEntry,
-    placeEntry,
+    ...writes,
   }
 })
 
