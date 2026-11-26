@@ -43,13 +43,19 @@ Use **Drizzle ORM** (`drizzle-orm@1.0.0-rc.6`, pinned exact) through its native
   setting JSON schemas).
 - Keep **migrations** in `SqliteMigrator.fromRecord` in `src/main/database.ts`. Shipped migrations
   `0001` through `0003` stay unchanged because existing databases already record them in
-  `effect_sql_migrations`. Future schema changes update `src/main/database-schema.ts` and add the
-  next numbered `SqliteMigrator` step in `src/main/database.ts` (any DDL statement carries an
-  explicit disable reason; any data backfill uses Drizzle). This avoids bundling separate `.sql`
-  files or maintaining a second migration tracking table.
+  `effect_sql_migrations`. Neither of the two alternatives in ARM-160 fits cleanly:
+  - Drizzle's query builder only builds DML queries and cannot express SQLite DDL (`CREATE TABLE`,
+    `ALTER TABLE`), so migration steps cannot be written purely with the query builder.
+  - Drizzle's own `migrate()` (`drizzle-orm/effect-sqlite-node/migrator`) reads `.sql` files from a
+    folder on disk via `readMigrationFiles`, which would require shipping unbundled SQL files in the
+    packaged app and running a second migration tracking table (`__drizzle_migrations`) alongside
+    existing databases' `effect_sql_migrations`.
+    Future schema changes therefore update `src/main/database-schema.ts` and add the next numbered
+    `SqliteMigrator` step in `src/main/database.ts`, with an explicit `oxlint-disable-next-line`
+    reason on each DDL statement and Drizzle queries for any data backfill.
 - Enforce the boundary with `open-spotify/no-raw-sql`, which forbids raw `sql` tagged templates
-  and `sql.unsafe` / `sql.literal` / `sql.raw` calls everywhere except the already-shipped
-  migrations (with a written reason).
+  and `sql.unsafe` / `sql.literal` / `sql.raw` calls everywhere except DDL migrations in
+  `src/main/database.ts` (with a written reason).
 
 ## Consequences
 

@@ -35,7 +35,7 @@ export class ImportedThemes extends Context.Service<
             .from(importedThemesTable)
             .orderBy(asc(rowId())),
         )
-        .pipe(Effect.flatMap(Schema.decodeEffect(Schema.Array(ImportedThemeRow))))
+        .pipe(Effect.flatMap(Schema.decodeUnknownEffect(Schema.Array(ImportedThemeRow))))
 
       const hasSameNameAndAuthor = Effect.fn("ImportedThemes.hasSameNameAndAuthor")(function* (
         theme: Theme,

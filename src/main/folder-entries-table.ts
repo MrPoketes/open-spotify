@@ -16,10 +16,8 @@ const collectLineage = (
 ) => {
   const parentById = new Map(folderRows.map((row) => [row.id, row.parentId]))
   const lineage: Array<{ readonly id: string }> = []
-  const visited = new Set<string>()
   let currentId: string | null = folderId
-  while (currentId !== null && parentById.has(currentId) && !visited.has(currentId)) {
-    visited.add(currentId)
+  while (currentId !== null && parentById.has(currentId)) {
     lineage.push({ id: currentId })
     currentId = parentById.get(currentId) ?? null
   }
@@ -115,15 +113,6 @@ const makeFolderEntryQueries = Effect.gen(function* () {
   }
 })
 
-const setEntryPosition =
-  (database: Database["Service"], parentId: string | null) => (entryId: string, position: number) =>
-    database.run((db) =>
-      db
-        .update(folderEntriesTable)
-        .set({ parentId, position })
-        .where(eq(folderEntriesTable.id, entryId)),
-    )
-
 // The reads and writes behind the Folders service. The service decides
 // whether an operation is allowed; this module only touches rows.
 export const makeFolderEntriesTable = Effect.gen(function* () {
@@ -194,9 +183,14 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
       .map((child) => child.id)
       .filter((childId) => childId !== placement.entryId)
     const orderedIds = otherChildIds.toSpliced(placement.position, 0, placement.entryId)
-    yield* Effect.forEach(orderedIds, setEntryPosition(database, placement.parentId), {
-      discard: true,
-    })
+    for (const [position, entryId] of orderedIds.entries()) {
+      yield* database.run((db) =>
+        db
+          .update(folderEntriesTable)
+          .set({ parentId: placement.parentId, position })
+          .where(eq(folderEntriesTable.id, entryId)),
+      )
+    }
   })
 
   return {
