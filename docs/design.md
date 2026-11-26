@@ -721,14 +721,19 @@ announce every message (`useShowStatusMessage` in `src/renderer/ui`).
   readers announce it. No spinner, since nothing animates on page load.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, with a Retry button next to it
-  (`src/renderer/ui/error-with-retry.tsx`). When a later page of a long list fails, the rows
-  already loaded stay and the error sits below them. A virtualised list can fail in the middle,
-  so its error sticks to the bottom of the view and shows wherever the user has scrolled.
+  (`src/renderer/ui/error-with-retry.tsx`). Failed Spotify loads add a short `text-xs` `muted`
+  detail line under the message (and in the now-playing bar and queue pane) so the user can see
+  why Spotify rejected or could not answer the request. When a later page of a long list fails,
+  the rows already loaded stay and the error sits below them. A virtualised list can fail in the
+  middle, so its error sticks to the bottom of the view and shows wherever the user has scrolled.
 - An auth failure on a Spotify load (`NotLoggedIn` or `SessionExpired`) never shows Retry, since
   retrying cannot bring back a session. Instead it sends the user to `/login` (with
-  `sessionExpired: true` for `SessionExpired`). A Retry button is only for failures a retry can
-  fix (network, 5xx, decode, temporary token-refresh failure, or local storage). Failed Spotify
-  load views go through `SpotifyLoadFailure`
+  `sessionExpired: true` for `SessionExpired`). A development-mode 403 (`SpotifyAccessDenied` —
+  the account is not added under User Management in the Spotify Developer Dashboard, or lacks an
+  active Premium subscription) also never offers Retry; it explains what is missing, links the
+  Spotify Developer Dashboard, and shows the detail line. A Retry button is only for failures a
+  retry can fix (network, 5xx, decode, temporary token-refresh failure, or local storage). Failed
+  Spotify load views go through `SpotifyLoadFailure`
   (`src/renderer/features/spotify/spotify-load-failure.tsx`), which shares the error-to-login
   mapping (`src/renderer/features/login/login-destination.ts`) with route guards and action
   handlers that inspect a failed Spotify load.

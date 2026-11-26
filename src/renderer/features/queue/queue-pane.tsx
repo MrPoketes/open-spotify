@@ -1,3 +1,4 @@
+import { Navigate } from "@tanstack/react-router"
 import { X } from "lucide-react"
 import { type ReactNode, type RefObject, memo, use, useId, useState } from "react"
 import {
@@ -11,8 +12,10 @@ import { useStreamValue } from "../../lib/use-stream-value"
 import { IconButton } from "../../ui/icon-button"
 import { LoadingMessage } from "../../ui/loading-message"
 import { PaneDivider } from "../../ui/pane-divider"
+import { loginDestinationFor } from "../login/login-destination"
 import { PlayableItemSummary } from "../playback/playable-item-summary"
-import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
+import { spotifyErrorDetail } from "../spotify/spotify-error-detail"
+import { SpotifyAccessDeniedNotice, SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { PlayerQueue } from "../spotify/spotify-player-queue"
 import { makeQueueContents } from "./queue-contents"
 import { UpNextList } from "./up-next-list"
@@ -93,7 +96,22 @@ const QueueBody = memo(function QueueBody() {
     )
   }
   if (contents.status === "unreachable") {
-    return <QueueMessage title="Can't reach Spotify right now." />
+    const destination = loginDestinationFor(contents.error)
+    if (destination !== null) {
+      return <Navigate {...destination} />
+    }
+    if (contents.error._tag === "SpotifyAccessDenied") {
+      return (
+        <div className="px-2">
+          <SpotifyAccessDeniedNotice error={contents.error} message="The queue didn't load." />
+        </div>
+      )
+    }
+    return (
+      <QueueMessage title="Can't reach Spotify right now.">
+        {spotifyErrorDetail(contents.error)}
+      </QueueMessage>
+    )
   }
   if (contents.status === "noActiveDevice") {
     return (

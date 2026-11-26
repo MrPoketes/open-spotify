@@ -34,6 +34,7 @@ import {
   type LogInError,
   LogInReply,
 } from "../../shared/spotify-auth-replies"
+import type { SpotifyFailureLog } from "../../shared/spotify-failure-log"
 import { Theme } from "../../shared/theme"
 import {
   ExportThemeReply,
@@ -159,6 +160,9 @@ export class DesktopBridge extends Context.Service<
       FoldersImportOutcome,
       ImportFoldersError | DesktopBridgeError
     >
+    readonly logSpotifyFailure: (
+      failure: SpotifyFailureLog,
+    ) => Effect.Effect<void, DesktopBridgeError>
   }
 >()("open-spotify/DesktopBridge") {
   static readonly make = (desktopApi: DesktopApi) => {
@@ -230,6 +234,8 @@ export class DesktopBridge extends Context.Service<
             : Effect.fail(reply),
         ),
       ),
+      logSpotifyFailure: (failure) =>
+        send(ipcChannels.logSpotifyFailure, Schema.Undefined, failure),
     })
   }
 

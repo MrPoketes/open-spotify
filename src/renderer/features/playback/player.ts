@@ -11,7 +11,7 @@ import { type QueuedItem, positionInQueue } from "./queued-item"
 export type PlayerState =
   | ({ readonly status: "active" } & TimedPlayback)
   | { readonly status: "noActiveDevice" }
-  | { readonly status: "unreachable" }
+  | { readonly status: "unreachable"; readonly error: SpotifyApiError }
 
 type PlayerCommand = Effect.Effect<void, SpotifyApiError>
 
@@ -73,11 +73,7 @@ const readState = Effect.fn("Player.readState")(
       onSome: (playback): PlayerState => ({ status: "active", playback, progressReadAt }),
     })
   },
-  Effect.catch((error) =>
-    Effect.logWarning("The playback state failed to load", error).pipe(
-      Effect.as<PlayerState>({ status: "unreachable" }),
-    ),
-  ),
+  Effect.catch((error) => Effect.succeed<PlayerState>({ status: "unreachable", error })),
 )
 
 const skipToQueuedItem = Effect.fn("Player.skipToQueuedItem")(function* (

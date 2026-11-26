@@ -1,11 +1,37 @@
 import { Effect, Layer } from "effect"
-import { HttpClient, HttpClientResponse } from "effect/http"
+import { HttpClient, HttpClientError, HttpClientResponse } from "effect/http"
+import type { AccessTokenError } from "../../../shared/spotify-auth-replies"
+import type { DesktopBridgeError } from "../../lib/desktop-bridge"
+import { SpotifyAccessToken } from "./spotify-access-token"
 import { SpotifyApi } from "./spotify-api"
 import { spotifyFakeAccessToken } from "./spotify-fake-server"
 
 export const spotifyApiUsing = (client: HttpClient.HttpClient) =>
   SpotifyApi.layerWithoutHttpClient.pipe(
     Layer.provide([Layer.succeed(HttpClient.HttpClient, client), spotifyFakeAccessToken]),
+  )
+
+// Fails every request the way fetch does when Spotify cannot be reached.
+export const offlineSpotifyClient = HttpClient.make((request) =>
+  Effect.fail(
+    new HttpClientError.HttpClientError({
+      reason: new HttpClientError.TransportError({
+        request,
+        cause: new TypeError("Failed to fetch"),
+      }),
+    }),
+  ),
+)
+
+export const spotifyApiWithTokenFailure = (error: AccessTokenError | DesktopBridgeError) =>
+  SpotifyApi.layerWithoutHttpClient.pipe(
+    Layer.provide([
+      Layer.succeed(
+        HttpClient.HttpClient,
+        HttpClient.make(() => Effect.die("should not send without a token")),
+      ),
+      Layer.succeed(SpotifyAccessToken, { get: Effect.fail(error) }),
+    ]),
   )
 
 interface ScriptedResponse {

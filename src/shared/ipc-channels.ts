@@ -25,6 +25,7 @@ export const ipcChannels = {
   deleteImportedTheme: "themes:delete-imported",
   exportFolders: "folders:export",
   importFolders: "folders:import",
+  logSpotifyFailure: "spotify:log-failure",
 } as const
 
 export type IpcChannel = (typeof ipcChannels)[keyof typeof ipcChannels]

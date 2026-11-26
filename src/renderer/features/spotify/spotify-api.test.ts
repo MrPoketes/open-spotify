@@ -1,8 +1,7 @@
 import { assert, describe, it, layer } from "@effect/vitest"
 import { Effect, Fiber, Stream } from "effect"
-import { HttpClient, HttpClientError } from "effect/http"
 import { TestClock } from "effect/testing"
-import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
+import { offlineSpotifyClient, scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
 import { SpotifyApi } from "./spotify-api"
 import { spotifyApiFake } from "./spotify-api-fake"
 import { spotifyErrorBody } from "./spotify-fake-error-body"
@@ -31,7 +30,7 @@ layer(spotifyApiFake)("spotifyApiFake", (test) => {
         fakePlaylists.map(({ name }) => name),
       )
       assert.deepStrictEqual(
-        playlists.map(({ items }) => items.total),
+        playlists.map(({ items }) => items?.total),
         fakePlaylists.map(({ entries }) => entries.length),
       )
     }),
@@ -254,20 +253,13 @@ describe("SpotifyApi responses", () => {
     }).pipe(Effect.provide(spotify.layer))
   })
 
-  it.effect("fails with SpotifyRequestError when Spotify cannot be reached", () => {
-    const offline = HttpClient.make((request) =>
-      Effect.fail(
-        new HttpClientError.HttpClientError({
-          reason: new HttpClientError.TransportError({ request, description: "Failed to fetch" }),
-        }),
-      ),
-    )
-    return Effect.gen(function* () {
+  it.effect("fails with SpotifyRequestError when Spotify cannot be reached", () =>
+    Effect.gen(function* () {
       const api = yield* SpotifyApi
 
       const error = yield* Effect.flip(api.getCurrentUser)
 
       assert.strictEqual(error._tag, "SpotifyRequestError")
-    }).pipe(Effect.provide(spotifyApiUsing(offline)))
-  })
+    }).pipe(Effect.provide(spotifyApiUsing(offlineSpotifyClient))),
+  )
 })
