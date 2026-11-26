@@ -260,6 +260,6 @@ describe("SpotifyApi responses", () => {
       const error = yield* Effect.flip(api.getCurrentUser)
 
       assert.strictEqual(error._tag, "SpotifyRequestError")
-    }).pipe(Effect.provide(spotifyApiUsing(offlineSpotifyClient()))),
+    }).pipe(Effect.provide(spotifyApiUsing(offlineSpotifyClient))),
   )
 })

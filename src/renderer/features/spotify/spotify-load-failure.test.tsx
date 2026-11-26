@@ -39,7 +39,7 @@ describe("SpotifyLoadFailure over fake HTTP responses", () => {
     await renderScreen(
       <CurrentUserLoader />,
       fakeMainProcess(),
-      spotifyApiUsing(offlineSpotifyClient()),
+      spotifyApiUsing(offlineSpotifyClient),
     )
 
     const alert = await screen.findByRole("alert")
@@ -146,11 +146,7 @@ describe("SpotifyLoadFailure over fake HTTP responses", () => {
 
 describe("NowPlayingBar and QueuePane failure details", () => {
   it("shows the failure detail line in the now-playing bar when polling fails", async () => {
-    await renderScreen(
-      nowPlayingBarAlone,
-      fakeMainProcess(),
-      spotifyApiUsing(offlineSpotifyClient()),
-    )
+    await renderScreen(nowPlayingBarAlone, fakeMainProcess(), spotifyApiUsing(offlineSpotifyClient))
 
     expect(await screen.findByText("Can't reach Spotify right now.")).toBeInTheDocument()
     expect(screen.getByText("Network error: Failed to fetch")).toBeInTheDocument()
@@ -179,7 +175,7 @@ describe("NowPlayingBar and QueuePane failure details", () => {
     await renderScreen(
       <QueuePane ref={{ current: null }} isOpen savedWidth={320} onClose={() => undefined} />,
       fakeMainProcess(),
-      spotifyApiUsing(offlineSpotifyClient()),
+      spotifyApiUsing(offlineSpotifyClient),
     )
 
     expect(await screen.findByText("Can't reach Spotify right now.")).toBeInTheDocument()

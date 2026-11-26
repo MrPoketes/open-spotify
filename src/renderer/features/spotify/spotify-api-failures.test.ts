@@ -175,7 +175,7 @@ describe("SpotifyApi failure logging", () => {
     })
     return Effect.gen(function* () {
       yield* getUserFailure.pipe(
-        Effect.provide(spotifyApiUsing(offlineSpotifyClient()).pipe(Layer.provide(forwarderLayer))),
+        Effect.provide(spotifyApiUsing(offlineSpotifyClient).pipe(Layer.provide(forwarderLayer))),
       )
       const decodeError = yield* getUserFailure.pipe(
         Effect.provide(badJson.layer.pipe(Layer.provide(forwarderLayer))),

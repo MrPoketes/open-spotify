@@ -8,6 +8,7 @@ import {
 } from "effect/http"
 import { type AccessTokenError, SessionExpired } from "../../../shared/spotify-auth-replies"
 import type { DesktopBridgeError } from "../../lib/desktop-bridge"
+import { SpotifyAccessDenial, classifyForbidden } from "./spotify-access-denial"
 import { authorizedSpotifyClient } from "./spotify-access-token"
 import {
   Album,
@@ -20,7 +21,7 @@ import { spotifyApiBaseUrl } from "./spotify-api-url"
 import { Artist } from "./spotify-artist"
 import { type AlbumGroup, artistRequests } from "./spotify-artist-requests"
 import type { Device } from "./spotify-device"
-import { classifyForbidden, parseSpotifyErrorBody } from "./spotify-error-body"
+import { parseSpotifyErrorBody } from "./spotify-error-body"
 import {
   type SpotifyFailureForwarder,
   SpotifyFailureLogForwarder,
@@ -66,7 +67,7 @@ class SpotifyDecodeError extends Schema.TaggedError<SpotifyDecodeError>()("Spoti
 export class SpotifyAccessDenied extends Schema.TaggedError<SpotifyAccessDenied>()(
   "SpotifyAccessDenied",
   {
-    denial: Schema.Literals(["userNotRegistered", "premiumRequired"]),
+    denial: SpotifyAccessDenial,
     message: Schema.String,
   },
 ) {}

@@ -12,14 +12,16 @@ export const spotifyApiUsing = (client: HttpClient.HttpClient) =>
   )
 
 // Fails every request the way fetch does when Spotify cannot be reached.
-export const offlineSpotifyClient = (cause: unknown = new TypeError("Failed to fetch")) =>
-  HttpClient.make((request) =>
-    Effect.fail(
-      new HttpClientError.HttpClientError({
-        reason: new HttpClientError.TransportError({ request, cause }),
+export const offlineSpotifyClient = HttpClient.make((request) =>
+  Effect.fail(
+    new HttpClientError.HttpClientError({
+      reason: new HttpClientError.TransportError({
+        request,
+        cause: new TypeError("Failed to fetch"),
       }),
-    ),
-  )
+    }),
+  ),
+)
 
 export const spotifyApiWithTokenFailure = (error: AccessTokenError | DesktopBridgeError) =>
   SpotifyApi.layerWithoutHttpClient.pipe(

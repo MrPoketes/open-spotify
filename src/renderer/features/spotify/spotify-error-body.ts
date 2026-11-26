@@ -17,10 +17,12 @@ interface SpotifyErrorDetails {
 
 const maxPlainTextLength = 300
 
+const fallbackHttpMessage = (status: number) => `Spotify responded with HTTP ${status}`
+
 const plainTextErrorMessage = (text: string, status: number): string => {
   const trimmed = text.trim()
   if (trimmed === "" || trimmed.startsWith("<")) {
-    return `Spotify responded with HTTP ${status}`
+    return fallbackHttpMessage(status)
   }
   return trimmed.slice(0, maxPlainTextLength)
 }
@@ -41,26 +43,6 @@ export const parseSpotifyErrorBody = (
       ),
     ),
     Effect.orElseSucceed((): SpotifyErrorDetails => ({
-      message: `Spotify responded with HTTP ${response.status}`,
+      message: fallbackHttpMessage(response.status),
     })),
   )
-
-const unregisteredUserPattern =
-  /not be registered|not registered|developer dashboard|developer\.spotify\.com\/dashboard/i
-
-const premiumRequiredPattern = /\bpremium\b/i
-
-type SpotifyAccessDenial = "userNotRegistered" | "premiumRequired"
-
-export const classifyForbidden = (
-  message: string,
-  reason: string | undefined,
-): SpotifyAccessDenial | null => {
-  if (reason === "PREMIUM_REQUIRED" || premiumRequiredPattern.test(message)) {
-    return "premiumRequired"
-  }
-  if (unregisteredUserPattern.test(message)) {
-    return "userNotRegistered"
-  }
-  return null
-}

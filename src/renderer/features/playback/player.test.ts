@@ -154,11 +154,10 @@ describe("Player", () => {
       yield* TestClock.adjust("2 seconds")
       const stateAfterRecovery = yield* Queue.take(states)
 
-      assert.strictEqual(stateAfterFailure.status, "unreachable")
-      assert.strictEqual(
-        stateAfterFailure.status === "unreachable" ? stateAfterFailure.error._tag : undefined,
-        "SpotifyRequestError",
-      )
+      assert.deepStrictEqual(stateAfterFailure, {
+        status: "unreachable",
+        error: new SpotifyRequestError({ cause: "Failed to fetch" }),
+      })
       assert.strictEqual(activeDeviceId(stateAfterRecovery), fakeDevices[0].id)
     }).pipe(Effect.scoped, Effect.provide(spotify.layer))
   })

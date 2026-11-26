@@ -78,7 +78,7 @@ function UnreachableAccessDenied({ error }: { readonly error: SpotifyAccessDenie
   const detail = spotifyErrorDetail(error)
   const heading =
     error.denial === "userNotRegistered"
-      ? "Account not added in Spotify dashboard."
+      ? "Account not added under User Management."
       : "Spotify Premium is required."
   return (
     <div role="alert" className="flex min-w-0 flex-col">
