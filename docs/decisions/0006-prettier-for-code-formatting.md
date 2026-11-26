@@ -31,10 +31,11 @@ Replace `oxfmt` with **Prettier** (`prettier@3.10.1`) and
 - `.prettierrc.json` preserves the existing code style (`printWidth: 100`, `semi: false`,
   `singleQuote: false`, `trailingComma: "all"`) and sets
   `importOrder: ["<BUILTIN_MODULES>", "<THIRD_PARTY_MODULES>", "^[.]"]` and
-  `importOrderTypeScriptVersion: "7.0.2"`.
-- `.prettierignore` ignores generated files (`src/renderer/routeTree.gen.ts`, `pnpm-lock.yaml`)
-  and build/test outputs (`out/`, `dist/`, `release/`, `coverage/`, `test-results/`), because
-  Prettier does not read `.gitignore` unless told to.
+  `importOrderTypeScriptVersion: "7.0.2"` (the installed TypeScript version; bump alongside
+  `typescript` in `package.json`).
+- `.prettierignore` ignores tracked generated files (`src/renderer/routeTree.gen.ts`,
+  `pnpm-lock.yaml`); build and test outputs stay excluded through `.gitignore`, which Prettier 3
+  reads by default.
 - `pnpm format` and `pnpm format:check` run `prettier --write .` and `prettier --check .`.
 - Remove `oxfmt` and `.oxfmtrc.json`.
 

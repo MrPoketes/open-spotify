@@ -1,7 +1,2 @@
 src/renderer/routeTree.gen.ts
 pnpm-lock.yaml
-out/
-dist/
-release/
-coverage/
-test-results/
