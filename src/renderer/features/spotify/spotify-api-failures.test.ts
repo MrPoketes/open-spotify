@@ -1,15 +1,18 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Layer, Logger, Stream } from "effect"
-import { FetchHttpClient, HttpClient, HttpClientError } from "effect/http"
+import { FetchHttpClient } from "effect/http"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { AccessTokenUnavailable } from "../../../shared/spotify-auth-replies"
 import type { SpotifyFailureLog } from "../../../shared/spotify-failure-log"
-import { DesktopBridgeError } from "../../lib/desktop-bridge"
 import { desktopBridgeOver } from "../../lib/desktop-bridge-fakes"
-import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
+import {
+  offlineSpotifyClient,
+  scriptedSpotify,
+  spotifyApiUsing,
+  spotifyApiWithTokenFailure,
+} from "./scripted-spotify-api"
 import { SpotifyAccessToken } from "./spotify-access-token"
 import { SpotifyApi } from "./spotify-api"
-import { spotifyErrorDetail } from "./spotify-error-detail"
 import { SpotifyFailureLogForwarder } from "./spotify-failure-logging"
 import { spotifyErrorBody } from "./spotify-fake-error-body"
 import { fakeAccessToken } from "./spotify-fake-server"
@@ -164,16 +167,6 @@ describe("SpotifyApi failure logging", () => {
 
   it.effect("logs one warning to console and main process for network and decode errors", () => {
     const { consoleWarnings, forwardedFailures, loggerLayer, forwarderLayer } = captureWarnings()
-    const offline = HttpClient.make((request) =>
-      Effect.fail(
-        new HttpClientError.HttpClientError({
-          reason: new HttpClientError.TransportError({
-            request,
-            cause: new TypeError("Failed to fetch"),
-          }),
-        }),
-      ),
-    )
     const badJson = scriptedSpotify([
       { status: 200, body: JSON.stringify({ id: 42, images: "none" }) },
     ])
@@ -182,7 +175,7 @@ describe("SpotifyApi failure logging", () => {
     })
     return Effect.gen(function* () {
       yield* getUserFailure.pipe(
-        Effect.provide(spotifyApiUsing(offline).pipe(Layer.provide(forwarderLayer))),
+        Effect.provide(spotifyApiUsing(offlineSpotifyClient()).pipe(Layer.provide(forwarderLayer))),
       )
       const decodeError = yield* getUserFailure.pipe(
         Effect.provide(badJson.layer.pipe(Layer.provide(forwarderLayer))),
@@ -213,16 +206,7 @@ describe("SpotifyApi failure logging", () => {
     const tokenFailure = new AccessTokenUnavailable({
       message: "Spotify could not refresh the session right now.",
     })
-    const apiLayer = SpotifyApi.layerWithoutHttpClient.pipe(
-      Layer.provide([
-        Layer.succeed(
-          HttpClient.HttpClient,
-          HttpClient.make(() => Effect.die("should not send without a token")),
-        ),
-        Layer.succeed(SpotifyAccessToken, { get: Effect.fail(tokenFailure) }),
-        forwarderLayer,
-      ]),
-    )
+    const apiLayer = spotifyApiWithTokenFailure(tokenFailure).pipe(Layer.provide(forwarderLayer))
     return Effect.gen(function* () {
       const error = yield* Effect.flip((yield* SpotifyApi).getCurrentUser)
 
@@ -313,15 +297,5 @@ describe("SpotifyApi development-mode playlist responses", () => {
       assert.isNull(playlists[1]?.items)
       assert.isNull(fullPlaylist.items)
     }).pipe(Effect.provide(spotify.layer))
-  })
-})
-
-describe("spotifyErrorDetail", () => {
-  it("formats a short detail line for a bridge failure", () => {
-    const detail = spotifyErrorDetail(
-      new DesktopBridgeError({ channel: "auth:get-access-token", cause: "ipc down" }),
-    )
-
-    assert.strictEqual(detail, "Couldn't reach the desktop app process.")
   })
 })

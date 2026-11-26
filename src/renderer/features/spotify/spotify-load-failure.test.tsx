@@ -1,6 +1,5 @@
 import { screen, waitFor, within } from "@testing-library/react"
-import { Effect, Layer } from "effect"
-import { HttpClient, HttpClientError } from "effect/http"
+import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
 import { AccessTokenUnavailable, SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
@@ -8,12 +7,17 @@ import { renderScreen } from "../../lib/render-screen"
 import { useLoad } from "../../lib/use-load"
 import { nowPlayingBarAlone } from "../playback/now-playing-bar-alone"
 import { QueuePane } from "../queue/queue-pane"
-import { scriptedSpotify, spotifyApiUsing } from "./scripted-spotify-api"
-import { SpotifyAccessToken } from "./spotify-access-token"
+import {
+  offlineSpotifyClient,
+  scriptedSpotify,
+  spotifyApiUsing,
+  spotifyApiWithTokenFailure,
+} from "./scripted-spotify-api"
 import { SpotifyApi } from "./spotify-api"
-import { spotifyDashboardUrl } from "./spotify-error-detail"
 import { spotifyErrorBody } from "./spotify-fake-error-body"
 import { SpotifyLoadFailure } from "./spotify-load-failure"
+
+const spotifyDashboardUrl = "https://developer.spotify.com/dashboard"
 
 const loadCurrentUser = Effect.gen(function* () {
   const spotify = yield* SpotifyApi
@@ -30,36 +34,13 @@ function CurrentUserLoader() {
   )
 }
 
-const offlineSpotify = () =>
-  spotifyApiUsing(
-    HttpClient.make((request) =>
-      Effect.fail(
-        new HttpClientError.HttpClientError({
-          reason: new HttpClientError.TransportError({
-            request,
-            cause: new TypeError("Failed to fetch"),
-          }),
-        }),
-      ),
-    ),
-  )
-
-const tokenRefreshFailureSpotify = (message: string) =>
-  SpotifyApi.layerWithoutHttpClient.pipe(
-    Layer.provide([
-      Layer.succeed(
-        HttpClient.HttpClient,
-        HttpClient.make(() => Effect.die("should not send without a token")),
-      ),
-      Layer.succeed(SpotifyAccessToken, {
-        get: Effect.fail(new AccessTokenUnavailable({ message })),
-      }),
-    ]),
-  )
-
 describe("SpotifyLoadFailure over fake HTTP responses", () => {
   it("shows the network detail line and Retry when Spotify cannot be reached", async () => {
-    await renderScreen(<CurrentUserLoader />, fakeMainProcess(), offlineSpotify())
+    await renderScreen(
+      <CurrentUserLoader />,
+      fakeMainProcess(),
+      spotifyApiUsing(offlineSpotifyClient()),
+    )
 
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent("Your profile didn't load.")
@@ -96,7 +77,9 @@ describe("SpotifyLoadFailure over fake HTTP responses", () => {
     await renderScreen(
       <CurrentUserLoader />,
       fakeMainProcess(),
-      tokenRefreshFailureSpotify("Spotify could not refresh the session right now."),
+      spotifyApiWithTokenFailure(
+        new AccessTokenUnavailable({ message: "Spotify could not refresh the session right now." }),
+      ),
     )
 
     const alert = await screen.findByRole("alert")
@@ -163,7 +146,11 @@ describe("SpotifyLoadFailure over fake HTTP responses", () => {
 
 describe("NowPlayingBar and QueuePane failure details", () => {
   it("shows the failure detail line in the now-playing bar when polling fails", async () => {
-    await renderScreen(nowPlayingBarAlone, fakeMainProcess(), offlineSpotify())
+    await renderScreen(
+      nowPlayingBarAlone,
+      fakeMainProcess(),
+      spotifyApiUsing(offlineSpotifyClient()),
+    )
 
     expect(await screen.findByText("Can't reach Spotify right now.")).toBeInTheDocument()
     expect(screen.getByText("Network error: Failed to fetch")).toBeInTheDocument()
@@ -192,7 +179,7 @@ describe("NowPlayingBar and QueuePane failure details", () => {
     await renderScreen(
       <QueuePane ref={{ current: null }} isOpen savedWidth={320} onClose={() => undefined} />,
       fakeMainProcess(),
-      offlineSpotify(),
+      spotifyApiUsing(offlineSpotifyClient()),
     )
 
     expect(await screen.findByText("Can't reach Spotify right now.")).toBeInTheDocument()
@@ -228,15 +215,7 @@ describe("NowPlayingBar and QueuePane failure details", () => {
     const router = await renderScreen(
       nowPlayingBarAlone,
       fakeMainProcess(),
-      SpotifyApi.layerWithoutHttpClient.pipe(
-        Layer.provide([
-          Layer.succeed(
-            HttpClient.HttpClient,
-            HttpClient.make(() => Effect.die("should not send without a token")),
-          ),
-          Layer.succeed(SpotifyAccessToken, { get: Effect.fail(new SessionExpired()) }),
-        ]),
-      ),
+      spotifyApiWithTokenFailure(new SessionExpired()),
     )
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"))

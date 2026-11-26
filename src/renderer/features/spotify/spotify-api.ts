@@ -20,12 +20,11 @@ import { spotifyApiBaseUrl } from "./spotify-api-url"
 import { Artist } from "./spotify-artist"
 import { type AlbumGroup, artistRequests } from "./spotify-artist-requests"
 import type { Device } from "./spotify-device"
+import { classifyForbidden, parseSpotifyErrorBody } from "./spotify-error-body"
 import {
   type SpotifyFailureForwarder,
   SpotifyFailureLogForwarder,
-  classifyForbidden,
   mainProcessFailureForwarder,
-  parseSpotifyErrorBody,
   reportClientFailure,
   reportDecodeFailure,
   reportSpotifyFailure,
@@ -99,19 +98,19 @@ const classifyStatusFailure = (status: number, message: string, reason: string |
   // The main process refreshes the token before it expires, so a 401 means
   // the user revoked the app's access and has to log in again.
   if (status === 401) {
-    return { error: new SessionExpired(), cause: "SessionExpired" }
+    return { error: new SessionExpired(), logSummary: "SessionExpired" }
   }
   if (reason === "NO_ACTIVE_DEVICE") {
-    return { error: new NoActiveDevice(), cause: "NoActiveDevice" }
+    return { error: new NoActiveDevice(), logSummary: "NoActiveDevice" }
   }
   const denial = status === 403 ? classifyForbidden(message, reason) : null
   if (denial !== null) {
     return {
       error: new SpotifyAccessDenied({ denial, message }),
-      cause: `SpotifyAccessDenied (${denial})`,
+      logSummary: `SpotifyAccessDenied (${denial})`,
     }
   }
-  return { error: new SpotifyResponseError({ status, message }), cause: `HTTP ${status}` }
+  return { error: new SpotifyResponseError({ status, message }), logSummary: `HTTP ${status}` }
 }
 
 const failForStatus = Effect.fn("SpotifyApi.failForStatus")(function* (
@@ -119,13 +118,13 @@ const failForStatus = Effect.fn("SpotifyApi.failForStatus")(function* (
   forwardFailure: SpotifyFailureForwarder,
 ) {
   const { message, reason } = yield* parseSpotifyErrorBody(response)
-  const { error, cause } = classifyStatusFailure(response.status, message, reason)
+  const { error, logSummary } = classifyStatusFailure(response.status, message, reason)
   yield* reportSpotifyFailure(forwardFailure, {
     url: response.request.url,
     status: response.status,
     spotifyMessage: message,
     spotifyReason: reason ?? null,
-    cause,
+    cause: logSummary,
   })
   return yield* error
 })

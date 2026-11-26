@@ -1,4 +1,4 @@
-import { spotifyDashboardUrl } from "./spotify-error-detail"
+const spotifyDashboardUrl = "https://developer.spotify.com/dashboard"
 
 export function SpotifyDashboardLink() {
   return (

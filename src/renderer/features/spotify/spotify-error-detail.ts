@@ -1,8 +1,6 @@
 import { Match } from "effect"
+import { describeErrorCause } from "./describe-error-cause"
 import type { SpotifyApiError } from "./spotify-api"
-import { describeErrorCause } from "./spotify-failure-logging"
-
-export const spotifyDashboardUrl = "https://developer.spotify.com/dashboard"
 
 const responseErrorDetail = (status: number, message: string): string => {
   if (message === `Spotify responded with HTTP ${status}`) {
