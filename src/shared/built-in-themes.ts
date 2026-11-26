@@ -1,4 +1,4 @@
-import { type Theme, defaultThemeTokens } from "./theme"
+import { defaultThemeTokens, type Theme } from "./theme"
 
 export const defaultThemeId = "dark"
 

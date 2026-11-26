@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm"
 import { Context, Effect, Layer, Option, Schema } from "effect"
 import type { SqlError } from "effect/sql"
-import { type SettingKey, type SettingValue, settingSchemas } from "../shared/settings"
+import { settingSchemas, type SettingKey, type SettingValue } from "../shared/settings"
 import { Database } from "./database"
 import { settingsTable } from "./database-schema"
 

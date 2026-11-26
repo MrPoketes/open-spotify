@@ -1,6 +1,6 @@
 import { Navigate } from "@tanstack/react-router"
 import { X } from "lucide-react"
-import { type ReactNode, type RefObject, memo, use, useId, useState } from "react"
+import { memo, use, useId, useState, type ReactNode, type RefObject } from "react"
 import {
   defaultRightPaneWidth,
   maximumRightPaneWidth,

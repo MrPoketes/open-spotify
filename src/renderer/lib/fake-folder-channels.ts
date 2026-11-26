@@ -3,15 +3,15 @@ import {
   AddFolderItemRequest,
   CreateFolderRequest,
   DeleteFolderRequest,
-  type Folder,
-  type FolderEntry,
-  type FolderTree,
   MoveFolderItemRequest,
   MoveFolderRequest,
   RemoveFolderItemRequest,
   RenameFolderRequest,
+  type Folder,
+  type FolderEntry,
+  type FolderTree,
 } from "../../shared/folders"
-import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
+import { ipcChannels, type IpcChannel } from "../../shared/ipc-channels"
 import { holdsFolder, locateFolder } from "../features/folders/folder-location"
 
 type FolderChange = (folder: Folder) => Folder

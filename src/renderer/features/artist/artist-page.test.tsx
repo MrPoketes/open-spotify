@@ -9,7 +9,7 @@ import {
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
-import { type SpotifyApi, SpotifyRequestError } from "../spotify/spotify-api"
+import { SpotifyRequestError, type SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { ArtistPage } from "./artist-page"
 

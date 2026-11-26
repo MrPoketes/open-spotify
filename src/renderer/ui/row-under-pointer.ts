@@ -1,4 +1,4 @@
-import { type CollisionDetection, type DragMoveEvent, pointerWithin } from "@dnd-kit/core"
+import { pointerWithin, type CollisionDetection, type DragMoveEvent } from "@dnd-kit/core"
 
 // dnd-kit's drag events say how far the dragged row has moved, which also
 // counts scrolling and shifts of the row itself, such as when a branch above

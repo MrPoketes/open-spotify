@@ -1,12 +1,12 @@
 import { defineRule, type ESTree, type SourceCode } from "@oxlint/plugins"
 import {
-  type CollectedKeyboardHandlers,
-  type FunctionNode,
   isKeyboardHandler,
-  type KeyboardEventOwner,
   recordKeyboardListenerHandler,
   recordKeyboardObjectHandlers,
   recordKeyboardPropertyHandler,
+  type CollectedKeyboardHandlers,
+  type FunctionNode,
+  type KeyboardEventOwner,
 } from "../keyboard-event-handlers.ts"
 import { memberPropertyName } from "../member-property-name.ts"
 

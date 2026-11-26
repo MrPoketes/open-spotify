@@ -1,17 +1,17 @@
 import {
-  type KeyboardEvent,
-  type ReactNode,
-  type Ref,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
 } from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
 import type { TreeDropPosition } from "./tree-drop"
 import { Expander, TreeRow } from "./tree-row"
-import { type RovingRowProps, type RowFocusHandle, useRovingFocus } from "./use-roving-focus"
-import { type TreeDropRules, useTreeDragAndDrop } from "./use-tree-drag-and-drop"
-import { type TreeNode, type VisibleTreeRow, visibleTreeRows } from "./visible-tree-rows"
+import { useRovingFocus, type RovingRowProps, type RowFocusHandle } from "./use-roving-focus"
+import { useTreeDragAndDrop, type TreeDropRules } from "./use-tree-drag-and-drop"
+import { visibleTreeRows, type TreeNode, type VisibleTreeRow } from "./visible-tree-rows"
 
 export interface TreeItemProps extends RovingRowProps {
   readonly role: "treeitem"

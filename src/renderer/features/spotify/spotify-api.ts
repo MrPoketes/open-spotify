@@ -1,48 +1,48 @@
 import { Context, Effect, Layer, Option, Schema, type Stream } from "effect"
 import {
   FetchHttpClient,
+  HttpClientRequest,
   type HttpClient,
   type HttpClientError,
-  HttpClientRequest,
   type HttpClientResponse,
 } from "effect/http"
-import { type AccessTokenError, SessionExpired } from "../../../shared/spotify-auth-replies"
+import { SessionExpired, type AccessTokenError } from "../../../shared/spotify-auth-replies"
 import type { DesktopBridgeError } from "../../lib/desktop-bridge"
-import { SpotifyAccessDenial, classifyForbidden } from "./spotify-access-denial"
+import { classifyForbidden, SpotifyAccessDenial } from "./spotify-access-denial"
 import { authorizedSpotifyClient } from "./spotify-access-token"
 import {
   Album,
   AlbumTracksPage,
+  SavedAlbum,
   type AlbumTrack,
   type ArtistAlbumsPage,
-  SavedAlbum,
 } from "./spotify-album"
 import { spotifyApiBaseUrl } from "./spotify-api-url"
 import { Artist } from "./spotify-artist"
-import { type AlbumGroup, artistRequests } from "./spotify-artist-requests"
+import { artistRequests, type AlbumGroup } from "./spotify-artist-requests"
 import type { Device } from "./spotify-device"
 import { parseSpotifyErrorBody } from "./spotify-error-body"
 import {
-  type SpotifyFailureForwarder,
-  SpotifyFailureLogForwarder,
   mainProcessFailureForwarder,
   reportClientFailure,
   reportDecodeFailure,
   reportSpotifyFailure,
+  SpotifyFailureLogForwarder,
+  type SpotifyFailureForwarder,
 } from "./spotify-failure-logging"
-import { type TimeRange, listeningHistoryRequests } from "./spotify-listening-history"
+import { listeningHistoryRequests, type TimeRange } from "./spotify-listening-history"
 import { Paging, streamPages } from "./spotify-paging"
 import type { PlayHistory } from "./spotify-play-history"
 import { PlaybackState, type RepeatMode } from "./spotify-playback-state"
 import type { PlayerQueue } from "./spotify-player-queue"
 import {
-  type PlaybackStart,
   playerCommands,
   playerReads,
   playerUrl,
+  type PlaybackStart,
 } from "./spotify-player-requests"
 import { Playlist, PlaylistItemsPage, SimplifiedPlaylist } from "./spotify-playlist"
-import { SearchResults, type SearchType, searchPageSize } from "./spotify-search"
+import { searchPageSize, SearchResults, type SearchType } from "./spotify-search"
 import { SavedShow, Show, ShowEpisodePage } from "./spotify-show"
 import { SavedTracksPage, Track } from "./spotify-track"
 import { CurrentUser } from "./spotify-user"

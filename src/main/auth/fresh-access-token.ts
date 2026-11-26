@@ -5,7 +5,7 @@ import {
   SessionExpired,
 } from "../../shared/spotify-auth-replies"
 import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
-import { TokenStore, makeStoredSession } from "./token-store"
+import { makeStoredSession, TokenStore } from "./token-store"
 
 // Refreshing a minute early keeps the token valid for the request the
 // renderer is about to make with it.

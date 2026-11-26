@@ -5,8 +5,8 @@ import type { Device } from "../spotify/spotify-device"
 import type { RepeatMode } from "../spotify/spotify-playback-state"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { makePendingPlaybackChanges } from "./pending-playback-changes"
-import { type PlaybackProgress, type TimedPlayback, progressAt } from "./playback-progress"
-import { type QueuedItem, positionInQueue } from "./queued-item"
+import { progressAt, type PlaybackProgress, type TimedPlayback } from "./playback-progress"
+import { positionInQueue, type QueuedItem } from "./queued-item"
 
 export type PlayerState =
   | ({ readonly status: "active" } & TimedPlayback)

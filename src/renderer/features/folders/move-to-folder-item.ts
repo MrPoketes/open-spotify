@@ -4,9 +4,9 @@ import { folderMenuItems } from "./folder-menu-items"
 import {
   canMoveInto,
   canMoveToTopLevel,
-  type FolderMove,
   moveIntoFolder,
   moveToTopLevel,
+  type FolderMove,
 } from "./folder-moves"
 import type { PlacedEntry } from "./folder-tree-nodes"
 

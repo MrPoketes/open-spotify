@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect"
-import { type Folder, FolderName, type FolderTree, SpotifyItem } from "../shared/folders"
+import { FolderName, SpotifyItem, type Folder, type FolderTree } from "../shared/folders"
 import {
   FoldersFileDamaged,
   FoldersFileInvalid,

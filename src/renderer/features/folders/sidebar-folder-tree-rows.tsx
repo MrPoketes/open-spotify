@@ -7,7 +7,7 @@ import type { TreeItemProps } from "../../ui/tree-view"
 import { useContextMenu } from "../../ui/use-context-menu"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import { describeFolderEntry } from "./folder-entry-description"
-import { type FocusAfterRename, FolderRenameField } from "./folder-rename-field"
+import { FolderRenameField, type FocusAfterRename } from "./folder-rename-field"
 import type { PlacedFolder, PlacedItem } from "./folder-tree-nodes"
 import { useMoveFolderEntry } from "./use-move-folder-entry"
 

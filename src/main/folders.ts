@@ -1,12 +1,12 @@
 import { Context, Effect, Layer, Option, type Schema } from "effect"
 import type { SqlError } from "effect/sql"
 import {
-  type AddFolderItemRequest,
-  type CreateFolderRequest,
-  type DeleteFolderRequest,
   FolderItemNotFound,
   FolderMovedIntoOwnSubtree,
   FolderNotFound,
+  type AddFolderItemRequest,
+  type CreateFolderRequest,
+  type DeleteFolderRequest,
   type FolderTree,
   type MoveFolderItemRequest,
   type MoveFolderRequest,
@@ -14,7 +14,7 @@ import {
   type RenameFolderRequest,
 } from "../shared/folders"
 import { Database } from "./database"
-import { type FolderEntriesTable, makeFolderEntriesTable } from "./folder-entries-table"
+import { makeFolderEntriesTable, type FolderEntriesTable } from "./folder-entries-table"
 import { assembleFolderTree } from "./folder-tree-rows"
 import type { PortableFolder } from "./folders-file"
 

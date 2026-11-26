@@ -4,7 +4,6 @@ import { Deferred, Effect, Fiber, Layer, Schema } from "effect"
 import { TestClock } from "effect/testing"
 import { SpotifySession } from "./spotify-session"
 import {
-  type FakeSpotifyAccounts,
   approveLogin,
   approvingBrowser,
   callBack,
@@ -14,6 +13,7 @@ import {
   makeFakeSpotifyAccounts,
   restoreFakeSession,
   saveFakeClientId,
+  type FakeSpotifyAccounts,
 } from "./spotify-session-fakes"
 import type { SystemBrowser } from "./system-browser"
 

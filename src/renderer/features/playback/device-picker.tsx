@@ -1,5 +1,5 @@
 import { MonitorSpeaker } from "lucide-react"
-import { type RefObject, useCallback, useEffect, useId, useRef } from "react"
+import { useCallback, useEffect, useId, useRef, type RefObject } from "react"
 import { DeviceList } from "./device-list"
 
 interface DevicePickerProps {

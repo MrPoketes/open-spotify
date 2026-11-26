@@ -1,4 +1,4 @@
-import { type ReactNode, use, useMemo, useState } from "react"
+import { use, useMemo, useState, type ReactNode } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { saveSetting } from "../../lib/saved-setting"

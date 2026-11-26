@@ -1,4 +1,4 @@
-import { type FocusEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState, type FocusEvent, type KeyboardEvent } from "react"
 import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import { blankFolderNameMessage } from "./blank-folder-name-message"
 

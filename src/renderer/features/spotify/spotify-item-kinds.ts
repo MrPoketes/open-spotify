@@ -1,4 +1,4 @@
-import { Disc3, ListMusic, type LucideIcon, MicVocal, Music, Radio } from "lucide-react"
+import { Disc3, ListMusic, MicVocal, Music, Radio, type LucideIcon } from "lucide-react"
 
 export type SpotifyItemKind = "playlist" | "artist" | "album" | "show" | "track"
 

@@ -2,7 +2,7 @@ import { Effect } from "effect"
 import type { FolderChangeError } from "../../../shared/folders"
 import type { DesktopBridgeError } from "../../lib/desktop-bridge"
 import type { RendererServices } from "../../lib/renderer-runtime"
-import { type AnnouncedOutcome, useRunAnnounced } from "../../ui/use-run-announced"
+import { useRunAnnounced, type AnnouncedOutcome } from "../../ui/use-run-announced"
 import { useReadFolderTreeAgain } from "./folder-tree"
 
 export type FolderChangeFailure = FolderChangeError | DesktopBridgeError

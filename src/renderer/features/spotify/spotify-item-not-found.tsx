@@ -1,4 +1,4 @@
-import { type SpotifyItemKind, spotifyItemKinds } from "./spotify-item-kinds"
+import { spotifyItemKinds, type SpotifyItemKind } from "./spotify-item-kinds"
 
 // For an address whose Spotify id Spotify does not know.
 export function SpotifyItemNotFound({ kind }: { readonly kind: SpotifyItemKind }) {

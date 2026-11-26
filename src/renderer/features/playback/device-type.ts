@@ -3,12 +3,12 @@ import {
   Cast,
   Gamepad2,
   Laptop,
-  type LucideIcon,
   MonitorSpeaker,
   Smartphone,
   Speaker,
   Tablet,
   Tv,
+  type LucideIcon,
 } from "lucide-react"
 
 interface DeviceType {

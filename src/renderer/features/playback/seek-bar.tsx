@@ -1,5 +1,5 @@
 import { Effect, Stream } from "effect"
-import { type KeyboardEvent, use, useEffect, useEffectEvent, useState } from "react"
+import { use, useEffect, useEffectEvent, useState, type KeyboardEvent } from "react"
 import { clamp } from "../../lib/clamp"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useStreamValue } from "../../lib/use-stream-value"

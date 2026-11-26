@@ -1,14 +1,14 @@
 import {
-  Outlet,
-  RouterProvider,
   createMemoryHistory,
   createRootRoute,
   createRoute,
   createRouter,
+  Outlet,
+  RouterProvider,
 } from "@tanstack/react-router"
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { type ManagedRuntime, Stream } from "effect"
+import { Stream, type ManagedRuntime } from "effect"
 import type { ReactNode } from "react"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"

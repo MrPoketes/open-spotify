@@ -1,6 +1,6 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Schema } from "effect"
-import { LibrarySections, defaultLibrarySections } from "./library-layout"
+import { defaultLibrarySections, LibrarySections } from "./library-layout"
 
 const decodeSections = Schema.decodeUnknownEffect(LibrarySections)
 

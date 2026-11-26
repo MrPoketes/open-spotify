@@ -1,4 +1,4 @@
-import { type ESTree, type ParseResult, parseSync } from "vite"
+import { parseSync, type ESTree, type ParseResult } from "vite"
 import { propertyKeyName } from "./property-key-name.ts"
 import { lineAtOffset, lineStartsOf } from "./source-lines.ts"
 

@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent } from "react"
 import { createPortal } from "react-dom"
 import { closeWhenFocusLeaves } from "./close-when-focus-leaves"
-import { type MenuItem, MenuList } from "./menu-list"
+import { MenuList, type MenuItem } from "./menu-list"
 
 // Where a context menu opens, and the element that gets focus back when it
 // closes.

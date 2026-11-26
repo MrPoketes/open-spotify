@@ -1,4 +1,4 @@
-import { type ReactNode, type RefObject, useEffect, useId } from "react"
+import { useEffect, useId, type ReactNode, type RefObject } from "react"
 
 interface ModalDialogProps {
   readonly heading: string

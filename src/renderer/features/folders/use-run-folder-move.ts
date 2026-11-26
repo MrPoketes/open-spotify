@@ -1,7 +1,7 @@
 import { Effect } from "effect"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import type { FolderMove } from "./folder-moves"
-import { type FolderChangeFailure, useChangeFolders } from "./use-change-folders"
+import { useChangeFolders, type FolderChangeFailure } from "./use-change-folders"
 
 // The main process refuses a move made against a tree that has changed since
 // the renderer read it, for example in another window or by an import.

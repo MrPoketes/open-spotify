@@ -1,18 +1,18 @@
 import { useVirtualizer } from "@tanstack/react-virtual"
 import {
-  type Ref,
-  type RefObject,
   use,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
   useState,
+  type Ref,
+  type RefObject,
 } from "react"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { TrackListDensityContext } from "./track-list-density-context"
-import { type TrackListEntry, TrackListHeader, type TrackListLayout, TrackRow } from "./track-row"
+import { TrackListHeader, TrackRow, type TrackListEntry, type TrackListLayout } from "./track-row"
 import { trackRowHeight } from "./track-row-height"
 import { useRowFocus } from "./use-row-focus"
 import { useTrackPlayback } from "./use-track-playback"

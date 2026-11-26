@@ -1,4 +1,4 @@
-import { type AnySQLiteColumn, integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core"
+import { integer, sqliteTable, text, unique, type AnySQLiteColumn } from "drizzle-orm/sqlite-core"
 
 export const settingsTable = sqliteTable("settings", {
   key: text("key").primaryKey(),

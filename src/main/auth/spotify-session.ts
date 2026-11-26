@@ -1,16 +1,16 @@
 import { Context, Deferred, Effect, Layer, Ref, Semaphore } from "effect"
 import {
-  type AccessTokenError,
   LoginCancelled,
-  type LogInError,
   SessionExpired,
+  type AccessTokenError,
+  type LogInError,
 } from "../../shared/spotify-auth-replies"
 import type { Settings } from "../settings"
 import { freshAccessToken } from "./fresh-access-token"
 import { logIn } from "./log-in"
 import type { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
 import type { SystemBrowser } from "./system-browser"
-import { type TokenStorageError, TokenStore } from "./token-store"
+import { TokenStore, type TokenStorageError } from "./token-store"
 
 // The user's Spotify login. The refresh token never leaves the main process:
 // the renderer only ever receives access tokens.

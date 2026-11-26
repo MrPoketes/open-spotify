@@ -1,7 +1,7 @@
 import type { KeyboardEvent } from "react"
 import type { FolderTree } from "../../../shared/folders"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
-import { type FolderMove, stepMove } from "./folder-moves"
+import { stepMove, type FolderMove } from "./folder-moves"
 import type { PlacedEntry } from "./folder-tree-nodes"
 import { moveToFolderItem } from "./move-to-folder-item"
 import { useRunFolderMove } from "./use-run-folder-move"

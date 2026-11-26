@@ -4,10 +4,10 @@ import { MalformedIpcRequest } from "../shared/malformed-ipc-request"
 import {
   GetSettingRequest,
   SetSettingRequest,
-  type SettingKey,
   SettingReply,
-  type SettingValue,
   settingSchemas,
+  type SettingKey,
+  type SettingValue,
 } from "../shared/settings"
 import { decodeIpcRequest } from "./decode-ipc-request"
 import { replyWithTaggedFailures } from "./reply-with-tagged-failures"
