@@ -13,6 +13,7 @@ import { exportFoldersFromIpc, importFoldersFromIpc } from "./folders-file-ipc"
 import { folderIpcOperations } from "./folders-ipc"
 import { mainRuntime } from "./main-runtime"
 import { getSettingFromIpc, setSettingFromIpc } from "./settings-ipc"
+import { logSpotifyFailureFromIpc } from "./spotify-failure-log-ipc"
 import {
   deleteImportedThemeFromIpc,
   exportCurrentThemeFromIpc,
@@ -65,6 +66,9 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle(ipcChannels.importFolders, (event) =>
     mainRuntime.runPromise(importFoldersFromIpc(BrowserWindow.fromWebContents(event.sender))),
+  )
+  ipcMain.handle(ipcChannels.logSpotifyFailure, (_event, request: unknown) =>
+    mainRuntime.runPromise(logSpotifyFailureFromIpc(request)),
   )
   // Each operation returns its own reply type. Widening them to one function
   // type lets TypeScript call any of them in this loop.

@@ -21,7 +21,9 @@ export function PlaylistHeader({ playlist, totalDuration }: PlaylistHeaderProps)
   const description = plainText(playlist.description ?? "")
   const details = [
     playlist.owner.displayName ?? playlist.owner.id,
-    playlist.items === undefined ? null : formatCount(playlist.items.total, "track", "tracks"),
+    playlist.items === undefined || playlist.items === null
+      ? null
+      : formatCount(playlist.items.total, "track", "tracks"),
     totalDuration,
   ].filter((detail) => detail !== null)
   // A playlist whose tracks Spotify withholds still plays; an empty one has

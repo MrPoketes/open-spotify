@@ -1,22 +1,12 @@
 import { spotifyRedirectUri } from "../../../shared/spotify-redirect-uri"
 import { CopyButton } from "../../ui/copy-button"
-
-const spotifyDashboardUrl = "https://developer.spotify.com/dashboard"
+import { SpotifyDashboardLink } from "../spotify/spotify-dashboard-link"
 
 export function SpotifyAppSteps() {
   return (
     <ol className="flex list-decimal flex-col gap-3 pl-6">
       <li>
-        Open the{" "}
-        <a
-          href={spotifyDashboardUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-accent underline"
-        >
-          Spotify Developer Dashboard
-        </a>{" "}
-        and choose Create app. Any name and description will do.
+        Open the <SpotifyDashboardLink /> and choose Create app. Any name and description will do.
       </li>
       <li className="flex flex-col gap-2">
         Add this Redirect URI:

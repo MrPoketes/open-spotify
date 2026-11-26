@@ -36,7 +36,8 @@ const playlistFields = {
 
 export const SimplifiedPlaylist = Schema.Struct({
   ...playlistFields,
-  items: Schema.Struct({ total: Schema.Number }),
+  // Spotify withholds items for playlists the user does not own or collaborate on.
+  items: Schema.optionalKey(Schema.NullOr(Schema.Struct({ total: Schema.Number }))),
 })
 
 export type SimplifiedPlaylist = typeof SimplifiedPlaylist.Type
@@ -44,8 +45,8 @@ export type SimplifiedPlaylist = typeof SimplifiedPlaylist.Type
 export const Playlist = Schema.Struct({
   ...playlistFields,
   // Spotify includes the first page of items only for playlists the user owns
-  // or collaborates on.
-  items: Schema.optionalKey(PlaylistItemsPage),
+  // or collaborates on, and omits or nulls it otherwise.
+  items: Schema.optionalKey(Schema.NullOr(PlaylistItemsPage)),
 })
 
 export type Playlist = typeof Playlist.Type

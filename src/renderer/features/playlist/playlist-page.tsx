@@ -31,7 +31,7 @@ function ItemsWithheld({ playlistId }: { readonly playlistId: string }) {
 }
 
 function PlaylistContent({ playlist }: { readonly playlist: Playlist }) {
-  if (playlist.items === undefined) {
+  if (playlist.items === undefined || playlist.items === null) {
     return (
       <div className="flex flex-col gap-8">
         <PlaylistHeader playlist={playlist} totalDuration={null} />

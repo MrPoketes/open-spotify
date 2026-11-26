@@ -3,14 +3,16 @@ import { AccentButton } from "./pill-button"
 
 interface ErrorWithRetryProps {
   readonly message: string
+  readonly detail?: string
   readonly onRetry: () => void
   readonly retryRef?: Ref<HTMLButtonElement>
 }
 
-export function ErrorWithRetry({ message, onRetry, retryRef }: ErrorWithRetryProps) {
+export function ErrorWithRetry({ message, detail, onRetry, retryRef }: ErrorWithRetryProps) {
   return (
     <div role="alert" className="flex flex-col items-start gap-2 text-sm">
       <p>{message}</p>
+      {detail !== undefined && <p className="text-xs text-muted">{detail}</p>}
       <AccentButton label="Retry" onClick={onRetry} ref={retryRef} />
     </div>
   )

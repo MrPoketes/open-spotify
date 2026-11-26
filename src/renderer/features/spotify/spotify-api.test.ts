@@ -31,7 +31,7 @@ layer(spotifyApiFake)("spotifyApiFake", (test) => {
         fakePlaylists.map(({ name }) => name),
       )
       assert.deepStrictEqual(
-        playlists.map(({ items }) => items.total),
+        playlists.map(({ items }) => items?.total),
         fakePlaylists.map(({ entries }) => entries.length),
       )
     }),

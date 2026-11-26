@@ -1,6 +1,7 @@
 import { Effect, Stream } from "effect"
 import { Player, type PlayerState } from "../playback/player"
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
+import { spotifyErrorDetail } from "../spotify/spotify-error-detail"
 import type { PlayerQueue } from "../spotify/spotify-player-queue"
 
 type QueueContents =
@@ -8,14 +9,21 @@ type QueueContents =
   | { readonly status: "loaded"; readonly queue: PlayerQueue }
   | { readonly status: "failed"; readonly error: SpotifyApiError }
   | { readonly status: "noActiveDevice" }
-  | { readonly status: "unreachable" }
+  | { readonly status: "unreachable"; readonly error: SpotifyApiError }
 
 // Spotify offers no way to watch the queue. It moves on when the playing item
 // changes, so it is read again whenever the playing item or the player's
 // status changes, and whenever the player reports that the queue changed
 // without either, such as after shuffle was turned on.
-const playingItemKey = (state: PlayerState) =>
-  state.status === "active" ? `active ${state.playback.item?.uri ?? "nothing"}` : state.status
+const playingItemKey = (state: PlayerState) => {
+  if (state.status === "active") {
+    return `active ${state.playback.item?.uri ?? "nothing"}`
+  }
+  if (state.status === "unreachable") {
+    return `unreachable ${spotifyErrorDetail(state.error)}`
+  }
+  return state.status
+}
 
 const readQueue = (spotify: SpotifyApi["Service"]) =>
   spotify.getQueue.pipe(
@@ -33,10 +41,8 @@ export const makeQueueContents = (): Stream.Stream<QueueContents, never, Player 
     Effect.gen(function* () {
       const player = yield* Player
       const spotify = yield* SpotifyApi
-      const contentsForState = (state: PlayerState) =>
-        state.status === "active"
-          ? Stream.fromEffect(readQueue(spotify))
-          : Stream.succeed<QueueContents>({ status: state.status })
+      const contentsForState = (state: PlayerState): Stream.Stream<QueueContents> =>
+        state.status === "active" ? Stream.fromEffect(readQueue(spotify)) : Stream.succeed(state)
       return Stream.merge(
         player.state.pipe(
           Stream.changesWith((previous, next) => playingItemKey(previous) === playingItemKey(next)),

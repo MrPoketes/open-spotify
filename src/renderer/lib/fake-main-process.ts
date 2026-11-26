@@ -3,6 +3,7 @@ import type { DesktopApi } from "../../preload/desktop-api"
 import type { FolderTree } from "../../shared/folders"
 import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
 import { GetSettingRequest, SetSettingRequest } from "../../shared/settings"
+import { SpotifyFailureLog } from "../../shared/spotify-failure-log"
 import { Theme } from "../../shared/theme"
 import type { ExportThemeReply, ImportThemeReply } from "../../shared/theme-file-replies"
 import { ImportedThemeId, type LibraryTheme } from "../../shared/theme-library"
@@ -66,6 +67,9 @@ export const fakeMainProcess = ({
       importedThemes.delete(Schema.decodeUnknownSync(ImportedThemeId)(request))
     },
     [ipcChannels.exportCurrentTheme]: () => exportThemeReply,
+    [ipcChannels.logSpotifyFailure]: (request) => {
+      Schema.decodeUnknownSync(SpotifyFailureLog)(request)
+    },
   }
   return {
     invoke: (channel, request) => {

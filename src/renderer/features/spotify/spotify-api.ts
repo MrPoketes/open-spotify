@@ -1,14 +1,14 @@
-import { Context, Effect, Layer, Option, Schedule, Schema, type Stream } from "effect"
+import { Context, Effect, Layer, Option, Schema, type Stream } from "effect"
 import {
   FetchHttpClient,
-  HttpClient,
+  type HttpClient,
   type HttpClientError,
   HttpClientRequest,
   type HttpClientResponse,
 } from "effect/http"
 import { type AccessTokenError, SessionExpired } from "../../../shared/spotify-auth-replies"
 import type { DesktopBridgeError } from "../../lib/desktop-bridge"
-import { SpotifyAccessToken } from "./spotify-access-token"
+import { authorizedSpotifyClient } from "./spotify-access-token"
 import {
   Album,
   AlbumTracksPage,
@@ -20,6 +20,16 @@ import { spotifyApiBaseUrl } from "./spotify-api-url"
 import { Artist } from "./spotify-artist"
 import { type AlbumGroup, artistRequests } from "./spotify-artist-requests"
 import type { Device } from "./spotify-device"
+import {
+  type SpotifyFailureForwarder,
+  SpotifyFailureLogForwarder,
+  classifyForbidden,
+  mainProcessFailureForwarder,
+  parseSpotifyErrorBody,
+  reportClientFailure,
+  reportDecodeFailure,
+  reportSpotifyFailure,
+} from "./spotify-failure-logging"
 import { type TimeRange, listeningHistoryRequests } from "./spotify-listening-history"
 import { Paging, streamPages } from "./spotify-paging"
 import type { PlayHistory } from "./spotify-play-history"
@@ -52,12 +62,23 @@ class SpotifyDecodeError extends Schema.TaggedError<SpotifyDecodeError>()("Spoti
   cause: Schema.Defect(),
 }) {}
 
+// Development-mode 403 failures that retrying cannot fix: the account is not
+// allowlisted in the Spotify Developer Dashboard, or lacks Premium.
+export class SpotifyAccessDenied extends Schema.TaggedError<SpotifyAccessDenied>()(
+  "SpotifyAccessDenied",
+  {
+    denial: Schema.Literals(["userNotRegistered", "premiumRequired"]),
+    message: Schema.String,
+  },
+) {}
+
 // Player commands fail with this when no Spotify Connect device is active.
 export class NoActiveDevice extends Schema.TaggedError<NoActiveDevice>()("NoActiveDevice", {}) {}
 
 export type SpotifyApiError =
   | AccessTokenError
   | DesktopBridgeError
+  | SpotifyAccessDenied
   | SpotifyResponseError
   | SpotifyRequestError
   | SpotifyDecodeError
@@ -74,32 +95,39 @@ const trackAndEpisodeTypes = "additional_types=track,episode"
 
 const FollowedArtistsPage = Schema.Struct({ artists: Paging(Artist) })
 
-const SpotifyErrorBody = Schema.Struct({
-  error: Schema.Struct({ message: Schema.String, reason: Schema.optionalKey(Schema.String) }),
-})
-
-const errorDetails = (response: HttpClientResponse.HttpClientResponse) =>
-  response.json.pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(SpotifyErrorBody)),
-    Effect.map(({ error }) => error),
-    Effect.orElseSucceed((): typeof SpotifyErrorBody.Type.error => ({
-      message: `Spotify responded with HTTP ${response.status}`,
-    })),
-  )
+const classifyStatusFailure = (status: number, message: string, reason: string | undefined) => {
+  // The main process refreshes the token before it expires, so a 401 means
+  // the user revoked the app's access and has to log in again.
+  if (status === 401) {
+    return { error: new SessionExpired(), cause: "SessionExpired" }
+  }
+  if (reason === "NO_ACTIVE_DEVICE") {
+    return { error: new NoActiveDevice(), cause: "NoActiveDevice" }
+  }
+  const denial = status === 403 ? classifyForbidden(message, reason) : null
+  if (denial !== null) {
+    return {
+      error: new SpotifyAccessDenied({ denial, message }),
+      cause: `SpotifyAccessDenied (${denial})`,
+    }
+  }
+  return { error: new SpotifyResponseError({ status, message }), cause: `HTTP ${status}` }
+}
 
 const failForStatus = Effect.fn("SpotifyApi.failForStatus")(function* (
   response: HttpClientResponse.HttpClientResponse,
+  forwardFailure: SpotifyFailureForwarder,
 ) {
-  // The main process refreshes the token before it expires, so a 401 means
-  // the user revoked the app's access and has to log in again.
-  if (response.status === 401) {
-    return yield* new SessionExpired()
-  }
-  const { message, reason } = yield* errorDetails(response)
-  if (reason === "NO_ACTIVE_DEVICE") {
-    return yield* new NoActiveDevice()
-  }
-  return yield* new SpotifyResponseError({ status: response.status, message })
+  const { message, reason } = yield* parseSpotifyErrorBody(response)
+  const { error, cause } = classifyStatusFailure(response.status, message, reason)
+  yield* reportSpotifyFailure(forwardFailure, {
+    url: response.request.url,
+    status: response.status,
+    spotifyMessage: message,
+    spotifyReason: reason ?? null,
+    cause,
+  })
+  return yield* error
 })
 
 // The client also fails with the access token's errors, such as when the
@@ -108,19 +136,19 @@ const sendWith = (
   client: HttpClient.HttpClient.With<
     HttpClientError.HttpClientError | AccessTokenError | DesktopBridgeError
   >,
+  forwardFailure: SpotifyFailureForwarder,
 ) =>
   Effect.fn("SpotifyApi.send")(function* (
     request: HttpClientRequest.HttpClientRequest,
   ): Effect.fn.Return<HttpClientResponse.HttpClientResponse, SpotifyApiError> {
-    const response = yield* client
-      .execute(request)
-      .pipe(
-        Effect.catchTag("HttpClientError", (cause) =>
-          Effect.fail(new SpotifyRequestError({ cause })),
-        ),
-      )
+    const response = yield* client.execute(request).pipe(
+      Effect.catchTag("HttpClientError", (cause) =>
+        Effect.fail(new SpotifyRequestError({ cause })),
+      ),
+      Effect.tapError((error) => reportClientFailure(forwardFailure, request.url, error)),
+    )
     if (response.status < 200 || response.status >= 300) {
-      return yield* failForStatus(response)
+      return yield* failForStatus(response, forwardFailure)
     }
     return response
   })
@@ -128,10 +156,12 @@ const sendWith = (
 const decodeJson = <A>(
   response: HttpClientResponse.HttpClientResponse,
   responseSchema: Schema.Decoder<A>,
+  forwardFailure: SpotifyFailureForwarder,
 ) =>
   response.json.pipe(
     Effect.flatMap(Schema.decodeUnknownEffect(responseSchema)),
     Effect.mapError((cause) => new SpotifyDecodeError({ url: response.request.url, cause })),
+    Effect.tapError((error) => reportDecodeFailure(forwardFailure, response, error.cause)),
   )
 
 const searchUrl = (query: string, types: ReadonlyArray<SearchType>, offset: number) =>
@@ -141,26 +171,6 @@ const addToPlaylistRequest = (playlistId: string, uri: string) =>
   HttpClientRequest.post(
     `${spotifyApiBaseUrl}/playlists/${encodeURIComponent(playlistId)}/items`,
   ).pipe(HttpClientRequest.bodyJsonUnsafe({ uris: [uri] }))
-
-const authorizedClient = Effect.gen(function* () {
-  const accessToken = yield* SpotifyAccessToken
-  return (yield* HttpClient.HttpClient).pipe(
-    HttpClient.mapRequestEffect((request) =>
-      accessToken.get.pipe(
-        Effect.map((token) =>
-          request.pipe(HttpClientRequest.bearerToken(token), HttpClientRequest.acceptJson),
-        ),
-      ),
-    ),
-    // Spotify sends Retry-After with 429 responses, and retryTransient
-    // waits at least that long before the next attempt.
-    HttpClient.retryTransient({
-      retryOn: "response-only",
-      schedule: Schedule.exponential("1 second"),
-      times: 3,
-    }),
-  )
-})
 
 export class SpotifyApi extends Context.Service<
   SpotifyApi,
@@ -235,11 +245,12 @@ export class SpotifyApi extends Context.Service<
   static readonly layerWithoutHttpClient = Layer.effect(
     SpotifyApi,
     Effect.gen(function* () {
-      const send = sendWith(yield* authorizedClient)
+      const forwardFailure = yield* SpotifyFailureLogForwarder
+      const send = sendWith(yield* authorizedSpotifyClient, forwardFailure)
 
       const getJson = <A>(url: string, responseSchema: Schema.Decoder<A>) =>
         send(HttpClientRequest.get(url)).pipe(
-          Effect.flatMap((response) => decodeJson(response, responseSchema)),
+          Effect.flatMap((response) => decodeJson(response, responseSchema, forwardFailure)),
         )
 
       // Spotify answers 204 with no body when no device is active.
@@ -249,7 +260,7 @@ export class SpotifyApi extends Context.Service<
         Effect.flatMap((response) =>
           response.status === 204
             ? Effect.succeedNone
-            : decodeJson(response, PlaybackState).pipe(Effect.map(Option.some)),
+            : decodeJson(response, PlaybackState, forwardFailure).pipe(Effect.map(Option.some)),
         ),
       )
 
@@ -319,6 +330,6 @@ export class SpotifyApi extends Context.Service<
   )
 
   static readonly layer = SpotifyApi.layerWithoutHttpClient.pipe(
-    Layer.provide(FetchHttpClient.layer),
+    Layer.provide([FetchHttpClient.layer, mainProcessFailureForwarder]),
   )
 }

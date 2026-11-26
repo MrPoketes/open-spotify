@@ -1,6 +1,11 @@
+import { Navigate } from "@tanstack/react-router"
 import { ListMusic } from "lucide-react"
 import type { RefObject } from "react"
 import { AccentButton } from "../../ui/pill-button"
+import { loginDestinationFor } from "../login/login-destination"
+import type { SpotifyAccessDenied, SpotifyApiError } from "../spotify/spotify-api"
+import { SpotifyDashboardLink } from "../spotify/spotify-dashboard-link"
+import { spotifyErrorDetail } from "../spotify/spotify-error-detail"
 import { DevicePicker } from "./device-picker"
 import { NowPlayingItemSummary } from "./now-playing-item-summary"
 import { PlaybackControls } from "./playback-controls"
@@ -69,6 +74,43 @@ export function NowPlayingBar({
   )
 }
 
+function UnreachableAccessDenied({ error }: { readonly error: SpotifyAccessDenied }) {
+  const detail = spotifyErrorDetail(error)
+  const heading =
+    error.denial === "userNotRegistered"
+      ? "Account not added in Spotify dashboard."
+      : "Spotify Premium is required."
+  return (
+    <div role="alert" className="flex min-w-0 flex-col">
+      <p className="truncate text-sm">
+        {heading} <SpotifyDashboardLink />
+      </p>
+      <p className="truncate text-xs text-muted" title={detail}>
+        {detail}
+      </p>
+    </div>
+  )
+}
+
+function UnreachableSummary({ error }: { readonly error: SpotifyApiError }) {
+  const destination = loginDestinationFor(error)
+  if (destination !== null) {
+    return <Navigate {...destination} />
+  }
+  if (error._tag === "SpotifyAccessDenied") {
+    return <UnreachableAccessDenied error={error} />
+  }
+  const detail = spotifyErrorDetail(error)
+  return (
+    <div className="flex min-w-0 flex-col">
+      <p className="text-sm text-muted">Can&apos;t reach Spotify right now.</p>
+      <p className="truncate text-xs text-muted" title={detail}>
+        {detail}
+      </p>
+    </div>
+  )
+}
+
 interface NowPlayingSummaryProps {
   readonly playerState: PlayerStateOrLoading
   readonly onChooseDevice: () => void
@@ -80,7 +122,7 @@ function NowPlayingSummary({ playerState, onChooseDevice }: NowPlayingSummaryPro
   }
 
   if (playerState.status === "unreachable") {
-    return <p className="text-sm text-muted">Can't reach Spotify right now.</p>
+    return <UnreachableSummary error={playerState.error} />
   }
 
   if (playerState.status === "noActiveDevice") {
