@@ -1,7 +1,9 @@
 import { assert, describe, it } from "@effect/vitest"
+import { eq } from "drizzle-orm"
 import { Effect, Schema } from "effect"
-import { SqlClient } from "effect/sql"
 import type { FolderEntry, FolderTree } from "../shared/folders"
+import { Database } from "./database"
+import { folderEntriesTable } from "./database-schema"
 import { Folders } from "./folders"
 import { album, artist, freshFolders, playlist } from "./folders-fakes"
 
@@ -99,7 +101,7 @@ describe("Folders", () => {
 
   it.effect("deletes a folder with everything inside it", () =>
     Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient
+      const database = yield* Database
       const folders = yield* Folders
       const rockId = yield* folders.createFolder({ name: "Rock", parentFolderId: null })
       const classicsId = yield* folders.createFolder({ name: "Classics", parentFolderId: rockId })
@@ -108,7 +110,9 @@ describe("Folders", () => {
 
       yield* folders.deleteFolder({ folderId: rockId })
 
-      const storedRows = yield* sql`SELECT id FROM folder_entries`
+      const storedRows = yield* database.run((drizzle) =>
+        drizzle.select({ id: folderEntriesTable.id }).from(folderEntriesTable),
+      )
       assert.deepStrictEqual(namesOf(yield* folders.readTree), ["Jazz"])
       assert.strictEqual(storedRows.length, 1)
     }).pipe(Effect.provide(freshFolders())),
@@ -239,10 +243,15 @@ describe("Folders", () => {
   // a malformed tree.
   it.effect("fails with SchemaError when a stored entry does not match its schema", () =>
     Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient
+      const database = yield* Database
       const folders = yield* Folders
       const folderId = yield* folders.createFolder({ name: "Rock", parentFolderId: null })
-      yield* sql`UPDATE folder_entries SET name = '' WHERE id = ${folderId}`
+      yield* database.run((drizzle) =>
+        drizzle
+          .update(folderEntriesTable)
+          .set({ name: "" })
+          .where(eq(folderEntriesTable.id, folderId)),
+      )
 
       const error = yield* Effect.flip(folders.readTree)
 

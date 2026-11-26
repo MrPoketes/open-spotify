@@ -13,6 +13,7 @@ import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
 import { noLiteralAriaKeyshortcuts } from "./rules/no-literal-aria-keyshortcuts.ts"
 import { noNewDateWithArguments } from "./rules/no-new-date-with-arguments.ts"
 import { noRawInvisibleCharacters } from "./rules/no-raw-invisible-characters.ts"
+import { noRawSql } from "./rules/no-raw-sql.ts"
 import { noRendererRuntimeImport } from "./rules/no-renderer-runtime-import.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noThrow } from "./rules/no-throw.ts"
@@ -43,6 +44,7 @@ export default definePlugin({
     "no-literal-aria-keyshortcuts": noLiteralAriaKeyshortcuts,
     "no-new-date-with-arguments": noNewDateWithArguments,
     "no-raw-invisible-characters": noRawInvisibleCharacters,
+    "no-raw-sql": noRawSql,
     "no-renderer-runtime-import": noRendererRuntimeImport,
     "no-stale-file-references": noStaleFileReferences,
     "no-throw": noThrow,

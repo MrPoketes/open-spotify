@@ -1,69 +1,107 @@
-import { Effect, Schema } from "effect"
-import { SqlClient, SqlSchema } from "effect/sql"
+import { and, asc, eq, isNull, max } from "drizzle-orm"
+import { Effect, Option, Schema } from "effect"
 import type { SpotifyItem } from "../shared/folders"
+import { Database } from "./database"
+import { folderEntriesTable } from "./database-schema"
 import { FolderEntryRow } from "./folder-tree-rows"
 
-const EntryId = Schema.Struct({ id: Schema.String })
+const sameParent = (parentId: string | null) =>
+  parentId === null
+    ? isNull(folderEntriesTable.parentId)
+    : eq(folderEntriesTable.parentId, parentId)
+
+const collectLineage = (
+  folderRows: ReadonlyArray<{ readonly id: string; readonly parentId: string | null }>,
+  folderId: string,
+) => {
+  const parentById = new Map(folderRows.map((row) => [row.id, row.parentId]))
+  const lineage: Array<{ readonly id: string }> = []
+  let currentId: string | null = folderId
+  while (currentId !== null && parentById.has(currentId)) {
+    lineage.push({ id: currentId })
+    currentId = parentById.get(currentId) ?? null
+  }
+  return lineage
+}
 
 const makeFolderEntryQueries = Effect.gen(function* () {
-  const sql = yield* SqlClient.SqlClient
+  const database = yield* Database
 
-  const listAllInPositionOrder = SqlSchema.findAll({
-    Request: Schema.Void,
-    Result: FolderEntryRow,
-    execute: () => sql`
-      SELECT id, parent_id, name, spotify_uri, image_url FROM folder_entries ORDER BY position
-    `,
-  })
-
-  const findFolder = SqlSchema.findOneOption({
-    Request: Schema.String,
-    Result: EntryId,
-    execute: (folderId) => sql`
-      SELECT id FROM folder_entries WHERE id = ${folderId} AND spotify_uri IS NULL
-    `,
-  })
-
-  const findItem = SqlSchema.findOneOption({
-    Request: Schema.Struct({ folderId: Schema.String, uri: Schema.String }),
-    Result: EntryId,
-    execute: ({ folderId, uri }) => sql`
-      SELECT id FROM folder_entries WHERE parent_id = ${folderId} AND spotify_uri = ${uri}
-    `,
-  })
-
-  const listFolderAndAncestors = SqlSchema.findAll({
-    Request: Schema.String,
-    Result: EntryId,
-    execute: (folderId) => sql`
-      WITH RECURSIVE lineage (id, parent_id) AS (
-        SELECT id, parent_id FROM folder_entries WHERE id = ${folderId}
-        UNION ALL
-        SELECT folder_entries.id, folder_entries.parent_id
-        FROM folder_entries JOIN lineage ON folder_entries.id = lineage.parent_id
+  const listAllInPositionOrder = () =>
+    database
+      .run((drizzle) =>
+        drizzle
+          .select({
+            id: folderEntriesTable.id,
+            parentId: folderEntriesTable.parentId,
+            name: folderEntriesTable.name,
+            spotifyUri: folderEntriesTable.spotifyUri,
+            imageUrl: folderEntriesTable.imageUrl,
+          })
+          .from(folderEntriesTable)
+          .orderBy(asc(folderEntriesTable.position)),
       )
-      SELECT id FROM lineage
-    `,
-  })
+      .pipe(Effect.flatMap(Schema.decodeUnknownEffect(Schema.Array(FolderEntryRow))))
 
-  const listChildIds = SqlSchema.findAll({
-    Request: Schema.NullOr(Schema.String),
-    Result: EntryId,
-    execute: (parentId) => sql`
-      SELECT id FROM folder_entries WHERE parent_id IS ${parentId} ORDER BY position
-    `,
-  })
+  const findFolder = (folderId: string) =>
+    database
+      .run((drizzle) =>
+        drizzle
+          .select({ id: folderEntriesTable.id })
+          .from(folderEntriesTable)
+          .where(and(eq(folderEntriesTable.id, folderId), isNull(folderEntriesTable.spotifyUri)))
+          .limit(1),
+      )
+      .pipe(Effect.map((rows) => Option.fromUndefinedOr(rows[0])))
+
+  const findItem = ({ folderId, uri }: { readonly folderId: string; readonly uri: string }) =>
+    database
+      .run((drizzle) =>
+        drizzle
+          .select({ id: folderEntriesTable.id })
+          .from(folderEntriesTable)
+          .where(
+            and(eq(folderEntriesTable.parentId, folderId), eq(folderEntriesTable.spotifyUri, uri)),
+          )
+          .limit(1),
+      )
+      .pipe(Effect.map((rows) => Option.fromUndefinedOr(rows[0])))
+
+  const listFolderAndAncestors = (folderId: string) =>
+    database
+      .run((drizzle) =>
+        drizzle
+          .select({ id: folderEntriesTable.id, parentId: folderEntriesTable.parentId })
+          .from(folderEntriesTable)
+          .where(isNull(folderEntriesTable.spotifyUri)),
+      )
+      .pipe(Effect.map((folderRows) => collectLineage(folderRows, folderId)))
+
+  const listChildIds = (parentId: string | null) =>
+    database.run((drizzle) =>
+      drizzle
+        .select({ id: folderEntriesTable.id })
+        .from(folderEntriesTable)
+        .where(sameParent(parentId))
+        .orderBy(asc(folderEntriesTable.position)),
+    )
 
   // Positions may have gaps after a delete, so a new entry goes past the
   // highest position rather than at the number of children.
-  const findNextPosition = SqlSchema.findOne({
-    Request: Schema.NullOr(Schema.String),
-    Result: Schema.Struct({ position: Schema.Int }),
-    execute: (parentId) => sql`
-      SELECT COALESCE(MAX(position) + 1, 0) AS position
-      FROM folder_entries WHERE parent_id IS ${parentId}
-    `,
-  })
+  const nextPosition = (parentId: string | null) =>
+    database
+      .run((drizzle) =>
+        drizzle
+          .select({ maxPosition: max(folderEntriesTable.position) })
+          .from(folderEntriesTable)
+          .where(sameParent(parentId)),
+      )
+      .pipe(
+        Effect.map((rows) => {
+          const highestPosition = rows[0]?.maxPosition
+          return typeof highestPosition === "number" ? highestPosition + 1 : 0
+        }),
+      )
 
   return {
     listAllInPositionOrder,
@@ -71,33 +109,28 @@ const makeFolderEntryQueries = Effect.gen(function* () {
     findItem,
     listFolderAndAncestors,
     listChildIds,
-    findNextPosition,
+    nextPosition,
   }
 })
 
-// The reads and writes behind the Folders service. The service decides
-// whether an operation is allowed; this module only touches rows.
-export const makeFolderEntriesTable = Effect.gen(function* () {
-  const sql = yield* SqlClient.SqlClient
-  const queries = yield* makeFolderEntryQueries
-
-  const nextPosition = (parentId: string | null) =>
-    queries.findNextPosition(parentId).pipe(
-      Effect.map((row) => row.position),
-      // An aggregate query always returns exactly one row.
-      Effect.catchTag("NoSuchElementError", Effect.die),
-    )
-
+const makeFolderEntryWrites = (
+  database: Database["Service"],
+  queries: Effect.Success<typeof makeFolderEntryQueries>,
+) => {
   const insertFolder = Effect.fn("FolderEntriesTable.insertFolder")(function* (folder: {
     readonly name: string
     readonly parentId: string | null
   }) {
     const folderId = crypto.randomUUID()
-    const position = yield* nextPosition(folder.parentId)
-    yield* sql`
-      INSERT INTO folder_entries (id, parent_id, position, name)
-      VALUES (${folderId}, ${folder.parentId}, ${position}, ${folder.name})
-    `
+    const position = yield* queries.nextPosition(folder.parentId)
+    yield* database.run((drizzle) =>
+      drizzle.insert(folderEntriesTable).values({
+        id: folderId,
+        parentId: folder.parentId,
+        position,
+        name: folder.name,
+      }),
+    )
     return folderId
   })
 
@@ -106,20 +139,38 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
     folderId: string,
     item: SpotifyItem,
   ) {
-    const position = yield* nextPosition(folderId)
-    yield* sql`
-      INSERT INTO folder_entries (id, parent_id, position, name, spotify_uri, image_url)
-      VALUES (${crypto.randomUUID()}, ${folderId}, ${position}, ${item.name}, ${item.uri},
-        ${item.imageUrl})
-      ON CONFLICT (parent_id, spotify_uri) DO NOTHING
-    `
+    const position = yield* queries.nextPosition(folderId)
+    yield* database.run((drizzle) =>
+      drizzle
+        .insert(folderEntriesTable)
+        .values({
+          id: crypto.randomUUID(),
+          parentId: folderId,
+          position,
+          name: item.name,
+          spotifyUri: item.uri,
+          imageUrl: item.imageUrl,
+        })
+        .onConflictDoNothing({
+          target: [folderEntriesTable.parentId, folderEntriesTable.spotifyUri],
+        }),
+    )
   })
 
   const renameFolder = (folderId: string, name: string) =>
-    sql`UPDATE folder_entries SET name = ${name} WHERE id = ${folderId}`
+    database
+      .run((drizzle) =>
+        drizzle.update(folderEntriesTable).set({ name }).where(eq(folderEntriesTable.id, folderId)),
+      )
+      .pipe(Effect.asVoid)
 
   // Deleting a folder cascades to everything inside it.
-  const deleteEntry = (entryId: string) => sql`DELETE FROM folder_entries WHERE id = ${entryId}`
+  const deleteEntry = (entryId: string) =>
+    database
+      .run((drizzle) =>
+        drizzle.delete(folderEntriesTable).where(eq(folderEntriesTable.id, entryId)),
+      )
+      .pipe(Effect.asVoid)
 
   // Rewrites the positions of every child of the parent, so the result does
   // not depend on the gaps left by earlier deletes.
@@ -132,26 +183,32 @@ export const makeFolderEntriesTable = Effect.gen(function* () {
       .map((child) => child.id)
       .filter((childId) => childId !== placement.entryId)
     const orderedIds = otherChildIds.toSpliced(placement.position, 0, placement.entryId)
-    yield* Effect.forEach(
-      orderedIds,
-      (entryId, position) => sql`
-        UPDATE folder_entries SET parent_id = ${placement.parentId}, position = ${position}
-        WHERE id = ${entryId}
-      `,
-      { discard: true },
-    )
+    for (const [position, entryId] of orderedIds.entries()) {
+      yield* database.run((drizzle) =>
+        drizzle
+          .update(folderEntriesTable)
+          .set({ parentId: placement.parentId, position })
+          .where(eq(folderEntriesTable.id, entryId)),
+      )
+    }
   })
+
+  return { insertFolder, insertItem, renameFolder, deleteEntry, placeEntry }
+}
+
+// The reads and writes behind the Folders service. The service decides
+// whether an operation is allowed; this module only touches rows.
+export const makeFolderEntriesTable = Effect.gen(function* () {
+  const database = yield* Database
+  const queries = yield* makeFolderEntryQueries
+  const writes = makeFolderEntryWrites(database, queries)
 
   return {
     listAllInPositionOrder: queries.listAllInPositionOrder,
     findFolder: queries.findFolder,
     findItem: queries.findItem,
     listFolderAndAncestors: queries.listFolderAndAncestors,
-    insertFolder,
-    insertItem,
-    renameFolder,
-    deleteEntry,
-    placeEntry,
+    ...writes,
   }
 })
 

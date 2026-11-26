@@ -22,10 +22,12 @@ Open Spotify is an Electron app with three parts that run in separate processes.
 Owns everything that needs Node or must stay out of reach of web content:
 
 - the application window and the `app://` protocol that serves the built UI;
-- local storage (themes, folders, settings) in SQLite through `@effect/sql-sqlite-node`, which
-  uses Node's built-in `node:sqlite`, so there is no native module to compile. The database
-  file is `open-spotify.sqlite` in Electron's `userData` directory, and migrations
-  (`src/main/database.ts`) run when `mainRuntime` starts;
+- local storage (themes, folders, settings) in SQLite through Drizzle ORM
+  (`drizzle-orm/effect-sqlite-node`) over `@effect/sql-sqlite-node`, which uses Node's built-in
+  `node:sqlite`, so there is no native module to compile. Tables are defined once in
+  `src/main/database-schema.ts`, queries run through the `Database` service in
+  `src/main/database.ts`, the database file is `open-spotify.sqlite` in Electron's `userData`
+  directory, and `SqliteMigrator` migrations run when `mainRuntime` starts;
 - the OAuth login flow (a short-lived loopback server on `127.0.0.1:43821`) and token storage
   encrypted with Electron's `safeStorage`.
 

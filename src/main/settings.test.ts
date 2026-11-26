@@ -1,6 +1,7 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Option } from "effect"
-import { SqlClient } from "effect/sql"
+import { Database } from "./database"
+import { settingsTable } from "./database-schema"
 import { Settings } from "./settings"
 import { freshSettings } from "./settings-fakes"
 
@@ -20,9 +21,11 @@ describe("Settings", () => {
   // A stored value written by an older build may no longer match its Schema.
   it.effect("fails with SchemaError when a stored value does not match its schema", () =>
     Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient
+      const database = yield* Database
       const settings = yield* Settings
-      yield* sql`INSERT INTO settings (key, value) VALUES ('spotifyClientId', '""')`
+      yield* database.run((drizzle) =>
+        drizzle.insert(settingsTable).values({ key: "spotifyClientId", value: '""' }),
+      )
 
       const error = yield* Effect.flip(settings.get("spotifyClientId"))
 

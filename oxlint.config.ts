@@ -89,6 +89,7 @@ export default defineConfig({
     "open-spotify/no-inline-modifier-check": "error",
     "open-spotify/no-junk-drawer-modules": "error",
     "open-spotify/no-raw-invisible-characters": "error",
+    "open-spotify/no-raw-sql": "error",
     "open-spotify/no-renderer-runtime-import": "error",
     "open-spotify/no-stale-file-references": "error",
     "open-spotify/no-throw": "error",

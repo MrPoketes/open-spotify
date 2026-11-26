@@ -140,6 +140,22 @@ writing Effect code, and grep `node_modules/effect/dist/*.d.ts` when unsure.
 - Import Node platform modules by subpath, e.g. `@effect/platform-node/NodeFileSystem`. The
   package root also loads optional modules (Redis) that break the packaged app.
 
+## Database
+
+SQLite tables are defined once in `src/main/database-schema.ts` with Drizzle ORM, and main-process
+queries run through the `Database` service in `src/main/database.ts` (`database.run((drizzle) => ...)`
+and `database.withTransaction(...)`). Decode stored values at the edge with Effect `Schema`. Do
+not write raw SQL (`open-spotify/no-raw-sql` forbids `` sql`...` ``, `sql.unsafe`, `sql.literal`,
+and `sql.raw`).
+
+To change the schema, update `src/main/database-schema.ts` and add a new numbered `SqliteMigrator`
+step in `src/main/database.ts` (never edit shipped migrations `0001`–`0003`). Because Drizzle's
+query builder cannot express SQLite DDL (`CREATE TABLE` / `ALTER TABLE`) and its file-based
+migrator requires shipping `.sql` files outside the bundle, DDL statements in `src/main/database.ts`
+carry an `oxlint-disable-next-line open-spotify/no-raw-sql -- <reason>` comment; any data
+migration inside a step uses Drizzle. See
+[decision 0005](docs/decisions/0005-drizzle-orm-for-sqlite-queries.md).
+
 ## React and styling
 
 - Function components with named exports. Props are `readonly`. Keep components small and

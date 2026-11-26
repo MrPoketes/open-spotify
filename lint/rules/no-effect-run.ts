@@ -1,4 +1,5 @@
 import { defineRule, type ESTree } from "@oxlint/plugins"
+import { importedExportName } from "../imported-export-name.ts"
 import { memberPropertyName } from "../member-property-name.ts"
 
 const effectModule = "effect"
@@ -68,7 +69,7 @@ function collectEffectAlias(node: ESTree.ImportDeclaration, effectIdentifiers: S
     if (
       specifier.type === "ImportSpecifier" &&
       specifier.importKind !== "type" &&
-      importedName(specifier.imported) === "Effect"
+      importedExportName(specifier.imported) === "Effect"
     ) {
       effectIdentifiers.add(specifier.local.name)
     }
@@ -81,7 +82,7 @@ function isForbiddenRunnerImport(
   return (
     specifier.type === "ImportSpecifier" &&
     specifier.importKind !== "type" &&
-    forbiddenRunners.has(importedName(specifier.imported))
+    forbiddenRunners.has(importedExportName(specifier.imported))
   )
 }
 
@@ -94,8 +95,4 @@ function isForbiddenEffectMember(
   }
   const propertyName = memberPropertyName(node)
   return propertyName !== undefined && forbiddenRunners.has(propertyName)
-}
-
-function importedName(imported: ESTree.ImportSpecifier["imported"]): string {
-  return imported.type === "Identifier" ? imported.name : imported.value
 }

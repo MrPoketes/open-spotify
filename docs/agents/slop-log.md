@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 2026-11-26 | Raw SQL string queries hiding column names and result shapes until runtime                        | Drizzle query builder and `open-spotify/no-raw-sql`                         |
 | 2026-11-26 | Component tests rendering `<Library />` over the full default fake library (PR #109)              | `AGENTS.md` "Tests" rule (no lint: static check cannot tell used entries)   |
 | 2026-11-25 | Component tests checking `useEffect` state outside the DOM right after `findBy*` (PR #71)         | `AGENTS.md` "Tests" rule (no lint: static check cannot see effect ordering) |
 | 2026-11-25 | Adding a third copy and deferring the shared abstraction to a follow-up issue (PR #82)            | Rule in `AGENTS.md` (rule 4), `docs/agents/worker.md`, and `reviewer.md`    |
