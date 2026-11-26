@@ -6,7 +6,7 @@ match the headings below; Linear, not this file, records what has been ticketed.
 ## M1: Foundation (done)
 
 - Electron + TanStack Start (SPA) + Effect scaffold, typed IPC bridge, `app://` protocol
-- oxlint with custom no-slop rules, oxfmt, Vitest, CI on three platforms
+- oxlint with custom no-slop rules, Prettier, Vitest, CI on three platforms
 - Agent playbooks and the autonomous pipeline
 
 ## M2: Core plumbing

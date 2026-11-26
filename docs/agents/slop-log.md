@@ -29,7 +29,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 | 2026-11-25 | Type and value imports from the same module split into separate import statements                 | `import/no-duplicates` with `preferInline: true`                            |
 | 2026-11-25 | Renderer tests spying on DOM prototypes with `vi.spyOn` without restoring them between tests      | `restoreMocks: true` in `vitest.config.ts` (renderer)                       |
 | 2026-11-25 | Raw invisible characters (such as U+FEFF) hidden inside string literals, templates, and JSX text  | Custom rule `open-spotify/no-raw-invisible-characters`                      |
-| 2026-11-25 | Relative imports placed above third-party imports and inconsistent import order across files      | `sortImports` in `.oxfmtrc.json` (`oxfmt`)                                  |
+| 2026-11-25 | Relative imports placed above third-party imports and inconsistent import order across files      | `@ianvs/prettier-plugin-sort-imports` in `.prettierrc.json` (Prettier)      |
 | 2026-11-25 | Copy-pasted code blocks, renamed copies, and long Tailwind `className` strings across files       | Cross-file duplicate check `lint/duplicate-code.test.ts`                    |
 | 2026-11-25 | Running effects directly with `Effect.run*` instead of through a `ManagedRuntime`                 | Custom rule `open-spotify/no-effect-run`                                    |
 | 2026-11-24 | Parsing incoming date strings with `new Date(value)` instead of `Schema.DateFromString`           | Custom rule `open-spotify/no-new-date-with-arguments`                       |
