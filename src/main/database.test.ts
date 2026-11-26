@@ -2,8 +2,8 @@ import path from "node:path"
 import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
 import { assert, layer } from "@effect/vitest"
 import { Effect, FileSystem } from "effect"
-import { SqlClient } from "effect/sql"
-import { databaseLayer } from "./database"
+import { Database, databaseLayer } from "./database"
+import { settingsTable } from "./database-schema"
 
 layer(NodeFileSystem.layer)("databaseLayer", (it) => {
   // Migrations run on every launch, so a second run against an existing
@@ -16,16 +16,40 @@ layer(NodeFileSystem.layer)("databaseLayer", (it) => {
       const secondLaunch = databaseLayer(databaseFile)
 
       yield* Effect.gen(function* () {
-        const sql = yield* SqlClient.SqlClient
-        yield* sql`INSERT INTO settings (key, value) VALUES ('spotifyClientId', '"abc"')`
+        const database = yield* Database
+        yield* database.run((db) =>
+          db.insert(settingsTable).values({ key: "spotifyClientId", value: '"abc"' }),
+        )
       }).pipe(Effect.provide(firstLaunch))
 
       const rows = yield* Effect.gen(function* () {
-        const sql = yield* SqlClient.SqlClient
-        return yield* sql`SELECT key, value FROM settings`
+        const database = yield* Database
+        return yield* database.run((db) => db.select().from(settingsTable))
       }).pipe(Effect.provide(secondLaunch))
 
       assert.deepStrictEqual(rows, [{ key: "spotifyClientId", value: '"abc"' }])
     }),
+  )
+
+  // Multi-step storage changes rely on withTransaction so a failure partway
+  // through leaves the database unchanged.
+  it.effect("rolls back writes when a transaction fails", () =>
+    Effect.gen(function* () {
+      const database = yield* Database
+
+      const error = yield* Effect.flip(
+        database.withTransaction(
+          Effect.gen(function* () {
+            yield* database.run((db) =>
+              db.insert(settingsTable).values({ key: "themeId", value: '"light"' }),
+            )
+            return yield* Effect.fail("aborted")
+          }),
+        ),
+      )
+
+      assert.strictEqual(error, "aborted")
+      assert.deepStrictEqual(yield* database.run((db) => db.select().from(settingsTable)), [])
+    }).pipe(Effect.provide(databaseLayer(":memory:"))),
   )
 })

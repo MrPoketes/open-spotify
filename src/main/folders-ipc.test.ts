@@ -1,9 +1,11 @@
+import * as SqliteClient from "@effect/sql-sqlite-node/SqliteClient"
 import { assert, describe, it } from "@effect/vitest"
-import { Effect, Schema } from "effect"
-import { SqlClient } from "effect/sql"
+import { Effect, Layer, Schema } from "effect"
 import { FolderChangeError, FolderId, FolderMovedIntoOwnSubtree } from "../shared/folders"
 import { ipcChannels } from "../shared/ipc-channels"
 import { MalformedIpcRequest } from "../shared/malformed-ipc-request"
+import { Database } from "./database"
+import { Folders } from "./folders"
 import { album, freshFolders } from "./folders-fakes"
 import { folderIpcOperations } from "./folders-ipc"
 import { replyAsRendererReceives } from "./reply-as-renderer-receives"
@@ -85,17 +87,20 @@ describe("folder IPC", () => {
 
   // The renderer cannot act on a broken database, so the invoke rejects and
   // the renderer sees DesktopBridgeError.
-  it.effect("fails instead of replying when the database fails", () =>
-    Effect.gen(function* () {
-      const folderId = yield* createFolderNamed("Rock", null)
-      const sql = yield* SqlClient.SqlClient
-      yield* sql`DROP TABLE folder_entries`
-
+  it.effect("fails instead of replying when the database fails", () => {
+    const unmigratedFolders = Folders.layer.pipe(
+      Layer.provide(Database.layer),
+      Layer.provide(SqliteClient.layer({ filename: ":memory:" })),
+    )
+    return Effect.gen(function* () {
       const error = yield* Effect.flip(
-        folderIpcOperations[ipcChannels.renameFolder]({ folderId, name: "Classic rock" }),
+        folderIpcOperations[ipcChannels.renameFolder]({
+          folderId: "3f1c1b9e-6a51-4d3e-9a43-2f6f0f3d5c11",
+          name: "Classic rock",
+        }),
       )
 
       assert.strictEqual(error._tag, "SqlError")
-    }).pipe(Effect.provide(freshFolders())),
-  )
+    }).pipe(Effect.provide(unmigratedFolders))
+  })
 })

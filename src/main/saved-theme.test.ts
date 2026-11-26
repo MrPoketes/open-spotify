@@ -1,7 +1,8 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect } from "effect"
-import { SqlClient } from "effect/sql"
 import { builtInThemes } from "../shared/built-in-themes"
+import { Database } from "./database"
+import { settingsTable } from "./database-schema"
 import { ImportedThemes } from "./imported-themes"
 import { freshThemeStorage } from "./imported-themes-fakes"
 import { loadSavedTheme } from "./saved-theme"
@@ -35,8 +36,10 @@ describe("loadSavedTheme", () => {
   // newer build must fall back to a theme instead of stopping the app.
   it.effect("returns the default dark theme when the saved id names no theme", () =>
     Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient
-      yield* sql`INSERT INTO settings (key, value) VALUES ('themeId', '"solarized"')`
+      const database = yield* Database
+      yield* database.run((db) =>
+        db.insert(settingsTable).values({ key: "themeId", value: '"solarized"' }),
+      )
 
       assert.deepStrictEqual(yield* loadSavedTheme, builtInThemes.dark)
     }).pipe(Effect.provide(freshThemeStorage())),

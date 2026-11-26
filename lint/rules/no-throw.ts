@@ -1,5 +1,6 @@
 import { defineRule, type ESTree, type Scope, type Variable } from "@oxlint/plugins"
 import { findVariable } from "../find-variable.ts"
+import { importedExportName } from "../imported-export-name.ts"
 
 // Errors belong in typed Effect failures so callers handle them through the
 // type system. TanStack Router is the only exception: it signals redirects and
@@ -81,8 +82,4 @@ function isRouterValueImport(node: ESTree.Node | null): boolean {
     node.importKind !== "type" &&
     node.source.value === tanstackRouterModule
   )
-}
-
-function importedExportName(imported: ESTree.ImportSpecifier["imported"]): string {
-  return imported.type === "Identifier" ? imported.name : imported.value
 }

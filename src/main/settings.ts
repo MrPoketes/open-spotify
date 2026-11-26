@@ -1,6 +1,9 @@
+import { eq } from "drizzle-orm"
 import { Context, Effect, Layer, Option, Schema } from "effect"
-import { SqlClient, type SqlError, SqlSchema } from "effect/sql"
-import { SettingKey, type SettingValue, settingSchemas } from "../shared/settings"
+import type { SqlError } from "effect/sql"
+import { type SettingKey, type SettingValue, settingSchemas } from "../shared/settings"
+import { Database } from "./database"
+import { settingsTable } from "./database-schema"
 
 const storedValueSchema = <K extends SettingKey>(key: K) =>
   Schema.fromJsonString(settingSchemas[key])
@@ -20,22 +23,21 @@ export class Settings extends Context.Service<
   static readonly layer = Layer.effect(
     Settings,
     Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient
-
-      const findStoredRow = SqlSchema.findOneOption({
-        Request: SettingKey,
-        Result: Schema.Struct({ value: Schema.String }),
-        execute: (key) => sql`SELECT value FROM settings WHERE key = ${key}`,
-      })
+      const database = yield* Database
 
       const get = Effect.fn("Settings.get")(function* <K extends SettingKey>(key: K) {
-        const storedRow = yield* findStoredRow(key)
-        if (Option.isNone(storedRow)) {
+        const rows = yield* database.run((db) =>
+          db
+            .select({ value: settingsTable.value })
+            .from(settingsTable)
+            .where(eq(settingsTable.key, key))
+            .limit(1),
+        )
+        const storedRow = rows[0]
+        if (storedRow === undefined) {
           return Option.none()
         }
-        return Option.some(
-          yield* Schema.decodeEffect(storedValueSchema(key))(storedRow.value.value),
-        )
+        return Option.some(yield* Schema.decodeEffect(storedValueSchema(key))(storedRow.value))
       })
 
       const set = Effect.fn("Settings.set")(function* <K extends SettingKey>(
@@ -43,10 +45,12 @@ export class Settings extends Context.Service<
         value: SettingValue<K>,
       ) {
         const encodedValue = yield* Schema.encodeEffect(storedValueSchema(key))(value)
-        yield* sql`
-          INSERT INTO settings (key, value) VALUES (${key}, ${encodedValue})
-          ON CONFLICT (key) DO UPDATE SET value = excluded.value
-        `
+        yield* database.run((db) =>
+          db
+            .insert(settingsTable)
+            .values({ key, value: encodedValue })
+            .onConflictDoUpdate({ target: settingsTable.key, set: { value: encodedValue } }),
+        )
       })
 
       return Settings.of({ get, set })

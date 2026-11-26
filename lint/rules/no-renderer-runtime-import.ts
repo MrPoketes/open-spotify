@@ -1,5 +1,6 @@
 import path from "node:path"
 import { defineRule, type ESTree } from "@oxlint/plugins"
+import { importedExportName } from "../imported-export-name.ts"
 import { repoRelativePath } from "../repo-relative-path.ts"
 
 // Components read the runtime from RendererRuntimeContext so tests can render
@@ -60,7 +61,7 @@ export const noRendererRuntimeImport = defineRule({
         for (const specifier of node.specifiers) {
           if (
             specifier.exportKind !== "type" &&
-            moduleExportName(specifier.local) === forbiddenExport
+            importedExportName(specifier.local) === forbiddenExport
           ) {
             report(specifier)
           }
@@ -105,12 +106,8 @@ function isForbiddenImportSpecifier(
   }
   if (specifier.type === "ImportSpecifier") {
     return (
-      specifier.importKind !== "type" && moduleExportName(specifier.imported) === forbiddenExport
+      specifier.importKind !== "type" && importedExportName(specifier.imported) === forbiddenExport
     )
   }
   return false
-}
-
-function moduleExportName(node: ESTree.ImportSpecifier["imported"]): string {
-  return node.type === "Identifier" ? node.name : node.value
 }

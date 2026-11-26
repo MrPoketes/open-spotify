@@ -3,18 +3,18 @@ import { Folder, type FolderTree, SpotifyItem } from "../shared/folders"
 
 const FolderRow = Schema.Struct({
   id: Folder.fields.id,
-  parent_id: Schema.NullOr(Folder.fields.id),
+  parentId: Schema.NullOr(Folder.fields.id),
   name: Folder.fields.name,
-  spotify_uri: Schema.Null,
+  spotifyUri: Schema.Null,
 })
 
 type FolderRow = typeof FolderRow.Type
 
 const SpotifyItemRow = Schema.Struct({
-  parent_id: Folder.fields.id,
+  parentId: Folder.fields.id,
   name: SpotifyItem.fields.name,
-  spotify_uri: SpotifyItem.fields.uri,
-  image_url: SpotifyItem.fields.imageUrl,
+  spotifyUri: SpotifyItem.fields.uri,
+  imageUrl: SpotifyItem.fields.imageUrl,
 })
 
 type SpotifyItemRow = typeof SpotifyItemRow.Type
@@ -25,9 +25,9 @@ type FolderEntryRow = typeof FolderEntryRow.Type
 
 const toSpotifyItem = (row: SpotifyItemRow): SpotifyItem => ({
   _tag: "SpotifyItem",
-  uri: row.spotify_uri,
+  uri: row.spotifyUri,
   name: row.name,
-  imageUrl: row.image_url,
+  imageUrl: row.imageUrl,
 })
 
 export const assembleFolderTree = (
@@ -35,9 +35,9 @@ export const assembleFolderTree = (
 ): FolderTree => {
   const rowsByParentId = new Map<string | null, Array<FolderEntryRow>>()
   for (const row of rowsInPositionOrder) {
-    const siblingRows = rowsByParentId.get(row.parent_id) ?? []
+    const siblingRows = rowsByParentId.get(row.parentId) ?? []
     siblingRows.push(row)
-    rowsByParentId.set(row.parent_id, siblingRows)
+    rowsByParentId.set(row.parentId, siblingRows)
   }
 
   const toFolder = (row: FolderRow): Folder => ({
@@ -45,11 +45,11 @@ export const assembleFolderTree = (
     id: row.id,
     name: row.name,
     entries: (rowsByParentId.get(row.id) ?? []).map((childRow) =>
-      childRow.spotify_uri === null ? toFolder(childRow) : toSpotifyItem(childRow),
+      childRow.spotifyUri === null ? toFolder(childRow) : toSpotifyItem(childRow),
     ),
   })
 
   // The table rejects Spotify items without a parent, so this filter removes
   // nothing. It tells TypeScript that the top-level rows are folders.
-  return (rowsByParentId.get(null) ?? []).filter((row) => row.spotify_uri === null).map(toFolder)
+  return (rowsByParentId.get(null) ?? []).filter((row) => row.spotifyUri === null).map(toFolder)
 }
