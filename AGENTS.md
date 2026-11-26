@@ -181,6 +181,16 @@ cannot fail for a meaningful reason should not exist.
   React effect writes outside the DOM (such as a fake service's state or `navigator.mediaSession`),
   assert it inside `waitFor` instead of right after a `findBy*` query: `findBy*` resolves as soon
   as the DOM commits, before passive `useEffect`s have necessarily run.
+- **Give the fake Spotify API only the library entries the test reads.** A component test that
+  renders `<Library />` (directly or through `<Sidebar />` or `<AppShell />`) passes
+  `spotifyApiFakeWith(...)` with `Stream.empty` (or only the entries it reads) for the library
+  streams (`currentUserPlaylists`, `savedAlbums`, `followedArtists`, `savedShows`) it does not
+  use. The default fake carries dozens of fixture entries (over fifty followed artists alone);
+  rendering rows a test never reads on mount and again after every change makes tests time out
+  when several suites run in parallel. Reserve the full default library for tests of the library
+  itself, such as paging and section layout (see
+  `src/renderer/features/folders/add-to-folder.test.tsx` and
+  `src/renderer/features/shell/sidebar.test.tsx`).
 - Effect code is tested with `@effect/vitest` (`it.effect`, `layer(...)`). See
   `src/main/renderer-files.test.ts`.
 - `e2e/app.test.ts` is a smoke test of the packaged app (run `pnpm package:dir` first): it
