@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, type Layer, Stream } from "effect"
+import { Effect, Stream, type Layer } from "effect"
 import { describe, expect, it } from "vitest"
 import {
   AccessTokenUnavailable,

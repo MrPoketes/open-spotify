@@ -1,6 +1,6 @@
 import { RovingList } from "../../ui/roving-list"
 import type { LibraryEntry } from "./library-entries"
-import { type LibraryEntryActions, LibraryEntryRow } from "./library-entry-row"
+import { LibraryEntryRow, type LibraryEntryActions } from "./library-entry-row"
 
 interface LibraryEntryListProps {
   readonly id?: string

@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { HomeSection } from "./home-section"
 import { LoadedContent } from "./loaded-content"
 import { TimeRangeSwitch } from "./time-range-switch"
-import { type TopItems, hasNoTopItems } from "./use-top-items"
+import { hasNoTopItems, type TopItems } from "./use-top-items"
 
 interface TopItemsSectionProps<A> {
   readonly kind: "artists" | "tracks"

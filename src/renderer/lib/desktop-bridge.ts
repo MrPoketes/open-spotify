@@ -2,12 +2,12 @@ import { Context, Effect, Layer, Option, Schema } from "effect"
 import type { DesktopApi } from "../../preload/desktop-api"
 import { AppInfo } from "../../shared/app-info"
 import {
-  type AddFolderItemRequest,
-  type CreateFolderRequest,
-  type DeleteFolderRequest,
   FolderChangeError,
   FolderId,
   FolderTree,
+  type AddFolderItemRequest,
+  type CreateFolderRequest,
+  type DeleteFolderRequest,
   type MoveFolderItemRequest,
   type MoveFolderRequest,
   type RemoveFolderItemRequest,
@@ -15,24 +15,24 @@ import {
 } from "../../shared/folders"
 import {
   ExportFoldersReply,
+  ImportFoldersReply,
   type FoldersImportOutcome,
   type ImportFoldersError,
-  ImportFoldersReply,
 } from "../../shared/folders-file-replies"
-import { type IpcChannel, ipcChannels } from "../../shared/ipc-channels"
+import { ipcChannels, type IpcChannel } from "../../shared/ipc-channels"
 import { IpcReply } from "../../shared/ipc-reply"
 import { MalformedIpcRequest } from "../../shared/malformed-ipc-request"
 import {
-  type SettingKey,
-  type SettingValue,
   SettingReply,
   settingSchemas,
+  type SettingKey,
+  type SettingValue,
 } from "../../shared/settings"
 import {
-  type AccessTokenError,
   AccessTokenReply,
-  type LogInError,
   LogInReply,
+  type AccessTokenError,
+  type LogInError,
 } from "../../shared/spotify-auth-replies"
 import type { SpotifyFailureLog } from "../../shared/spotify-failure-log"
 import { Theme } from "../../shared/theme"

@@ -1,7 +1,7 @@
 import type { Effect } from "effect"
 import { useState } from "react"
 import type { RendererServices } from "../../lib/renderer-runtime"
-import { type LoadState, loadOnce } from "../../lib/use-load"
+import { loadOnce, type LoadState } from "../../lib/use-load"
 import { useStreamValue } from "../../lib/use-stream-value"
 import type { SpotifyApiError } from "../spotify/spotify-api"
 import type { TimeRange } from "../spotify/spotify-listening-history"

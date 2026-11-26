@@ -1,5 +1,5 @@
 import { screen, within } from "@testing-library/react"
-import { Effect, type Layer, Option } from "effect"
+import { Effect, Option, type Layer } from "effect"
 import { Profiler } from "react"
 import { describe, expect, it, vi } from "vitest"
 import type { TrackListDensity } from "../../../shared/track-list-density"

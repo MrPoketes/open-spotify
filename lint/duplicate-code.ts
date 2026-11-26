@@ -1,8 +1,8 @@
 import {
+  analyzeSourceFile,
   type ClassListOccurrence,
   type CodeToken,
   type FileAnalysis,
-  analyzeSourceFile,
 } from "./duplicate-code-tokens.ts"
 
 // Thresholds tuned so real copies from PR #25 (spotifyApiWith at 44 exact

@@ -1,5 +1,5 @@
 import { Effect, Layer, Option, Schema } from "effect"
-import { HttpClient, type HttpClientRequest, HttpClientResponse } from "effect/http"
+import { HttpClient, HttpClientResponse, type HttpClientRequest } from "effect/http"
 import { SpotifyAccessToken } from "./spotify-access-token"
 import type { AlbumGroup } from "./spotify-artist-requests"
 import { fakeDiscography } from "./spotify-discography-fixtures"
@@ -7,7 +7,6 @@ import { spotifyErrorBody } from "./spotify-fake-error-body"
 import { fakePlayer } from "./spotify-fake-player"
 import { fakeTracks } from "./spotify-fake-tracks"
 import {
-  type FakePlaylist,
   fakeAlbums,
   fakeCurrentUser,
   fakeEpisode,
@@ -18,6 +17,7 @@ import {
   fakeSavedAlbums,
   fakeSavedShows,
   fakeShows,
+  type FakePlaylist,
 } from "./spotify-fixtures"
 import type { TimeRange } from "./spotify-listening-history"
 import {

@@ -1,15 +1,15 @@
 import { use, useEffect, useRef } from "react"
 import {
-  type LibraryTheme,
-  type ThemeId,
   defaultLibraryTheme,
   findLibraryTheme,
   isBuiltInTheme,
+  type LibraryTheme,
+  type ThemeId,
 } from "../../../shared/theme-library"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useRovingFocus } from "../../ui/use-roving-focus"
 import { selectTheme } from "./saved-theme"
-import { type DeleteTrigger, ThemeOption } from "./theme-option"
+import { ThemeOption, type DeleteTrigger } from "./theme-option"
 import { useDeleteImportedTheme } from "./use-delete-imported-theme"
 import { useThemePreview } from "./use-theme-preview"
 

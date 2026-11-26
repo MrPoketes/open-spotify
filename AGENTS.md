@@ -21,7 +21,7 @@ autonomous pipeline, your playbook is in [docs/agents](docs/agents).
 | `pnpm test:e2e`    | Launch the unpacked app against fake Spotify                   |
 | `pnpm screenshots` | Retake the README screenshots from the unpacked app            |
 | `pnpm lint:fix`    | Apply automatic lint fixes                                     |
-| `pnpm format`      | Format all files with oxfmt                                    |
+| `pnpm format`      | Format all files with Prettier                                 |
 | `pnpm icons`       | Regenerate the app icon files from `build/icon.svg`            |
 
 ## Where code goes

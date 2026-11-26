@@ -9,7 +9,7 @@ import {
   RemoveFolderItemRequest,
   RenameFolderRequest,
 } from "../shared/folders"
-import { type IpcChannel, ipcChannels } from "../shared/ipc-channels"
+import { ipcChannels, type IpcChannel } from "../shared/ipc-channels"
 import { decodeIpcRequest } from "./decode-ipc-request"
 import { Folders } from "./folders"
 import { replyWithTaggedFailures } from "./reply-with-tagged-failures"

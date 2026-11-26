@@ -1,4 +1,4 @@
-import { Context, type Effect, Layer, type Option } from "effect"
+import { Context, Layer, type Effect, type Option } from "effect"
 import type { BaseWindow, Dialog, FileFilter } from "electron"
 import { choosePathToOpen, choosePathToSave, type ModalDialogError } from "./modal-dialogs"
 

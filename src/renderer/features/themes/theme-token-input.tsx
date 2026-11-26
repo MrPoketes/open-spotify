@@ -3,7 +3,7 @@ import { useId } from "react"
 import { HexColor, sixDigitHexColor } from "../../../shared/theme"
 import type { ContrastShortfall } from "../../../shared/theme-contrast"
 import { ContrastWarnings } from "./contrast-warnings"
-import { type TokenField, tokenValueProblem } from "./theme-token-fields"
+import { tokenValueProblem, type TokenField } from "./theme-token-fields"
 
 const fieldStyle =
   "min-w-0 rounded-small bg-surface-raised px-3 py-2 text-sm aria-invalid:ring-2 aria-invalid:ring-danger"

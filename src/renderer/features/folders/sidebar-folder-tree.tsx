@@ -12,9 +12,9 @@ import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { useFolderTree } from "./folder-tree"
 import { folderTreeNodes } from "./folder-tree-nodes"
 import {
-  type SidebarFolderActions,
   SidebarFolderRow,
   SpotifyItemRow,
+  type SidebarFolderActions,
 } from "./sidebar-folder-tree-rows"
 import { useDropFolderEntry } from "./use-drop-folder-entry"
 import { useFolderTreeChanges } from "./use-folder-tree-changes"

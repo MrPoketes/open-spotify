@@ -1,14 +1,14 @@
 import { Check, ChevronRight } from "lucide-react"
 import {
+  useLayoutEffect,
+  useRef,
+  useState,
   type CSSProperties,
   type FocusEvent,
   type KeyboardEvent,
   type MouseEvent,
   type Ref,
   type RefObject,
-  useLayoutEffect,
-  useRef,
-  useState,
 } from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { menuItemTargetForKey } from "./menu-item-target"

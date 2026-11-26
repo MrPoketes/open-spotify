@@ -1,6 +1,6 @@
 import type { LibraryEntryKind, LibrarySection } from "../../../shared/library-layout"
 import { librarySectionNames } from "./library-section-names"
-import { type FocusAfterChange, showSectionFocusKey } from "./use-focus-after-change"
+import { showSectionFocusKey, type FocusAfterChange } from "./use-focus-after-change"
 
 interface HiddenLibrarySectionsProps {
   readonly sections: ReadonlyArray<LibrarySection>

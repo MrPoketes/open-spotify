@@ -1,5 +1,5 @@
 import { redirect } from "@tanstack/react-router"
-import { Effect, type ManagedRuntime, Option } from "effect"
+import { Effect, Option, type ManagedRuntime } from "effect"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { loginDestinationFor } from "./login-destination"
 

@@ -1,5 +1,5 @@
 import { Effect } from "effect"
-import { SpotifyApi, maximumPageSize } from "../spotify/spotify-api"
+import { maximumPageSize, SpotifyApi } from "../spotify/spotify-api"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import type { SavedTrack, SavedTracksPage } from "../spotify/spotify-track"
 import { formatListDuration } from "../track-list/format-duration"

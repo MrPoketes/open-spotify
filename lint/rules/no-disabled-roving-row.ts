@@ -5,9 +5,9 @@ import { memberPropertyName } from "../member-property-name.ts"
 import {
   isRovingType,
   objectPatternBinding,
-  type RovingTypeIndex,
   typeAnnotationOf,
   typeHasRovingProperty,
+  type RovingTypeIndex,
   type VariableDef,
   type VariableName,
 } from "../roving-row-types.ts"

@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type RefObject, useLayoutEffect, useRef, useState } from "react"
+import { useLayoutEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react"
 import { targetRowForKey } from "../../ui/use-roving-focus"
 
 interface RowFocusOptions {

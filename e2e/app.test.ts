@@ -1,9 +1,9 @@
 import {
-  type ElectronApplication,
-  type Page,
   _electron,
   test as base,
   expect,
+  type ElectronApplication,
+  type Page,
 } from "@playwright/test"
 import { fakeSpotifyAccounts, logInThroughOnboarding, serveFakeWebApi } from "./fake-spotify"
 import { packagedAppExecutable } from "./packaged-app"

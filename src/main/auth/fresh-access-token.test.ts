@@ -2,11 +2,11 @@ import { assert, describe, it } from "@effect/vitest"
 import { Effect, Fiber } from "effect"
 import { TestClock } from "effect/testing"
 import {
-  type FakeSpotifyAccounts,
   fakeBrowser,
   fakeSpotifySession,
   makeFakeSpotifyAccounts,
   restoreFakeSession,
+  type FakeSpotifyAccounts,
 } from "./spotify-session-fakes"
 
 // Login has its own tests. These start from a session saved by an earlier

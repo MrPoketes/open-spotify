@@ -2,7 +2,7 @@ import { Folder as FolderIcon, type LucideIcon } from "lucide-react"
 import type { FolderEntry } from "../../../shared/folders"
 import type { ArtworkSource } from "../../ui/artwork"
 import { formatCount } from "../../ui/format-count"
-import { type SpotifyItemKind, spotifyItemKinds } from "../spotify/spotify-item-kinds"
+import { spotifyItemKinds, type SpotifyItemKind } from "../spotify/spotify-item-kinds"
 
 type FolderEntryPage =
   | { readonly to: "/folder/$folderId"; readonly params: { readonly folderId: string } }

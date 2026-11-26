@@ -1,7 +1,7 @@
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import react from "@vitejs/plugin-react"
-import { type Plugin, defineConfig } from "vite"
+import { defineConfig, type Plugin } from "vite"
 import {
   contentSecurityPolicy,
   scriptNoncePlaceholder,

@@ -2,11 +2,11 @@ import {
   DndContext,
   MeasuringStrategy,
   PointerSensor,
-  type PointerSensorOptions,
   useSensor,
   useSensors,
+  type PointerSensorOptions,
 } from "@dnd-kit/core"
-import { type PointerEvent, type ReactNode, useState } from "react"
+import { useState, type PointerEvent, type ReactNode } from "react"
 import { rowUnderPointer } from "./row-under-pointer"
 
 // A press that moves less than this is a click on the row.

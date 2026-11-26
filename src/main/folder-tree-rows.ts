@@ -1,5 +1,5 @@
 import { Schema } from "effect"
-import { Folder, type FolderTree, SpotifyItem } from "../shared/folders"
+import { Folder, SpotifyItem, type FolderTree } from "../shared/folders"
 
 const FolderRow = Schema.Struct({
   id: Folder.fields.id,

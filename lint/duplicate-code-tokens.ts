@@ -1,4 +1,4 @@
-import { type ESTree, parseSync } from "vite"
+import { parseSync, type ESTree } from "vite"
 import { lineAtOffset, lineStartsOf } from "./source-lines.ts"
 import { tailwindClassSet } from "./tailwind-classes.ts"
 

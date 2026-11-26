@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import type { Theme } from "../../../shared/theme"
-import { type LibraryTheme, findLibraryTheme } from "../../../shared/theme-library"
+import { findLibraryTheme, type LibraryTheme } from "../../../shared/theme-library"
 import { SecondaryButton } from "../../ui/pill-button"
 import type { SavedThemeLibrary } from "./saved-theme"
 import { ThemeEditor } from "./theme-editor"

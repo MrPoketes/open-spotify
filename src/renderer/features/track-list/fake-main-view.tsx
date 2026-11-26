@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useState } from "react"
+import { useCallback, useState, type ReactNode } from "react"
 import { giveMainViewALayout } from "./fake-main-view-layout"
 
 // A track list reads the main view's size as it mounts, before the ref of the

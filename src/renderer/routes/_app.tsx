@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Outlet } from "@tanstack/react-router"
 import { Effect } from "effect"
 import { defaultRightPaneWidth } from "../../shared/right-pane-width"
 import { defaultSidebarWidth } from "../../shared/sidebar-width"

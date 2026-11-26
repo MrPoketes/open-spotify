@@ -1,5 +1,5 @@
 import { Option, Record, Result, Schema } from "effect"
-import { CssLength, HexColor, type ThemeToken, themeTokenSchemas } from "../../../shared/theme"
+import { CssLength, HexColor, themeTokenSchemas, type ThemeToken } from "../../../shared/theme"
 
 type TokenPrefix<Token> = Token extends `${infer Prefix}-${string}` ? Prefix : Token
 

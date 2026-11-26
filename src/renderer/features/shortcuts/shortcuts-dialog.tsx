@@ -4,12 +4,12 @@ import { IconButton } from "../../ui/icon-button"
 import { IsMacContext } from "./is-mac-context"
 import { keyComboLabels } from "./key-combo"
 import {
-  type KeyboardShortcut,
   rowShortcuts,
-  type ShortcutGroupName,
   shortcutGroups,
   shortcutKeys,
   windowShortcuts,
+  type KeyboardShortcut,
+  type ShortcutGroupName,
 } from "./keyboard-shortcuts"
 import { useKeyboardShortcut } from "./use-keyboard-shortcut"
 

@@ -1,9 +1,9 @@
 import type { LucideIcon } from "lucide-react"
-import { type KeyboardEvent, useId, useRef, useState } from "react"
+import { useId, useRef, useState, type KeyboardEvent } from "react"
 import { closeWhenFocusLeaves } from "./close-when-focus-leaves"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
 import { iconControlClassName } from "./icon-control-class-name"
-import { type MenuItem, MenuList, type MenuOpenFocus } from "./menu-list"
+import { MenuList, type MenuItem, type MenuOpenFocus } from "./menu-list"
 
 interface MenuButtonProps {
   readonly label: string

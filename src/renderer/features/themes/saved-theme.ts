@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { defaultThemeId } from "../../../shared/built-in-themes"
-import { type LibraryTheme, findLibraryTheme, themeLibrary } from "../../../shared/theme-library"
+import { findLibraryTheme, themeLibrary, type LibraryTheme } from "../../../shared/theme-library"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { loadSavedSetting, saveSetting } from "../../lib/saved-setting"
 import { applyTheme } from "./apply-theme"

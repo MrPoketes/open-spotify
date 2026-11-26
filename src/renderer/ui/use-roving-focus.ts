@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useCallback, useRef, useState } from "react"
+import { useCallback, useRef, useState, type KeyboardEvent } from "react"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
 
 type Move = (activeIndex: number, rowCount: number) => number

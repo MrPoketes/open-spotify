@@ -1,4 +1,4 @@
-import { type ReactNode, useId } from "react"
+import { useId, type ReactNode } from "react"
 
 interface HomeSectionProps {
   readonly title: string

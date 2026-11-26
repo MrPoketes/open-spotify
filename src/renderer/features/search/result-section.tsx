@@ -1,5 +1,5 @@
 import { Effect } from "effect"
-import { type ReactNode, type Ref, useId } from "react"
+import { useId, type ReactNode, type Ref } from "react"
 import { LoadingMessage } from "../../ui/loading-message"
 import { SecondaryButton } from "../../ui/pill-button"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
@@ -7,8 +7,8 @@ import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { Page } from "../spotify/spotify-paging"
 import type { SearchResults, SearchType } from "../spotify/spotify-search"
-import { type LoadControl, useLoadControlFocus } from "../spotify/use-load-control-focus"
-import { type NextPageState, useNextPages } from "../spotify/use-next-pages"
+import { useLoadControlFocus, type LoadControl } from "../spotify/use-load-control-focus"
+import { useNextPages, type NextPageState } from "../spotify/use-next-pages"
 
 interface ResultSectionProps<A> {
   readonly query: string

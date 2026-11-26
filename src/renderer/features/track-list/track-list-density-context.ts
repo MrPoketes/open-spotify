@@ -1,5 +1,5 @@
 import { createContext } from "react"
-import { type TrackListDensity, defaultTrackListDensity } from "../../../shared/track-list-density"
+import { defaultTrackListDensity, type TrackListDensity } from "../../../shared/track-list-density"
 
 interface TrackListDensityChoice {
   readonly density: TrackListDensity

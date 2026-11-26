@@ -1,7 +1,7 @@
 import type { Effect } from "effect"
 import type { ContextType } from "react"
 import { describe, expectTypeOf, it } from "vitest"
-import type { RendererRuntimeContext, RendererServices, rendererRuntime } from "./renderer-runtime"
+import type { rendererRuntime, RendererRuntimeContext, RendererServices } from "./renderer-runtime"
 
 type ForkedContextEffect = Parameters<ContextType<typeof RendererRuntimeContext>["runFork"]>[0]
 type ForkedRendererEffect = Parameters<typeof rendererRuntime.runFork>[0]

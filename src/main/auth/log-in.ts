@@ -5,7 +5,7 @@ import { makeAuthorizationRequest } from "./authorization-request"
 import { listenOnRedirectPort } from "./callback-server"
 import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
 import { SystemBrowser } from "./system-browser"
-import { TokenStore, makeStoredSession } from "./token-store"
+import { makeStoredSession, TokenStore } from "./token-store"
 
 const loginTimeout = Duration.minutes(5)
 

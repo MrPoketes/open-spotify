@@ -2,10 +2,10 @@ import { use, useEffect, useEffectEvent } from "react"
 import { IsMacContext } from "./is-mac-context"
 import { matchesKeyCombo } from "./key-combo"
 import {
-  type KeyboardShortcut,
   shortcutKeys,
-  type WindowShortcutName,
   windowShortcuts,
+  type KeyboardShortcut,
+  type WindowShortcutName,
 } from "./keyboard-shortcuts"
 
 const isTextEntry = (target: EventTarget | null) =>

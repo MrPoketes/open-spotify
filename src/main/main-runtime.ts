@@ -1,6 +1,6 @@
 import path from "node:path"
 import * as NodeFileSystem from "@effect/platform-node/NodeFileSystem"
-import { type Effect, type Fiber, Layer, ManagedRuntime } from "effect"
+import { Layer, ManagedRuntime, type Effect, type Fiber } from "effect"
 import { app, dialog, safeStorage, shell } from "electron"
 import { SpotifySession } from "./auth/spotify-session"
 import { SpotifyTokenEndpoint } from "./auth/spotify-token-endpoint"

@@ -1,10 +1,10 @@
 import {
-  Outlet,
-  RouterProvider,
   createMemoryHistory,
   createRootRoute,
   createRoute,
   createRouter,
+  Outlet,
+  RouterProvider,
   useSearch,
 } from "@tanstack/react-router"
 import { act, render, screen, waitFor, within } from "@testing-library/react"
