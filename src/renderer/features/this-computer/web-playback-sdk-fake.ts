@@ -9,7 +9,8 @@ export const webPlaybackSdkNeverReady = Layer.succeed(
 
 export const fakeThisComputerDeviceId = "fake-device-this-computer"
 
-const holding = <A>(value: A) => Stream.concat(Stream.succeed(value), Stream.never)
+// Emits the value and then nothing more, like a state that never changes.
+const unchanging = <A>(value: A) => Stream.concat(Stream.succeed(value), Stream.never)
 
 // An SDK that is ready at once. It records whether its player is connected
 // and each volume the player is given.
@@ -28,8 +29,8 @@ export const readyWebPlaybackSdk = () => {
           }),
       ).pipe(
         Effect.as({
-          deviceId: holding(fakeThisComputerDeviceId),
-          failure: holding(null),
+          deviceId: unchanging(fakeThisComputerDeviceId),
+          failure: unchanging(null),
           setVolume: (volumePercent: number) =>
             Effect.sync(() => {
               sdkPlayer.volumes.push(volumePercent)
@@ -48,8 +49,8 @@ export const webPlaybackSdkReporting = (failure: SdkErrorEvent, deviceId: string
     WebPlaybackSdk,
     WebPlaybackSdk.of({
       connect: Effect.succeed({
-        deviceId: holding(deviceId),
-        failure: holding(failure),
+        deviceId: unchanging(deviceId),
+        failure: unchanging(failure),
         setVolume: () => Effect.void,
       }),
     }),

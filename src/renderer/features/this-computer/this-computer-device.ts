@@ -4,10 +4,11 @@ import { describeThisComputerFailure, type ThisComputerFailure } from "./this-co
 const thisComputerName = "This computer"
 
 // A device without an id never matches, even while this computer has none.
-export const shownDeviceName = (device: Device, thisComputerDeviceId: string | null) =>
+const isThisComputer = (device: Device, thisComputerDeviceId: string | null) =>
   thisComputerDeviceId !== null && device.id === thisComputerDeviceId
-    ? thisComputerName
-    : device.name
+
+export const shownDeviceName = (device: Device, thisComputerDeviceId: string | null) =>
+  isThisComputer(device, thisComputerDeviceId) ? thisComputerName : device.name
 
 export interface DeviceEntry {
   readonly device: Device
@@ -36,14 +37,14 @@ export const withThisComputer = (
   failure: ThisComputerFailure | null,
 ): ReadonlyArray<DeviceEntry> => {
   const failureReason = failure === null ? null : describeThisComputerFailure(failure)
-  const isThisComputer = (device: Device) =>
-    thisComputerDeviceId !== null && device.id === thisComputerDeviceId
   const entries = devices.map((device) =>
-    isThisComputer(device)
+    isThisComputer(device, thisComputerDeviceId)
       ? { device: { ...device, name: thisComputerName }, failureReason }
       : { device, failureReason: null },
   )
-  if (devices.some(isThisComputer) || (thisComputerDeviceId === null && failure === null)) {
+  const isListedBySpotify = devices.some((device) => isThisComputer(device, thisComputerDeviceId))
+  const hasNothingToShow = thisComputerDeviceId === null && failure === null
+  if (isListedBySpotify || hasNothingToShow) {
     return entries
   }
   return [...entries, { device: unlistedThisComputer(thisComputerDeviceId), failureReason }]

@@ -54,6 +54,8 @@ export const addThisComputerDevice = Effect.fn("addThisComputerDevice")(
     )
   },
   Effect.scoped,
+  // Effect.fn passes each step the function's own arguments after the effect,
+  // so a failure can be reported through the caller's callback.
   (addition, _onDeviceIdChange, onFailureChange) =>
     addition.pipe(
       Effect.catch((error) =>

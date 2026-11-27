@@ -10,8 +10,7 @@ import { ImportedThemeId, type LibraryTheme } from "../../shared/theme-library"
 import { fakeFolderChannels } from "./fake-folder-channels"
 
 // The theme file channels reply as if the user had answered their dialogs.
-// Both default to the user canceling. Widevine is installed unless a test
-// says otherwise.
+// Both default to the user canceling.
 interface FakeMainProcessOptions {
   readonly environmentClientId?: string
   readonly isWidevineInstalled?: boolean

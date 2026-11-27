@@ -192,10 +192,15 @@ describe("This computer", () => {
         }),
       })
       const picker = await openPicker()
+      const thisComputer = () =>
+        within(picker).getByRole("button", {
+          name: /^This computer\s*Spotify couldn't play on this computer/,
+        })
+      // The failure can arrive before the device id, while the entry cannot
+      // be picked yet.
+      await waitFor(() => expect(thisComputer()).not.toHaveAttribute("aria-disabled", "true"))
 
-      await userEvent.click(
-        await deviceButton(picker, /^This computer\s*Spotify couldn't play on this computer/),
-      )
+      await userEvent.click(thisComputer())
 
       await waitFor(() => expect(transferredTo).toEqual([fakeThisComputerDeviceId]))
     })
