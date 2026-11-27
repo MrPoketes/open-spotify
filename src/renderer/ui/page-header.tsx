@@ -21,8 +21,9 @@ interface PageCover {
 }
 
 interface PageHeaderProps {
-  // What the page shows, such as "Playlist" or "Show". It leads the line of
-  // details under the title rather than sitting above it as a label.
+  // What the page shows, such as "Playlist" or "Show". It leads the details
+  // line, because a label above a heading is noise (docs/design.md, Page
+  // header).
   readonly kind: string
   readonly title: string
   readonly cover: PageCover

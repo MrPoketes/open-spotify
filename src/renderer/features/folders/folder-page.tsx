@@ -49,7 +49,8 @@ function LoadedFolder({ location, savedView }: LoadedFolderProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
+      {/* The header's own top padding spaces it from the breadcrumb. */}
+      <div className="flex flex-col">
         {ancestors.length > 0 && <FolderBreadcrumb folder={folder} ancestors={ancestors} />}
         <PageHeader
           kind="Folder"

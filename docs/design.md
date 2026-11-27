@@ -158,7 +158,9 @@ these sizes:
 
 Weights: 400 for body, 500 for resting toggle options, 600 for emphasis, buttons, and active
 items, 700 for headings. Headings from `text-xl` up use `font-display` (lint enforces it) and
-`tracking-tight`. Durations and counts use `tabular-nums` so columns line up. The labels that
+`tracking-tight`. Durations and counts in columns use `tabular-nums` so they line up; running
+text, such as a page header's details line, leaves it off, since Schibsted Grotesk's tabular
+figures set commas at figure width ("5 ,000"). The labels that
 divide the sidebar (Folders, Pinned, the library sections, Hidden) and the track list's column
 names are set like the credits on a sleeve's back: `text-xs`, 600, `uppercase`, `tracking-wider`,
 `muted` (`src/renderer/ui/credits-label-class-name.ts`).

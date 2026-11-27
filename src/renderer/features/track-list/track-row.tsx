@@ -74,8 +74,6 @@ const addedAtFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }
 
 export function TrackListHeader({ layout }: { readonly layout: TrackListLayout }) {
   return (
-    // A hairline rules the column names off from the rows, as on a sleeve's
-    // tracklist.
     <tr
       aria-rowindex={1}
       className={`${trackColumns(layout)} ${creditsLabelClassName} mb-2 h-9 border-b border-border text-left`}

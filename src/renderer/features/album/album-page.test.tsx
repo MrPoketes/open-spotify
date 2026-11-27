@@ -28,14 +28,14 @@ const spotifyFailingFirstAlbumRequest = spotifyApiFakeWith((spotify) => {
 })
 
 describe("AlbumPage", () => {
-  it("shows the album's name, artists, release year, track count, and duration", async () => {
+  it("shows the album's name, kind, artists, release year, track count, and duration", async () => {
     await renderAlbumPage("fake-album-0")
 
     const header = await albumHeader("Glass Harbour")
     expect(
       within(header).getByRole("heading", { name: "Glass Harbour", level: 1 }),
     ).toBeInTheDocument()
-    expect(header).toHaveTextContent("Northbound Static · 2019 · 10 tracks · 30 min")
+    expect(header).toHaveTextContent("Album · Northbound Static · 2019 · 10 tracks · 30 min")
   })
 
   // Spotify embeds only the first 50 tracks, and the total must count them all.
