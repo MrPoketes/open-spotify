@@ -809,8 +809,8 @@ On a focused link, which `Space` would only scroll past, or a focused radio butt
 already checked, it plays or pauses. Holding the keys down runs a shortcut once, except for the
 volume, which keeps stepping like a volume key. Quick presses add up: each seek starts from where
 the last one moved the seek bar, before Spotify reports it, and the volume slider shows each step
-at once and sends the total once the presses stop. A seek stays
-within the item and the volume between 0 and 100, and a press at a limit sends nothing. A menu
+at once and sends the total once the presses stop. A seek stays within the item and the volume
+between 0 and 100, and a press at a limit sends nothing. A menu
 button opens on `↓` or `↑` only without a modifier, so `Ctrl+↓` turns the volume down even there.
 A playback shortcut whose control cannot be used says why in the status message, since the
 control's tooltip may never have been seen. A held volume shortcut says it once, not on every

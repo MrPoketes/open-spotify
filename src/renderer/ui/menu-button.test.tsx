@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Settings } from "lucide-react"
-import { describe, expect, it, onTestFinished } from "vitest"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { MenuButton } from "./menu-button"
 
 const actions = [
@@ -118,6 +118,36 @@ describe("MenuButton", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
     expect(menuButton).toHaveFocus()
     expect(menuButton).toHaveAttribute("aria-expanded", "false")
+  })
+
+  // A click elsewhere, such as in the search field, closes the menu, and
+  // typing must then go where the click put focus.
+  it("leaves focus on the control a click outside moved it to", async () => {
+    // Base UI gives focus back after a click outside only where focus() reads
+    // its preventScroll option, which jsdom's does not.
+    const focusElement = HTMLElement.prototype.focus
+    vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(function (
+      this: HTMLElement,
+      options?: FocusOptions,
+    ) {
+      void options?.preventScroll
+      focusElement.call(this, options)
+    })
+    render(
+      <>
+        <MenuButton label="Options" icon={Settings} items={actions} />
+        <input aria-label="Search" />
+      </>,
+    )
+    const searchField = screen.getByRole("textbox", { name: "Search" })
+
+    await openWithClick()
+    // A browser focuses the field on the press, while the menu fades out.
+    act(() => searchField.focus())
+    await userEvent.click(searchField)
+
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument())
+    expect(searchField).toHaveFocus()
   })
 
   it("closes when a click lands outside it", async () => {
