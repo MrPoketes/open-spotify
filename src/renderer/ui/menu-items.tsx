@@ -29,13 +29,26 @@ export type MenuItem = MenuAction | MenuSubmenu
 
 const menuItemKey = (item: MenuItem) => item.id ?? item.label
 
-// The items of a menu button's or a context menu's menu, with a submenu for
-// each item that holds items of its own.
-export function MenuItems({ items }: { readonly items: ReadonlyArray<MenuItem> }) {
-  return items.map((item) => <MenuEntry key={menuItemKey(item)} item={item} />)
+interface MenuItemsProps {
+  readonly items: ReadonlyArray<MenuItem>
+  // Takes the chosen item's action, for the menu to run once it has closed
+  // (useActionAfterMenuCloses).
+  readonly onChoose: (action: () => void) => void
 }
 
-function MenuEntry({ item }: { readonly item: MenuItem }) {
+// The items of a menu button's or a context menu's menu, with a submenu for
+// each item that holds items of its own.
+export function MenuItems({ items, onChoose }: MenuItemsProps) {
+  return items.map((item) => <MenuEntry key={menuItemKey(item)} item={item} onChoose={onChoose} />)
+}
+
+function MenuEntry({
+  item,
+  onChoose,
+}: {
+  readonly item: MenuItem
+  readonly onChoose: MenuItemsProps["onChoose"]
+}) {
   if ("items" in item) {
     return (
       <MenuPrimitive.SubmenuRoot>
@@ -44,18 +57,19 @@ function MenuEntry({ item }: { readonly item: MenuItem }) {
             submenu on its way. */}
         <DropdownMenuSubTrigger openOnHover={false}>{item.label}</DropdownMenuSubTrigger>
         <DropdownMenuSubContent aria-label={item.label}>
-          <MenuItems items={item.items} />
+          <MenuItems items={item.items} onChoose={onChoose} />
         </DropdownMenuSubContent>
       </MenuPrimitive.SubmenuRoot>
     )
   }
+  const choose = () => onChoose(item.onSelect)
   if (item.checked === undefined) {
-    return <DropdownMenuItem onClick={item.onSelect}>{item.label}</DropdownMenuItem>
+    return <DropdownMenuItem onClick={choose}>{item.label}</DropdownMenuItem>
   }
   // A checkbox item stays open by default, for ticking several; here each
   // choice is a whole action, like any other item's.
   return (
-    <DropdownMenuCheckboxItem checked={item.checked} onCheckedChange={item.onSelect} closeOnClick>
+    <DropdownMenuCheckboxItem checked={item.checked} onCheckedChange={choose} closeOnClick>
       {item.label}
     </DropdownMenuCheckboxItem>
   )

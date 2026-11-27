@@ -200,6 +200,19 @@ describe("Add to folder", () => {
     ).toHaveAttribute("aria-checked", "true")
   })
 
+  // Keyboard users continue from the row they opened the menu on, so focus
+  // must not end up on the page itself.
+  it("gives focus back to the row when the New folder dialog is cancelled", async () => {
+    const user = await renderWithFolders(trackList)
+    const row = await trackRow()
+    const folderSubmenu = await openFolderSubmenu(user, row)
+    await user.click(within(folderSubmenu).getByRole("menuitem", { name: "New folder…" }))
+    const dialog = await screen.findByRole("dialog", { name: "New folder" })
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }))
+
+    expect(row).toHaveFocus()
+  })
+
   it("asks for a name instead of creating a folder with a blank one", async () => {
     const user = await renderWithFolders(trackList)
 

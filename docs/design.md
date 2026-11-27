@@ -703,7 +703,7 @@ rows with `rounded-small` corners that turn `surface-raised` while highlighted: 
 with keyboard focus, or while their submenu is open. An item that opens a dialog ends its label
 with an ellipsis ("Import folders…").
 
-A context menu (`ContextMenu` in `src/renderer/ui`, on shadcn's Context Menu) opens on
+A context menu (`ContextMenu` in `src/renderer/ui`, on Base UI's Context Menu) opens on
 right-click, `Shift+F10`, or the context-menu key, at the pointer or, from the keyboard, under the
 element. It looks like any other menu and follows the WAI-ARIA menu pattern: like a menu button's
 menu, it opens from a key with focus on the first item and from a right-click with focus on the
@@ -720,6 +720,8 @@ is a popup of its own, so a scrolling menu never clips one. Every menu ignores k
 `Ctrl`, `Alt`, or `Cmd`, so app-wide shortcuts such as `Alt+←` still work while it is open, and
 keeps every other key: `Space` chooses an item and a letter jumps to one, so no window shortcut
 fires. A menu lists only the actions that lead somewhere, and an element with none opens no menu.
+A chosen item's action runs once its menu has closed, with focus back on the menu's opener, so a
+dialog the action opens gives focus back to the opener when it closes.
 
 The menu parts are `src/renderer/ui/dropdown-menu.tsx`. Base UI builds its Context Menu from the
 same Menu parts, so context menus use them too, and both kinds draw their items from the same
@@ -804,10 +806,10 @@ position works instead.
 No shortcut fires while focus is in a text field, and only shortcuts held with `Ctrl`, `Alt`, or
 `Cmd` fire while a menu has focus (see Menus). `Space` leaves a focused button to press itself.
 On a focused link, which `Space` would only scroll past, or a focused radio button, which is
-already checked, it plays or pauses. Holding the keys down runs a
-shortcut once, except for the volume, which keeps stepping like a volume key. Quick presses add
-up: each seek starts from where the last one moved the seek bar, before Spotify reports it, and
-the volume slider shows each step at once and sends the total once the presses stop. A seek stays
+already checked, it plays or pauses. Holding the keys down runs a shortcut once, except for the
+volume, which keeps stepping like a volume key. Quick presses add up: each seek starts from where
+the last one moved the seek bar, before Spotify reports it, and the volume slider shows each step
+at once and sends the total once the presses stop. A seek stays
 within the item and the volume between 0 and 100, and a press at a limit sends nothing. A menu
 button opens on `↓` or `↑` only without a modifier, so `Ctrl+↓` turns the volume down even there.
 A playback shortcut whose control cannot be used says why in the status message, since the

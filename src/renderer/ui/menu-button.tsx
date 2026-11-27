@@ -1,9 +1,11 @@
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import type { LucideIcon } from "lucide-react"
+import { useRef } from "react"
 import { buttonVariants } from "./button-variants"
 import { DropdownMenuContent } from "./dropdown-menu"
 import { leaveShortcutsToTheWindow } from "./leave-shortcuts-to-the-window"
 import { MenuItems, type MenuItem } from "./menu-items"
+import { useActionAfterMenuCloses } from "./use-action-after-menu-closes"
 
 interface MenuButtonProps {
   readonly label: string
@@ -18,11 +20,14 @@ interface MenuButtonProps {
 const menuAlignments = { left: "start", right: "end" } as const
 
 export function MenuButton({ label, icon: Icon, items, menuAlignment = "right" }: MenuButtonProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const { choose, runChosenAction } = useActionAfterMenuCloses(buttonRef)
   return (
     // Not modal, unlike Base UI's default: the page keeps scrolling, and a
     // click outside closes the menu and still reaches what it lands on.
     <MenuPrimitive.Root modal={false}>
       <MenuPrimitive.Trigger
+        ref={buttonRef}
         aria-label={label}
         title={label}
         onKeyDown={leaveShortcutsToTheWindow}
@@ -30,8 +35,12 @@ export function MenuButton({ label, icon: Icon, items, menuAlignment = "right" }
       >
         <Icon aria-hidden size={20} />
       </MenuPrimitive.Trigger>
-      <DropdownMenuContent aria-label={label} align={menuAlignments[menuAlignment]}>
-        <MenuItems items={items} />
+      <DropdownMenuContent
+        aria-label={label}
+        align={menuAlignments[menuAlignment]}
+        finalFocus={runChosenAction}
+      >
+        <MenuItems items={items} onChoose={choose} />
       </DropdownMenuContent>
     </MenuPrimitive.Root>
   )

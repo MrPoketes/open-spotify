@@ -2,6 +2,7 @@ import { Ellipsis, type LucideIcon } from "lucide-react"
 import { useId, type ReactNode } from "react"
 import { Artwork, type ArtworkSource } from "./artwork"
 import { ContextMenu } from "./context-menu"
+import { openedContextMenu } from "./context-menu-content"
 import { MenuButton } from "./menu-button"
 import type { MenuItem } from "./menu-items"
 
@@ -41,13 +42,14 @@ export function PageHeader({
 }: PageHeaderProps) {
   const { isRound = false, ...artwork } = cover
   const titleId = useId()
-  const opensMenu = menuItems !== undefined && menuItems.length > 0
+  const headerMenu = openedContextMenu(
+    menuItems === undefined ? null : { label: `Actions for ${title}`, items: menuItems },
+  )
+  const opensMenu = headerMenu !== null
 
   return (
     <>
-      <ContextMenu
-        menu={menuItems === undefined ? null : { label: `Actions for ${title}`, items: menuItems }}
-      >
+      <ContextMenu menu={headerMenu}>
         <header
           // A header inside the main view is a generic element, which cannot
           // have a name, so a group named after the title says what the focused

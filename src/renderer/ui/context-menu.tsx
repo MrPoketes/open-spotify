@@ -1,17 +1,12 @@
 import { ContextMenu as ContextMenuPrimitive } from "@base-ui/react/context-menu"
 import type { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { useRef, type FocusEvent, type KeyboardEvent, type ReactElement } from "react"
+import { openedContextMenu, type ContextMenuContent } from "./context-menu-content"
 import { DropdownMenuContent } from "./dropdown-menu"
-import { MenuItems, type MenuItem } from "./menu-items"
-
-interface ContextMenuContent {
-  readonly label: string
-  readonly items: ReadonlyArray<MenuItem>
-}
+import { MenuItems } from "./menu-items"
+import { useActionAfterMenuCloses } from "./use-action-after-menu-closes"
 
 interface ContextMenuProps {
-  // An element with no menu, or with no items in it, opens nothing
-  // (docs/design.md, Menus).
   readonly menu: ContextMenuContent | null
   // The element the menu opens from. It keeps its own props and handlers.
   readonly children: ReactElement
@@ -20,13 +15,15 @@ interface ContextMenuProps {
 const isMenuKey = (event: KeyboardEvent) =>
   event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")
 
-// shadcn/ui's Context Menu: opens at the pointer on right-click, or under the
-// element on Shift+F10 or the context-menu key, and returns focus to the
-// element when it closes.
+// Base UI's Context Menu, drawn with shadcn/ui's Dropdown Menu parts: opens at
+// the pointer on right-click, or under the element on Shift+F10 or the
+// context-menu key, and returns focus to the element when it closes.
 export function ContextMenu({ menu, children }: ContextMenuProps) {
   const menuActions = useRef<MenuPrimitive.Root.Actions>(null)
   const openedWithKeyboard = useRef(false)
-  const shownMenu = menu !== null && menu.items.length > 0 ? menu : null
+  const opener = useRef<HTMLElement>(null)
+  const { choose, runChosenAction } = useActionAfterMenuCloses(opener)
+  const shownMenu = openedContextMenu(menu)
 
   // Base UI opens the menu on the contextmenu event, which a key press does
   // not reliably fire: jsdom never does, and a browser fires it at a point of
@@ -76,6 +73,9 @@ export function ContextMenu({ menu, children }: ContextMenuProps) {
   return (
     <ContextMenuPrimitive.Root actionsRef={menuActions} disabled={shownMenu === null}>
       <ContextMenuPrimitive.Trigger
+        ref={(element: HTMLElement | null) => {
+          opener.current = element
+        }}
         render={children}
         onContextMenu={() => {
           openedWithKeyboard.current = false
@@ -86,9 +86,10 @@ export function ContextMenu({ menu, children }: ContextMenuProps) {
         <DropdownMenuContent
           aria-label={shownMenu.label}
           onFocus={focusFirstItemAfterKey}
+          finalFocus={runChosenAction}
           onKeyDown={closeOnTab}
         >
-          <MenuItems items={shownMenu.items} />
+          <MenuItems items={shownMenu.items} onChoose={choose} />
         </DropdownMenuContent>
       )}
     </ContextMenuPrimitive.Root>
