@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Settings } from "lucide-react"
-import { describe, expect, it, onTestFinished } from "vitest"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { MenuButton } from "./menu-button"
 
 const actions = [
@@ -10,6 +10,25 @@ const actions = [
   { label: "Third", onSelect: () => {} },
 ]
 
+// Opened with the pointer, the menu itself takes focus, a moment after it
+// opens, and the arrow keys move from there.
+const openWithClick = async () => {
+  await userEvent.click(screen.getByRole("button", { name: "Options" }))
+  const menu = await screen.findByRole("menu", { name: "Options" })
+  await waitFor(() => expect(menu).toHaveFocus())
+}
+
+const jsdomFocus: unknown = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "focus")?.value
+
+// Base UI gives focus back after a click outside only where focus() reads its
+// preventScroll option, which jsdom's does not.
+function focusReadingPreventScroll(this: HTMLElement, options?: FocusOptions) {
+  void options?.preventScroll
+  if (typeof jsdomFocus === "function") {
+    Reflect.apply(jsdomFocus, this, [options])
+  }
+}
+
 describe("MenuButton", () => {
   // Keyboard users must be able to leave a menu without choosing anything and
   // continue from where they were.
@@ -17,7 +36,7 @@ describe("MenuButton", () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
     const menuButton = screen.getByRole("button", { name: "Options" })
 
-    await userEvent.click(menuButton)
+    await openWithClick()
     await userEvent.keyboard("{Escape}")
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
@@ -30,29 +49,30 @@ describe("MenuButton", () => {
     screen.getByRole("button", { name: "Options" }).focus()
 
     await userEvent.keyboard("{ArrowUp}")
-    expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus()
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus())
 
     await userEvent.keyboard("{ArrowDown}")
-    expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus())
   })
 
   it("moves focus to the first item on Home and the last item on End", async () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await openWithClick()
     await userEvent.keyboard("{End}")
-    expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus()
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus())
 
     await userEvent.keyboard("{Home}")
-    expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus())
   })
 
   // App-wide shortcuts, such as Alt+Left to go back, listen on the window and
   // must still work while a menu has focus.
   it("leaves arrow keys, Home and End held with Ctrl, Alt or Cmd to app-wide shortcuts", async () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await openWithClick()
     await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus())
     const keysHeardByWindow: Array<string> = []
     const hearKey = (event: KeyboardEvent) => keysHeardByWindow.push(event.key)
     window.addEventListener("keydown", hearKey)
@@ -62,7 +82,7 @@ describe("MenuButton", () => {
       "{Control>}{ArrowDown}{/Control}{Alt>}{Home}{/Alt}{Meta>}{End}{/Meta}{Alt>}{ArrowLeft}{/Alt}",
     )
 
-    expect(screen.getByRole("menuitem", { name: "Second" })).toHaveFocus()
+    expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
     expect(keysHeardByWindow).toEqual(
       expect.arrayContaining(["ArrowDown", "Home", "End", "ArrowLeft"]),
     )
@@ -90,7 +110,7 @@ describe("MenuButton", () => {
       </>,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await openWithClick()
     await userEvent.tab()
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
@@ -103,12 +123,33 @@ describe("MenuButton", () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
     const menuButton = screen.getByRole("button", { name: "Options" })
 
-    await userEvent.click(menuButton)
+    await openWithClick()
     await userEvent.tab({ shift: true })
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
     expect(menuButton).toHaveFocus()
     expect(menuButton).toHaveAttribute("aria-expanded", "false")
+  })
+
+  // A click elsewhere, such as in the search field, closes the menu, and
+  // typing must then go where the click put focus.
+  it("leaves focus on the control a click outside moved it to", async () => {
+    vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(focusReadingPreventScroll)
+    render(
+      <>
+        <MenuButton label="Options" icon={Settings} items={actions} />
+        <input aria-label="Search" />
+      </>,
+    )
+    const searchField = screen.getByRole("textbox", { name: "Search" })
+
+    await openWithClick()
+    // A browser focuses the field on the press, while the menu fades out.
+    act(() => searchField.focus())
+    await userEvent.click(searchField)
+
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument())
+    expect(searchField).toHaveFocus()
   })
 
   it("closes when a click lands outside it", async () => {
@@ -119,7 +160,7 @@ describe("MenuButton", () => {
       </>,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await openWithClick()
     await userEvent.click(screen.getByText("Elsewhere"))
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()

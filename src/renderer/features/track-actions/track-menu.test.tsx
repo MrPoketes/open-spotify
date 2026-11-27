@@ -125,7 +125,7 @@ type User = ReturnType<typeof userEvent.setup>
 
 const chooseFromMenu = async (user: User, row: HTMLElement, itemName: string) => {
   await user.pointer({ keys: "[MouseRight]", target: row })
-  await user.click(screen.getByRole("menuitem", { name: itemName }))
+  await user.click(await screen.findByRole("menuitem", { name: itemName }))
 }
 
 // Add to playlist opens its submenu once the playlists have loaded.
@@ -134,7 +134,7 @@ const openPlaylistSubmenu = async (user: User, row: HTMLElement) => {
   await user.click(
     await screen.findByRole("menuitem", { name: "Add to playlist", expanded: false }),
   )
-  return screen.getByRole("menu", { name: "Add to playlist" })
+  return screen.findByRole("menu", { name: "Add to playlist" })
 }
 
 const findStatusMessage = (text: string) => within(screen.getByRole("status")).findByText(text)
@@ -155,8 +155,8 @@ describe("Track menu", () => {
     const { user, router, row } = await renderTracks()
 
     await user.pointer({ keys: "[MouseRight]", target: row })
-    await user.click(screen.getByRole("menuitem", { name: "Go to artist" }))
-    await user.click(screen.getByRole("menuitem", { name: "Lena Varga" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Go to artist" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Lena Varga" }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/artist/fake-artist-1"))
   })
@@ -168,7 +168,7 @@ describe("Track menu", () => {
       keys: "[MouseRight]",
       target: screen.getByRole("row", { name: "Low Tide by Kite Theory" }),
     })
-    await user.click(screen.getByRole("menuitem", { name: "Go to artist" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Go to artist" }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/artist/fake-artist-2"))
   })
@@ -177,7 +177,7 @@ describe("Track menu", () => {
     const { user, row } = await renderTracks()
 
     await user.pointer({ keys: "[MouseRight]", target: row })
-    await user.click(screen.getByRole("menuitem", { name: "Copy link" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Copy link" }))
 
     expect(await screen.findByRole("status")).toHaveTextContent("Link copied")
     expect(await navigator.clipboard.readText()).toBe("https://open.spotify.com/track/fake-track-0")

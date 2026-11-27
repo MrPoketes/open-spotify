@@ -3,7 +3,7 @@ import { use, useState } from "react"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { formatCount } from "../../ui/format-count"
-import type { MenuAction } from "../../ui/menu-list"
+import type { MenuAction } from "../../ui/menu-items"
 import { useReadFolderTreeAgain } from "./folder-tree"
 
 export interface FoldersFileOutcome {

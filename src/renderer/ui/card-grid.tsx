@@ -3,9 +3,9 @@ import type { LucideIcon } from "lucide-react"
 import type { Ref } from "react"
 import { Artwork, type ArtworkSource } from "./artwork"
 import { cardGridClassNames, type CardGridLayout } from "./card-grid-class-names"
-import type { MenuItem } from "./menu-list"
+import { ContextMenu } from "./context-menu"
+import type { MenuItem } from "./menu-items"
 import { RovingList } from "./roving-list"
-import { useContextMenu } from "./use-context-menu"
 import type { RovingRowProps, RowFocusHandle } from "./use-roving-focus"
 
 export interface GridCard {
@@ -76,21 +76,14 @@ interface CardLinkProps {
 }
 
 function CardLink({ card, layout, rovingProps }: CardLinkProps) {
-  const cardMenu = useContextMenu(
+  const cardMenu =
     card.menuItems === undefined
       ? null
-      : { label: `Actions for ${card.title}`, items: card.menuItems },
-  )
+      : { label: `Actions for ${card.title}`, items: card.menuItems }
 
   return (
-    <>
-      <Link
-        {...card.link}
-        {...rovingProps}
-        onContextMenu={cardMenu.openAtPointer}
-        onKeyDown={cardMenu.openWithKeyboard}
-        className={cardClassNames[layout]}
-      >
+    <ContextMenu menu={cardMenu}>
+      <Link {...card.link} {...rovingProps} className={cardClassNames[layout]}>
         <Artwork
           sources={card.artwork}
           placeholderIcon={card.placeholderIcon}
@@ -101,7 +94,6 @@ function CardLink({ card, layout, rovingProps }: CardLinkProps) {
           <span className="truncate text-xs text-muted">{card.details}</span>
         </span>
       </Link>
-      {cardMenu.menu}
-    </>
+    </ContextMenu>
   )
 }

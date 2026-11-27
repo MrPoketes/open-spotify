@@ -100,12 +100,15 @@ describe("Dragging folder entries", () => {
   // The menu is drawn outside the row, but React still hands the row its presses.
   it("starts no drag from a row's context menu", async () => {
     await renderTree()
+    // The open menu is modal and hides the tree from the accessibility tree,
+    // so the row to drag over is found first.
+    const runningRow = await treeItem("Running")
     await userEvent.pointer({ keys: "[MouseRight]", target: await treeItem("Focus") })
 
     const renameItem = await screen.findByRole("menuitem", { name: "Rename" })
-    await dragOverTreeItem(renameItem, await treeItem("Running"), 0.5)
+    await dragOverTreeItem(renameItem, runningRow, 0.5)
 
-    expect(await dropPositionOn("Running")).toBeNull()
+    expect(runningRow).not.toHaveAttribute("data-drop-position")
   })
 
   // The rows below a folder that opens move down, the dragged row with them,

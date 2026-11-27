@@ -37,7 +37,7 @@ const chooseSectionOption = async (sectionName: string, option: string) => {
   await userEvent.click(
     await screen.findByRole("button", { name: `${sectionName} section options` }),
   )
-  await userEvent.click(screen.getByRole("menuitem", { name: option }))
+  await userEvent.click(await screen.findByRole("menuitem", { name: option }))
 }
 
 describe("Library pins and sections", () => {

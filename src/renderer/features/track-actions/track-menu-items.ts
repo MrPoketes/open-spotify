@@ -1,4 +1,4 @@
-import type { MenuItem } from "../../ui/menu-list"
+import type { MenuItem } from "../../ui/menu-items"
 import type { FolderItemSource } from "../folders/use-add-to-folder"
 import type { SimplifiedArtist } from "../spotify/spotify-artist"
 import type { SimplifiedPlaylist } from "../spotify/spotify-playlist"

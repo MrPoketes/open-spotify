@@ -1,9 +1,11 @@
+import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import type { LucideIcon } from "lucide-react"
-import { useId, useRef, useState, type KeyboardEvent } from "react"
+import { useRef } from "react"
 import { buttonVariants } from "./button-variants"
-import { closeWhenFocusLeaves } from "./close-when-focus-leaves"
-import { hasShortcutModifier } from "./has-shortcut-modifier"
-import { MenuList, type MenuItem, type MenuOpenFocus } from "./menu-list"
+import { DropdownMenuContent } from "./dropdown-menu"
+import { leaveShortcutsToTheWindow } from "./leave-shortcuts-to-the-window"
+import { MenuItems, type MenuItem } from "./menu-items"
+import { useActionAfterMenuCloses } from "./use-action-after-menu-closes"
 
 interface MenuButtonProps {
   readonly label: string
@@ -15,57 +17,31 @@ interface MenuButtonProps {
   readonly menuAlignment?: "left" | "right"
 }
 
-const menuAlignmentClassNames = { left: "left-0", right: "right-0" }
+const menuAlignments = { left: "start", right: "end" } as const
 
-// Follows the WAI-ARIA menu button pattern: the arrow keys open the menu on
-// its first or last item, Escape and Shift+Tab close it and return focus to
-// the button, and Tab closes it and moves on.
 export function MenuButton({ label, icon: Icon, items, menuAlignment = "right" }: MenuButtonProps) {
-  const menuId = useId()
   const buttonRef = useRef<HTMLButtonElement>(null)
-  // The item the menu opened on, or null while it is closed.
-  const [menuOpenedOn, setMenuOpenedOn] = useState<MenuOpenFocus | null>(null)
-
-  const closeAndFocusButton = () => {
-    setMenuOpenedOn(null)
-    buttonRef.current?.focus()
-  }
-
-  const openWithKeyboard = (event: KeyboardEvent) => {
-    const openedOnByKey: Record<string, MenuOpenFocus> = { ArrowDown: "first", ArrowUp: "last" }
-    const openedOn = openedOnByKey[event.key]
-    if (openedOn === undefined || hasShortcutModifier(event)) return
-    event.preventDefault()
-    setMenuOpenedOn(openedOn)
-  }
-
+  const { choose, runChosenAction } = useActionAfterMenuCloses(buttonRef)
   return (
-    <div className="relative" onBlur={closeWhenFocusLeaves(() => setMenuOpenedOn(null))}>
-      <button
+    // Not modal, unlike Base UI's default: the page keeps scrolling, and a
+    // click outside closes the menu and still reaches what it lands on.
+    <MenuPrimitive.Root modal={false}>
+      <MenuPrimitive.Trigger
         ref={buttonRef}
-        type="button"
         aria-label={label}
         title={label}
-        aria-haspopup="menu"
-        aria-expanded={menuOpenedOn !== null}
-        aria-controls={menuOpenedOn === null ? undefined : menuId}
-        onClick={() => setMenuOpenedOn(menuOpenedOn === null ? "first" : null)}
-        onKeyDown={openWithKeyboard}
+        onKeyDown={leaveShortcutsToTheWindow}
         className={buttonVariants({ variant: "ghost", size: "icon" })}
       >
         <Icon aria-hidden size={20} />
-      </button>
-      {menuOpenedOn !== null && (
-        <div className={`absolute top-full z-10 mt-1 ${menuAlignmentClassNames[menuAlignment]}`}>
-          <MenuList
-            id={menuId}
-            label={label}
-            items={items}
-            focusOnOpen={menuOpenedOn}
-            closeAll={closeAndFocusButton}
-          />
-        </div>
-      )}
-    </div>
+      </MenuPrimitive.Trigger>
+      <DropdownMenuContent
+        aria-label={label}
+        align={menuAlignments[menuAlignment]}
+        finalFocus={runChosenAction}
+      >
+        <MenuItems items={items} onChoose={choose} />
+      </DropdownMenuContent>
+    </MenuPrimitive.Root>
   )
 }

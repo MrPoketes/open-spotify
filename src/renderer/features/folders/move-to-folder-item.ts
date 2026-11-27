@@ -1,5 +1,5 @@
 import type { FolderTree } from "../../../shared/folders"
-import type { MenuItem } from "../../ui/menu-list"
+import type { MenuItem } from "../../ui/menu-items"
 import { folderMenuItems } from "./folder-menu-items"
 import {
   canMoveInto,

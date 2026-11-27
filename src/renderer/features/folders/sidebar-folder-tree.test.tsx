@@ -119,7 +119,7 @@ describe("SidebarFolderTree", () => {
     await focusTreeItem("Focus")
 
     await userEvent.keyboard("{Shift>}{F10}{/Shift}")
-    await userEvent.click(screen.getByRole("menuitem", { name: "New folder" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "New folder" }))
     await renameField()
     await userEvent.keyboard("Deep work{Enter}")
 
@@ -143,7 +143,7 @@ describe("SidebarFolderTree", () => {
     await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
 
     await userEvent.pointer({ keys: "[MouseRight]", target: await treeItem("Focus") })
-    await userEvent.click(screen.getByRole("menuitem", { name: "Rename" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Rename" }))
     await userEvent.clear(await renameField())
     await userEvent.keyboard("Deep focus{Enter}")
 
@@ -214,7 +214,7 @@ describe("SidebarFolderTree", () => {
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{Shift>}{F10}{/Shift}")
-    await userEvent.click(screen.getByRole("menuitem", { name: "Delete…" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Delete…" }))
     const dialog = screen.getByRole("dialog", { name: "Delete Running?" })
     expect(dialog).toHaveTextContent("the 3 items in it")
     await userEvent.click(screen.getByRole("button", { name: "Delete folder" }))
@@ -235,7 +235,7 @@ describe("SidebarFolderTree", () => {
     await focusTreeItem("Focus")
 
     await userEvent.keyboard("{Shift>}{F10}{/Shift}")
-    await userEvent.click(screen.getByRole("menuitem", { name: "Delete…" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Delete…" }))
     expect(screen.getByRole("dialog", { name: "Delete Focus?" })).toHaveTextContent("empty")
     await userEvent.click(screen.getByRole("button", { name: "Delete folder" }))
 

@@ -2,9 +2,11 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, type Layer } from "effect"
+import { Ellipsis } from "lucide-react"
 import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
+import { MenuButton } from "../../ui/menu-button"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { IsMacContext } from "../shortcuts/is-mac-context"
 import type { SpotifyApi } from "../spotify/spotify-api"
@@ -17,17 +19,27 @@ import { seekBar, showsPosition } from "./seek-bar-queries"
 interface RenderOptions {
   readonly isMac?: boolean
   readonly spotifyApi?: Layer.Layer<SpotifyApi>
+  readonly onMenuItemChosen?: () => void
 }
 
 // With a text field beside the bar, and the status message the app shell
 // shows above it.
-const renderNowPlayingBar = async ({ isMac = false, spotifyApi }: RenderOptions = {}) => {
+const renderNowPlayingBar = async ({
+  isMac = false,
+  spotifyApi,
+  onMenuItemChosen = () => {},
+}: RenderOptions = {}) => {
   await renderScreen(
     <IsMacContext value={isMac}>
       <StatusMessageProvider>
         <input aria-label="Notes" />
         <a href="#playlist">Late Night Drive</a>
         <input type="radio" aria-label="Dark" defaultChecked />
+        <MenuButton
+          label="Options"
+          icon={Ellipsis}
+          items={[{ label: "Hide section", onSelect: onMenuItemChosen }]}
+        />
         {nowPlayingBarAlone}
       </StatusMessageProvider>
     </IsMacContext>,
@@ -124,6 +136,23 @@ describe("playback shortcuts", () => {
     await userEvent.keyboard(" ")
 
     expect(await control("Play")).toBeInTheDocument()
+  })
+
+  // Space chooses the focused menu item, so choosing from a menu with the
+  // keyboard must not also pause the music.
+  it("leaves Space to a focused menu item, which it chooses", async () => {
+    const chosenItems: Array<string> = []
+    await renderNowPlayingBar({ onMenuItemChosen: () => chosenItems.push("Hide section") })
+
+    screen.getByRole("button", { name: "Options" }).focus()
+    await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() =>
+      expect(screen.getByRole("menuitem", { name: "Hide section" })).toHaveFocus(),
+    )
+    await userEvent.keyboard(" ")
+
+    expect(chosenItems).toEqual(["Hide section"])
+    expect(await control("Pause")).toBeInTheDocument()
   })
 
   // A focused radio button is always the checked one, so Space has nothing

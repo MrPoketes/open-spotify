@@ -1,51 +1,35 @@
-// oxlint-disable-next-line no-restricted-imports -- user-event has no scroll action and jsdom does no layout
-import { fireEvent, render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
-import type { MenuItem } from "./menu-list"
-import { useContextMenu } from "./use-context-menu"
+import { ContextMenu } from "./context-menu"
+import type { MenuItem } from "./menu-items"
+import { RovingList } from "./roving-list"
 
 function MenuTarget({ items }: { readonly items: ReadonlyArray<MenuItem> }) {
-  const menu = useContextMenu({ label: "Target actions", items })
   return (
-    <>
-      <button type="button" onContextMenu={menu.openAtPointer} onKeyDown={menu.openWithKeyboard}>
-        Target
-      </button>
-      {menu.menu}
-    </>
+    <ContextMenu menu={{ label: "Target actions", items }}>
+      <button type="button">Target</button>
+    </ContextMenu>
   )
 }
 
-function ListRowWithMenu({ onKey }: { readonly onKey: (key: string) => void }) {
-  const menu = useContextMenu({
-    label: "Row actions",
-    items: [{ label: "Only", onSelect: () => {} }],
-  })
-  return (
-    // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- Stands in for a list row that listens for its own keys.
-    <div
-      onKeyDown={(event) => {
-        onKey(event.key)
-        menu.openWithKeyboard(event)
-      }}
-    >
-      <button type="button">Row</button>
-      {menu.menu}
-    </div>
-  )
-}
+const action = (label: string, selected: Array<string> = []) => ({
+  label,
+  onSelect: () => selected.push(label),
+})
 
 const renderMenuTarget = () => {
   const selected: Array<string> = []
-  const action = (label: string) => ({ label, onSelect: () => selected.push(label) })
   render(
     <main>
       <MenuTarget
         items={[
-          action("First"),
-          { label: "More", items: [action("Inner first"), action("Inner second")] },
-          action("Last"),
+          action("First", selected),
+          {
+            label: "More",
+            items: [action("Inner first", selected), action("Inner second", selected)],
+          },
+          action("Last", selected),
         ]}
       />
     </main>,
@@ -57,6 +41,12 @@ const renderMenuTarget = () => {
 
 const menuItem = (name: string) => screen.getByRole("menuitem", { name })
 
+// Base UI moves focus into the menu a moment after it opens.
+const openWithKeys = async (keys: string) => {
+  await userEvent.keyboard(keys)
+  await waitFor(() => expect(menuItem("First")).toHaveFocus())
+}
+
 describe("ContextMenu", () => {
   // Keyboard users must be able to open the menu without a mouse, leave it
   // without choosing anything, and continue from where they were.
@@ -66,9 +56,8 @@ describe("ContextMenu", () => {
   ])("opens with $name and returns focus to its target on Escape", async ({ keys }) => {
     const { target } = renderMenuTarget()
 
-    await userEvent.keyboard(keys)
+    await openWithKeys(keys)
     expect(screen.getByRole("menu", { name: "Target actions" })).toBeInTheDocument()
-    expect(menuItem("First")).toHaveFocus()
     await userEvent.keyboard("{Escape}")
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
@@ -79,7 +68,7 @@ describe("ContextMenu", () => {
   // it would skip everything after the element it opened from.
   it("closes on Tab and returns focus to its target", async () => {
     const { target } = renderMenuTarget()
-    await userEvent.keyboard("{ContextMenu}")
+    await openWithKeys("{ContextMenu}")
 
     await userEvent.tab()
 
@@ -89,35 +78,39 @@ describe("ContextMenu", () => {
 
   it("closes when the pointer clicks outside it", async () => {
     renderMenuTarget()
-    await userEvent.keyboard("{ContextMenu}")
+    await openWithKeys("{ContextMenu}")
 
-    await userEvent.click(screen.getByRole("main"))
+    // The open menu is modal, so the rest of the page is hidden from the
+    // accessibility tree until it closes.
+    await userEvent.click(screen.getByRole("main", { hidden: true }))
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
   })
 
-  it("opens where the pointer right-clicks, with focus on the first item", async () => {
+  it("opens on right-click with focus on the menu, and the down arrow moves to the first item", async () => {
     const { target } = renderMenuTarget()
 
-    await userEvent.pointer({ keys: "[MouseRight]", target, coords: { clientX: 40, clientY: 60 } })
+    await userEvent.pointer({ keys: "[MouseRight]", target })
+    const menu = screen.getByRole("menu", { name: "Target actions" })
+    await waitFor(() => expect(menu).toHaveFocus())
+    await userEvent.keyboard("{ArrowDown}")
 
-    expect(screen.getByRole("menu")).toHaveStyle({ left: "40px", top: "60px" })
-    expect(menuItem("First")).toHaveFocus()
+    await waitFor(() => expect(menuItem("First")).toHaveFocus())
   })
 
   it("moves through the items with the arrow keys, wrapping around the ends", async () => {
     renderMenuTarget()
-    await userEvent.keyboard("{ContextMenu}")
+    await openWithKeys("{ContextMenu}")
 
     await userEvent.keyboard("{ArrowUp}")
-    expect(menuItem("Last")).toHaveFocus()
+    await waitFor(() => expect(menuItem("Last")).toHaveFocus())
     await userEvent.keyboard("{ArrowDown}{ArrowDown}")
     expect(menuItem("More")).toHaveFocus()
   })
 
   it("runs the item Enter activates, then closes and returns focus to its target", async () => {
     const { target, selected } = renderMenuTarget()
-    await userEvent.keyboard("{ContextMenu}")
+    await openWithKeys("{ContextMenu}")
 
     await userEvent.keyboard("{End}{Enter}")
 
@@ -128,51 +121,48 @@ describe("ContextMenu", () => {
 
   it("opens a submenu with the right arrow and goes back to its item with the left arrow", async () => {
     const { selected } = renderMenuTarget()
-    await userEvent.keyboard("{ContextMenu}{ArrowDown}")
+    await openWithKeys("{ContextMenu}")
+    await userEvent.keyboard("{ArrowDown}")
 
     await userEvent.keyboard("{ArrowRight}")
     expect(menuItem("More")).toHaveAttribute("aria-expanded", "true")
     expect(screen.getByRole("menu", { name: "More" })).toBeInTheDocument()
-    expect(menuItem("Inner first")).toHaveFocus()
+    await waitFor(() => expect(menuItem("Inner first")).toHaveFocus())
     await userEvent.keyboard("{ArrowLeft}")
 
     expect(screen.queryByRole("menu", { name: "More" })).not.toBeInTheDocument()
     expect(menuItem("More")).toHaveFocus()
-    await userEvent.keyboard("{ArrowRight}{ArrowDown}{Enter}")
+    await userEvent.keyboard("{ArrowRight}")
+    await waitFor(() => expect(menuItem("Inner first")).toHaveFocus())
+    await userEvent.keyboard("{ArrowDown}{Enter}")
     expect(selected).toEqual(["Inner second"])
   })
 
-  // The menu stays where it opened, so once the pane under it scrolls it no
-  // longer sits next to the element it belongs to.
-  it("closes when the pane it was opened from scrolls, returning focus to its target", async () => {
-    const { target } = renderMenuTarget()
-    await userEvent.keyboard("{ContextMenu}")
+  // The menu is portalled out of the list, but React passes its key presses
+  // up through the list it was opened from, which must not move focus to
+  // another row.
+  it("keeps its arrow keys from moving focus in the list it was opened from", async () => {
+    render(
+      <RovingList
+        rows={["Row one", "Row two"]}
+        rowKey={(row) => row}
+        className=""
+        renderRow={(row, rovingProps) => (
+          <ContextMenu
+            menu={{ label: `Actions for ${row}`, items: [action("First"), action("Second")] }}
+          >
+            <button type="button" {...rovingProps}>
+              {row}
+            </button>
+          </ContextMenu>
+        )}
+      />,
+    )
+    screen.getByRole("button", { name: "Row one" }).focus()
 
-    fireEvent.scroll(screen.getByRole("main"))
+    await openWithKeys("{ContextMenu}")
+    await userEvent.keyboard("j{End}")
 
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
-    expect(target).toHaveFocus()
-  })
-
-  // A long menu, such as a list of playlists, scrolls by itself.
-  it("stays open while the menu itself scrolls", async () => {
-    renderMenuTarget()
-    await userEvent.keyboard("{ContextMenu}{ArrowDown}{ArrowRight}")
-
-    fireEvent.scroll(screen.getByRole("menu", { name: "More" }))
-
-    expect(screen.getByRole("menu", { name: "More" })).toBeInTheDocument()
-  })
-
-  // Arrow keys inside the menu must not also move whatever list the menu was
-  // opened from, even though the menu sits inside it in the React tree.
-  it("keeps its keys from reaching the element it was opened from", async () => {
-    const keysSeenByRow: Array<string> = []
-    render(<ListRowWithMenu onKey={(key) => keysSeenByRow.push(key)} />)
-    screen.getByRole("button", { name: "Row" }).focus()
-
-    await userEvent.keyboard("{ContextMenu}{ArrowDown}{Escape}")
-
-    expect(keysSeenByRow).toEqual(["ContextMenu"])
+    expect(menuItem("Second")).toHaveFocus()
   })
 })
