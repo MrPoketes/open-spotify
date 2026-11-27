@@ -15,6 +15,12 @@ export type PlayerState =
 
 type PlayerCommand = Effect.Effect<void, SpotifyApiError>
 
+export interface VolumeChange {
+  // The active device when the volume was set.
+  readonly deviceId: string | null
+  readonly volumePercent: number
+}
+
 export class QueuedItemGone extends Schema.TaggedError<QueuedItemGone>()("QueuedItemGone", {}) {}
 
 // Spotify rate-limits each Client ID over a rolling 30-second window, and all
@@ -162,6 +168,26 @@ const seekCommands = (
   }
 }
 
+// Announces each volume as it sends it, with the device it was set on.
+const makeVolumeCommands = Effect.fn("Player.makeVolumeCommands")(function* (
+  shownState: Effect.Effect<Option.Option<PlayerState>>,
+  sendVolume: (volumePercent: number) => PlayerCommand,
+) {
+  const volumeChanges = yield* PubSub.unbounded<VolumeChange>()
+  return {
+    setVolume: Effect.fn("Player.setVolume")(function* (volumePercent: number) {
+      const shown = yield* shownState
+      const deviceId =
+        Option.isSome(shown) && shown.value.status === "active"
+          ? shown.value.playback.device.id
+          : null
+      yield* PubSub.publish(volumeChanges, { deviceId, volumePercent })
+      yield* sendVolume(volumePercent)
+    }),
+    volumeChanges: Stream.fromPubSub(volumeChanges),
+  }
+})
+
 const progressOf = (playerState: PlayerState): Stream.Stream<PlaybackProgress | null> => {
   if (playerState.status !== "active") {
     return Stream.succeed(null)
@@ -210,6 +236,9 @@ export class Player extends Context.Service<
     readonly setRepeat: (mode: RepeatMode) => PlayerCommand
     // From 0 to 100.
     readonly setVolume: (volumePercent: number) => PlayerCommand
+    // Each volume set through setVolume. Polled volumes are left out, because
+    // Spotify can report the volume from before a change for a while after it.
+    readonly volumeChanges: Stream.Stream<VolumeChange>
     readonly addToQueue: (uri: string) => PlayerCommand
   }
 >()("open-spotify/Player") {
@@ -276,6 +305,10 @@ export class Player extends Context.Service<
       const sendThenRefresh = (command: PlayerCommand) =>
         send(command).pipe(Effect.andThen(refresh))
 
+      const volumeCommands = yield* makeVolumeCommands(latestState, (volumePercent) =>
+        pendingChanges.showWhileSending({ volumePercent }, send(spotify.setVolume(volumePercent))),
+      )
+
       return Player.of({
         state,
         queueChanges: Stream.fromPubSub(queueChanges),
@@ -306,11 +339,7 @@ export class Player extends Context.Service<
           pendingChanges.showWhileSending({ shuffle: isOn }, send(spotify.setShuffle(isOn))),
         setRepeat: (mode) =>
           pendingChanges.showWhileSending({ repeat: mode }, send(spotify.setRepeat(mode))),
-        setVolume: (volumePercent) =>
-          pendingChanges.showWhileSending(
-            { volumePercent },
-            send(spotify.setVolume(volumePercent)),
-          ),
+        ...volumeCommands,
         addToQueue: (uri) =>
           send(spotify.addToQueue(uri)).pipe(
             Effect.andThen(PubSub.publish(queueChanges, undefined)),

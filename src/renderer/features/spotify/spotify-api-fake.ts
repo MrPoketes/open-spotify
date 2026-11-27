@@ -21,9 +21,14 @@ export const spotifyApiFakeWith = (
     }),
   ).pipe(Layer.provide(spotifyApiFake))
 
+// Changes the playback state the fake reports, as an override that other
+// overrides can join.
+export const playbackStateChangedBy =
+  (change: (playback: PlaybackState) => PlaybackState) => (spotify: SpotifyApi["Service"]) => ({
+    getPlaybackState: spotify.getPlaybackState.pipe(Effect.map(Option.map(change))),
+  })
+
 // The fake with its playback state changed, for tests of a state the fake
 // player does not reach on its own.
 export const spotifyApiFakeWithPlayback = (change: (playback: PlaybackState) => PlaybackState) =>
-  spotifyApiFakeWith((spotify) => ({
-    getPlaybackState: spotify.getPlaybackState.pipe(Effect.map(Option.map(change))),
-  }))
+  spotifyApiFakeWith(playbackStateChangedBy(change))

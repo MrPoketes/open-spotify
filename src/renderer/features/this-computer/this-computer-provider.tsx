@@ -1,7 +1,7 @@
 import { Fiber } from "effect"
 import { use, useEffect, useState, type ReactNode } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
-import { playOnThisComputer } from "./play-on-this-computer"
+import { addThisComputerDevice } from "./add-this-computer-device"
 import { ThisComputerDeviceIdContext } from "./this-computer-device-id-context"
 
 // Lives in the app shell, which unmounts on log out, so the player disconnects
@@ -11,7 +11,7 @@ export function ThisComputerProvider({ children }: { readonly children: ReactNod
   const [deviceId, setDeviceId] = useState<string | null>(null)
 
   useEffect(() => {
-    const connection = runtime.runFork(playOnThisComputer(setDeviceId))
+    const connection = runtime.runFork(addThisComputerDevice(setDeviceId))
     return () => {
       runtime.runFork(Fiber.interrupt(connection))
     }

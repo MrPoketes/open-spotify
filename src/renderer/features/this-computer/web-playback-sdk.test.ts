@@ -85,8 +85,7 @@ describe("WebPlaybackSdk", () => {
     Effect.gen(function* () {
       const connecting = yield* Effect.forkScoped(connect)
       yield* Effect.yieldNow
-      const sdk = fakeSdk()
-      window.Spotify = { Player: sdk.Player }
+      const sdk = installLoadedSdk()
       window.onSpotifyWebPlaybackSDKReady?.()
 
       yield* Fiber.join(connecting)

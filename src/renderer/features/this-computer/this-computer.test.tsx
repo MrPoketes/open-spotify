@@ -1,25 +1,61 @@
 // oxlint-disable-next-line no-restricted-imports -- user-event cannot drag or step a native range input in jsdom
-import { fireEvent, screen, waitFor } from "@testing-library/react"
+import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Option } from "effect"
+import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
+import { deviceButton, openPicker, pickerButton } from "../playback/device-picker-queries"
 import { appShellRuntimeWith, renderAppShell } from "../shell/render-app-shell"
+import { playbackStateChangedBy } from "../spotify/spotify-api-fake"
+import { fakeDevices } from "../spotify/spotify-fixtures"
 import { fakeThisComputerDeviceId, readyWebPlaybackSdk } from "./web-playback-sdk-fake"
 
-const openDevicePicker = async () => {
-  await userEvent.click(await screen.findByRole("button", { name: /^Choose a device/ }))
-  return screen.findByRole("dialog", { name: "Connect to a device" })
-}
+// Spotify reports the active device at 60 %. It is this computer.
+const playingOnThisComputer = playbackStateChangedBy((playback) => ({
+  ...playback,
+  device: { ...playback.device, id: fakeThisComputerDeviceId },
+}))
 
 describe("This computer", () => {
-  it("lists this computer in the device picker once the Web Playback SDK is ready", async () => {
+  // Spotify's device list can lag behind the SDK's ready event.
+  it("lists this computer in the device picker as soon as the Web Playback SDK is ready", async () => {
     const sdk = readyWebPlaybackSdk()
     await renderAppShell({ runtime: appShellRuntimeWith({ webPlaybackSdk: sdk.layer }) })
 
-    await openDevicePicker()
+    const picker = await openPicker()
 
-    expect(await screen.findByRole("button", { name: /^This computer/ })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /^Mira's Phone/ })).toBeInTheDocument()
+    expect(await deviceButton(picker, /^This computer/)).toBeInTheDocument()
+    expect(within(picker).getByRole("button", { name: /^Mira's Phone/ })).toBeInTheDocument()
+  })
+
+  it("shows the device Spotify lists for the Web Playback SDK as this computer", async () => {
+    const sdk = readyWebPlaybackSdk()
+    await renderAppShell({
+      runtime: appShellRuntimeWith({
+        spotify: (spotify) => ({
+          getAvailableDevices: spotify.getAvailableDevices.pipe(
+            Effect.map((devices) => [
+              ...devices,
+              {
+                id: fakeThisComputerDeviceId,
+                name: "Open Spotify",
+                type: "Computer",
+                isActive: false,
+                isRestricted: false,
+                volumePercent: 100,
+                supportsVolume: true,
+              },
+            ]),
+          ),
+        }),
+        webPlaybackSdk: sdk.layer,
+      }),
+    })
+
+    const picker = await openPicker()
+
+    expect(await within(picker).findAllByRole("button", { name: /^This computer/ })).toHaveLength(1)
+    expect(within(picker).queryByRole("button", { name: /^Open Spotify/ })).not.toBeInTheDocument()
+    expect(within(picker).getAllByRole("button")).toHaveLength(fakeDevices.length + 1)
   })
 
   it("moves playback to this computer when it is picked", async () => {
@@ -33,42 +69,38 @@ describe("This computer", () => {
         webPlaybackSdk: sdk.layer,
       }),
     })
-    const picker = await openDevicePicker()
+    const picker = await openPicker()
 
-    await userEvent.click(await screen.findByRole("button", { name: /^This computer/ }))
+    await userEvent.click(await deviceButton(picker, /^This computer/))
 
     await waitFor(() => expect(picker).not.toBeInTheDocument())
     expect(transferredTo).toEqual([fakeThisComputerDeviceId])
   })
 
-  // The SDK's player keeps a volume of its own, which decides how loud this
-  // computer plays.
-  it("sends the volume set in the app to the Web Playback SDK's player", async () => {
+  it("names this computer in the bar while it plays", async () => {
     const sdk = readyWebPlaybackSdk()
     await renderAppShell({
-      runtime: appShellRuntimeWith({
-        spotify: (spotify) => ({
-          getPlaybackState: spotify.getPlaybackState.pipe(
-            Effect.map(
-              Option.map((playback) => ({
-                ...playback,
-                device: { ...playback.device, id: fakeThisComputerDeviceId },
-              })),
-            ),
-          ),
-        }),
-        webPlaybackSdk: sdk.layer,
-      }),
+      runtime: appShellRuntimeWith({ spotify: playingOnThisComputer, webPlaybackSdk: sdk.layer }),
     })
+
+    expect(await pickerButton("Playing on This computer")).toBeInTheDocument()
+  })
+
+  // The SDK's player keeps a volume of its own, which decides how loud this
+  // computer plays. Spotify can keep reporting the volume from before a
+  // change for a while, and passing a polled volume on would undo the change.
+  it("sends the SDK's player each volume set in the app and never a polled one", async () => {
+    const sdk = readyWebPlaybackSdk()
+    await renderAppShell({
+      runtime: appShellRuntimeWith({ spotify: playingOnThisComputer, webPlaybackSdk: sdk.layer }),
+    })
+    await pickerButton("Playing on This computer")
     const slider = await screen.findByRole("slider", { name: "Volume" })
     await waitFor(() => expect(slider).toHaveValue("60"))
-    expect(
-      screen.getByRole("button", { name: "Choose a device. Playing on This computer" }),
-    ).toBeInTheDocument()
 
     fireEvent.change(slider, { target: { value: "30" } })
 
-    await waitFor(() => expect(sdk.sdkPlayer.volumes).toEqual([60, 30]))
+    await waitFor(() => expect(sdk.sdkPlayer.volumes).toEqual([30]))
   })
 
   // The app shell unmounts when the user logs out, and the next account must
