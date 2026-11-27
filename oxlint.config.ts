@@ -174,6 +174,12 @@ export default defineConfig({
       rules: { "open-spotify/no-dom-node-access": "error" },
     },
     {
+      // A fake main process keeps what tests save in memory, so each test makes
+      // its own instead of reading what another test saved.
+      files: ["src/renderer/**"],
+      rules: { "open-spotify/no-shared-fake-main-process": "error" },
+    },
+    {
       // Component tests render bare unstyled native controls in jsdom to test
       // behaviour.
       files: ["src/renderer/**/*.test.tsx"],

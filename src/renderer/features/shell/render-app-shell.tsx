@@ -11,7 +11,6 @@ import { userEvent } from "@testing-library/user-event"
 import { Stream, type Layer, type ManagedRuntime } from "effect"
 import type { ReactNode } from "react"
 import type { DesktopApi } from "../../../preload/desktop-api"
-import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext, type RendererServices } from "../../lib/renderer-runtime"
 import type { SpotifyApi } from "../spotify/spotify-api"
@@ -19,11 +18,6 @@ import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { defaultPlayOnThisComputer } from "../this-computer/play-on-this-computer-context"
 import type { WebPlaybackSdk } from "../this-computer/web-playback-sdk"
 import { AppShell } from "./app-shell"
-
-// Installed on import so pane widths saved during a drag can be read back from
-// the same fake main process, and so tests that override the Spotify API can
-// build a runtime over it too.
-Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 
 interface AppShellRuntimeOptions {
   readonly mainProcess?: DesktopApi
@@ -33,14 +27,13 @@ interface AppShellRuntimeOptions {
 
 // The library is left empty because no test of the shell reads it, and
 // rendering the fixtures' sixty-odd entries in the sidebar ran the first test
-// past its timeout on a busy machine.
+// past its timeout on a busy machine. Without a given main process, the
+// runtime gets a fresh one, so a test never reads settings another test saved.
 export const appShellRuntimeWith = ({
-  mainProcess = window.desktop,
   spotify = () => ({}),
   ...runtimeOptions
 }: AppShellRuntimeOptions) =>
   fakeRendererRuntime({
-    mainProcess,
     spotifyApi: spotifyApiFakeWith((fakeSpotify) => ({
       currentUserPlaylists: Stream.empty,
       savedAlbums: Stream.empty,
@@ -50,8 +43,6 @@ export const appShellRuntimeWith = ({
     })),
     ...runtimeOptions,
   })
-
-export const appShellRuntime = appShellRuntimeWith({})
 
 interface ShellOptions {
   readonly savedSidebarWidth?: number
@@ -70,7 +61,7 @@ export const renderAppShell = async ({
   savedRightPaneWidth = 320,
   savedPlayOnThisComputer = defaultPlayOnThisComputer,
   platform = "win32",
-  runtime = appShellRuntime,
+  runtime = appShellRuntimeWith({}),
   albumPageContent = null,
 }: ShellOptions = {}) => {
   const rootRoute = createRootRoute({

@@ -2,13 +2,10 @@ import { screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
-import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { ContextPlayButton } from "../playback/context-play-button"
 import { NoActiveDevice } from "../spotify/spotify-api"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
-// Importing it also installs the fake main process as window.desktop.
-import { appShellRuntime, openQueue, renderAppShell } from "./render-app-shell"
+import { appShellRuntimeWith, openQueue, renderAppShell } from "./render-app-shell"
 
 const sidebarDivider = () => screen.getByRole("separator", { name: "Resize sidebar" })
 const queueDivider = () => screen.getByRole("separator", { name: "Resize queue" })
@@ -26,7 +23,8 @@ const resizablePanes = [
     growDirection: 1,
     growKey: "{ArrowRight}",
     shrinkKey: "{ArrowLeft}",
-    renderWithWidth: (width: number) => renderAppShell({ savedSidebarWidth: width }),
+    renderWithWidth: (width: number, runtime = appShellRuntimeWith({})) =>
+      renderAppShell({ savedSidebarWidth: width, runtime }),
     pane: () => screen.getByRole("navigation", { name: "Library" }),
   },
   {
@@ -39,8 +37,8 @@ const resizablePanes = [
     growDirection: -1,
     growKey: "{ArrowLeft}",
     shrinkKey: "{ArrowRight}",
-    renderWithWidth: async (width: number) => {
-      const view = await renderAppShell({ savedRightPaneWidth: width })
+    renderWithWidth: async (width: number, runtime = appShellRuntimeWith({})) => {
+      const view = await renderAppShell({ savedRightPaneWidth: width, runtime })
       await openQueue()
       return view
     },
@@ -105,14 +103,15 @@ describe.each(resizablePanes)("the $name divider", (resizablePane) => {
   })
 
   it("restores the width the user chose after a restart", async () => {
-    const firstLaunch = await resizablePane.renderWithWidth(300)
+    const runtime = appShellRuntimeWith({})
+    const firstLaunch = await resizablePane.renderWithWidth(300, runtime)
     await dragDivider(50)
     await waitFor(async () => {
-      expect(await appShellRuntime.runPromise(loadSavedWidth)).toBe(350)
+      expect(await runtime.runPromise(loadSavedWidth)).toBe(350)
     })
     firstLaunch.unmount()
 
-    await resizablePane.renderWithWidth(await appShellRuntime.runPromise(loadSavedWidth))
+    await resizablePane.renderWithWidth(await runtime.runPromise(loadSavedWidth), runtime)
 
     expect(divider()).toHaveAttribute("aria-valuenow", "350")
   })
@@ -209,12 +208,11 @@ describe("AppShell", () => {
   // no device to play on must lead to choosing one, not fail silently.
   it("opens the device picker and says why when playing from a page finds no device", async () => {
     await renderAppShell({
-      runtime: fakeRendererRuntime({
-        mainProcess: window.desktop,
-        spotifyApi: spotifyApiFakeWith(() => ({
+      runtime: appShellRuntimeWith({
+        spotify: () => ({
           getPlaybackState: Effect.succeedNone,
           startPlayback: () => Effect.fail(new NoActiveDevice()),
-        })),
+        }),
       }),
       albumPageContent: (
         <ContextPlayButton contextUri="spotify:album:fake-album-0" contextName="Glass Harbour" />

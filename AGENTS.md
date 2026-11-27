@@ -180,6 +180,13 @@ cannot fail for a meaningful reason should not exist.
   way real callers do. Do not test private helpers or assert on internal calls.
 - **Fake dependencies with layers, not mocks.** Give the code under test a fake layer (for
   example a fake Spotify API returning fixed data). Never call the real network.
+- **Start every test from fresh fake state.** A test never depends on what another test saved
+  or left behind. Create the fake main process (`fakeMainProcess()`) or runtime inside the test
+  or a helper it calls, never at module or `describe` level, and pass the same one to every
+  launch the test reads settings back from (see
+  `src/renderer/features/this-computer/play-on-this-computer-setting.test.tsx`). Otherwise a
+  test that reads a saved setting sees an earlier test's value and passes only because of the
+  order tests run in. `open-spotify/no-shared-fake-main-process` rejects a shared one.
 - **Do not write:** tests for constants or trivial getters, tests that repeat what the type
   checker already proves, snapshot tests, tests that only check a function was called, or
   a test whose every failure another test would also catch (such as "returns a value after it
