@@ -14,8 +14,11 @@ export function LikedSongsHeader({ songCount, totalDuration }: LikedSongsHeaderP
     (detail) => detail !== null,
   )
   return (
-    <PageHeader kind={spotifyItemKinds.playlist.label} title="Liked Songs" cover={likedSongsCover}>
-      <p className="text-sm text-muted">{details.join(" · ")}</p>
-    </PageHeader>
+    <PageHeader
+      kind={spotifyItemKinds.playlist.label}
+      title="Liked Songs"
+      cover={likedSongsCover}
+      details={details}
+    />
   )
 }

@@ -1,6 +1,8 @@
 import { Effect } from "effect"
 import { useId, useState } from "react"
+import { Button } from "../../ui/button"
 import { CardGrid, type GridCard } from "../../ui/card-grid"
+import { PageSection } from "../../ui/page-section"
 import { useCardGridColumnCount } from "../../ui/use-card-grid-column-count"
 import { useWithFolderMenu } from "../folders/use-with-folder-menu"
 import { NextPageFooter } from "../spotify/next-page-footer"
@@ -36,7 +38,6 @@ export function DiscographySection({
   albumGroup,
   firstPage,
 }: DiscographySectionProps) {
-  const headingId = useId()
   const gridId = useId()
   const [isExpanded, setIsExpanded] = useState(false)
   const { gridRef, columnCount } = useCardGridColumnCount()
@@ -62,23 +63,22 @@ export function DiscographySection({
   const needsMoreAlbums = isExpanded || albums.length < columnCount
 
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 id={headingId} className="font-display text-xl font-bold">
-          {title}
-        </h2>
-        {firstPage.total > columnCount ? (
-          <button
-            type="button"
+    <PageSection
+      title={title}
+      controls={
+        firstPage.total > columnCount ? (
+          <Button
+            variant="ghost"
+            size="sm"
             aria-expanded={isExpanded}
             aria-controls={gridId}
             onClick={() => setIsExpanded(!isExpanded)}
-            className="rounded-small px-2 py-1 text-sm font-semibold text-muted transition-colors duration-120 ease-out hover:text-foreground"
           >
             {isExpanded ? "Show fewer" : "Show all"}
-          </button>
-        ) : null}
-      </div>
+          </Button>
+        ) : null
+      }
+    >
       <CardGrid
         id={gridId}
         ref={gridRef}
@@ -93,6 +93,6 @@ export function DiscographySection({
         wantsNextPage={needsMoreAlbums && nextOffset !== null}
         retryRef={retryRef}
       />
-    </section>
+    </PageSection>
   )
 }

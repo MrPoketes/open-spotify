@@ -94,7 +94,9 @@ lands, it keeps its earlier styling inside the new shell, and its section below 
 - Card grids (albums, artists, folders) use `repeat(auto-fill, minmax(160px, 1fr))` with a
   24 px gap, so the column count follows the pane width. Tile grids (Home's Jump back in) use
   `repeat(auto-fill, minmax(240px, 1fr))` with an 8 px gap.
-- Track lists use fixed columns: index, title and artist, album, date added, duration. Columns
+- Track lists use fixed columns: index, title and artist, album, date added, duration. The
+  column names are credits labels (see Type) in a 36 px header row ruled off from the rows by a
+  `border` hairline. Columns
   that do not fit the list's width are hidden from the right, never squeezed: date added goes
   first, below 768 px, then the album, below 576 px. Duration always stays. An album name links
   to its album page, and each artist name links to that artist's page, so a track with several
@@ -156,10 +158,12 @@ these sizes:
 
 Weights: 400 for body, 500 for resting toggle options, 600 for emphasis, buttons, and active
 items, 700 for headings. Headings from `text-xl` up use `font-display` (lint enforces it) and
-`tracking-tight`. Durations and counts use `tabular-nums` so columns line up. The labels that
-divide the sidebar (Folders, Pinned, the library sections, Hidden) are set like the credits on a
-sleeve's back: `text-xs`, 600, `uppercase`, `tracking-wider`, `muted`
-(`src/renderer/ui/sidebar-heading-class-names.ts`).
+`tracking-tight`. Durations and counts in columns use `tabular-nums` so they line up; running
+text, such as a page header's details line, leaves it off, since Schibsted Grotesk's tabular
+figures set commas at figure width ("5 ,000"). The labels that
+divide the sidebar (Folders, Pinned, the library sections, Hidden) and the track list's column
+names are set like the credits on a sleeve's back: `text-xs`, 600, `uppercase`, `tracking-wider`,
+`muted` (`src/renderer/ui/credits-label-class-name.ts`).
 
 ### Radii
 
@@ -175,13 +179,13 @@ two apart at a glance.
 
 ### Elevation
 
-| Level   | Surface           | Shadow           | Use                                          |
-| ------- | ----------------- | ---------------- | -------------------------------------------- |
-| Ground  | `canvas`          | none             | The window, the sidebar, the now-playing bar |
-| Sheet   | `surface`         | `shadow-raised`  | The main view and the right pane             |
-| Raised  | `surface-raised`  | none             | Inputs, tiles, hovered rows and cards        |
-| Artwork | the image         | `shadow-raised`  | Covers in card grids and page headers        |
-| Overlay | `surface-overlay` | `shadow-overlay` | Menus, dialogs, the command palette, toasts  |
+| Level   | Surface           | Shadow           | Use                                           |
+| ------- | ----------------- | ---------------- | --------------------------------------------- |
+| Ground  | `canvas`          | none             | The window, the sidebar, the now-playing bar  |
+| Sheet   | `surface`         | `shadow-raised`  | The main view and the right pane              |
+| Raised  | `surface-raised`  | none             | Inputs, tiles, hovered rows and cards         |
+| Artwork | the image         | `shadow-raised`  | Covers in grids and page headers; play button |
+| Overlay | `surface-overlay` | `shadow-overlay` | Menus, dialogs, the command palette, toasts   |
 
 Hovered and selected list rows change color (`surface-raised`, or `accent` at 15 % opacity
 when selected) but never gain a shadow.
@@ -203,7 +207,8 @@ scrolls away with the page, while the top bar takes on its background. Its
 opacity is the `artwork-wash` token (0.45 in the dark theme, 0.3 in the light one), and a theme
 that sets it to 0 turns the wash off. It is decorative and hidden from screen readers. The
 smallest image Spotify lists is enough, since it is blurred. Home takes it from the cover of the
-track played last; a page without artwork shows none.
+track played last, and every page with a page header from its cover (see Page header); a page
+without artwork, such as Liked Songs or a folder, shows none.
 
 ### Icons
 
@@ -240,7 +245,8 @@ two keep the app's meaning.
   toolbars and icon buttons.
 
 The default size is 36 px tall with `rounded-medium` corners, the small size 32 px with
-`rounded-small` corners and `text-xs`, and icon buttons 32 px and round. Labels are 600 weight. A
+`rounded-small` corners and `text-xs`, icon buttons 32 px and round, and the `play` size 56 px,
+round, and lifted with `shadow-raised` (see Playing from a page). Labels are 600 weight. A
 disabled or `aria-disabled` button dims to 50 %, and an `aria-disabled` one keeps its focus.
 Links that look like buttons, such as the top bar's Home and Settings, use `buttonVariants`.
 
@@ -519,10 +525,47 @@ one tab stop, starting on the first device, and moves like any other list (see K
 `Escape` or choosing a device closes the picker and returns focus to its button; clicking or
 tabbing outside closes it.
 
+### Page header
+
+Album, artist, playlist, show, Liked Songs, and folder pages open with the same header
+(`src/renderer/ui/page-header.tsx`), set like the front of a sleeve: the cover leads and the type
+beside it is aligned to its bottom edge.
+
+- The page's artwork wash (see Artwork wash) from the cover sits behind it.
+- The cover is 224 px, square with `rounded-medium` corners (round for an artist), lifted with
+  `shadow-raised`. Missing artwork shows the kind's placeholder tile.
+- The title is `text-5xl`, 700, `tracking-tight`, balanced over its lines, and breaks long words
+  rather than overflow.
+- Under the title, one `text-sm` details line says what the page is: the kind first, in
+  `foreground` at 600 ("Playlist", "Album", "Artist", "Show", "Folder"), then the rest in `muted`,
+  separated by " · ": an album's linked artists, release year, track count, and length; a
+  playlist's owner, track count, and length; an artist's genres; a show's episode count; a
+  folder's item count. There is no separate kind label above the title: a label over a heading is
+  noise the details line already carries.
+- A description, when Spotify sends one, follows in `text-sm` `muted`, at most 65 characters
+  wide.
+- 24 px under the header come the play button (see Playing from a page) and a More options menu
+  button with the same actions as the header's context menu. A page whose item nothing can act on,
+  such as Liked Songs, has neither.
+
+The header is a focusable group named after the title when it has a menu, so `Shift+F10` and the
+context-menu key open it. While the page loads, a skeleton in the header's shape (cover, round for
+an artist, title, details line) holds its place.
+
+### Page sections
+
+A page's sections each start with a `text-xl` heading over a `border` hairline, like the rules
+that divide a sleeve's back, with any control (a time range switch, Show all) at the hairline's
+right end (`src/renderer/ui/page-section.tsx`). The heading row has the same height with or
+without a control, so side-by-side sections line up. Home's sections, an artist's discography, a
+show's Episodes, and each disc of a multi-disc album use it.
+
 ### Playing from a page
 
-Album, playlist, artist, and show pages have a 56 px round `accent` play button with a 24 px
-filled `Play` icon in `on-accent`, between the header and the list. It starts the page's context
+Album, playlist, artist, and show pages have a 56 px round play button with a 24 px filled `Play`
+icon, 24 px under the header and ahead of the More options button: a default `Button` in the
+`play` size, so it is `accent` with `on-accent` and darkens on hover, and it lifts off the artwork
+wash with `shadow-raised` like the cover. It starts the page's context
 from the beginning. While that context plays it shows `Pause` and pauses it; while the context is
 paused it resumes it. Its name says what it acts on ("Play Late Night Drive"). A playlist whose
 tracks Spotify withholds still has the button. Liked Songs has none, because Spotify has no
@@ -647,9 +690,7 @@ saved theme.
 
 Home opens with the artwork wash, taken from the cover of the track played last, and a `text-5xl`
 greeting, "Hello, <display name>" ("Hello" until the name loads, or when Spotify has none). Below
-it come up to four sections, 48 px apart. Each starts with a `text-xl` heading over a `border`
-hairline, like the rules on a sleeve's back, with any control at the hairline's right end; the
-heading row has the same height with or without a control, so side-by-side sections line up:
+it come up to four page sections (see Page sections), 48 px apart:
 
 - **Jump back in:** tiles for up to eight distinct albums, playlists, and artists the user
   recently played from, most recent first, in a tile grid. A tile is a 64 px `surface-raised` row
@@ -680,16 +721,16 @@ Log out and the app version live in Settings, under Account.
 
 ### Artist page
 
-The header is the page header every page shares, with the artist's image as a round cover, a
-`text-xs` "Artist" label, the name in `text-5xl`, and the genres in `text-sm` `muted` when
-Spotify lists any. Below it the discography comes in up to three sections, in this order:
-Albums, Singles and EPs, Appears On. A section with no releases is left out; an artist with
-none at all says so.
+The header is the page header every page shares (see Page header), with the artist's image as a
+round cover and the genres after "Artist" in the details line when Spotify lists any. Below it the
+discography comes in up to three page sections, in this order: Albums, Singles and EPs, Appears
+On. They sit 48 px apart and 48 px under the header, as on Home. A section with no releases is
+left out; an artist with none at all says so.
 
-Each section has a `text-xl` heading and a card grid. A card shows the cover, the name in
-`text-sm` at 600, and the release year in `text-xs` `muted`, and links to the album page. A
-section shows one row of cards, as many as fit the pane width. When it has more, a "Show all"
-button at the right end of the heading reveals the rest and becomes "Show fewer"; it sets
+Each section is a card grid under its heading. A card shows the cover, the name in `text-sm` at
+600, and the release year in `text-xs` `muted`, and links to the album page. A section shows one
+row of cards, as many as fit the pane width. When it has more, a small ghost "Show all" button at
+the right end of the heading reveals the rest and becomes "Show fewer"; it sets
 `aria-expanded`. The revealed grid loads its next page when its end scrolls into view, like any
 long list. Each grid is one tab stop with roving focus.
 
@@ -699,8 +740,8 @@ so the page does not show them.
 ### Folder page
 
 The header shows a breadcrumb of the parent folders (only for a nested folder) above the page
-header every page shares: a `Folder` placeholder tile as the cover, a `text-xs` "Folder" label,
-the name in `text-5xl`, and the item count.
+header every page shares: a `Folder` placeholder tile as the cover, the name, and the item count
+after "Folder" in the details line.
 
 Under the header sits the round play button every page shares (see Playing from a page), named
 after the folder ("Play Running"). It plays the folder's own tracks as a list, in folder order.
@@ -910,8 +951,9 @@ announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 
 - While a list or page loads, it says so inside an `output` element, so screen readers announce
   it. Home shows skeletons in the shape of its sections (`src/renderer/ui/skeleton.tsx`) and keeps
-  the message for screen readers, and so does the sidebar library; other screens show the
-  message in `muted` text until their redesign. No spinner.
+  the message for screen readers, and so do the sidebar library and the pages with a page header
+  (a skeleton cover, round for an artist, beside a title and a details line). Other screens show
+  the message in `muted` text until their redesign. No spinner.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, after a 16 px `muted` `CircleAlert` icon,
   with a small outline Retry button under it (`src/renderer/ui/error-with-retry.tsx`). It stays

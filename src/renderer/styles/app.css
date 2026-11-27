@@ -98,6 +98,14 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /*
+   * Browsers set table header cells in bold, and Tailwind's preflight does not
+   * reset them, so a weight set on a header row would not reach its cells.
+   */
+  th {
+    font-weight: inherit;
+  }
+
   /* One focus style everywhere, so no component can ship without one. */
   :focus-visible {
     outline: 2px solid var(--theme-color-focus);

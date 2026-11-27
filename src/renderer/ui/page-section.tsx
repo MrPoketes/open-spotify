@@ -1,13 +1,15 @@
 import { useId, type ReactNode } from "react"
 
-interface HomeSectionProps {
+interface PageSectionProps {
   readonly title: string
   // Shown at the right end of the heading, such as a time range switch.
   readonly controls?: ReactNode
   readonly children: ReactNode
 }
 
-export function HomeSection({ title, controls, children }: HomeSectionProps) {
+// A section of a page: its heading sits over a hairline rule, like the rules
+// that divide a sleeve's back (docs/design.md, Page sections).
+export function PageSection({ title, controls, children }: PageSectionProps) {
   const headingId = useId()
   return (
     <section aria-labelledby={headingId} className="flex min-w-0 flex-col gap-4">

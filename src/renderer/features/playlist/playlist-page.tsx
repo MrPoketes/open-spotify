@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
-import { LoadingMessage } from "../../ui/loading-message"
+import { PageHeaderLoading } from "../../ui/page-header"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { Playlist } from "../spotify/spotify-playlist"
@@ -56,7 +56,7 @@ export function PlaylistPage({ playlistId }: { readonly playlistId: string }) {
   const { state, retry } = useLoad(loadPlaylist(playlistId), "The playlist failed to load")
 
   if (state.status === "loading") {
-    return <LoadingMessage>Loading playlist…</LoadingMessage>
+    return <PageHeaderLoading message="Loading playlist…" />
   }
   if (state.status === "failed") {
     return (

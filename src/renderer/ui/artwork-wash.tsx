@@ -8,9 +8,9 @@ interface ArtworkWashProps {
 // The artwork, blurred far past recognition, colors the top of the page and
 // fades into the surface (docs/design.md, Artwork wash). It bleeds through the
 // main view's padding to the edges of the sheet (px-8 in app-shell.tsx) and up
-// behind the floating top bar, and scrolls away with the page. The page's root must
-// be positioned. The theme's artwork-wash token sets its strength, and a theme
-// that sets it to 0 turns it off.
+// behind the floating top bar, and scrolls away with the page. Its parent must
+// be positioned and start at the top of the page. The theme's artwork-wash
+// token sets its strength, and a theme that sets it to 0 turns it off.
 export function ArtworkWash({ sources }: ArtworkWashProps) {
   // Blurred, the smallest image looks the same as the largest.
   const smallestSource = sources.at(-1)

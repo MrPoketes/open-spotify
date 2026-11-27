@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { HomeSection } from "./home-section"
+import { PageSection } from "../../ui/page-section"
 import { LoadedContent } from "./loaded-content"
 import { TimeRangeSwitch } from "./time-range-switch"
 import { hasNoTopItems, type TopItems } from "./use-top-items"
@@ -23,7 +23,7 @@ export function TopItemsSection<A>({ kind, topItems, renderItems }: TopItemsSect
     />
   )
   return (
-    <HomeSection title={title} controls={timeRangeSwitch}>
+    <PageSection title={title} controls={timeRangeSwitch}>
       <LoadedContent
         state={topItems.state}
         loadingMessage={`Loading your top ${kind}…`}
@@ -39,6 +39,6 @@ export function TopItemsSection<A>({ kind, topItems, renderItems }: TopItemsSect
           )
         }
       </LoadedContent>
-    </HomeSection>
+    </PageSection>
   )
 }

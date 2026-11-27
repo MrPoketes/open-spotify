@@ -1,7 +1,7 @@
 import type { Effect } from "effect"
 import type { ReactNode } from "react"
 import { useLoad } from "../../lib/use-load"
-import { LoadingMessage } from "../../ui/loading-message"
+import { PageHeaderLoading } from "../../ui/page-header"
 import { isUnknownSpotifyId } from "./is-unknown-spotify-id"
 import type { SpotifyApi, SpotifyApiError } from "./spotify-api"
 import type { SpotifyItemKind } from "./spotify-item-kinds"
@@ -18,7 +18,7 @@ export function LoadedSpotifyItem<A>({ kind, load, children }: LoadedSpotifyItem
   const { state, retry } = useLoad(load, `The ${kind} failed to load`)
 
   if (state.status === "loading") {
-    return <LoadingMessage>{`Loading ${kind}…`}</LoadingMessage>
+    return <PageHeaderLoading message={`Loading ${kind}…`} isRound={kind === "artist"} />
   }
   if (state.status === "failed" && isUnknownSpotifyId(state.error)) {
     return <SpotifyItemNotFound kind={kind} />

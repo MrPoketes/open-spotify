@@ -36,15 +36,14 @@ export function PlaylistHeader({ playlist, totalDuration }: PlaylistHeaderProps)
       kind={spotifyItemKinds.playlist.label}
       title={playlist.name}
       cover={{ sources: images, placeholderIcon: spotifyItemKinds.playlist.icon }}
+      details={details}
+      description={description}
       menuItems={[addToFolder({ uri: playlist.uri, name: playlist.name, images })]}
       playButton={
         isEmpty ? undefined : (
           <ContextPlayButton contextUri={playlist.uri} contextName={playlist.name} />
         )
       }
-    >
-      {description === "" ? null : <p className="text-sm text-muted">{description}</p>}
-      <p className="text-sm text-muted">{details.join(" · ")}</p>
-    </PageHeader>
+    />
   )
 }

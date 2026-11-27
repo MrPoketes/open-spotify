@@ -1,3 +1,4 @@
+import { PageSection } from "../../ui/page-section"
 import type { AlbumTrack } from "../spotify/spotify-album"
 import type { Image } from "../spotify/spotify-image"
 import { TrackList } from "../track-list/track-list"
@@ -43,27 +44,55 @@ interface AlbumTracksProps {
   readonly highlightedTrackId: string | undefined
 }
 
+interface DiscTracksProps extends Omit<AlbumTracksProps, "tracks"> {
+  readonly disc: Disc
+  readonly label: string
+}
+
+function DiscTracks({ album, disc, label, highlightedTrackId }: DiscTracksProps) {
+  const highlightedIndex = disc.entries.findIndex(({ trackId }) => trackId === highlightedTrackId)
+  return (
+    <TrackList
+      label={label}
+      layout="album"
+      trackCount={disc.entries.length}
+      trackAt={(index) => disc.entries[index]}
+      playbackStartAt={(index) => ({
+        contextUri: album.uri,
+        offset: { position: disc.firstPosition + index },
+      })}
+      highlightedIndex={highlightedIndex === -1 ? undefined : highlightedIndex}
+    />
+  )
+}
+
 export function AlbumTracks({ album, tracks, highlightedTrackId }: AlbumTracksProps) {
   const discs = discsOf(tracks, album.images)
-  const hasDiscHeadings = discs.length > 1
-  return discs.map(({ discNumber, entries, firstPosition }) => {
-    const label = hasDiscHeadings ? `Disc ${discNumber}` : "Tracks"
-    const highlightedIndex = entries.findIndex(({ trackId }) => trackId === highlightedTrackId)
+  const [firstDisc] = discs
+  if (firstDisc === undefined) {
+    return null
+  }
+  if (discs.length === 1) {
     return (
-      <div key={discNumber} className="flex flex-col gap-4">
-        {hasDiscHeadings ? <h2 className="font-display text-xl font-bold">{label}</h2> : null}
-        <TrackList
+      <DiscTracks
+        album={album}
+        disc={firstDisc}
+        label="Tracks"
+        highlightedTrackId={highlightedTrackId}
+      />
+    )
+  }
+  return discs.map((disc) => {
+    const label = `Disc ${disc.discNumber}`
+    return (
+      <PageSection key={disc.discNumber} title={label}>
+        <DiscTracks
+          album={album}
+          disc={disc}
           label={label}
-          layout="album"
-          trackCount={entries.length}
-          trackAt={(index) => entries[index]}
-          playbackStartAt={(index) => ({
-            contextUri: album.uri,
-            offset: { position: firstPosition + index },
-          })}
-          highlightedIndex={highlightedIndex === -1 ? undefined : highlightedIndex}
+          highlightedTrackId={highlightedTrackId}
         />
-      </div>
+      </PageSection>
     )
   })
 }

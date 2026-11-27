@@ -38,7 +38,7 @@ export function ArtistPage({ artistId }: { readonly artistId: string }) {
       {({ artist, discography }) => {
         const parts = discography.filter(({ firstPage }) => firstPage.total > 0)
         return (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-12">
             <ArtistHeader artist={artist} />
             {parts.length === 0 ? (
               <p className="text-muted">Spotify lists no releases for this artist.</p>

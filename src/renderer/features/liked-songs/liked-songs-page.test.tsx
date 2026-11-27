@@ -53,7 +53,9 @@ describe("LikedSongsPage", () => {
     await renderLikedSongsPage()
 
     expect(await screen.findByRole("heading", { name: "Liked Songs", level: 1 })).toBeVisible()
-    expect(screen.getByText(/^5,000 songs · about \d+ hr( \d+ min)?$/)).toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "Liked Songs" })).toHaveTextContent(
+      /Playlist · 5,000 songs · about \d+ hr( \d+ min)?$/,
+    )
     expect(screen.getByRole("table", { name: "Liked Songs" })).toHaveAttribute(
       "aria-rowcount",
       "5001",
@@ -116,7 +118,9 @@ describe("LikedSongsPage", () => {
     )
 
     expect(await screen.findByText("Songs you like will appear here.")).toBeVisible()
-    expect(screen.getByText("0 songs")).toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "Liked Songs" })).toHaveTextContent(
+      "Playlist · 0 songs",
+    )
     expect(screen.queryByRole("table")).toBeNull()
   })
 
