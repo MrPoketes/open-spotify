@@ -1,5 +1,6 @@
 import {
   Context,
+  Duration,
   Effect,
   Layer,
   Queue,
@@ -15,6 +16,11 @@ const sdkScriptUrl = "https://sdk.scdn.co/spotify-player.js"
 // Other Spotify apps list this computer under this name. Open Spotify's own
 // device picker calls it "This computer" instead.
 const connectDeviceName = "Open Spotify"
+
+// The SDK's connect() can stay pending for good without reporting an error
+// (https://community.spotify.com/t5/Spotify-for-Developers/Web-Playback-SDK-player-connect-never-resolves-in-Development/td-p/7392190),
+// so a player that has not connected by then counts as one that did not start.
+const connectTimeout = Duration.seconds(30)
 
 // The parts of the SDK's Spotify.Player that Open Spotify uses, from
 // https://developer.spotify.com/documentation/web-playback-sdk/reference
@@ -68,6 +74,10 @@ interface SdkEvent {
   readonly payload: unknown
 }
 
+// The SDK's events, and the end of a connect() that did not connect. Both go
+// through one queue, so the player follows them in the order they happened.
+type PlayerEvent = SdkEvent | { readonly name: "not_connected" }
+
 // The SDK script calls window.onSpotifyWebPlaybackSDKReady once it has
 // loaded, and Spotify.Player exists only from then on. A script that failed
 // to load is removed, so the next connect, after the next login, tries again.
@@ -116,9 +126,27 @@ interface PlayerState {
   readonly failure: SubscriptionRef.SubscriptionRef<SdkErrorEvent | null>
 }
 
+// The SDK may report why it did not connect before or after connect()
+// settles, so its own reason replaces the generic one and is never replaced
+// by it. A player that is ready did start, whatever connect() says.
+const followNotConnected = Effect.fn("followNotConnected")(function* ({
+  deviceId,
+  failure,
+}: PlayerState) {
+  const isReady = (yield* SubscriptionRef.get(deviceId)) !== null
+  if (isReady || (yield* SubscriptionRef.get(failure)) !== null) {
+    return
+  }
+  yield* SubscriptionRef.set(failure, "initialization_error")
+})
+
 // The SDK reports no recovery from an error, so an error holds until the
 // player is ready again.
-const followEvent = (event: SdkEvent, { deviceId, failure }: PlayerState) => {
+const followEvent = (event: PlayerEvent, playerState: PlayerState) => {
+  const { deviceId, failure } = playerState
+  if (event.name === "not_connected") {
+    return followNotConnected(playerState)
+  }
   if (event.name === "ready") {
     return Schema.decodeUnknownEffect(ReadyEvent)(event.payload).pipe(
       Effect.flatMap((ready) => SubscriptionRef.set(deviceId, ready.device_id)),
@@ -136,7 +164,7 @@ const followEvent = (event: SdkEvent, { deviceId, failure }: PlayerState) => {
   )
 }
 
-const listenTo = (player: SdkPlayer, events: Queue.Enqueue<SdkEvent>) => {
+const listenTo = (player: SdkPlayer, events: Queue.Enqueue<PlayerEvent>) => {
   for (const name of sdkEventNames) {
     player.addListener(name, (payload) => Queue.offerUnsafe(events, { name, payload }))
   }
@@ -175,7 +203,7 @@ const acquirePlayer = (
     (player) => Effect.sync(() => player.disconnect()),
   )
 
-const connectPlayer = (player: SdkPlayer) =>
+const connectPlayer = (player: SdkPlayer, events: Queue.Enqueue<PlayerEvent>) =>
   Effect.tryPromise({
     try: () => player.connect(),
     catch: (cause) => new WebPlaybackSdkError({ reason: "The player failed to connect", cause }),
@@ -184,6 +212,16 @@ const connectPlayer = (player: SdkPlayer) =>
       (isConnected) => isConnected,
       () => new WebPlaybackSdkError({ reason: "The player did not connect" }),
     ),
+    Effect.timeoutOrElse({
+      duration: connectTimeout,
+      orElse: () =>
+        Effect.fail(new WebPlaybackSdkError({ reason: "The player did not connect in time" })),
+    }),
+    Effect.catch((error) =>
+      Effect.logError("This computer's player did not connect", error).pipe(
+        Effect.andThen(Queue.offer(events, { name: "not_connected" })),
+      ),
+    ),
   )
 
 const connectThisComputer = Effect.fn("WebPlaybackSdk.connect")(function* (
@@ -191,7 +229,7 @@ const connectThisComputer = Effect.fn("WebPlaybackSdk.connect")(function* (
 ) {
   const SpotifyPlayer = yield* loadedSdk
   const tokenRequests = yield* Queue.unbounded<(accessToken: string) => void>()
-  const events = yield* Queue.unbounded<SdkEvent>()
+  const events = yield* Queue.unbounded<PlayerEvent>()
   const playerState: PlayerState = {
     deviceId: yield* SubscriptionRef.make<string | null>(null),
     failure: yield* SubscriptionRef.make<SdkErrorEvent | null>(null),
@@ -205,7 +243,9 @@ const connectThisComputer = Effect.fn("WebPlaybackSdk.connect")(function* (
       Effect.forever,
     ),
   )
-  yield* connectPlayer(player)
+  // The SDK can report errors before connect() settles, and connect() may
+  // never settle, so the player's state is returned without waiting for it.
+  yield* Effect.forkScoped(connectPlayer(player, events), { startImmediately: true })
   return {
     deviceId: SubscriptionRef.changes(playerState.deviceId),
     failure: SubscriptionRef.changes(playerState.failure),

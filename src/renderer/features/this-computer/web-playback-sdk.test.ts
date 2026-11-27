@@ -1,5 +1,6 @@
 import { afterEach, assert, describe, it } from "@effect/vitest"
 import { Effect, Exit, Fiber, Layer, Queue, Scope } from "effect"
+import { TestClock } from "effect/testing"
 import { vi } from "vitest"
 import { collectStream } from "../../lib/collect-stream"
 import { SpotifyAccessToken } from "../spotify/spotify-access-token"
@@ -10,7 +11,8 @@ interface FakeSdkPlayerOptions {
 }
 
 // Stands in for the SDK's Spotify.Player and keeps every player it creates.
-const fakeSdk = () => {
+// Each player's connect() settles like the given connection.
+const fakeSdk = (connection: Promise<boolean>) => {
   const players: Array<FakeSdkPlayer> = []
   class FakeSdkPlayer {
     readonly listeners = new Map<string, (payload: unknown) => void>()
@@ -21,7 +23,7 @@ const fakeSdk = () => {
     }
     connect() {
       this.isConnected = true
-      return Promise.resolve(true)
+      return connection
     }
     disconnect() {
       this.isConnected = false
@@ -69,8 +71,19 @@ const connect = Effect.gen(function* () {
   return yield* sdk.connect
 })
 
-const installLoadedSdk = () => {
-  const sdk = fakeSdk()
+const neverConnecting = new Promise<boolean>(() => {})
+
+// A connect() that stays pending until the test settles it.
+const pendingConnection = () => {
+  let resolveConnection: ((isConnected: boolean) => void) | undefined
+  const promise = new Promise<boolean>((resolve) => {
+    resolveConnection = resolve
+  })
+  return { promise, settle: (isConnected: boolean) => resolveConnection?.(isConnected) }
+}
+
+const installLoadedSdk = (connection = Promise.resolve(true)) => {
+  const sdk = fakeSdk(connection)
   window.Spotify = { Player: sdk.Player }
   return sdk
 }
@@ -142,6 +155,71 @@ describe("WebPlaybackSdk", () => {
       assert.strictEqual(yield* Queue.take(failures), "playback_error")
       sdk.createdPlayer().emit("ready", { device_id: "fake-sdk-device" })
       assert.strictEqual(yield* Queue.take(failures), null)
+    }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
+  )
+
+  // Spotify does not document whether its errors arrive before connect()
+  // settles, and connect() can stay pending for good, so an error shows as
+  // soon as the SDK reports it.
+  it.effect("reports an SDK error that arrives while the player is still connecting", () =>
+    Effect.gen(function* () {
+      const sdk = installLoadedSdk(neverConnecting)
+      const thisComputer = yield* connect
+      const failures = yield* collectStream(thisComputer.failure)
+      assert.strictEqual(yield* Queue.take(failures), null)
+
+      sdk.createdPlayer().emit("authentication_error", { message: "Invalid token scopes." })
+
+      assert.strictEqual(yield* Queue.take(failures), "authentication_error")
+    }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
+  )
+
+  // The SDK's reason tells the user more than a player that did not start.
+  it.effect("keeps the SDK's error when the player then fails to connect", () =>
+    Effect.gen(function* () {
+      const connection = pendingConnection()
+      const sdk = installLoadedSdk(connection.promise)
+      const thisComputer = yield* connect
+      const failures = yield* collectStream(thisComputer.failure)
+      assert.strictEqual(yield* Queue.take(failures), null)
+
+      sdk.createdPlayer().emit("account_error", { message: "Premium required" })
+      connection.settle(false)
+      // Lets the player follow the failed connect() before it gets ready, which
+      // clears the error, so the null below comes after every earlier failure.
+      yield* Effect.yieldNow
+      sdk.createdPlayer().emit("ready", { device_id: "fake-sdk-device" })
+
+      assert.strictEqual(yield* Queue.take(failures), "account_error")
+      assert.strictEqual(yield* Queue.take(failures), null)
+    }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
+  )
+
+  it.effect("reports that the player could not start when it fails to connect", () =>
+    Effect.gen(function* () {
+      const connection = pendingConnection()
+      installLoadedSdk(connection.promise)
+      const thisComputer = yield* connect
+      const failures = yield* collectStream(thisComputer.failure)
+      assert.strictEqual(yield* Queue.take(failures), null)
+
+      connection.settle(false)
+
+      assert.strictEqual(yield* Queue.take(failures), "initialization_error")
+    }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
+  )
+
+  // Otherwise the entry says nothing for as long as connect() stays pending.
+  it.effect("reports that the player could not start when it does not connect in time", () =>
+    Effect.gen(function* () {
+      installLoadedSdk(neverConnecting)
+      const thisComputer = yield* connect
+      const failures = yield* collectStream(thisComputer.failure)
+      assert.strictEqual(yield* Queue.take(failures), null)
+
+      yield* TestClock.adjust("30 seconds")
+
+      assert.strictEqual(yield* Queue.take(failures), "initialization_error")
     }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
   )
 
