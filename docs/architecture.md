@@ -72,7 +72,8 @@ window loads the Vite dev server instead.
   main process.
 - The renderer loads Spotify's Web Playback SDK, which makes this computer a Spotify Connect
   device listed as "This computer" in the device picker
-  (`src/renderer/features/this-computer`). Remote control works without it
+  (`src/renderer/features/this-computer`), unless the user turns off "Play on this computer" in
+  Settings. Remote control works without it
   ([decision 0007](decisions/0007-widevine-through-castlabs-electron.md)).
 - `src/renderer/client.tsx` replaces TanStack Start's default client entry. It applies the
   saved theme (`src/renderer/features/themes`) before React hydrates, and the main process

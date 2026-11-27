@@ -5,6 +5,7 @@ import { defaultSidebarWidth } from "../../shared/sidebar-width"
 import { defaultTrackListDensity } from "../../shared/track-list-density"
 import { redirectUnlessLoggedIn } from "../features/login/require-login"
 import { AppShell } from "../features/shell/app-shell"
+import { defaultPlayOnThisComputer } from "../features/this-computer/play-on-this-computer-context"
 import { DesktopBridge } from "../lib/desktop-bridge"
 import { rendererRuntime } from "../lib/renderer-runtime"
 import { loadSavedSetting } from "../lib/saved-setting"
@@ -25,18 +26,25 @@ const loadAppShell = Effect.gen(function* () {
     savedSidebarWidth: loadSavedSetting("sidebarWidth", defaultSidebarWidth),
     savedRightPaneWidth: loadSavedSetting("rightPaneWidth", defaultRightPaneWidth),
     savedTrackListDensity: loadSavedSetting("trackListDensity", defaultTrackListDensity),
+    savedPlayOnThisComputer: loadSavedSetting("playOnThisComputer", defaultPlayOnThisComputer),
   })
 })
 
 function AppLayout() {
-  const { appInfo, savedSidebarWidth, savedRightPaneWidth, savedTrackListDensity } =
-    Route.useLoaderData()
+  const {
+    appInfo,
+    savedSidebarWidth,
+    savedRightPaneWidth,
+    savedTrackListDensity,
+    savedPlayOnThisComputer,
+  } = Route.useLoaderData()
 
   return (
     <AppShell
       savedSidebarWidth={savedSidebarWidth}
       savedRightPaneWidth={savedRightPaneWidth}
       savedTrackListDensity={savedTrackListDensity}
+      savedPlayOnThisComputer={savedPlayOnThisComputer}
       platform={appInfo.platform}
     >
       <Outlet />

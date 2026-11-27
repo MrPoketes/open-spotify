@@ -52,6 +52,7 @@ export const appShellRuntime = appShellRuntimeWith({})
 interface ShellOptions {
   readonly savedSidebarWidth?: number
   readonly savedRightPaneWidth?: number
+  readonly savedPlayOnThisComputer?: boolean
   readonly platform?: string
   readonly runtime?: ManagedRuntime.ManagedRuntime<RendererServices, never>
   // Shown under the album page's heading.
@@ -62,6 +63,7 @@ interface ShellOptions {
 export const renderAppShell = async ({
   savedSidebarWidth = 280,
   savedRightPaneWidth = 320,
+  savedPlayOnThisComputer = true,
   platform = "win32",
   runtime = appShellRuntime,
   albumPageContent = null,
@@ -72,6 +74,7 @@ export const renderAppShell = async ({
         savedSidebarWidth={savedSidebarWidth}
         savedRightPaneWidth={savedRightPaneWidth}
         savedTrackListDensity="comfortable"
+        savedPlayOnThisComputer={savedPlayOnThisComputer}
         platform={platform}
       >
         <Outlet />
