@@ -723,8 +723,9 @@ Log out and the app version live in Settings, under Account.
 
 The header is the page header every page shares (see Page header), with the artist's image as a
 round cover and the genres after "Artist" in the details line when Spotify lists any. Below it the
-discography comes in up to three page sections, 48 px apart, in this order: Albums, Singles and
-EPs, Appears On. A section with no releases is left out; an artist with none at all says so.
+discography comes in up to three page sections, in this order: Albums, Singles and EPs, Appears
+On. They sit 48 px apart and 48 px under the header, as on Home. A section with no releases is
+left out; an artist with none at all says so.
 
 Each section is a card grid under its heading. A card shows the cover, the name in `text-sm` at
 600, and the release year in `text-xs` `muted`, and links to the album page. A section shows one
