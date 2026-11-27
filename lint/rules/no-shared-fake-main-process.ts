@@ -6,10 +6,12 @@ const fakeMainProcessFactories = new Set([
   "appShellRuntimeWith",
 ])
 
+const runOnceFunctions = new Set(["describe", "beforeAll"])
+
 // A fake main process keeps saved settings, themes, and folders in memory. One
-// made at module or describe level is shared by every test that uses it, so a
-// test reading a setting back sees what an earlier test saved and passes or
-// fails depending on which tests ran before it.
+// made at module or describe level, or in beforeAll, is shared by every test
+// that uses it, so a test reading a setting back sees what an earlier test
+// saved and passes or fails depending on which tests ran before it.
 export const noSharedFakeMainProcess = defineRule({
   meta: {
     type: "problem",
@@ -36,11 +38,11 @@ export const noSharedFakeMainProcess = defineRule({
   },
 })
 
-// A describe callback runs once for all its tests, so it does not count.
+// A describe or beforeAll callback runs once for all its tests, so it does not count.
 function isInsideTestOrHelper(node: ESTree.Node): boolean {
   let current: ESTree.Node | null = node.parent
   while (current !== null) {
-    if (isFunction(current) && !isDescribeCallback(current)) {
+    if (isFunction(current) && !isRunOnceCallback(current)) {
       return true
     }
     current = current.parent
@@ -56,16 +58,17 @@ function isFunction(node: ESTree.Node): boolean {
   )
 }
 
-function isDescribeCallback(node: ESTree.Node): boolean {
+function isRunOnceCallback(node: ESTree.Node): boolean {
   const parent = node.parent
-  return parent?.type === "CallExpression" && isDescribeCall(parent.callee)
+  return parent?.type === "CallExpression" && isRunOnceCall(parent.callee)
 }
 
-// Matches describe(...), describe.skip(...), and describe.each(table)(...).
-function isDescribeCall(callee: ESTree.Node): boolean {
+// Matches describe(...), describe.skip(...), describe.each(table)(...), and
+// beforeAll(...).
+function isRunOnceCall(callee: ESTree.Node): boolean {
   let current = callee
   while (current.type === "CallExpression" || current.type === "MemberExpression") {
     current = current.type === "CallExpression" ? current.callee : current.object
   }
-  return current.type === "Identifier" && current.name === "describe"
+  return current.type === "Identifier" && runOnceFunctions.has(current.name)
 }

@@ -182,7 +182,7 @@ cannot fail for a meaningful reason should not exist.
   example a fake Spotify API returning fixed data). Never call the real network.
 - **Start every test from fresh fake state.** A test never depends on what another test saved
   or left behind. Create the fake main process (`fakeMainProcess()`) or runtime inside the test
-  or a helper it calls, never at module or `describe` level, and pass the same one to every
+  or a helper it calls, never at module or `describe` level or in `beforeAll`, and pass the same one to every
   launch the test reads settings back from (see
   `src/renderer/features/this-computer/play-on-this-computer-setting.test.tsx`). Otherwise a
   test that reads a saved setting sees an earlier test's value and passes only because of the

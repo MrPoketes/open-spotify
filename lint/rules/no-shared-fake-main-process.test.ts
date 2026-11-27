@@ -14,6 +14,7 @@ ruleTester.run("no-shared-fake-main-process", noSharedFakeMainProcess, {
     "const launchApp = (mainProcess = fakeMainProcess()) => renderAppShell(mainProcess)",
     "function renderTree() { return renderScreen(fakeMainProcess()) }",
     "const runtime = fakeRendererRuntimeLike()",
+    "beforeEach(() => { mainProcess = fakeMainProcess() })",
   ],
   invalid: [
     {
@@ -21,7 +22,11 @@ ruleTester.run("no-shared-fake-main-process", noSharedFakeMainProcess, {
       errors: [{ messageId: "noSharedFakeMainProcess" }],
     },
     {
-      code: 'Object.defineProperty(window, "desktop", { value: fakeMainProcess() })',
+      code: "beforeAll(() => { mainProcess = fakeMainProcess() })",
+      errors: [{ messageId: "noSharedFakeMainProcess" }],
+    },
+    {
+      code: 'describe("Settings", () => { beforeAll(() => { runtime = fakeRendererRuntime() }) })',
       errors: [{ messageId: "noSharedFakeMainProcess" }],
     },
     {
