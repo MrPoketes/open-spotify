@@ -10,6 +10,7 @@ import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { NoActiveDevice, type SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFake, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
+import { openAddToFolder, openFolderInMenu } from "./add-to-folder-menu-queries"
 import { FolderPage } from "./folder-page"
 import { FoldersProvider } from "./folders-provider"
 
@@ -240,14 +241,10 @@ describe("FolderPage", () => {
         keys: "[MouseRight]",
         target: within(entries).getByRole("link", { name: /Low Orbit/ }),
       })
-      await userEvent.click(screen.getByRole("menuitem", { name: "Add to folder" }))
-      const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
-      await userEvent.click(within(folderSubmenu).getByRole("menuitem", { name: "Running" }))
+      const folderSubmenu = await openAddToFolder(userEvent)
+      const runningSubmenu = await openFolderInMenu(userEvent, folderSubmenu, "Running")
       await userEvent.click(
-        within(screen.getByRole("menu", { name: "Running" })).getByRole("menuitemcheckbox", {
-          name: "Running",
-          checked: true,
-        }),
+        within(runningSubmenu).getByRole("menuitemcheckbox", { name: "Running", checked: true }),
       )
 
       expect(await screen.findByText("Removed from Running")).toBeInTheDocument()

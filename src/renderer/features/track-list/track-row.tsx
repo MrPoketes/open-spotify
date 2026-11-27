@@ -3,7 +3,7 @@ import { Clock, Volume2 } from "lucide-react"
 import { useId, type CSSProperties, type KeyboardEvent } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
-import { useContextMenu } from "../../ui/use-context-menu"
+import { ContextMenu } from "../../ui/context-menu"
 import { ArtistLinks } from "../artist/artist-links"
 import { useAddToFolder } from "../folders/use-add-to-folder"
 import { formatArtistNames } from "../spotify/format-artist-names"
@@ -272,7 +272,7 @@ export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
   const playingTextId = useId()
   // A row that is still loading has no actions yet, and a row whose actions
   // would all lead nowhere, such as a local file's, opens no menu.
-  const trackMenu = useContextMenu(
+  const trackMenu =
     entry === undefined
       ? null
       : {
@@ -281,36 +281,38 @@ export function TrackRow({ entry, layout, density, slot }: TrackRowProps) {
             editablePlaylists: editablePlaylists.state,
             addToFolder,
           }),
-        },
-  )
+        }
 
   return (
-    <tr
-      {...rowAttributes(slot, layout, density)}
-      aria-label={accessibleName(slot.index, entry)}
-      aria-describedby={slot.isCurrentItem ? playingTextId : undefined}
-      onContextMenu={trackMenu.openAtPointer}
-      onDoubleClick={entry === undefined ? undefined : slot.onPlay}
-      onKeyDown={(event) => {
-        trackMenu.openWithKeyboard(event)
-        // Enter on a link in the row follows the link instead.
-        if (event.key === "Enter" && event.target === event.currentTarget && entry !== undefined) {
-          slot.onPlay()
-        }
-        slot.onKeyDown(event)
-      }}
-    >
-      <PositionCell
-        index={slot.index}
-        isCurrentItem={slot.isCurrentItem}
-        playingTextId={playingTextId}
-      />
-      {entry === undefined ? (
-        <PlaceholderCells layout={layout} density={density} />
-      ) : (
-        <TrackCells entry={entry} layout={layout} density={density} slot={slot} />
-      )}
-      {trackMenu.menu}
-    </tr>
+    <ContextMenu menu={trackMenu}>
+      <tr
+        {...rowAttributes(slot, layout, density)}
+        aria-label={accessibleName(slot.index, entry)}
+        aria-describedby={slot.isCurrentItem ? playingTextId : undefined}
+        onDoubleClick={entry === undefined ? undefined : slot.onPlay}
+        onKeyDown={(event) => {
+          // Enter on a link in the row follows the link instead.
+          if (
+            event.key === "Enter" &&
+            event.target === event.currentTarget &&
+            entry !== undefined
+          ) {
+            slot.onPlay()
+          }
+          slot.onKeyDown(event)
+        }}
+      >
+        <PositionCell
+          index={slot.index}
+          isCurrentItem={slot.isCurrentItem}
+          playingTextId={playingTextId}
+        />
+        {entry === undefined ? (
+          <PlaceholderCells layout={layout} density={density} />
+        ) : (
+          <TrackCells entry={entry} layout={layout} density={density} slot={slot} />
+        )}
+      </tr>
+    </ContextMenu>
   )
 }

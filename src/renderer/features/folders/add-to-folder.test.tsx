@@ -21,6 +21,7 @@ import { coverUrl } from "../spotify/spotify-fixtures"
 import { FakeMainView } from "../track-list/fake-main-view"
 import { TrackList } from "../track-list/track-list"
 import type { TrackListEntry } from "../track-list/track-row"
+import { openAddToFolder, openFolderInMenu } from "./add-to-folder-menu-queries"
 import { FolderPage } from "./folder-page"
 import { FoldersProvider } from "./folders-provider"
 import { lowOrbit } from "./low-orbit-album"
@@ -132,15 +133,11 @@ const sidebarAlbum = () => screen.findByRole("link", { name: /^Low Orbit.*Album/
 // Opens the Add to folder submenu of the element's context menu.
 const openFolderSubmenu = async (user: User, target: HTMLElement) => {
   await user.pointer({ keys: "[MouseRight]", target })
-  await user.click(await screen.findByRole("menuitem", { name: "Add to folder", expanded: false }))
-  return screen.getByRole("menu", { name: "Add to folder" })
+  return openAddToFolder(user)
 }
 
-const openRunningSubmenu = async (user: User, target: HTMLElement) => {
-  const folderSubmenu = await openFolderSubmenu(user, target)
-  await user.click(within(folderSubmenu).getByRole("menuitem", { name: "Running" }))
-  return screen.getByRole("menu", { name: "Running" })
-}
+const openRunningSubmenu = async (user: User, target: HTMLElement) =>
+  openFolderInMenu(user, await openFolderSubmenu(user, target), "Running")
 
 describe("Add to folder", () => {
   it("adds a track to the chosen folder and marks that folder afterwards", async () => {
@@ -228,8 +225,7 @@ describe("Add to folder", () => {
 
     header.focus()
     await user.keyboard("{Shift>}{F10}{/Shift}")
-    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
-    const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
+    const folderSubmenu = await openAddToFolder(user)
     await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
 
     expect(await findStatusMessage("Added to Focus")).toBeInTheDocument()
@@ -253,8 +249,7 @@ describe("Add to folder", () => {
 
     card.focus()
     await user.keyboard("{Shift>}{F10}{/Shift}")
-    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
-    const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
+    const folderSubmenu = await openAddToFolder(user)
     await user.click(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Focus" }))
 
     expect(await findStatusMessage("Added to Focus")).toBeInTheDocument()
@@ -268,14 +263,9 @@ describe("Add to folder", () => {
     const user = await renderWithFolders(<PlaylistPage playlistId={lateNightDriveId} />)
 
     await user.click(await screen.findByRole("button", { name: "More options" }))
-    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
-    const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
-    await user.click(within(folderSubmenu).getByRole("menuitem", { name: "Running" }))
+    const runningSubmenu = await openFolderInMenu(user, await openAddToFolder(user), "Running")
     await user.click(
-      within(screen.getByRole("menu", { name: "Running" })).getByRole("menuitemcheckbox", {
-        name: "Running",
-        checked: true,
-      }),
+      within(runningSubmenu).getByRole("menuitemcheckbox", { name: "Running", checked: true }),
     )
 
     expect(await findStatusMessage("Removed from Running")).toBeInTheDocument()
@@ -360,7 +350,7 @@ describe("Add to folder", () => {
     const user = await renderWithFolders(trackList, mainProcessFailingFirstTreeRead())
 
     await user.pointer({ keys: "[MouseRight]", target: await trackRow() })
-    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Add to folder" }))
 
     expect(await findStatusMessage("Your folders didn't load. Trying again.")).toBeInTheDocument()
     const folderSubmenu = await openFolderSubmenu(user, await trackRow())

@@ -1,4 +1,5 @@
 import { use, useEffect, useEffectEvent } from "react"
+import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
 import { IsMacContext } from "./is-mac-context"
 import { matchesKeyCombo } from "./key-combo"
 import {
@@ -15,11 +16,20 @@ const isTextEntry = (target: EventTarget | null) =>
       "textarea, select, input:not([type='checkbox'], [type='radio'], [type='range'])",
     ))
 
+// An open menu takes every key held without Ctrl, Alt, or Cmd: Space chooses
+// the focused item and a letter jumps to one.
+const isKeyForOpenMenu = (event: KeyboardEvent) =>
+  event.target instanceof Element &&
+  event.target.closest("[role=menu]") !== null &&
+  !hasShortcutModifier(event)
+
 // Space presses a focused button, so a shortcut on Space gives way to it. On
 // a link Space only scrolls, and a focused radio button is already checked, so
 // there the shortcut runs.
 const isKeyForFocusedElement = (event: KeyboardEvent) =>
-  isTextEntry(event.target) || (event.key === " " && event.target instanceof HTMLButtonElement)
+  isTextEntry(event.target) ||
+  isKeyForOpenMenu(event) ||
+  (event.key === " " && event.target instanceof HTMLButtonElement)
 
 // Runs the action when the user presses the shortcut's keys anywhere in the
 // window, except while typing. Holding the keys down runs the action once,

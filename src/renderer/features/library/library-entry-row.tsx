@@ -3,8 +3,8 @@ import { Link } from "@tanstack/react-router"
 import { Pin, PinOff } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import { ArtworkSummary } from "../../ui/artwork-summary"
+import { ContextMenu } from "../../ui/context-menu"
 import { rowActionClassName } from "../../ui/row-action-class-name"
-import { useContextMenu } from "../../ui/use-context-menu"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { toSpotifyItem, useAddToFolder } from "../folders/use-add-to-folder"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
@@ -34,9 +34,9 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
   // Liked Songs is not an item Spotify can link to, so no folder can hold it,
   // and it has no other action for a menu.
   const canGoInFolder = entry.kind !== "liked-songs"
-  const entryMenu = useContextMenu(
-    canGoInFolder ? { label: `Actions for ${entry.name}`, items: [addToFolder(entry)] } : null,
-  )
+  const entryMenu = canGoInFolder
+    ? { label: `Actions for ${entry.name}`, items: [addToFolder(entry)] }
+    : null
   // The folder tree decodes the item from the drag data when the row is
   // dropped on a folder.
   const { setNodeRef, listeners, isDragging } = useDraggable({
@@ -57,27 +57,25 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
       {...listeners}
       className={`group flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised ${isDragging ? "opacity-50" : ""}`}
     >
-      <Link
-        {...entry.page}
-        {...rovingProps}
-        ref={(row: HTMLElement | null) => {
-          rovingProps.ref(row)
-          focusAfterPin(row)
-        }}
-        onKeyDown={(event) => {
-          togglePinWithKey(event)
-          entryMenu.openWithKeyboard(event)
-        }}
-        onContextMenu={entryMenu.openAtPointer}
-        aria-keyshortcuts={pinShortcut.ariaKeyShortcuts}
-        className="flex min-w-0 flex-1 rounded-small px-2 py-1"
-      >
-        <ArtworkSummary
-          artwork={libraryEntryArtwork(entry)}
-          title={entry.name}
-          details={entry.details}
-        />
-      </Link>
+      <ContextMenu menu={entryMenu}>
+        <Link
+          {...entry.page}
+          {...rovingProps}
+          ref={(row: HTMLElement | null) => {
+            rovingProps.ref(row)
+            focusAfterPin(row)
+          }}
+          onKeyDown={togglePinWithKey}
+          aria-keyshortcuts={pinShortcut.ariaKeyShortcuts}
+          className="flex min-w-0 flex-1 rounded-small px-2 py-1"
+        >
+          <ArtworkSummary
+            artwork={libraryEntryArtwork(entry)}
+            title={entry.name}
+            details={entry.details}
+          />
+        </Link>
+      </ContextMenu>
       <button
         type="button"
         tabIndex={-1}
@@ -88,7 +86,6 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
       >
         {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}
       </button>
-      {entryMenu.menu}
     </div>
   )
 }

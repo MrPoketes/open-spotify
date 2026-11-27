@@ -1,5 +1,5 @@
 import type { Folder } from "../../../shared/folders"
-import type { MenuAction, MenuItem } from "../../ui/menu-list"
+import type { MenuAction, MenuItem } from "../../ui/menu-items"
 
 // A folder with folders inside opens a submenu, which starts with the folder
 // itself so it can still be chosen. A folder that cannot be chosen, and holds

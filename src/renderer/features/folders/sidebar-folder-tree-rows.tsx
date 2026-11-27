@@ -3,8 +3,8 @@ import type { KeyboardEvent } from "react"
 import type { Folder, FolderTree } from "../../../shared/folders"
 import { Artwork } from "../../ui/artwork"
 import { ArtworkSummary } from "../../ui/artwork-summary"
+import { ContextMenu } from "../../ui/context-menu"
 import type { TreeItemProps } from "../../ui/tree-view"
-import { useContextMenu } from "../../ui/use-context-menu"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import { describeFolderEntry } from "./folder-entry-description"
 import { FolderRenameField, type FocusAfterRename } from "./folder-rename-field"
@@ -39,7 +39,7 @@ export function SidebarFolderRow({
   const folder = placed.entry
   const { name, details, icon, page } = describeFolderEntry(folder)
   const { moveWithKey, ariaKeyShortcuts, moveToFolderItem } = useMoveFolderEntry(placed, tree)
-  const folderMenu = useContextMenu({
+  const folderMenu = {
     label: `Actions for ${name}`,
     items: [
       { label: "New folder", onSelect: () => actions.createFolderInside(folder) },
@@ -47,7 +47,7 @@ export function SidebarFolderRow({
       ...(moveToFolderItem === undefined ? [] : [moveToFolderItem]),
       { label: "Delete…", onSelect: () => actions.askToDelete(folder) },
     ],
-  })
+  }
   const renameShortcut = useRowShortcut("renameFolder")
 
   // While the name is edited, the field is the row's tab stop. Shift+Tab
@@ -77,7 +77,7 @@ export function SidebarFolderRow({
   }
 
   return (
-    <>
+    <ContextMenu menu={folderMenu}>
       <Link
         {...page}
         {...itemProps}
@@ -85,9 +85,7 @@ export function SidebarFolderRow({
           itemProps.onKeyDown(event)
           startRenamingWithKey(event)
           moveWithKey(event)
-          folderMenu.openWithKeyboard(event)
         }}
-        onContextMenu={folderMenu.openAtPointer}
         aria-keyshortcuts={`${renameShortcut.ariaKeyShortcuts} ${ariaKeyShortcuts}`}
         className={rowClassName}
       >
@@ -97,8 +95,7 @@ export function SidebarFolderRow({
           details={details}
         />
       </Link>
-      {folderMenu.menu}
-    </>
+    </ContextMenu>
   )
 }
 
@@ -111,21 +108,19 @@ interface SpotifyItemRowProps {
 export function SpotifyItemRow({ placed, tree, itemProps }: SpotifyItemRowProps) {
   const { name, details, artwork, icon, isArtist, page } = describeFolderEntry(placed.entry)
   const { moveWithKey, ariaKeyShortcuts, moveToFolderItem } = useMoveFolderEntry(placed, tree)
-  const itemMenu = useContextMenu({
+  const itemMenu = {
     label: `Actions for ${name}`,
     items: moveToFolderItem === undefined ? [] : [moveToFolderItem],
-  })
+  }
   return (
-    <>
+    <ContextMenu menu={itemMenu}>
       <Link
         {...page}
         {...itemProps}
         onKeyDown={(event) => {
           itemProps.onKeyDown(event)
           moveWithKey(event)
-          itemMenu.openWithKeyboard(event)
         }}
-        onContextMenu={itemMenu.openAtPointer}
         aria-keyshortcuts={ariaKeyShortcuts}
         className={rowClassName}
       >
@@ -135,7 +130,6 @@ export function SpotifyItemRow({ placed, tree, itemProps }: SpotifyItemRowProps)
           details={details}
         />
       </Link>
-      {itemMenu.menu}
-    </>
+    </ContextMenu>
   )
 }

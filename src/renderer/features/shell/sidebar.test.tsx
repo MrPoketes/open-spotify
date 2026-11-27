@@ -75,15 +75,15 @@ describe("Sidebar folder menu", () => {
     )
 
     await user.click(await screen.findByRole("button", { name: "Folder options" }))
-    await user.click(screen.getByRole("menuitem", { name: "Import folders…" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Import folders…" }))
     await screen.findByText("Imported 1 folder.")
     await user.pointer({
       keys: "[MouseRight]",
       target: await screen.findByRole("link", { name: /^Small Hours/ }),
     })
-    await user.click(screen.getByRole("menuitem", { name: "Add to folder" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Add to folder" }))
 
-    const folderSubmenu = screen.getByRole("menu", { name: "Add to folder" })
+    const folderSubmenu = await screen.findByRole("menu", { name: "Add to folder" })
     expect(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Imported" })).toBeVisible()
   })
 
@@ -94,7 +94,7 @@ describe("Sidebar folder menu", () => {
     )
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
-    await userEvent.click(screen.getByRole("menuitem", { name: "Export folders…" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Export folders…" }))
 
     expect(await screen.findByText("Exported your folders.")).toBeInTheDocument()
   })
@@ -108,7 +108,7 @@ describe("Sidebar folder menu", () => {
     )
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
-    await userEvent.click(screen.getByRole("menuitem", { name: "Import folders…" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Import folders…" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "That file uses folders format version 2, which this version of Open Spotify can't read. No folders were imported.",
@@ -121,7 +121,7 @@ describe("Sidebar folder menu", () => {
     await renderSidebar(<Sidebar savedWidth={280} />, mainProcessFailing())
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
-    await userEvent.click(screen.getByRole("menuitem", { name: "Export folders…" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Export folders…" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Your folders couldn't be exported.")
   })
@@ -130,7 +130,7 @@ describe("Sidebar folder menu", () => {
     await renderSidebar(<Sidebar savedWidth={280} />, mainProcessFailing())
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
-    await userEvent.click(screen.getByRole("menuitem", { name: "Import folders…" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Import folders…" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The file couldn't be imported. No folders were imported.",
@@ -167,7 +167,7 @@ describe("Sidebar folder tree", () => {
     )
 
     await user.click(await screen.findByRole("button", { name: "Folder options" }))
-    await user.click(screen.getByRole("menuitem", { name: "Import folders…" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Import folders…" }))
 
     expect(await screen.findByRole("treeitem", { name: /^Imported/ })).toBeInTheDocument()
   })

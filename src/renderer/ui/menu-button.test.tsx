@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Settings } from "lucide-react"
 import { describe, expect, it, onTestFinished } from "vitest"
@@ -10,6 +10,14 @@ const actions = [
   { label: "Third", onSelect: () => {} },
 ]
 
+// Opened with the pointer, the menu itself takes focus, a moment after it
+// opens, and the arrow keys move from there.
+const openWithClick = async () => {
+  await userEvent.click(screen.getByRole("button", { name: "Options" }))
+  const menu = await screen.findByRole("menu", { name: "Options" })
+  await waitFor(() => expect(menu).toHaveFocus())
+}
+
 describe("MenuButton", () => {
   // Keyboard users must be able to leave a menu without choosing anything and
   // continue from where they were.
@@ -17,7 +25,7 @@ describe("MenuButton", () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
     const menuButton = screen.getByRole("button", { name: "Options" })
 
-    await userEvent.click(menuButton)
+    await openWithClick()
     await userEvent.keyboard("{Escape}")
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
@@ -30,29 +38,30 @@ describe("MenuButton", () => {
     screen.getByRole("button", { name: "Options" }).focus()
 
     await userEvent.keyboard("{ArrowUp}")
-    expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus()
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus())
 
     await userEvent.keyboard("{ArrowDown}")
-    expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus())
   })
 
   it("moves focus to the first item on Home and the last item on End", async () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await openWithClick()
     await userEvent.keyboard("{End}")
-    expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus()
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "Third" })).toHaveFocus())
 
     await userEvent.keyboard("{Home}")
-    expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus())
   })
 
   // App-wide shortcuts, such as Alt+Left to go back, listen on the window and
   // must still work while a menu has focus.
   it("leaves arrow keys, Home and End held with Ctrl, Alt or Cmd to app-wide shortcuts", async () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await openWithClick()
     await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus())
     const keysHeardByWindow: Array<string> = []
     const hearKey = (event: KeyboardEvent) => keysHeardByWindow.push(event.key)
     window.addEventListener("keydown", hearKey)
@@ -62,7 +71,7 @@ describe("MenuButton", () => {
       "{Control>}{ArrowDown}{/Control}{Alt>}{Home}{/Alt}{Meta>}{End}{/Meta}{Alt>}{ArrowLeft}{/Alt}",
     )
 
-    expect(screen.getByRole("menuitem", { name: "Second" })).toHaveFocus()
+    expect(screen.getByRole("menuitem", { name: "First" })).toHaveFocus()
     expect(keysHeardByWindow).toEqual(
       expect.arrayContaining(["ArrowDown", "Home", "End", "ArrowLeft"]),
     )
@@ -90,7 +99,7 @@ describe("MenuButton", () => {
       </>,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await openWithClick()
     await userEvent.tab()
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
@@ -103,7 +112,7 @@ describe("MenuButton", () => {
     render(<MenuButton label="Options" icon={Settings} items={actions} />)
     const menuButton = screen.getByRole("button", { name: "Options" })
 
-    await userEvent.click(menuButton)
+    await openWithClick()
     await userEvent.tab({ shift: true })
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()
@@ -119,7 +128,7 @@ describe("MenuButton", () => {
       </>,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "Options" }))
+    await openWithClick()
     await userEvent.click(screen.getByText("Elsewhere"))
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument()

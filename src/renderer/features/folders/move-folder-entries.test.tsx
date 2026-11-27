@@ -19,7 +19,7 @@ import {
 const openMoveSubmenu = async (name: string) => {
   await userEvent.pointer({ keys: "[MouseRight]", target: await treeItem(name) })
   await userEvent.click(await screen.findByRole("menuitem", { name: "Move to folder" }))
-  return screen.getByRole("menu", { name: "Move to folder" })
+  return screen.findByRole("menu", { name: "Move to folder" })
 }
 
 // Refuses every folder move, as the real main process does when the tree it
