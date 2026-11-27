@@ -3,8 +3,8 @@ import type { Theme } from "../../../shared/theme"
 import { findLibraryTheme, type LibraryTheme } from "../../../shared/theme-library"
 import { Button } from "../../ui/button"
 import type { SavedThemeLibrary } from "./saved-theme"
+import { ThemeActions } from "./theme-actions"
 import { ThemeEditor } from "./theme-editor"
-import { ThemeFileButtons } from "./theme-file-buttons"
 import { ThemePicker } from "./theme-picker"
 
 // The main process keeps imported themes in import order and a replaced theme
@@ -67,7 +67,7 @@ export function AppearanceSettings({ library }: { readonly library: SavedThemeLi
           setThemes((currentThemes) => currentThemes.filter(({ id }) => id !== themeId))
         }
       />
-      <div>
+      <ThemeActions onImport={addTheme}>
         <Button
           variant="secondary"
           ref={editButton}
@@ -75,8 +75,7 @@ export function AppearanceSettings({ library }: { readonly library: SavedThemeLi
         >
           Edit a copy
         </Button>
-      </div>
-      <ThemeFileButtons onImport={addTheme} />
+      </ThemeActions>
     </div>
   )
 }

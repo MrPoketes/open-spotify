@@ -1,6 +1,7 @@
-import { use, useId } from "react"
+import { use } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { SegmentedControl, type SegmentedControlOption } from "../../ui/segmented-control"
+import { SettingRow } from "../../ui/setting-row"
 import { TrackListDensityContext } from "./track-list-density-context"
 
 const densityOptions: ReadonlyArray<SegmentedControlOption<TrackListDensity>> = [
@@ -10,21 +11,21 @@ const densityOptions: ReadonlyArray<SegmentedControlOption<TrackListDensity>> = 
 
 export function TrackListDensitySetting() {
   const { density, chooseDensity } = use(TrackListDensityContext)
-  const descriptionId = useId()
 
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-sm font-semibold">Track list rows</p>
-      <p id={descriptionId} className="text-xs text-muted">
-        Dense rows leave out artwork, so twice as many tracks fit on screen.
-      </p>
-      <SegmentedControl
-        label="Track list rows"
-        aria-describedby={descriptionId}
-        options={densityOptions}
-        value={density}
-        onChange={chooseDensity}
-      />
-    </div>
+    <SettingRow
+      label="Track list rows"
+      description="Dense rows leave out artwork, so twice as many tracks fit on screen."
+    >
+      {({ descriptionId }) => (
+        <SegmentedControl
+          label="Track list rows"
+          aria-describedby={descriptionId}
+          options={densityOptions}
+          value={density}
+          onChange={chooseDensity}
+        />
+      )}
+    </SettingRow>
   )
 }

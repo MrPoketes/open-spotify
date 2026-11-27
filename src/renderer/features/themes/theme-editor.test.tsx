@@ -115,7 +115,8 @@ describe("ThemeEditor", () => {
     await openEditor()
 
     await replaceText(screen.getByLabelText("radius-medium"), "1.5")
-    await userEvent.selectOptions(screen.getByLabelText("radius-medium unit"), "rem")
+    await userEvent.click(screen.getByRole("combobox", { name: "radius-medium unit" }))
+    await userEvent.click(await screen.findByRole("option", { name: "rem" }))
 
     expect(appliedToken("radius-medium")).toBe("1.5rem")
   })
@@ -123,9 +124,18 @@ describe("ThemeEditor", () => {
   it("previews the light color scheme", async () => {
     await openEditor()
 
-    await userEvent.click(screen.getByRole("radio", { name: "Light" }))
+    await userEvent.click(screen.getByRole("button", { name: "Light" }))
 
     expect(document.documentElement.style.colorScheme).toBe("light")
+  })
+
+  it("previews the artwork wash at the opacity its slider is moved to", async () => {
+    await openEditor()
+
+    screen.getByRole("slider", { name: "artwork-wash" }).focus()
+    await userEvent.keyboard("{ArrowRight}")
+
+    expect(appliedToken("artwork-wash")).toBe("0.5")
   })
 
   it("flags an invalid value next to its field and keeps it off the app", async () => {

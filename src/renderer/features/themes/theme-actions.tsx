@@ -1,17 +1,23 @@
+import type { ReactNode } from "react"
 import type { LibraryTheme } from "../../../shared/theme-library"
 import { Button } from "../../ui/button"
 import { useThemeFiles } from "./use-theme-files"
 
-export function ThemeFileButtons({
-  onImport,
-}: {
+interface ThemeActionsProps {
+  // Comes first in the row, ahead of import and export.
+  readonly children: ReactNode
   readonly onImport: (importedTheme: LibraryTheme) => void
-}) {
+}
+
+// The row of buttons under the theme picker, and what importing or exporting
+// a file reported.
+export function ThemeActions({ children, onImport }: ThemeActionsProps) {
   const { message, importThemeFile, exportCurrentTheme } = useThemeFiles(onImport)
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
+        {children}
         <Button variant="secondary" onClick={importThemeFile}>
           Import theme…
         </Button>

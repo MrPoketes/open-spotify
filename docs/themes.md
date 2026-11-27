@@ -132,8 +132,10 @@ a dark theme, or the darkest surface of a light one.
 You can also build a theme without a text editor:
 
 1. Open **Settings** and choose the theme to start from in the theme list.
-2. Choose **Edit a copy**. The editor lists every token with a control that only accepts valid
-   values, and the whole app previews each change as you make it.
+2. Choose **Edit a copy**. The editor lists every token with a control that fits its value: a
+   color picker beside the hex value for colors, a number and a unit for radii and spacing, a
+   text field for fonts and shadows, and a slider from Off to 100% for `artwork-wash`. The whole
+   app previews each valid change as you make it.
 3. Give the theme a name and author, and choose **Save theme**. It is stored like an imported
    theme, appears at the end of the theme list, and is put in use. **Cancel** discards the
    changes.

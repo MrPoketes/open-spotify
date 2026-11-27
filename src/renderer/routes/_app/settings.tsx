@@ -5,6 +5,9 @@ import { loadSavedThemeLibrary } from "../../features/themes/saved-theme"
 import { PlayOnThisComputerSetting } from "../../features/this-computer/play-on-this-computer-setting"
 import { TrackListDensitySetting } from "../../features/track-list/track-list-density-setting"
 import { rendererRuntime } from "../../lib/renderer-runtime"
+import { PageSection } from "../../ui/page-section"
+import { pageTitleClassName } from "../../ui/page-title-class-name"
+import { SettingRow } from "../../ui/setting-row"
 
 export const Route = createFileRoute("/_app/settings")({
   loader: () => rendererRuntime.runPromise(loadSavedThemeLibrary),
@@ -21,30 +24,28 @@ function SettingsPage() {
   const { appInfo } = appShellRoute.useLoaderData()
 
   return (
-    <div className="flex max-w-xl flex-col gap-8">
-      <h1 className="font-display text-3xl font-bold">Settings</h1>
-      <section aria-labelledby="appearance-heading" className="flex flex-col gap-4">
-        <h2 id="appearance-heading" className="font-display text-xl font-bold">
-          Appearance
-        </h2>
+    <div className="flex max-w-2xl flex-col gap-12">
+      <h1 className={`${pageTitleClassName} pt-6`}>Settings</h1>
+      <PageSection title="Appearance">
         <AppearanceSettings library={library} />
-        <TrackListDensitySetting />
-      </section>
-      <section aria-labelledby="playback-heading" className="flex flex-col gap-4">
-        <h2 id="playback-heading" className="font-display text-xl font-bold">
-          Playback
-        </h2>
+        <div className="mt-2 border-t border-border pt-6">
+          <TrackListDensitySetting />
+        </div>
+      </PageSection>
+      <PageSection title="Playback">
         <PlayOnThisComputerSetting />
-      </section>
-      <section aria-labelledby="account-heading" className="flex flex-col items-start gap-4">
-        <h2 id="account-heading" className="font-display text-xl font-bold">
-          Account
-        </h2>
-        <LogOutButton />
-        <p className="text-xs text-muted">
-          Open Spotify {appInfo.version} on {appInfo.platform}
-        </p>
-      </section>
+      </PageSection>
+      <PageSection title="Account">
+        <SettingRow
+          label="Log out of Spotify"
+          description="Forgets your Spotify login on this computer. Your Client ID stays saved for the next login."
+        >
+          {() => <LogOutButton />}
+        </SettingRow>
+      </PageSection>
+      <p className="text-xs text-muted">
+        Open Spotify {appInfo.version} on {appInfo.platform}
+      </p>
     </div>
   )
 }

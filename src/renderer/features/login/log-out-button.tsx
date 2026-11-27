@@ -4,6 +4,7 @@ import { use, useState } from "react"
 import { attemptNavigation } from "../../lib/attempt-navigation"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { Button } from "../../ui/button"
 
 const logOut = Effect.gen(function* () {
   const bridge = yield* DesktopBridge
@@ -28,14 +29,10 @@ export function LogOutButton() {
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <button
-        type="button"
-        onClick={logOutAndLeave}
-        className="rounded-small bg-surface-raised px-3 py-2 text-sm"
-      >
+    <div className="flex flex-col items-end gap-2">
+      <Button variant="outline" onClick={logOutAndLeave}>
         Log out
-      </button>
+      </Button>
       {logOutFailed && (
         <p role="alert" className="text-sm text-danger">
           Could not log out. Try again.

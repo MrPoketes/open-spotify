@@ -1,5 +1,11 @@
 import { Option, Record, Result, Schema } from "effect"
-import { CssLength, HexColor, themeTokenSchemas, type ThemeToken } from "../../../shared/theme"
+import {
+  CssLength,
+  HexColor,
+  Opacity,
+  themeTokenSchemas,
+  type ThemeToken,
+} from "../../../shared/theme"
 
 type TokenPrefix<Token> = Token extends `${infer Prefix}-${string}` ? Prefix : Token
 
@@ -14,7 +20,7 @@ const groupHeadings: Record<TokenPrefix<ThemeToken>, string> = {
   artwork: "Artwork",
 }
 
-type TokenControl = "color" | "length" | "text"
+type TokenControl = "color" | "length" | "opacity" | "text"
 
 export interface TokenField {
   readonly token: ThemeToken
@@ -31,7 +37,10 @@ const controlFor = (token: ThemeToken): TokenControl => {
   if (valueSchema === HexColor) {
     return "color"
   }
-  return valueSchema === CssLength ? "length" : "text"
+  if (valueSchema === CssLength) {
+    return "length"
+  }
+  return valueSchema === Opacity ? "opacity" : "text"
 }
 
 const themeTokens = Record.keys(themeTokenSchemas)
