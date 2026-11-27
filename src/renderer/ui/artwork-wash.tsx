@@ -1,5 +1,4 @@
 import type { ArtworkSource } from "./artwork"
-import { mainViewContentTop } from "./main-view-insets"
 
 interface ArtworkWashProps {
   // Widest first, the order Spotify lists image sizes in.
@@ -21,8 +20,7 @@ export function ArtworkWash({ sources }: ArtworkWashProps) {
   return (
     <div
       aria-hidden
-      style={{ top: -mainViewContentTop }}
-      className="pointer-events-none absolute -inset-x-8 -z-10 h-96 overflow-hidden"
+      className="pointer-events-none absolute -inset-x-8 -top-(--main-view-content-top) -z-10 h-96 overflow-hidden"
     >
       <img
         src={smallestSource.url}

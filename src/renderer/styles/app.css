@@ -82,6 +82,16 @@
 }
 
 @layer base {
+  /*
+   * The top bar floats over the top of the main view (docs/design.md, Layout
+   * grid). Both lengths follow the theme's spacing step, like the controls in
+   * the bar.
+   */
+  :root {
+    --top-bar-height: calc(var(--theme-spacing) * 14);
+    --main-view-content-top: calc(var(--top-bar-height) + var(--theme-spacing) * 4);
+  }
+
   body {
     background-color: var(--theme-color-canvas);
     color: var(--theme-color-foreground);

@@ -9,7 +9,6 @@ import {
   type Ref,
   type RefObject,
 } from "react"
-import { topBarHeight } from "../../ui/main-view-insets"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { TrackListDensityContext } from "./track-list-density-context"
@@ -22,6 +21,17 @@ import { useTrackPlayback } from "./use-track-playback"
 // the list, such as a playlist header, scrolls away with it.
 const scrollingMainView = (rowsRef: RefObject<HTMLElement | null>) =>
   rowsRef.current?.closest("main") ?? null
+
+// The main view keeps rows it scrolls into view clear of the floating top bar
+// with scroll-padding-top (app.css). The virtualiser scrolls by itself, so it
+// reads the same length rather than keeping a copy.
+const scrollPaddingTopOf = (mainView: HTMLElement | null) => {
+  if (mainView === null) {
+    return 0
+  }
+  const scrollPaddingTop = Number.parseFloat(getComputedStyle(mainView).scrollPaddingTop)
+  return Number.isNaN(scrollPaddingTop) ? 0 : scrollPaddingTop
+}
 
 // How far the rows start below the top of the main view's scrolled content,
 // which the virtualiser needs to work out which rows are on screen. What sits
@@ -90,7 +100,7 @@ export function TrackList({
     estimateSize: () => trackRowHeight[density],
     overscan: 10,
     scrollMargin: rowsOffset,
-    scrollPaddingStart: topBarHeight,
+    scrollPaddingStart: scrollPaddingTopOf(scrollingMainView(rowsRef)),
   })
   // The virtualiser keeps the row sizes it worked out and does not notice a
   // new estimate, so a change of density must make it start over.

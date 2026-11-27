@@ -88,8 +88,8 @@ lands, it keeps its earlier styling inside the new shell, and its section below 
   shows behind it, and turns `surface` with a `border` hairline under it once the view has
   scrolled 48 px. The main view's scroll position drives that change in CSS, with no script.
   Content starts 16 px below the bar, and whatever scrolls into view (a focused control, a row
-  moved to with the arrow keys) stops below it instead of under it
-  (`src/renderer/ui/main-view-insets.ts`).
+  moved to with the arrow keys) stops below it instead of under it. Both lengths are steps of the
+  `spacing` token (`--top-bar-height` and `--main-view-content-top` in `app.css`).
 - Card grids (albums, artists, folders) use `repeat(auto-fill, minmax(160px, 1fr))` with a
   24 px gap, so the column count follows the pane width. Tile grids (Home's Jump back in) use
   `repeat(auto-fill, minmax(240px, 1fr))` with an 8 px gap.
