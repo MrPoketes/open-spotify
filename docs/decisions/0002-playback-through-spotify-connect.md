@@ -1,6 +1,8 @@
 # 0002: Playback through Spotify Connect
 
-**Status:** accepted (2026-11-20)
+**Status:** accepted (2026-11-20). Amended by
+[0007](0007-widevine-through-castlabs-electron.md): the Web Playback SDK adds this computer as an
+extra device.
 
 ## Context
 

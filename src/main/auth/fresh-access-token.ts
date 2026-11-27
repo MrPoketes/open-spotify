@@ -4,6 +4,7 @@ import {
   NotLoggedIn,
   SessionExpired,
 } from "../../shared/spotify-auth-replies"
+import { requestedScopes } from "./authorization-request"
 import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
 import { makeStoredSession, TokenStore } from "./token-store"
 
@@ -25,7 +26,11 @@ export const freshAccessToken = Effect.gen(function* () {
   if (Option.isNone(storedSession)) {
     return yield* new NotLoggedIn()
   }
-  const { clientId, refreshToken, accessToken, accessTokenExpiresAt } = storedSession.value
+  const { clientId, refreshToken, accessToken, accessTokenExpiresAt, grantedScopes } =
+    storedSession.value
+  if (!requestedScopes.every((scope) => grantedScopes.includes(scope))) {
+    return yield* tokenStore.clear.pipe(Effect.andThen(Effect.fail(new SessionExpired())))
+  }
   const now = yield* Clock.currentTimeMillis
   if (now < accessTokenExpiresAt - Duration.toMillis(refreshMargin)) {
     return accessToken
@@ -43,6 +48,7 @@ export const freshAccessToken = Effect.gen(function* () {
     refreshToken: refreshedTokens.refresh_token ?? refreshToken,
     accessToken: refreshedTokens.access_token,
     expiresInSeconds: refreshedTokens.expires_in,
+    grantedScopes,
   })
   yield* tokenStore.save(renewedSession)
   return renewedSession.accessToken

@@ -5,6 +5,7 @@ import { Deferred, Effect, FileSystem, Layer, Schema } from "effect"
 import { HttpClient, HttpClientResponse, type HttpClientRequest } from "effect/http"
 import { Settings } from "../settings"
 import { freshSettings } from "../settings-fakes"
+import { requestedScopes } from "./authorization-request"
 import { LoginRedirectPort } from "./callback-server"
 import { SpotifySession } from "./spotify-session"
 import { SpotifyTokenEndpoint } from "./spotify-token-endpoint"
@@ -72,7 +73,10 @@ export const makeFakeSpotifyAccounts = () => {
       authorizeQuery.get("code_challenge") === codeChallengeFor(form.get("code_verifier") ?? "") &&
       authorizeQuery.get("redirect_uri") === form.get("redirect_uri") &&
       form.get("client_id") === fakeClientId
-    return isValid ? ([200, issueTokens()] as const) : ([400, { error: "invalid_grant" }] as const)
+    if (!isValid) {
+      return [400, { error: "invalid_grant" }] as const
+    }
+    return [200, { ...issueTokens(), scope: authorizeQuery.get("scope") }] as const
   }
 
   const refresh = (form: URLSearchParams) => {
@@ -190,6 +194,7 @@ export const fakeSpotifySession = (
 // A session saved by an earlier launch of the app.
 export const restoreFakeSession = Effect.fn("restoreFakeSession")(function* (
   spotifyAccounts: FakeSpotifyAccounts,
+  grantedScopes: ReadonlyArray<string> = requestedScopes,
 ) {
   const tokenStore = yield* TokenStore
   const issuedTokens = spotifyAccounts.issueTokens()
@@ -198,6 +203,7 @@ export const restoreFakeSession = Effect.fn("restoreFakeSession")(function* (
     refreshToken: issuedTokens.refresh_token,
     accessToken: issuedTokens.access_token,
     expiresInSeconds: issuedTokens.expires_in,
+    grantedScopes,
   })
   yield* tokenStore.save(session)
   return yield* SpotifySession
