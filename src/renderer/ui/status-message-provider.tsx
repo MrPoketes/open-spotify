@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
+import { overlayPanelClassName } from "./overlay-panel-class-name"
 import { StatusMessageContext, type StatusMessage } from "./status-message-context"
 
 // Long enough to read a short sentence twice.
@@ -32,7 +33,7 @@ export function StatusMessageProvider({ children }: { readonly children: ReactNo
         {message === null ? null : (
           <p
             key={messageCount}
-            className={`rounded-large bg-surface-overlay px-3 py-2 text-sm shadow-overlay transition-[opacity,translate] duration-200 ease-out starting:translate-y-2 starting:opacity-0 ${message.isFailure ? "text-danger" : ""}`}
+            className={`px-3 py-2 text-sm ${overlayPanelClassName} ${message.isFailure ? "text-danger" : ""}`}
           >
             {message.text}
           </p>

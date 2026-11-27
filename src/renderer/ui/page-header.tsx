@@ -59,7 +59,7 @@ export function PageHeader({
 
   return (
     <div className="relative flex flex-col gap-6 pt-6">
-      <ArtworkWash sources={artwork.sources} />
+      <ArtworkWash placement="page" sources={artwork.sources} />
       <ContextMenu menu={headerMenu}>
         <header
           // A header inside the main view is a generic element, which cannot

@@ -179,13 +179,13 @@ two apart at a glance.
 
 ### Elevation
 
-| Level   | Surface           | Shadow           | Use                                           |
-| ------- | ----------------- | ---------------- | --------------------------------------------- |
-| Ground  | `canvas`          | none             | The window, the sidebar, the now-playing bar  |
-| Sheet   | `surface`         | `shadow-raised`  | The main view and the right pane              |
-| Raised  | `surface-raised`  | none             | Inputs, tiles, hovered rows and cards         |
-| Artwork | the image         | `shadow-raised`  | Covers in grids and page headers; play button |
-| Overlay | `surface-overlay` | `shadow-overlay` | Menus, dialogs, the command palette, toasts   |
+| Level   | Surface           | Shadow           | Use                                                 |
+| ------- | ----------------- | ---------------- | --------------------------------------------------- |
+| Ground  | `canvas`          | none             | The window, the sidebar, the now-playing bar        |
+| Sheet   | `surface`         | `shadow-raised`  | The main view and the right pane                    |
+| Raised  | `surface-raised`  | none             | Inputs, tiles, hovered rows and cards               |
+| Artwork | the image         | `shadow-raised`  | Covers in grids, headers, and the bar; play buttons |
+| Overlay | `surface-overlay` | `shadow-overlay` | Menus, dialogs, the command palette, toasts         |
 
 Hovered and selected list rows change color (`surface-raised`, or `accent` at 15 % opacity
 when selected) but never gain a shadow.
@@ -201,14 +201,16 @@ text and the icon's coral as the accent; the light theme is the same sleeve prin
 ### Artwork wash
 
 The page's artwork, blurred far past recognition (`blur-3xl`, `saturate-150`), fills the top
-384 px of the page and fades into `surface` (`src/renderer/ui/artwork-wash.tsx`). It bleeds
+384 px of the page and fades out into `surface` (`src/renderer/ui/artwork-wash.tsx`). It bleeds
 through the main view's padding to the sheet's edges and up behind the floating top bar, and
 scrolls away with the page, while the top bar takes on its background. Its
 opacity is the `artwork-wash` token (0.45 in the dark theme, 0.3 in the light one), and a theme
 that sets it to 0 turns the wash off. It is decorative and hidden from screen readers. The
 smallest image Spotify lists is enough, since it is blurred. Home takes it from the cover of the
 track played last, and every page with a page header from its cover (see Page header); a page
-without artwork, such as Liked Songs or a folder, shows none.
+without artwork, such as Liked Songs or a folder, shows none. The now-playing bar has a smaller one:
+the playing cover's wash fills the left third of the bar, behind what plays, and fades out into the
+`canvas` to the right and above, so the bar takes on the music's color without becoming a panel.
 
 ### Icons
 
@@ -457,25 +459,31 @@ and the message says so.
 ### Now-playing bar and device picker
 
 The bar has three columns: what is playing on the left, the playback controls in the middle,
-and the queue button and device picker on the right. The left column shows 40 px artwork, as in
-library rows, then the title in `text-sm` and the artists in `text-xs` `muted` ("Show
-episode" for an episode). A track's title links to its album page and each artist name to that
-artist's page; an episode's title links to its show page. A local file has no Spotify pages, so
-its title and artists are plain text.
+and the queue button and device picker on the right. The left column leads with the cover, as a
+sleeve does: 56 px artwork with `rounded-small` corners, lifted with `shadow-raised`, then the
+title in `text-sm` 600 and the artists in `text-xs` `muted` ("Show episode" for an episode),
+over the bar's artwork wash (see Artwork wash). A track's title links to its album page and each
+artist name to that artist's page; an episode's title links to its show page. A local file has no
+Spotify pages, so its title and artists are plain text.
 
-The controls are, in order: shuffle, previous, play or pause, next, repeat. They are 32 px
-round icon buttons; play or pause is `accent` with `on-accent` icons, and the others are
-`muted`. Shuffle and repeat show that they are on with `accent` and a 4 px dot under the
-icon, so the state does not rely on color, and set `aria-pressed`. Repeat cycles off, the
-context, and the track; for the track it uses the `Repeat1` icon and is named "Repeat one
-track".
+The controls are, in order and 12 px apart: shuffle, previous, play or pause, next, repeat.
+Play or pause is the bar's one primary action: a 40 px `accent` disc with a filled 18 px
+`on-accent` glyph, lifted with `shadow-raised`, that darkens on hover like a default Button. The
+others are 32 px round ghost Buttons with `muted` 20 px icons
+(`src/renderer/features/playback/player-control-button.tsx`). Shuffle and repeat show that they are
+on with `accent` and a 4 px dot under the icon, so the state does not rely on color, and set
+`aria-pressed`. Repeat cycles off, the context, and the track; for the track it uses the `Repeat1`
+icon and is named "Repeat one track".
 
 Under the controls, a seek bar shows how far into the item playback is: the elapsed time, a
 slider, and the total time, in `text-xs` `muted` `tabular-nums` (`-:--` while nothing plays).
-Every slider in the app is the shared range slider (`src/renderer/ui/range-slider.tsx`): a
-16 px tall native range input over a 4 px `rounded-full` rail in `muted`, filled with `accent` up
-to a 12 px `accent` thumb. Arrow, page, `Home`, and `End` keys held with Ctrl, Alt, or Cmd do not
-move it, since they belong to the app-wide shortcuts.
+Every slider in the app is the shared Slider (`src/renderer/ui/slider.tsx`, shadcn's Slider on
+Base UI): a 16 px tall control over a 4 px `rounded-full` rail in `muted` at 35 % opacity, filled
+with `accent` up to the value. Its 12 px `foreground` thumb, lifted with `shadow-raised`, shows only
+while the pointer is over the slider, while it is dragged, and while it has keyboard focus, when it
+also carries the focus outline; at rest the bar reads as a line of progress, like a tracklist's
+rule. Arrow, page, `Home`, and `End` keys held with Ctrl, Alt, or Cmd do not move it, since they
+belong to the app-wide shortcuts.
 Between polls the slider moves on by itself while playback plays, and stands still while it is
 paused. The slider is labelled "Playback position", and its value reads as "1:23 of 3:45".
 Left and right (or down and up) arrows step 5 seconds, `PageDown` and `PageUp` step a tenth of
@@ -493,24 +501,30 @@ makes it the accessible description.
 
 The bar's right end holds the queue button (`ListMusic`, a toggle drawn like shuffle) and always
 the device picker button, labelled with the playing device ("Playing on Kitchen Speaker") or
-"No active device". With no active device, the bar's left side says that audio plays in the
-Spotify app or on another device, next to a "Choose a device" button that opens the picker.
+"No active device": a small ghost Button shaped as a pill, with a 16 px `MonitorSpeaker` icon,
+that stays `surface-raised` while the picker is open. With no active device, the bar's left side
+says that audio plays in the Spotify app or on another device, next to a "Choose a device" button
+that opens the picker.
 
 After the device picker come a mute button and a 96 px volume slider for the active device,
-labelled "Volume" and read as "60%". The arrow keys step it by 1 %. Moving it shows the new
-volume at once and sends it once the slider has rested for 250 ms, so a drag or a held arrow key
-sends one request. The change then behaves like any other control's: it holds for a second after
-Spotify accepts it, and a rejected change goes back with a `text-xs` `danger` alert under the
+labelled "Volume" and read as "60%". The arrow keys step it by 1 %, and Shift with an arrow,
+`PageUp`, and `PageDown` by 10 %. Moving it shows the new volume at once and sends it once the
+slider has rested for 250 ms, so a drag or a held arrow key sends one request. The change then
+behaves like any other control's: it holds for a second after Spotify accepts it, and a rejected
+change goes back with a `text-xs` `danger` alert under the
 slider, which overlays the bar's bottom edge so the controls beside it stay put. Mute (`Volume2`)
 turns the volume down to zero and becomes Unmute (`VolumeX`), which restores the last volume
 above zero, or 50 % when Spotify has reported none since the app opened. Both are unavailable
 whenever the playback controls are, and also when the device does not let Spotify change its
 volume; like the controls, they stay focusable and their `title` says why.
 
-The picker is a non-modal popover above its button: `surface-overlay`, `shadow-overlay`,
-`rounded-large`, 320 px wide. Each device is a row with a 20 px Lucide icon for its type, the
-name in `text-sm`, and the type in `text-xs` `muted`. The active device is drawn in `accent`,
-adds "Playing here" to its type line and a `Volume2` icon, and carries `aria-current`.
+The picker is a non-modal popover 12 px above its button: `surface-overlay`, `shadow-overlay`,
+`rounded-large`, 320 px wide with 8 px inside. It fades in and rises 8 px like a menu. Its heading,
+"Connect to a device", is a credits label (see Type). Each device is a menu row with a 36 px
+`rounded-medium` tile holding a 20 px Lucide icon for its type, `muted` on `surface`, then the
+name in `text-sm` and the type in `text-xs` `muted`. The active device's tile turns `accent` with
+an `on-accent` icon, its name turns 600, it adds "Playing here" to its type line and a `Volume2`
+icon in `accent`, and it carries `aria-current`.
 
 "This computer" is listed once the Web Playback SDK is ready, and also when it cannot play, so
 the user sees why instead of the entry disappearing: the SDK failed to start, Spotify refused
@@ -591,12 +605,18 @@ sidebar's (see Accessibility), and the width is remembered. Its header holds the
 and a close button. Opening the pane moves focus into it, and closing it while focus is inside
 returns focus to the queue button.
 
-The pane shows a "Now playing" section with the playing item and a "Next up" list, both in the
-now-playing bar's layout: 40 px artwork, the title, and the artists or "Show episode". Each
-upcoming item is a row button, and the list is one tab stop with roving focus. Pressing a row
-plays that item. Spotify has no endpoint for that, so the app reads the queue again, finds the
-item, and skips to the next item once for every item before it; if the item has left the queue,
-an alert under the list says so. A row points into the list it was shown in, so from the moment
+The pane shows a "Now playing" section with the playing item and a "Next up" list, each under a
+credits label (see Type), 24 px apart. Both are numbered like a tracklist: a 20 px column of
+`text-xs` `muted` `tabular-nums` positions before library-row layouts (40 px artwork, the title,
+and the artists or "Show episode"). The playing item shows a 16 px `Volume2` icon in `accent` in
+place of a number and its title in `accent`, as the playing row of a track list does. The numbers
+are hidden from screen readers, since the list already says where a row is. Each upcoming item is
+a 48 px row button with `rounded-small` corners that takes `surface-raised` on hover, and its
+number turns into a filled 14 px `Play` icon on hover and keyboard focus. The list is one tab
+stop with roving focus. Pressing a row plays that item. Spotify has no endpoint for that, so the
+app reads the queue again, finds the item, and skips to the next item once for every item before
+it; if the item has left the queue, an alert under the list says so. A row points into the list it
+was shown in, so from the moment
 a row is pressed until the queue read after that press arrives, the list ignores presses and is
 `aria-busy`. A double-click therefore plays the item once. When the new list arrives, focus goes
 to the row at the pressed row's position (or the last row, if the list got shorter), because the

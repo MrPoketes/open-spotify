@@ -1,6 +1,6 @@
 import { Volume2, VolumeX } from "lucide-react"
 import { clamp } from "../../lib/clamp"
-import { RangeSlider } from "../../ui/range-slider"
+import { Slider } from "../../ui/slider"
 import { PlayerControlButton } from "./player-control-button"
 import { usePlaybackShortcut } from "./use-playback-shortcut"
 import type { PlayerStateOrLoading } from "./use-player-state"
@@ -17,7 +17,6 @@ interface VolumeControlProps {
 export function VolumeControl({ playerState }: VolumeControlProps) {
   const volumeControl = useVolumeControl(playerState)
   const { volume, isMuted, unavailableReason, failure } = volumeControl
-  const isUnavailable = unavailableReason !== null
 
   // The slider shows each step at once and sends the volume once the presses
   // stop, so quick presses and a held key add up to one request. At 0 or 100
@@ -45,21 +44,14 @@ export function VolumeControl({ playerState }: VolumeControlProps) {
         onPress={volumeControl.toggleMute}
       />
       <div className="flex w-24">
-        <RangeSlider
-          filledFraction={volume / 100}
-          aria-label="Volume"
-          aria-valuetext={`${volume}%`}
-          aria-disabled={isUnavailable}
-          title={unavailableReason ?? "Volume"}
-          min={0}
+        <Slider
+          label="Volume"
+          valueText={`${volume}%`}
+          unavailableReason={unavailableReason}
           max={100}
           step={1}
           value={volume}
-          onChange={(event) => {
-            if (!isUnavailable) {
-              volumeControl.changeVolume(event.target.valueAsNumber)
-            }
-          }}
+          onValueChange={volumeControl.changeVolume}
         />
       </div>
       {failure !== null && (

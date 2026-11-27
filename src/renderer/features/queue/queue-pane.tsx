@@ -1,5 +1,5 @@
 import { Navigate } from "@tanstack/react-router"
-import { X } from "lucide-react"
+import { Volume2, X } from "lucide-react"
 import { memo, use, useId, useState, type ReactNode, type RefObject } from "react"
 import {
   defaultRightPaneWidth,
@@ -9,6 +9,7 @@ import {
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { saveSetting } from "../../lib/saved-setting"
 import { useStreamValue } from "../../lib/use-stream-value"
+import { creditsLabelClassName } from "../../ui/credits-label-class-name"
 import { IconButton } from "../../ui/icon-button"
 import { LoadingMessage } from "../../ui/loading-message"
 import { PaneDivider } from "../../ui/pane-divider"
@@ -18,6 +19,7 @@ import { spotifyErrorDetail } from "../spotify/spotify-error-detail"
 import { SpotifyAccessDeniedNotice, SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import type { PlayerQueue } from "../spotify/spotify-player-queue"
 import { makeQueueContents } from "./queue-contents"
+import { QueuePosition } from "./queue-position"
 import { UpNextList } from "./up-next-list"
 
 interface QueuePaneProps {
@@ -132,11 +134,14 @@ function QueueSections({ queue: { currentlyPlaying, upNext } }: { readonly queue
     )
   }
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {currentlyPlaying !== null && (
         <QueueSection heading="Now playing">
-          <div className="px-2 py-1">
-            <PlayableItemSummary item={currentlyPlaying} />
+          <div className="flex items-center gap-3 px-2 py-1">
+            <QueuePosition>
+              <Volume2 aria-hidden size={16} className="text-accent" />
+            </QueuePosition>
+            <PlayableItemSummary item={currentlyPlaying} isPlaying />
           </div>
         </QueueSection>
       )}
@@ -155,8 +160,8 @@ interface QueueSectionProps {
 function QueueSection({ heading, children }: QueueSectionProps) {
   const headingId = useId()
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-1">
-      <h3 id={headingId} className="px-2 text-sm font-bold">
+    <section aria-labelledby={headingId} className="flex flex-col gap-2">
+      <h3 id={headingId} className={`px-2 ${creditsLabelClassName}`}>
         {heading}
       </h3>
       {children}

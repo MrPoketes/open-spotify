@@ -1,9 +1,11 @@
+import { Play } from "lucide-react"
 import { useLayoutEffect, useRef, useState } from "react"
 import { useRovingFocus } from "../../ui/use-roving-focus"
 import { PlayableItemSummary } from "../playback/playable-item-summary"
 import { withOccurrences } from "../playback/queued-item"
 import { usePlayerCommand } from "../playback/use-player-command"
 import type { PlayableItem } from "../spotify/spotify-playable-item"
+import { QueuePosition } from "./queue-position"
 
 interface UpNextListProps {
   readonly items: ReadonlyArray<PlayableItem>
@@ -65,8 +67,18 @@ export function UpNextList({ items }: UpNextListProps) {
                 title={`Play ${item.name}`}
                 onKeyDown={onKeyDown}
                 onClick={() => play(item, occurrence, index)}
-                className="flex w-full rounded-small px-2 py-1 text-left transition-colors duration-120 ease-out hover:bg-surface-raised"
+                className="group/row flex w-full items-center gap-3 rounded-small px-2 py-1 text-left transition-colors duration-120 ease-out hover:bg-surface-raised"
               >
+                <QueuePosition>
+                  <span className="group-hover/row:hidden group-focus-visible/row:hidden">
+                    {index + 1}
+                  </span>
+                  <Play
+                    aria-hidden
+                    size={14}
+                    className="hidden fill-current text-foreground group-hover/row:block group-focus-visible/row:block"
+                  />
+                </QueuePosition>
                 <PlayableItemSummary item={item} />
               </button>
             </li>

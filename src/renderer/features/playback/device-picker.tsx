@@ -1,5 +1,9 @@
 import { MonitorSpeaker } from "lucide-react"
 import { useCallback, useEffect, useId, useRef, type RefObject } from "react"
+import { buttonVariants } from "../../ui/button-variants"
+import { cn } from "../../ui/class-names"
+import { creditsLabelClassName } from "../../ui/credits-label-class-name"
+import { overlayPanelClassName } from "../../ui/overlay-panel-class-name"
 import { DeviceList } from "./device-list"
 
 interface DevicePickerProps {
@@ -33,9 +37,9 @@ export function DevicePicker({ deviceLabel, isOpen, onOpenChange }: DevicePicker
         aria-expanded={isOpen}
         aria-label={`Choose a device. ${deviceLabel}`}
         onClick={() => onOpenChange(!isOpen)}
-        className="flex max-w-60 items-center gap-1 rounded-full px-3 py-1 text-xs text-muted transition-colors duration-120 ease-out hover:bg-surface-overlay hover:text-foreground"
+        className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "max-w-60 rounded-full")}
       >
-        <MonitorSpeaker aria-hidden size={16} className="shrink-0" />
+        <MonitorSpeaker aria-hidden size={16} />
         <span className="truncate">{deviceLabel}</span>
       </button>
       {isOpen && (
@@ -95,9 +99,9 @@ function DevicePickerPanel({ pickerRef, onClose, onCloseAndRestoreFocus }: Devic
       open
       aria-labelledby={headingId}
       tabIndex={-1}
-      className="absolute right-0 bottom-full left-auto mb-2 flex w-80 flex-col gap-3 rounded-large bg-surface-overlay p-4 text-foreground shadow-overlay"
+      className={`absolute right-0 bottom-full left-auto mb-3 flex w-80 flex-col gap-1 p-2 text-foreground ${overlayPanelClassName}`}
     >
-      <h2 id={headingId} className="text-base font-bold">
+      <h2 id={headingId} className={`px-3 pt-2 pb-1 ${creditsLabelClassName}`}>
         Connect to a device
       </h2>
       <DeviceList onDeviceChosen={onCloseAndRestoreFocus} />

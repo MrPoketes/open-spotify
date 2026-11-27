@@ -44,3 +44,7 @@ Object.defineProperties(HTMLDialogElement.prototype, {
     },
   },
 })
+
+// jsdom has no pointer capture, and Base UI's slider asks whether its control
+// holds the pointer when a drag ends. The tests never capture one.
+Object.defineProperty(Element.prototype, "hasPointerCapture", { value: () => false })

@@ -90,22 +90,27 @@ describe("NowPlayingBar volume", () => {
 
   // Alt+Left goes back in history and Ctrl+Right skips to the next track, and
   // the slider must not take them. jsdom does not step a range input, so the
-  // test checks which key presses Chromium's own step is held back for.
+  // test also checks that Chromium's own step is held back for those presses,
+  // while the window shortcuts still see them. A plain arrow is the slider's
+  // own (Base UI stops it there), so recording starts after it.
   it("steps with the arrow keys but leaves them alone when a shortcut modifier is held", async () => {
     await renderNowPlayingBarAlone()
     const slider = await volumeSlider()
+    await waitFor(() => expect(slider).toHaveValue(fakeVolume))
     slider.focus()
-    const keyDowns = recordDocumentKeyDowns()
 
-    await userEvent.keyboard("{ArrowRight}{Control>}{ArrowRight}{/Control}{Alt>}{ArrowLeft}{/Alt}")
+    await userEvent.keyboard("{ArrowRight}")
+    expect(slider).toHaveValue("61")
+    const keyDowns = recordDocumentKeyDowns()
+    await userEvent.keyboard("{Control>}{ArrowRight}{/Control}{Alt>}{ArrowLeft}{/Alt}")
 
     expect(keyDowns).toEqual([
-      ["ArrowRight", false],
       ["Control", false],
       ["ArrowRight", true],
       ["Alt", false],
       ["ArrowLeft", true],
     ])
+    expect(slider).toHaveValue("61")
   })
 
   it("turns the volume up 10 with Ctrl+↑ and down 10 with Ctrl+↓", async () => {

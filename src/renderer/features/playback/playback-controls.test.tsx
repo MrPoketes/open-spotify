@@ -1,8 +1,8 @@
-// oxlint-disable-next-line no-restricted-imports -- user-event cannot drag a native range input in jsdom and flushes React between key presses
+// oxlint-disable-next-line no-restricted-imports -- user-event cannot drag a slider in jsdom, which has no layout, and flushes React between key presses
 import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect } from "effect"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { NoActiveDevice } from "../spotify/spotify-api"
 import { spotifyApiFakeWith, spotifyApiFakeWithPlayback } from "../spotify/spotify-api-fake"
 import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
@@ -144,6 +144,10 @@ describe("NowPlayingBar seek bar", () => {
     await renderNowPlayingBarAlone(pausedPlayback)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
+    // The slider starts unavailable while playback loads, and must say it is
+    // available once it has loaded.
+    expect(slider).toHaveAttribute("aria-disabled", "false")
+    expect(slider).toHaveAccessibleDescription("Playback position")
 
     slider.focus()
     await userEvent.keyboard("{ArrowRight}")
@@ -230,18 +234,24 @@ describe("NowPlayingBar seek bar", () => {
     expect(seekPositions).toEqual([])
   })
 
-  // jsdom cannot drag a range input, so the test sends the events a drag
-  // makes: input on every step, then change once the thumb is let go.
+  // jsdom has no layout, so every element is given a 150 px box: one pixel
+  // is one second of the 2:30 track. The test sends the pointer events a drag
+  // makes: down on the thumb's center, a move for each step, then up.
   it("seeks once, to where the thumb is let go, when it is dragged", async () => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(
+      DOMRect.fromRect({ x: 0, y: 0, width: 150, height: 16 }),
+    )
     const { seekPositions, spotifyApi } = pausedPlaybackRecordingSeeks()
     await renderNowPlayingBarAlone(spotifyApi)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
 
-    fireEvent.input(slider, { target: { value: "60000" } })
-    fireEvent.input(slider, { target: { value: "70000" } })
+    fireEvent.pointerDown(slider, { clientX: 75 })
+    fireEvent.pointerMove(document, { clientX: 60, buttons: 1 })
+    fireEvent.pointerMove(document, { clientX: 70, buttons: 1 })
+    await showsPosition(slider, "1:10 of 2:30")
     expect(seekPositions).toEqual([])
-    fireEvent.change(slider, { target: { value: "70000" } })
+    fireEvent.pointerUp(document, { clientX: 70 })
 
     await showsPosition(slider, "1:10 of 2:30")
     expect(seekPositions).toEqual([70_000])
