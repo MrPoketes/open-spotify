@@ -1,5 +1,5 @@
 import type { LibraryTheme } from "../../../shared/theme-library"
-import { SecondaryButton } from "../../ui/pill-button"
+import { Button } from "../../ui/button"
 import { useThemeFiles } from "./use-theme-files"
 
 export function ThemeFileButtons({
@@ -12,8 +12,12 @@ export function ThemeFileButtons({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex gap-2">
-        <SecondaryButton label="Import theme…" onClick={importThemeFile} />
-        <SecondaryButton label="Export current theme…" onClick={exportCurrentTheme} />
+        <Button variant="secondary" onClick={importThemeFile}>
+          Import theme…
+        </Button>
+        <Button variant="secondary" onClick={exportCurrentTheme}>
+          Export current theme…
+        </Button>
       </div>
       {/* Stays on the page so screen readers announce each new status. */}
       <output className="text-sm text-muted">{message?.kind === "status" && message.text}</output>

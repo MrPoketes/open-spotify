@@ -189,17 +189,16 @@ describe("HomePage", () => {
     expect(trackRowNames("Your top tracks")).toEqual(fakeTopTracks.medium_term.map(trackRowName))
   })
 
-  // Jump back in and Recently played both come from the play history.
-  it("shows the play history failing in both sections it feeds, and loads both after Retry", async () => {
+  // Jump back in and Recently played both come from the play history, so a
+  // failed history is reported once rather than with two alerts and two Retry
+  // buttons that do the same thing.
+  it("reports a failed play history once, in Recently played, and loads both sections after Retry", async () => {
     await renderHomePage(spotifyFailingFirstPlayHistoryRequest)
-    const jumpBackIn = await screen.findByRole("region", { name: "Jump back in" })
-    const recentlyPlayed = screen.getByRole("region", { name: "Recently played" })
+    const recentlyPlayed = await screen.findByRole("region", { name: "Recently played" })
 
-    expect(await within(jumpBackIn).findByRole("alert")).toHaveTextContent(
-      "Jump back in didn't load.",
-    )
-    const recentlyPlayedAlert = within(recentlyPlayed).getByRole("alert")
+    const recentlyPlayedAlert = await within(recentlyPlayed).findByRole("alert")
     expect(recentlyPlayedAlert).toHaveTextContent("Recently played tracks didn't load.")
+    expect(screen.queryByRole("region", { name: "Jump back in" })).not.toBeInTheDocument()
     await userEvent.click(within(recentlyPlayedAlert).getByRole("button", { name: "Retry" }))
 
     expect(await screen.findByRole("list", { name: "Jump back in" })).toBeInTheDocument()

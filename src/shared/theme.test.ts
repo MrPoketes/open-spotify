@@ -32,6 +32,17 @@ describe("decodeThemeFile", () => {
     }),
   )
 
+  // The artwork wash is an opacity, and a value such as 45% or 1.5 would be
+  // ignored by the browser instead of reported.
+  it.effect.each(["1.5", "45%", ""])(
+    "rejects an artwork wash of %j",
+    Effect.fn("rejectArtworkWash")(function* (artworkWash: string) {
+      const error = yield* Effect.flip(decodeThemeFile(themeFile({ "artwork-wash": artworkWash })))
+
+      assert.include(error.message, '["tokens"]["artwork-wash"]')
+    }),
+  )
+
   // A misspelled token would otherwise be dropped and silently change nothing.
   it.effect("rejects an unknown token with an error that names it", () =>
     Effect.gen(function* () {

@@ -55,8 +55,9 @@ describe("TrackListDensitySetting", () => {
     await launchApp(fakeMainProcess())
     const user = userEvent.setup()
 
+    // The options are one tab stop, and the arrow keys move between them.
     await user.tab()
-    await user.tab()
+    await user.keyboard("{ArrowRight}")
     expect(screen.getByRole("button", { name: "Dense" })).toHaveFocus()
     await user.keyboard("{Enter}")
 

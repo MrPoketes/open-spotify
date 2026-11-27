@@ -207,7 +207,7 @@ describe("Library", () => {
     expect(router.state.location.pathname).toBe("/screen")
   })
 
-  it("narrows the list to one kind when its chip is pressed, counting Liked Songs as a playlist", async () => {
+  it("narrows the list to one kind when it is pressed, counting Liked Songs as a playlist", async () => {
     await renderLibrary()
     await screen.findAllByRole("list")
 
@@ -220,7 +220,7 @@ describe("Library", () => {
     expect(playlistTexts.every((text) => text.includes("Playlist · "))).toBe(true)
   })
 
-  it("shows every entry again when the active chip is pressed a second time", async () => {
+  it("shows every entry again when the pressed kind is pressed a second time", async () => {
     await renderLibrary()
     const allEntries = await libraryEntries()
     const albumsChip = kindChip("Albums")

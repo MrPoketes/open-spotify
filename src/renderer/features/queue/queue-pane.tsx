@@ -55,7 +55,7 @@ export function QueuePane({ ref, isOpen, savedWidth, onClose }: QueuePaneProps) 
         aria-labelledby={headingId}
         tabIndex={-1}
         style={{ width }}
-        className="flex shrink-0 flex-col overflow-hidden rounded-medium bg-surface"
+        className="flex shrink-0 flex-col overflow-hidden rounded-large bg-surface shadow-raised"
       >
         <div className="flex h-14 shrink-0 items-center justify-between px-4">
           <h2 id={headingId} className="font-display text-xl font-bold">

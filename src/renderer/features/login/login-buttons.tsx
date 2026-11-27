@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { AccentButton, SecondaryButton } from "../../ui/pill-button"
+import { Button } from "../../ui/button"
 
 interface LoginButtonsProps {
   readonly isWaiting: boolean
@@ -27,13 +27,14 @@ export function LoginButtons({ isWaiting, onLogIn, onCancel }: LoginButtonsProps
 
   return (
     <div className="flex gap-2">
-      <AccentButton
-        ref={logInButton}
-        label="Log in with Spotify"
-        disabled={isWaiting}
-        onClick={onLogIn}
-      />
-      {isWaiting && <SecondaryButton ref={cancelButton} label="Cancel" onClick={onCancel} />}
+      <Button ref={logInButton} disabled={isWaiting} onClick={onLogIn}>
+        Log in with Spotify
+      </Button>
+      {isWaiting && (
+        <Button variant="secondary" ref={cancelButton} onClick={onCancel}>
+          Cancel
+        </Button>
+      )}
     </div>
   )
 }

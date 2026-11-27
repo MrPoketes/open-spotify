@@ -23,11 +23,7 @@ export function Sidebar({ savedWidth }: { readonly savedWidth: number }) {
 
   return (
     <>
-      <nav
-        aria-label="Library"
-        style={{ width }}
-        className="flex shrink-0 flex-col gap-4 rounded-medium bg-surface pt-4"
-      >
+      <nav aria-label="Library" style={{ width }} className="flex shrink-0 flex-col gap-3 pt-3">
         <SidebarContents />
       </nav>
       <PaneDivider
@@ -68,8 +64,8 @@ function SidebarHeader() {
 
   return (
     <div className="flex flex-col px-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-xl font-bold">Your library</h2>
+      <div className="flex h-10 items-center justify-between gap-2">
+        <h2 className="font-display text-xl font-bold tracking-tight">Your library</h2>
         <MenuButton label="Folder options" icon={FolderCog} items={foldersFileActions.actions} />
       </div>
       <FoldersFileOutcomeMessage outcome={foldersFileActions.outcome} />

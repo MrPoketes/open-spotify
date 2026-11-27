@@ -6,7 +6,7 @@ question is not answered here, decide, build it, and add the answer to this file
 ## Principles
 
 1. **The music is the content.** Artwork and titles carry the color and weight. The chrome
-   around them is quiet: dark neutral surfaces, one accent color, no decoration.
+   around them is quiet and precise, and the accent marks only what plays and what to press.
 2. **Fast for people who know what they want.** Everything can be reached from the keyboard,
    and the common paths take one shortcut.
 3. **The user arranges the app.** Pane sizes, list density, sidebar contents, and every color
@@ -43,31 +43,58 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
    device is playing, and says plainly when none is active. Playback is remote control
    (decision 0002), so a user must never wonder why pressing play does nothing.
 
+## Direction: liner notes
+
+The app reads like a well-made record sleeve: the artwork leads, and everything around it is set
+with the precision of the liner notes on the back, small, aligned, and numbered. Why this
+direction, and what else was weighed, is in
+[decision 0008](decisions/0008-liner-notes-design-direction-on-shadcn.md).
+
+- **One lit sheet.** The main view is the only raised surface. The sidebar and the now-playing
+  bar sit on the bare `canvas`, so the eye goes to the content.
+- **Warm black and paper white.** The default theme's neutrals are warm, like a sleeve's card and
+  print, with the coral of the app icon as the one accent.
+- **Artwork carries the color.** Covers lift off the sheet with `shadow-raised`, and the artwork
+  wash (below) lets the music color the page.
+- **Quiet states.** Loading keeps the page's shape with skeletons; a failure is a muted line and
+  an outline Retry, never a row of accent buttons.
+
+The redesign lands screen by screen (ARM-162 and its follow-ups). Until a screen's follow-up
+lands, it keeps its earlier styling inside the new shell, and its section below describes it.
+
 ## Visual language
 
 ### Layout grid
 
 ```
 ┌──────────────┬─────────────────────────────────────┬──────────────┐
-│              │ top bar: history, search, settings  │              │
-│   sidebar    ├─────────────────────────────────────┤  right pane  │
-│              │                                     │  (optional)  │
-│  200–420 px  │  main view, fluid                   │  280–400 px  │
-│  default 280 │  content padding: 24 px             │  default 320 │
-│              │                                     │              │
+│              │ ╭ top bar: home, history, search ─╮ │ ╭──────────╮ │
+│   sidebar    │ │                                 │ │ │  right   │ │
+│  on canvas   │ │  main view: the raised sheet    │ │ │  pane    │ │
+│              │ │  content padding: 32 px         │ │ │ (sheet)  │ │
+│  200–420 px  │ │  fluid                          │ │ │ 280–400  │ │
+│  default 280 │ ╰─────────────────────────────────╯ │ ╰──────────╯ │
 ├──────────────┴─────────────────────────────────────┴──────────────┤
-│ now-playing bar, 72 px                                            │
+│ now-playing bar on canvas, 80 px                                  │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-- Panes sit on the `canvas` color, separated by an 8 px gap. Each pane is a `surface` with
-  `radius-medium` corners. The gap doubles as the resize handle.
-- The top bar is 56 px tall and belongs to the main view, not the window. A gear link to
-  Settings sits at its right end.
+- The window is `canvas` with an 8 px margin. The sidebar and the now-playing bar sit on it with
+  no panel of their own. The main view and the right pane are sheets: `surface`, `radius-large`
+  corners, `shadow-raised`. The gaps between them double as resize handles.
+- The top bar is 56 px tall and floats over the top of the main view. Its left end holds Home,
+  Back, and Forward, then the search field (at most 448 px wide); a gear link to Settings sits at
+  its right end. It is transparent while the view is scrolled to the top, so the artwork wash
+  shows behind it, and turns `surface` with a `border` hairline under it once the view has
+  scrolled 48 px. The main view's scroll position drives that change in CSS, with no script.
+  Content starts 16 px below the bar, and whatever scrolls into view (a focused control, a row
+  moved to with the arrow keys) stops below it instead of under it. Both lengths are steps of the
+  `spacing` token (`--top-bar-height` and `--main-view-content-top` in `app.css`).
 - Card grids (albums, artists, folders) use `repeat(auto-fill, minmax(160px, 1fr))` with a
-  24 px gap, so the column count follows the pane width.
+  24 px gap, so the column count follows the pane width. Tile grids (Home's Jump back in) use
+  `repeat(auto-fill, minmax(240px, 1fr))` with an 8 px gap.
 - Track lists use fixed columns: index, title and artist, album, date added, duration. Columns
-  that do not fit the pane width are hidden from the right, never squeezed: date added goes
+  that do not fit the list's width are hidden from the right, never squeezed: date added goes
   first, below 768 px, then the album, below 576 px. Duration always stays. An album name links
   to its album page, and each artist name links to that artist's page, so a track with several
   artists has one link per name. Only the row that is the list's tab stop puts these links in
@@ -88,77 +115,160 @@ The look is our own. Open Spotify does not use Spotify's logo, wordmark, green, 
 
 Onboarding and login come before the app exists, so they skip the pane layout: one `surface`
 panel with `radius-large` corners, centered on the `canvas`, 24 px from the window edge. The
-panel's one primary action is a round `accent` button with `on-accent` text; secondary actions
-are round `surface-raised` buttons or muted links. An action that waits, such as logging in in
-the browser, says what it waits for, disables the button that started it, and offers Cancel
-beside it. Focus moves to Cancel and back when the wait ends, and a double-click cannot cancel
-what its first click started. Onboarding's Client ID uses the shared text field (see Text
-fields).
+panel's one primary action is a default Button; secondary actions are secondary Buttons or muted
+links (see Buttons). An action that waits, such as logging in in the browser, says what it waits
+for, disables the button that started it, and offers Cancel beside it. Focus moves to Cancel and
+back when the wait ends, and a double-click cannot cancel what its first click started.
+Onboarding's Client ID uses the shared text field (see Text fields).
 
 ### Spacing
 
 Spacing comes from Tailwind's numeric scale, where one step is the `spacing` token (4 px by
 default). Use only these steps:
 
-| Step | Default | Use                                |
-| ---- | ------- | ---------------------------------- |
-| 1    | 4 px    | Icon to label; chip top and bottom |
-| 2    | 8 px    | Between related controls; pane gap |
-| 3    | 12 px   | Inside list rows, buttons, chips   |
-| 4    | 16 px   | Between groups in a pane           |
-| 6    | 24 px   | Main view padding; card grid gap   |
-| 8    | 32 px   | Between page sections              |
-| 12   | 48 px   | Above a page header                |
+| Step | Default | Use                                          |
+| ---- | ------- | -------------------------------------------- |
+| 1    | 4 px    | Icon to label                                |
+| 2    | 8 px    | Between related controls; pane gap; tile gap |
+| 3    | 12 px   | Inside list rows, buttons, and cards         |
+| 4    | 16 px   | Between a section heading and its content    |
+| 6    | 24 px   | Card grid gap                                |
+| 8    | 32 px   | Main view padding                            |
+| 12   | 48 px   | Between page sections                        |
 
 ### Type
 
-One family for body text (`font-body`) and one for headings (`font-display`). By default both
-use the operating system's UI font, so text looks native on every platform and nothing has to
-be bundled. Use only these sizes:
+The default typeface is Schibsted Grotesk, a grotesk with the compact build of newspaper and
+sleeve typography. It ships with the app (`@fontsource-variable/schibsted-grotesk`, SIL Open Font
+License), so the app looks the same on every platform; the system UI font behind it covers the
+scripts it lacks. A theme sets its own families with `font-body` and `font-display`. Use only
+these sizes:
 
-| Class       | Size  | Use                                            |
-| ----------- | ----- | ---------------------------------------------- |
-| `text-xs`   | 12 px | Metadata: durations, dates, counts             |
-| `text-sm`   | 14 px | List rows, sidebar items, buttons              |
-| `text-base` | 16 px | Body text, inputs                              |
-| `text-xl`   | 20 px | Section headings                               |
-| `text-3xl`  | 30 px | Page titles                                    |
-| `text-5xl`  | 48 px | Header of a playlist, album, artist, or folder |
+| Class       | Size  | Use                                                   |
+| ----------- | ----- | ----------------------------------------------------- |
+| `text-xs`   | 12 px | Metadata: durations, dates, counts; toggle options    |
+| `text-sm`   | 14 px | List rows, sidebar items, buttons, inputs             |
+| `text-base` | 16 px | Body text                                             |
+| `text-xl`   | 20 px | Section headings                                      |
+| `text-3xl`  | 30 px | Page titles                                           |
+| `text-5xl`  | 48 px | Home's greeting; the header of an album, artist, etc. |
 
-Weights: 400 for body, 600 for emphasis and active items, 700 for headings. Durations and counts
-use `tabular-nums` so columns line up.
+Weights: 400 for body, 500 for resting toggle options, 600 for emphasis, buttons, and active
+items, 700 for headings. Headings from `text-xl` up use `font-display` (lint enforces it) and
+`tracking-tight`. Durations and counts use `tabular-nums` so columns line up.
 
 ### Radii
 
-| Class            | Default | Use                                 |
-| ---------------- | ------- | ----------------------------------- |
-| `rounded-small`  | 4 px    | List rows, inputs, small artwork    |
-| `rounded-medium` | 8 px    | Panes, cards, artwork in grids      |
-| `rounded-large`  | 14 px   | Dialogs, menus, the command palette |
-| `rounded-full`   | —       | Avatars, round play buttons, pills  |
+| Class            | Default | Use                                                |
+| ---------------- | ------- | -------------------------------------------------- |
+| `rounded-small`  | 6 px    | List rows, small buttons, small artwork            |
+| `rounded-medium` | 10 px   | Buttons, inputs, tiles, artwork in grids           |
+| `rounded-large`  | 16 px   | Sheets, cards, dialogs, menus, the command palette |
+| `rounded-full`   | —       | Avatars, icon buttons, toggle groups, play buttons |
 
 Artists use round artwork; everything else uses square artwork with a radius. This tells the
 two apart at a glance.
 
 ### Elevation
 
-There are three levels. Most of the app is flat.
-
-| Level   | Surface           | Shadow           | Use                                         |
-| ------- | ----------------- | ---------------- | ------------------------------------------- |
-| Flat    | `surface`         | none             | Panes, lists, pages                         |
-| Raised  | `surface-raised`  | `shadow-raised`  | Hovered cards, inputs, the now-playing bar  |
-| Overlay | `surface-overlay` | `shadow-overlay` | Menus, dialogs, the command palette, toasts |
+| Level   | Surface           | Shadow           | Use                                          |
+| ------- | ----------------- | ---------------- | -------------------------------------------- |
+| Ground  | `canvas`          | none             | The window, the sidebar, the now-playing bar |
+| Sheet   | `surface`         | `shadow-raised`  | The main view and the right pane             |
+| Raised  | `surface-raised`  | none             | Inputs, tiles, hovered rows and cards        |
+| Artwork | the image         | `shadow-raised`  | Covers in card grids and page headers        |
+| Overlay | `surface-overlay` | `shadow-overlay` | Menus, dialogs, the command palette, toasts  |
 
 Hovered and selected list rows change color (`surface-raised`, or `accent` at 15 % opacity
 when selected) but never gain a shadow.
+
+### Color roles
+
+Color is used by role, never by hue. A component asks for "muted text on a raised surface", and
+the theme decides what that looks like. The default dark theme is warm black with paper-white
+text and the icon's coral as the accent; the light theme is the same sleeve printed on paper.
+`accent` marks only what plays, primary actions, and progress. A pressed toggle turns to
+`foreground`, and a hover state takes the next surface up.
+
+### Artwork wash
+
+The page's artwork, blurred far past recognition (`blur-3xl`, `saturate-150`), fills the top
+384 px of the page and fades into `surface` (`src/renderer/ui/artwork-wash.tsx`). It bleeds
+through the main view's padding to the sheet's edges and up behind the floating top bar, and
+scrolls away with the page, while the top bar takes on its background. Its
+opacity is the `artwork-wash` token (0.45 in the dark theme, 0.3 in the light one), and a theme
+that sets it to 0 turns the wash off. It is decorative and hidden from screen readers. The
+smallest image Spotify lists is enough, since it is blurred. Home takes it from the cover of the
+track played last; a page without artwork shows none.
 
 ### Icons
 
 Icons come from [Lucide](https://lucide.dev) (`lucide-react`, ISC license), imported one by one
 so only the icons in use are bundled. They draw with `currentColor`, so they follow the theme.
-Use 20 px icons in 32 px icon buttons and 16 px icons next to `text-sm` or smaller text. Icons
+Use 20 px icons in 32 px icon buttons and 14–16 px icons next to `text-sm` or smaller text. Icons
 are decorative (`aria-hidden`); the control that holds them carries the accessible name.
+
+### Components
+
+Controls come from [shadcn/ui](https://ui.shadcn.com) on Base UI (`@base-ui/react`), added with
+the shadcn CLI into `src/renderer/ui/` and restyled to this document. To add one, run
+`pnpm dlx shadcn@latest add <component>`, then check `package.json`: the CLI adds packages to
+`dependencies` with a caret range, which AGENTS.md forbids, so remove what it added or move it to
+an exact dev dependency. Make its imports relative (the CLI writes `@/ui/…`
+paths and a broken `cn` import; `cn` is in `src/renderer/ui/class-names.ts`), delete the exports
+nothing uses, and adapt its classes: no `dark:` variants, no focus rings (the global
+`:focus-visible` outline stays), no arbitrary radii, and `bg-surface-raised` for shadcn's
+`bg-muted` and `bg-accent`.
+
+`app.css` maps shadcn's CSS variables (`primary`, `secondary`, `popover`, `ring`, the radii, and
+the rest) onto the theme tokens, so a component from the CLI follows every theme. shadcn's `muted`
+and `accent` are surface colors, while the app's are a text color and the brand color, so those
+two keep the app's meaning.
+
+#### Buttons
+
+`Button` (`src/renderer/ui/button.tsx`) has four variants:
+
+- **default:** `accent` with `on-accent` text, for the one primary action of a view.
+- **secondary:** `surface-raised`, for the other actions beside it.
+- **outline:** a `border` edge on the surface, for low-key actions such as Retry and Copy.
+- **ghost:** `muted` icon or text that turns `foreground` on a `surface-raised` hover, for
+  toolbars and icon buttons.
+
+The default size is 36 px tall with `rounded-medium` corners, the small size 32 px with
+`rounded-small` corners and `text-xs`, and icon buttons 32 px and round. Labels are 600 weight. A
+disabled or `aria-disabled` button dims to 50 %, and an `aria-disabled` one keeps its focus.
+Links that look like buttons, such as the top bar's Home and Settings, use `buttonVariants`.
+
+#### Toggle groups
+
+A choice between two to five options is a toggle group (`src/renderer/ui/toggle-group.tsx`):
+`text-xs` options 28 px tall, set in one `surface-raised` pill. A pressed option
+turns `foreground` with `surface` text and a 600 weight, so its state shows as a change of
+lightness and weight, not of hue. Options set `aria-pressed`. The group is one tab stop named
+for screen readers; the arrow keys move between options, and `Enter` or `Space` presses one.
+
+`SegmentedControl` (`src/renderer/ui/segmented-control.tsx`) is a toggle group with exactly one
+option always chosen: Home's time ranges, the folder page's Grid / List, and Settings' track list
+rows.
+
+The sidebar library has a toggle group across its width, one option per kind (Playlists, Albums,
+Artists, Shows), with a name filter under it. Pressing the pressed kind again shows every kind. The
+filters stay at the top of the pane while the list scrolls. When the filters match nothing, the list
+says so instead of going blank. The sidebar folders sit above the filters and scroll away first,
+since the filters apply only to the library.
+
+#### Text fields
+
+A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 6 px
+gap between them. The input (`src/renderer/ui/input.tsx`) is `surface-raised` with
+`rounded-medium` corners, 36 px tall with 12 px inside, and `text-sm` text; it turns
+`surface-overlay` on hover. An invalid field gets a `danger` ring and a `text-xs` `danger`
+message in an `alert` under it, which also describes it (`aria-describedby`). The onboarding
+Client ID, the theme editor's Name and Author, and the New folder dialog's Name use it
+(`src/renderer/ui/text-field.tsx`). The Client ID turns off autocomplete and spell check, since
+it is not a word. The search field and the library's name filter use the same input, the search
+field as a pill with a search icon.
 
 ### Library rows
 
@@ -172,39 +282,15 @@ the kind stands in: `ListMusic` for playlists, `Disc3` for albums, `MicVocal` fo
 `Radio` for shows, `Music` for tracks, `Folder` for folders. Liked Songs has no artwork from
 Spotify and always shows `Heart` on `accent`. Its page header shows the same tile at cover size.
 
-### Filter chips
-
-Filter chips are pills (`rounded-full`) with `text-sm` labels, 12 px across and 4 px down
-inside, and an 8 px gap between chips that wraps onto a second line in a narrow pane. A resting
-chip is `surface-raised`; a pressed chip is `accent` with `on-accent` text, a 600 weight, and a
-16 px `Check` icon, so the state does not rely on color. Chips set `aria-pressed`, and a group
-of them sits in a `fieldset` whose `legend` names it for screen readers.
-
-The sidebar library has a chip per kind (Playlists, Albums, Artists, Shows) and a name filter
-under them. Pressing the active chip shows every kind again. The filters stay at the top of the
-pane while the list scrolls. When the filters match nothing, the list says so instead of going
-blank. The sidebar folders sit above the filters and scroll away first, since the filters apply
-only to the library.
-
-### Text fields
-
-A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 4 px
-gap between them. The input is `surface-raised` and `rounded-small`, with 12 px across and 8 px
-down inside and `text-base` text. An invalid field gets a `danger` ring and a `text-xs`
-`danger` message in an `alert` under it, which also describes it (`aria-describedby`). The
-onboarding Client ID, the theme editor's Name and Author, and the New folder dialog's Name use
-it (`src/renderer/ui/text-field.tsx`). The Client ID turns off autocomplete and spell check,
-since it is not a word.
-
 ### Sidebar sections and pins
 
-The sidebar library is split into sections: Liked Songs, Playlists, Albums, Artists, and Shows,
-in the order the user chose. Each section starts with a heading button (`text-sm`, 600,
-`muted`, with a 16 px chevron) that collapses or expands it and sets `aria-expanded`, and a
-"section options" menu with Move up, Move down, and Hide section. Moves swap with the
-neighbouring section on screen, so hidden and empty sections never make a move look like it did
-nothing. Hidden sections are listed under the library as round `surface-raised` "Show Albums"
-buttons. A section with no entries left after the filters is not shown.
+The sidebar library is split into sections: Liked Songs, Playlists, Albums, Artists, and Shows, in
+the order the user chose. Each section starts with a heading button (`text-sm`, 600, `muted`, with a
+16 px chevron) that collapses or expands it and sets `aria-expanded`, and a "section options" menu
+with Move up, Move down, and Hide section. Moves swap with the neighbouring section on screen, so
+hidden and empty sections never make a move look like it did nothing. Hidden sections are listed
+under the library as round `surface-raised` "Show Albums" buttons, until the sidebar's redesign. A
+section with no entries left after the filters is not shown.
 
 Any entry can be pinned. Pinned entries leave their section for a "Pinned" section that always sits
 at the top, in the order they were pinned. Each row has a pin button that shows on hover or while
@@ -440,20 +526,20 @@ that takes its place; a row deleted with the pointer leaves focus alone, so no o
 previewing. Built-in themes have no delete button.
 
 Below the list, "Edit a copy" opens the theme editor on a copy of the chosen theme, and
-"Import theme…" and "Export current theme…" are round `surface-raised` buttons
+"Import theme…" and "Export current theme…" are secondary buttons
 that open the operating system's file dialogs. A result is reported in `muted` text inside an
 `output` element; a rejected file shows the reason in `danger` text inside an `alert`. The dialogs are
 modal to the app window.
 
-Below them, "Track list rows" offers Comfortable and Dense as two filter chips in a `fieldset`,
-with a `text-xs` `muted` line that says what Dense changes. The choice applies to every track
+Below them, "Track list rows" offers Comfortable and Dense in a segmented control, with a
+`text-xs` `muted` line that says what Dense changes. The choice applies to every track
 list at once.
 
 A Playback section follows Appearance. Its "Play on this computer" switch, on by default, sits at
 the right end of a row whose `text-sm` 600-weight label and `text-xs` `muted` description name it.
 The switch is a 40 × 24 px `button` with `role="switch"`: an `accent` rail with an `on-accent`
 thumb on the right when on, a `muted` rail with a `surface` thumb on the left when off. It dims
-on hover and press like a filter chip, and clicking its label toggles it too. Turning
+on hover and press, and clicking its label toggles it too. Turning
 it off disconnects the Web Playback SDK's player and takes "This computer" out of the device
 picker at once; turning it on connects the player again.
 
@@ -464,14 +550,15 @@ hovered row cannot preview over the theme being edited. Focus moves to its Name 
 opens and back to "Edit a copy" when it closes. A built-in or imported theme is never edited in
 place: the editor starts from a copy named "<theme> (copy)".
 
-From the top: Name and Author fields side by side, a "Color scheme" radio group (Dark, Light),
-then one `fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows) with a field
-for every token. The fields come from the `Theme` Schema, so a new token appears without changes
-to the editor. Each field is labelled with its token name, and its control fits the value:
+From the top: Name and Author fields side by side, a "Color scheme" radio group (Dark, Light), then
+one `fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows, Artwork) with a field
+for every token. The fields come from the `Theme` Schema, so a new token appears without changes to
+the editor. Each field is labelled with its token name, and its control fits the value:
 
 - **Colors:** the native color picker beside a hex text field. Both edit the same value.
 - **Radii and spacing:** a number field and a unit list (`px`, `rem`, `em`).
 - **Fonts and shadows:** a text field for the CSS value.
+- **Artwork wash:** a text field for the opacity, from 0 to 1.
 
 Every valid change applies to the whole app at once. An invalid value gets a `danger` ring and a
 `text-xs` `danger` message under its field that describes it (`aria-describedby`), and the app
@@ -484,39 +571,44 @@ reads as meeting the target. The warnings sit in an `output` live region, so a s
 announces them as they appear, and they also describe the field. They follow every valid change
 and never block saving.
 
-Save theme (round `accent`) stores the copy as an imported theme and chooses it; with a field
+Save theme (a default button) stores the copy as an imported theme and chooses it; with a field
 still invalid or the name or author empty, it says so in an `alert` instead. A theme the main
 process refuses, such as one named like a built-in theme, shows its reason in the same `alert`.
-Cancel (round `surface-raised`), or leaving the page, discards the changes and restores the
+Cancel (a secondary button), or leaving the page, discards the changes and restores the
 saved theme.
 
 ### Home page
 
-The home page opens with a `text-3xl` greeting, "Hello, <display name>" ("Hello" until the name
-loads, or when Spotify has none). Below it come up to four sections, each with a `text-xl`
-heading:
+Home opens with the artwork wash, taken from the cover of the track played last, and a `text-5xl`
+greeting, "Hello, <display name>" ("Hello" until the name loads, or when Spotify has none). Below
+it come up to four sections, 48 px apart. Each starts with a `text-xl` heading over a `border`
+hairline, like the rules on a sleeve's back, with any control at the hairline's right end; the
+heading row has the same height with or without a control, so side-by-side sections line up:
 
-- **Jump back in:** cards for up to eight distinct albums, playlists, and artists the user
-  recently played from, most recent first, in the standard card grid. A card shows the artwork
-  (round for artists), the name in `text-sm` at 600, and the kind in `text-xs` `muted`, and
-  links to its page. Plays from anything else, such as Liked Songs, are skipped, and so is a page
-  Spotify won't return: its own playlists, such as Discover Weekly, which development-mode apps
-  cannot read, or a deleted playlist.
+- **Jump back in:** tiles for up to eight distinct albums, playlists, and artists the user
+  recently played from, most recent first, in a tile grid. A tile is a 64 px `surface-raised` row
+  with the artwork at its left edge (a 48 px circle for artists), the name in `text-sm` at 600,
+  and the kind in `text-xs` `muted`, and links to its page. Plays from anything else, such as
+  Liked Songs, are skipped, and so is a page Spotify won't return: its own playlists, such as
+  Discover Weekly, which development-mode apps cannot read, or a deleted playlist.
 - **Recently played:** the ten most recent tracks in the shared track list, with a track played
   several times in a row listed once.
-- **Your top artists:** the ten top artists as round cards.
 - **Your top tracks:** the ten top tracks in the shared track list.
+- **Your top artists:** the ten top artists as round cards.
 
-The two top sections have a time range switch at the right end of the heading: filter chips for
-"Last 4 weeks", "Last 6 months" (the default), and "Last year". Spotify computes its longest
-range from about a year of listening, so the app does not call it "All time".
+Recently played and Your top tracks sit side by side once the page is at least 1024 px wide, so a
+wide window fills with music instead of empty space; narrower, they stack.
 
-Each section loads on its own, with the usual loading and error states, and one failing section
-leaves the others in place. Jump back in and Recently played both come from the play history, so
-when it fails to load, both say so, and either Retry loads it for both. A section with nothing to
-show is left out. A top section stays once the user picks another time range, so the switch back
-stays too, and says when that range has nothing. An account with no listening history at all
-sees a short welcome message instead.
+The two top sections have a time range switch at the right end of the heading, a segmented
+control for "Last 4 weeks", "Last 6 months" (the default), and "Last year". Spotify computes its
+longest range from about a year of listening, so the app does not call it "All time".
+
+Each section loads on its own, with a skeleton in its shape (tiles, rows, or round cards) and its
+loading message for screen readers. One failing section leaves the others in place. Jump back in and
+Recently played both come from the play history, so when it fails to load, only Recently played says
+so, and its Retry loads it for both. A section with nothing to show is left out. A top section stays
+once the user picks another time range, so the switch back stays too, and says when that range has
+nothing. An account with no listening history at all sees a short welcome message instead.
 
 Log out and the app version live in Settings, under Account.
 
@@ -554,9 +646,8 @@ button always plays from the first track. Spotify reports no context for a list 
 cannot tell that the folder is playing and switch to `Pause`. A failed play behaves as on every
 other page: the status message says why, and with no active device the device picker opens.
 
-Below the play button, at the right end, a Grid / List toggle:
-two filter chips in a `fieldset`, so the chosen view has the chip's check mark and 600 weight as
-well as its `accent` fill. The choice is the `folderView` setting and applies to every folder.
+Below the play button, at the right end, a Grid / List segmented control. The choice is the
+`folderView` setting and applies to every folder.
 
 - **Grid:** cards in the standard card grid, each with square artwork (round for artists), the
   name in `text-sm` at 600, and the kind in `text-xs` `muted`. A nested folder says how many
@@ -584,7 +675,7 @@ The page title says "Results for “query”". Below it come up to four sections
 Tracks (the track list), Artists, Albums, and Playlists (card grids). A
 section with no results is left out. Artist cards have round artwork and say "Artist"; album
 cards name the album's artists; playlist cards say "By owner". Each section shows 10 results,
-the most Spotify returns per request in development mode, and a round `surface-raised`
+the most Spotify returns per request in development mode, and a secondary
 "Load more" button under it fetches the next 10 for that section alone. Search breaks the
 scroll-to-load rule (see Loading, empty, and error states) because its sections are stacked: a
 track list that grew as it scrolled would push the other sections out of reach. While a page
@@ -653,8 +744,8 @@ Running", or why it failed. Until the folders load, the item says so in the stat
 of opening a submenu, and after a failed load it loads them again.
 
 "New folder…" opens a modal dialog (`surface-overlay`, `shadow-overlay`, `rounded-large`, 320 px
-wide, over a `canvas` backdrop at 60 % opacity) with a Name field, then Cancel (round
-`surface-raised`) and Create folder (round `accent`). Create folder makes a top-level folder with
+wide, over a `canvas` backdrop at 60 % opacity) with a Name field, then Cancel (a secondary
+button) and Create folder (a default button). Create folder makes a top-level folder with
 the item in it. A blank name keeps the dialog open and marks the field invalid with "Enter a
 name for the folder.", until the name is no longer blank. Focus starts in the field, stays in the
 dialog, and returns to the menu's opener when the dialog closes; `Escape` closes it.
@@ -733,15 +824,19 @@ announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 
 ### Loading, empty, and error states
 
-- While a list or page loads, it says so in `muted` text inside an `output` element, so screen
-  readers announce it. No spinner, since nothing animates on page load.
+- While a list or page loads, it says so inside an `output` element, so screen readers announce
+  it. Home shows skeletons in the shape of its sections (`src/renderer/ui/skeleton.tsx`) and keeps
+  the message for screen readers; other screens show the message in `muted` text until their
+  redesign. No spinner.
 - An empty list says what will appear there. It never leaves a blank pane.
-- A failed load says so in plain text inside an `alert`, with a Retry button next to it
-  (`src/renderer/ui/error-with-retry.tsx`). Failed Spotify loads add a short `text-xs` `muted`
-  detail line under the message (and in the now-playing bar and queue pane) so the user can see
-  why Spotify rejected or could not answer the request. When a later page of a long list fails,
-  the rows already loaded stay and the error sits below them. A virtualised list can fail in the
-  middle, so its error sticks to the bottom of the view and shows wherever the user has scrolled.
+- A failed load says so in plain text inside an `alert`, after a 16 px `muted` `CircleAlert` icon,
+  with a small outline Retry button under it (`src/renderer/ui/error-with-retry.tsx`). It stays
+  quiet because a page can show several at once: the accent is for what plays. Failed Spotify loads
+  add a short `text-xs` `muted` detail line under the message (and in the now-playing bar and queue
+  pane) so the user can see why Spotify rejected or could not answer the request. When a later page
+  of a long list fails, the rows already loaded stay and the error sits below them. A virtualised
+  list can fail in the middle, so its error sticks to the bottom of the view and shows wherever the
+  user has scrolled.
 - An auth failure on a Spotify load (`NotLoggedIn` or `SessionExpired`) never shows Retry, since
   retrying cannot bring back a session. Instead it sends the user to `/login` (with
   `sessionExpired: true` for `SessionExpired`). A development-mode 403 (`SpotifyAccessDenied` —
@@ -767,7 +862,9 @@ Motion confirms an action; it never decorates.
 - Hover and press feedback: 120 ms, `ease-out`.
 - Opening and closing menus, dialogs, and panes: 200 ms, `ease-out`. Elements fade and move at
   most 8 px.
-- Nothing animates on page load, and nothing loops except loading indicators.
+- Nothing animates on page load, and nothing loops except loading skeletons, which pulse.
+- The top bar gains its background as the main view scrolls its first 48 px, driven by the
+  scroll position rather than by time.
 - With the operating system's reduce-motion setting on, all transitions and animations are cut
   to near zero (enforced globally in `app.css`).
 
@@ -776,12 +873,6 @@ Motion confirms an action; it never decorates.
 - Descriptions in list rows are clamped to two lines. A "Show more" button expands them in
   place.
 - Text from Spotify or podcast publishers is always rendered as text, never as HTML.
-
-### Color roles
-
-Color is used by role, never by hue. A component asks for "muted text on a raised surface", and
-the theme decides what that looks like. The default theme is a cool, near-black neutral with a
-warm coral accent.
 
 ### App icon
 
@@ -843,8 +934,8 @@ These rules apply to the default themes and to every component. Target: WCAG 2.2
   error message. `on-accent` reaches 4.5:1 against `accent`. Icons and `focus` reach 3:1
   against those surfaces. `border` is decorative and has no target, so a control's edge is
   shown by its surface color or an icon, not by a border alone. The default dark theme's
-  lowest ratio is `danger` on `surface-overlay`, at 5.4:1; the light theme's is `accent` on
-  `canvas`, at 4.7:1.
+  lowest ratio is `muted` on `surface-overlay`, at 5.8:1; the light theme's is `accent` on
+  `canvas`, at 4.5:1.
 - **Focus.** Every interactive element shows a 2 px `focus` outline with a 2 px offset when
   focused from the keyboard (`:focus-visible`). `app.css` sets this globally. Never remove it;
   if a component needs a different shape, change the outline, not its visibility.

@@ -4,6 +4,7 @@ import { Search } from "lucide-react"
 import { use, useEffect, useRef, useState, type KeyboardEvent } from "react"
 import { attemptNavigation } from "../../lib/attempt-navigation"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { Input } from "../../ui/input"
 import { IsMacContext } from "../shortcuts/is-mac-context"
 import { ariaKeyShortcut } from "../shortcuts/key-combo"
 import { shortcutKeys, windowShortcuts } from "../shortcuts/keyboard-shortcuts"
@@ -95,13 +96,13 @@ export function SearchField() {
   }
 
   return (
-    <div className="relative ml-2 w-full max-w-sm">
+    <div className="relative w-full max-w-md">
       <Search
         aria-hidden
         size={16}
         className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted"
       />
-      <input
+      <Input
         ref={input}
         type="search"
         aria-label="Search"
@@ -110,7 +111,7 @@ export function SearchField() {
         value={text}
         onChange={(event) => changeText(event.target.value)}
         onKeyDown={clearOnEscape}
-        className="h-8 w-full rounded-small bg-surface-raised pr-3 pl-8 text-base shadow-raised placeholder:text-muted"
+        className="rounded-full pl-9"
       />
     </div>
   )

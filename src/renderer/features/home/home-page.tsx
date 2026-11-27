@@ -1,7 +1,9 @@
 import { Effect } from "effect"
 import { useLoad, type LoadState } from "../../lib/use-load"
+import { ArtworkWash } from "../../ui/artwork-wash"
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { TimeRange } from "../spotify/spotify-listening-history"
+import type { PlayHistory } from "../spotify/spotify-play-history"
 import type { CurrentUser } from "../spotify/spotify-user"
 import { JumpBackInSection } from "./jump-back-in-section"
 import { RecentlyPlayedSection } from "./recently-played-section"
@@ -35,6 +37,11 @@ const greeting = (user: LoadState<CurrentUser, SpotifyApiError>) =>
     ? `Hello, ${user.value.displayName}`
     : "Hello"
 
+// The cover of what played last colors the top of the page.
+const lastPlayedArtwork = (
+  recentlyPlayed: LoadState<ReadonlyArray<PlayHistory>, SpotifyApiError>,
+) => (recentlyPlayed.status === "loaded" ? (recentlyPlayed.value[0]?.track.album.images ?? []) : [])
+
 // Each section loads, fails, and retries on its own, and hides itself when it
 // has nothing to show.
 export function HomePage() {
@@ -49,18 +56,26 @@ export function HomePage() {
     hasNoTopItems(topTracks)
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="font-display text-3xl font-bold">{greeting(user.state)}</h1>
-      {isNewAccount ? (
-        <p className="text-muted">
-          Welcome to Open Spotify. Play some music in Spotify, and what you listen to will show up
-          here.
-        </p>
-      ) : null}
-      <JumpBackInSection recentlyPlayed={recentlyPlayed.state} onRetry={recentlyPlayed.retry} />
-      <RecentlyPlayedSection recentlyPlayed={recentlyPlayed.state} onRetry={recentlyPlayed.retry} />
+    <div className="@container relative flex flex-col gap-12">
+      <ArtworkWash sources={lastPlayedArtwork(recentlyPlayed.state)} />
+      <div className="flex flex-col gap-3 pt-6">
+        <h1 className="font-display text-5xl font-bold tracking-tight">{greeting(user.state)}</h1>
+        {isNewAccount ? (
+          <p className="max-w-prose text-muted">
+            Welcome to Open Spotify. Play some music in Spotify, and what you listen to will show up
+            here.
+          </p>
+        ) : null}
+      </div>
+      <JumpBackInSection recentlyPlayed={recentlyPlayed.state} />
+      <div className="grid gap-12 @5xl:grid-cols-2">
+        <RecentlyPlayedSection
+          recentlyPlayed={recentlyPlayed.state}
+          onRetry={recentlyPlayed.retry}
+        />
+        <TopTracksSection topTracks={topTracks} />
+      </div>
       <TopArtistsSection topArtists={topArtists} />
-      <TopTracksSection topTracks={topTracks} />
     </div>
   )
 }

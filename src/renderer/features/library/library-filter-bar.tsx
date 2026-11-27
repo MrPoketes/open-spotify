@@ -1,5 +1,6 @@
 import type { Ref } from "react"
-import { FilterChip } from "../../ui/filter-chip"
+import { Input } from "../../ui/input"
+import { ToggleGroup, ToggleGroupItem } from "../../ui/toggle-group"
 import type { LibraryFilters, LibraryKindFilter } from "./library-filters"
 import { librarySectionNames } from "./library-section-names"
 
@@ -11,31 +12,29 @@ interface LibraryFilterBarProps {
   readonly nameFilterRef: Ref<HTMLInputElement>
 }
 
+// Pressing the chosen kind again shows every kind.
 export function LibraryFilterBar({ filters, onChange, nameFilterRef }: LibraryFilterBarProps) {
-  const toggleKind = (kind: LibraryKindFilter) =>
-    onChange({ ...filters, kind: filters.kind === kind ? null : kind })
-
   return (
-    <div className="sticky top-0 flex flex-col gap-2 bg-surface px-2 pt-1 pb-2">
-      <fieldset className="flex flex-wrap gap-2">
-        <legend className="sr-only">Filter by kind</legend>
+    <div className="sticky top-0 z-10 flex flex-col gap-2 bg-canvas px-2 pt-1 pb-2">
+      <ToggleGroup<LibraryKindFilter>
+        aria-label="Filter by kind"
+        className="w-full"
+        value={filters.kind === null ? [] : [filters.kind]}
+        onValueChange={([kind]) => onChange({ ...filters, kind: kind ?? null })}
+      >
         {chipKinds.map((kind) => (
-          <FilterChip
-            key={kind}
-            label={librarySectionNames[kind]}
-            pressed={filters.kind === kind}
-            onClick={() => toggleKind(kind)}
-          />
+          <ToggleGroupItem key={kind} value={kind} className="flex-1 px-1">
+            {librarySectionNames[kind]}
+          </ToggleGroupItem>
         ))}
-      </fieldset>
-      <input
+      </ToggleGroup>
+      <Input
         ref={nameFilterRef}
         type="search"
         aria-label="Filter by name"
         placeholder="Filter by name"
         value={filters.nameQuery}
         onChange={(event) => onChange({ ...filters, nameQuery: event.target.value })}
-        className="rounded-small bg-surface-raised px-3 py-2 text-base shadow-raised placeholder:text-muted"
       />
     </div>
   )

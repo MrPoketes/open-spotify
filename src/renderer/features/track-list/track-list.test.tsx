@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react"
+import { userEvent } from "@testing-library/user-event"
 import { Effect, Option, type Layer } from "effect"
 import { Profiler } from "react"
 import { describe, expect, it, vi } from "vitest"
@@ -14,6 +15,7 @@ import { scrollMainView } from "./fake-main-view-layout"
 import { TrackList } from "./track-list"
 import { TrackListDensityProvider } from "./track-list-density-provider"
 import type { TrackListEntry, TrackListLayout } from "./track-row"
+import { trackRowHeight } from "./track-row-height"
 
 const trackWithArtwork = (index: number): TrackListEntry => ({
   trackId: `fake-track-${index}`,
@@ -83,6 +85,8 @@ const sameTrackOnEveryPoll = () => {
 }
 
 // jsdom does no layout, so a test says where the rows start.
+const topBarClearance = 56
+
 const placeRowsAt = (top: number) =>
   vi.spyOn(HTMLTableSectionElement.prototype, "getBoundingClientRect").mockReturnValue({
     x: 0,
@@ -142,6 +146,24 @@ describe("TrackList", () => {
     scrollMainView(screen.getByRole("main"), 2000)
 
     expect(await screen.findByRole("row", { name: "Track 1 by Mira Kaelin" })).toBeInTheDocument()
+  })
+
+  // The top bar floats over the top of the main view, so a row the keyboard
+  // brings into view must stop below it, where the user can see it.
+  it("scrolls a row focused with the keyboard into view below the top bar", async () => {
+    placeRowsAt(0)
+    await renderTrackList("comfortable", { layout: "playlist", trackCount: 200 })
+    const mainView = screen.getByRole("main")
+    // jsdom loads no stylesheet, so the main view gets the top bar's clearance
+    // that app.css gives it.
+    mainView.style.scrollPaddingTop = `${topBarClearance}px`
+    scrollMainView(mainView, 20 * trackRowHeight.comfortable)
+
+    await userEvent.click(await screen.findByRole("row", { name: "Track 21 by Mira Kaelin" }))
+    await userEvent.keyboard("{ArrowUp}")
+
+    expect(screen.getByRole("row", { name: "Track 20 by Mira Kaelin" })).toHaveFocus()
+    expect(mainView.scrollTop).toBe(19 * trackRowHeight.comfortable - topBarClearance)
   })
 
   // The player polls every two seconds and each poll is a new state, even

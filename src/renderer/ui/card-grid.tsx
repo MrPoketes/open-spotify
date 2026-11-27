@@ -2,6 +2,7 @@ import { Link, type LinkProps } from "@tanstack/react-router"
 import type { LucideIcon } from "lucide-react"
 import type { Ref } from "react"
 import { Artwork, type ArtworkSource } from "./artwork"
+import { cardGridClassNames, type CardGridLayout } from "./card-grid-class-names"
 import type { MenuItem } from "./menu-list"
 import { RovingList } from "./roving-list"
 import { useContextMenu } from "./use-context-menu"
@@ -25,12 +26,13 @@ interface CardGridProps {
   readonly id?: string
   readonly label: string
   readonly cards: ReadonlyArray<GridCard>
+  readonly layout?: CardGridLayout
   readonly ref?: Ref<HTMLUListElement>
   readonly rowFocusRef?: Ref<RowFocusHandle>
 }
 
-// Its columns must match useCardGridColumnCount.
-export function CardGrid({ id, label, cards, ref, rowFocusRef }: CardGridProps) {
+// The cards layout's columns must match useCardGridColumnCount.
+export function CardGrid({ id, label, cards, layout = "cards", ref, rowFocusRef }: CardGridProps) {
   return (
     <RovingList
       id={id}
@@ -39,18 +41,41 @@ export function CardGrid({ id, label, cards, ref, rowFocusRef }: CardGridProps) 
       label={label}
       rows={cards}
       rowKey={(card) => card.key}
-      className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-6"
-      renderRow={(card, rovingProps) => <CardLink card={card} rovingProps={rovingProps} />}
+      className={cardGridClassNames[layout]}
+      renderRow={(card, rovingProps) => (
+        <CardLink card={card} layout={layout} rovingProps={rovingProps} />
+      )}
     />
   )
 }
 
+const cardClassNames: Record<CardGridLayout, string> = {
+  cards:
+    "flex flex-col gap-3 rounded-large p-3 transition-colors duration-120 ease-out hover:bg-surface-raised",
+  tiles:
+    "flex h-16 items-center gap-3 overflow-hidden rounded-medium bg-surface-raised pr-3 transition-colors duration-120 ease-out hover:bg-surface-overlay",
+}
+
+// Artwork on a card is lifted off the page like a sleeve; on a tile it is the
+// tile's edge. Artists are round in both.
+const cardArtwork = (card: GridCard, layout: CardGridLayout) => {
+  const isRound = card.roundArtwork === true
+  if (layout === "cards") {
+    return {
+      size: "fill",
+      className: isRound ? "rounded-full shadow-raised" : "rounded-medium shadow-raised",
+    } as const
+  }
+  return isRound ? { size: 48, className: "ml-2 rounded-full" } : { size: 64, className: "" }
+}
+
 interface CardLinkProps {
   readonly card: GridCard
+  readonly layout: CardGridLayout
   readonly rovingProps: RovingRowProps
 }
 
-function CardLink({ card, rovingProps }: CardLinkProps) {
+function CardLink({ card, layout, rovingProps }: CardLinkProps) {
   const cardMenu = useContextMenu(
     card.menuItems === undefined
       ? null
@@ -64,16 +89,17 @@ function CardLink({ card, rovingProps }: CardLinkProps) {
         {...rovingProps}
         onContextMenu={cardMenu.openAtPointer}
         onKeyDown={cardMenu.openWithKeyboard}
-        className="flex flex-col gap-2 rounded-medium p-3 transition duration-120 ease-out hover:bg-surface-raised hover:shadow-raised"
+        className={cardClassNames[layout]}
       >
         <Artwork
           sources={card.artwork}
-          size="fill"
-          className={card.roundArtwork ? "rounded-full" : "rounded-medium"}
           placeholderIcon={card.placeholderIcon}
+          {...cardArtwork(card, layout)}
         />
-        <span className="truncate text-sm font-semibold">{card.title}</span>
-        <span className="truncate text-xs text-muted">{card.details}</span>
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate text-sm font-semibold">{card.title}</span>
+          <span className="truncate text-xs text-muted">{card.details}</span>
+        </span>
       </Link>
       {cardMenu.menu}
     </>

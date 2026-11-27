@@ -11,6 +11,7 @@ const groupHeadings: Record<TokenPrefix<ThemeToken>, string> = {
   radius: "Radii",
   spacing: "Spacing",
   shadow: "Shadows",
+  artwork: "Artwork",
 }
 
 type TokenControl = "color" | "length" | "text"

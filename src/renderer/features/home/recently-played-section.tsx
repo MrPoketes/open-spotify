@@ -25,6 +25,7 @@ export function RecentlyPlayedSection({ recentlyPlayed, onRetry }: RecentlyPlaye
       <LoadedContent
         state={recentlyPlayed}
         loadingMessage="Loading recently played tracks…"
+        skeleton="rows"
         failureMessage="Recently played tracks didn't load."
         onRetry={onRetry}
       >

@@ -5,7 +5,7 @@ import { settingSchemas } from "../../../shared/settings"
 import { attemptNavigation } from "../../lib/attempt-navigation"
 import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
-import { AccentButton } from "../../ui/pill-button"
+import { Button } from "../../ui/button"
 import { TextField } from "../../ui/text-field"
 import { SpotifyAppSteps } from "./spotify-app-steps"
 
@@ -64,7 +64,7 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
             }
           />
           <div className="mt-2">
-            <AccentButton type="submit" label="Save and continue" />
+            <Button type="submit">Save and continue</Button>
           </div>
           {saveFailed && (
             <p role="alert" className="text-sm text-danger">

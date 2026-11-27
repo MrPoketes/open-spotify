@@ -1,7 +1,9 @@
 import { Effect } from "effect"
+import { Check, Copy } from "lucide-react"
 import { use, useState } from "react"
 import { RendererRuntimeContext } from "../lib/renderer-runtime"
 import { writeClipboardText } from "../lib/write-clipboard-text"
+import { Button } from "./button"
 
 export function CopyButton({ text, subject }: { readonly text: string; readonly subject: string }) {
   const runtime = use(RendererRuntimeContext)
@@ -19,13 +21,14 @@ export function CopyButton({ text, subject }: { readonly text: string; readonly 
   }
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="outline"
+      size="sm"
       onClick={copy}
       aria-label={isCopied ? `Copied ${subject}` : `Copy ${subject}`}
-      className="rounded-small bg-surface-overlay px-3 py-1 text-sm font-semibold"
     >
+      {isCopied ? <Check aria-hidden size={14} /> : <Copy aria-hidden size={14} />}
       {isCopied ? "Copied" : "Copy"}
-    </button>
+    </Button>
   )
 }

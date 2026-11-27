@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import type { Ref } from "react"
-import { iconControlClassName } from "./icon-control-class-name"
+import { Button } from "./button"
 
 interface IconButtonProps {
   readonly label: string
@@ -9,17 +9,19 @@ interface IconButtonProps {
   readonly ref?: Ref<HTMLButtonElement>
 }
 
+// A ghost Button that shows only an icon. The label names it and is its
+// tooltip, since nothing else on screen says what it does.
 export function IconButton({ label, icon: Icon, onClick, ref }: IconButtonProps) {
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       ref={ref}
-      type="button"
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={iconControlClassName}
     >
       <Icon aria-hidden size={20} />
-    </button>
+    </Button>
   )
 }

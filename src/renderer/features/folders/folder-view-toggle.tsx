@@ -1,5 +1,10 @@
 import type { FolderView } from "../../../shared/folder-view"
-import { FilterChip } from "../../ui/filter-chip"
+import { SegmentedControl, type SegmentedControlOption } from "../../ui/segmented-control"
+
+const viewOptions: ReadonlyArray<SegmentedControlOption<FolderView>> = [
+  { value: "grid", label: "Grid" },
+  { value: "list", label: "List" },
+]
 
 interface FolderViewToggleProps {
   readonly view: FolderView
@@ -7,11 +12,5 @@ interface FolderViewToggleProps {
 }
 
 export function FolderViewToggle({ view, onChange }: FolderViewToggleProps) {
-  return (
-    <fieldset className="flex gap-2">
-      <legend className="sr-only">View</legend>
-      <FilterChip label="Grid" pressed={view === "grid"} onClick={() => onChange("grid")} />
-      <FilterChip label="List" pressed={view === "list"} onClick={() => onChange("list")} />
-    </fieldset>
-  )
+  return <SegmentedControl label="View" options={viewOptions} value={view} onChange={onChange} />
 }
