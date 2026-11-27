@@ -59,7 +59,7 @@ technically correct but hard to read gets rejected. These rules are not suggesti
    or abbreviations like `pl`, `cfg`, `btn`. Do not use a Spotify domain noun (`track`, `album`,
    `artist`, `playlist`, `show`, `episode`, `device`, `queue`) as the name of an unrelated
    function, variable, or helper (for example, `pendingChanges.track(...)` to mean "keep track
-   of").
+   of"). The background of a switch or slider is its `rail`, never its `track`.
 2. **One module, one concept.** Name files in kebab-case after that concept
    (`format-duration.ts`). No `utils.ts`, `helpers.ts`, `types.ts`, or `constants.ts`. Put a
    type next to the code that owns it. No barrel `index.ts` files.

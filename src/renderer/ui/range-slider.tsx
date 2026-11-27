@@ -13,14 +13,14 @@ const steppingKeys = new Set([
 ])
 
 type RangeSliderProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "className"> & {
-  // How much of the track the accent fills, from 0 to 1.
+  // How much of the rail the accent fills, from 0 to 1.
   readonly filledFraction: number
   readonly ref?: Ref<HTMLInputElement>
 }
 
-// A range input that fills the width of its container. Chromium draws a
-// native range track in its own colors, so the input is transparent over a
-// track drawn from theme tokens. An aria-disabled slider dims, like the
+// A range input that fills the width of its container. Chromium draws the
+// native range rail in its own colors, so the input is transparent over a
+// rail drawn from theme tokens. An aria-disabled slider dims, like the
 // playback controls.
 export function RangeSlider({ filledFraction, onKeyDown, ref, ...inputProps }: RangeSliderProps) {
   // Chromium steps a range input on these keys even with a modifier held,
