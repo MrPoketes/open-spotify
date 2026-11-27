@@ -18,6 +18,17 @@ const openWithClick = async () => {
   await waitFor(() => expect(menu).toHaveFocus())
 }
 
+const jsdomFocus: unknown = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "focus")?.value
+
+// Base UI gives focus back after a click outside only where focus() reads its
+// preventScroll option, which jsdom's does not.
+function focusReadingPreventScroll(this: HTMLElement, options?: FocusOptions) {
+  void options?.preventScroll
+  if (typeof jsdomFocus === "function") {
+    Reflect.apply(jsdomFocus, this, [options])
+  }
+}
+
 describe("MenuButton", () => {
   // Keyboard users must be able to leave a menu without choosing anything and
   // continue from where they were.
@@ -123,16 +134,7 @@ describe("MenuButton", () => {
   // A click elsewhere, such as in the search field, closes the menu, and
   // typing must then go where the click put focus.
   it("leaves focus on the control a click outside moved it to", async () => {
-    // Base UI gives focus back after a click outside only where focus() reads
-    // its preventScroll option, which jsdom's does not.
-    const focusElement = HTMLElement.prototype.focus
-    vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(function (
-      this: HTMLElement,
-      options?: FocusOptions,
-    ) {
-      void options?.preventScroll
-      focusElement.call(this, options)
-    })
+    vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(focusReadingPreventScroll)
     render(
       <>
         <MenuButton label="Options" icon={Settings} items={actions} />
