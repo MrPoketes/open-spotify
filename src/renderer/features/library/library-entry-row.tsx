@@ -86,7 +86,14 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
           </Link>
         </Tooltip>
       </ContextMenu>
-      {isRail ? null : <PinButton entry={entry} pinned={pinned} actions={actions} />}
+      {isRail ? null : (
+        <PinButton
+          entry={entry}
+          pinned={pinned}
+          shortcutLabel={pinShortcut.label}
+          onToggle={() => actions.togglePin(entry)}
+        />
+      )}
     </div>
   )
 }
@@ -94,21 +101,21 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
 interface PinButtonProps {
   readonly entry: LibraryEntry
   readonly pinned: boolean
-  readonly actions: LibraryEntryActions
+  readonly shortcutLabel: string
+  readonly onToggle: () => void
 }
 
 // The pin button stays out of the tab order, so a list remains one tab stop
 // (docs/design.md); keyboard users pin the focused row with a shortcut instead.
-function PinButton({ entry, pinned, actions }: PinButtonProps) {
+function PinButton({ entry, pinned, shortcutLabel, onToggle }: PinButtonProps) {
   const pinLabel = pinned ? `Unpin ${entry.name}` : `Pin ${entry.name} to the top`
-  const pinShortcut = useRowShortcut("togglePin")
   return (
     <button
       type="button"
       tabIndex={-1}
       aria-label={pinLabel}
-      title={`${pinLabel} (${pinShortcut.label})`}
-      onClick={() => actions.togglePin(entry)}
+      title={`${pinLabel} (${shortcutLabel})`}
+      onClick={onToggle}
       className={`mr-2 ${rowActionClassName}`}
     >
       {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}

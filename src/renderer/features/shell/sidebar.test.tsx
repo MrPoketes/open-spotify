@@ -12,7 +12,7 @@ import { renderScreen } from "../../lib/render-screen"
 import { openAddToFolder } from "../folders/add-to-folder-menu-queries"
 import { FoldersProvider } from "../folders/folders-provider"
 import type { SpotifyApi } from "../spotify/spotify-api"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { spotifyApiFakeWith, spotifyApiFakeWithEmptyLibrary } from "../spotify/spotify-api-fake"
 import { Sidebar } from "./sidebar"
 
 // The fake follows 55 artists so that paging tests must follow the cursor.
@@ -223,13 +223,7 @@ const renderRail = (
       <Sidebar savedWidth={280} savedCollapsed />
     </FoldersProvider>,
     mainProcess,
-    spotifyApiFakeWith((spotify) => ({
-      currentUserPlaylists: Stream.empty,
-      savedAlbums: Stream.empty,
-      followedArtists: Stream.empty,
-      savedShows: Stream.empty,
-      ...library(spotify),
-    })),
+    spotifyApiFakeWithEmptyLibrary(library),
   )
 
 const withPlaylists = (spotify: SpotifyApi["Service"]) => ({

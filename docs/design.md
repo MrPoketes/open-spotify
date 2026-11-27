@@ -338,10 +338,13 @@ Pins are the `pinnedLibraryEntries` setting and the section order and states are
 The sidebar collapses to a 72 px icon rail, so a small window gives the main view more room. The
 toggle is a ghost icon button before the "Your library" heading (`PanelLeftClose`, "Collapse
 sidebar"), which stays in the same place and becomes "Expand sidebar" (`PanelLeftOpen`) in the
-rail, so it keeps focus when pressed. `Ctrl+B` (`Cmd+B` on macOS) does the same from anywhere.
+rail, so it keeps focus when pressed. `Ctrl+B` (`Cmd+B` on macOS) does the same from anywhere;
+when focus was in the sidebar, it moves to the toggle, since the other width may not show the
+focused control.
 Dragging the divider more than halfway from the narrowest width (200 px) towards the rail snaps
-the sidebar to the rail, and dragging it back out opens it at the dragged width; a resize from
-the keyboard opens it too. The divider reports "Collapsed" while the rail shows. The choice is the
+the sidebar to the rail, and dragging it back out opens it at the dragged width. On the
+keyboard, the divider's widening arrow opens it at its earlier width and `End` at the widest;
+the narrowing arrow and `Home` do nothing while it is collapsed. The divider reports "Collapsed" while the rail shows. The choice is the
 `sidebarCollapsed` setting, next to `sidebarWidth`, and the full width is kept for when it opens.
 
 In the rail every row shows only its 40 px artwork or icon, in the same column as in the full

@@ -11,7 +11,7 @@ import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { failingFirstTime } from "../spotify/failing-first-time"
 import type { SpotifyApi, SpotifyApiError } from "../spotify/spotify-api"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { spotifyApiFakeWith, spotifyApiFakeWithEmptyLibrary } from "../spotify/spotify-api-fake"
 import {
   fakeFollowedArtists,
   fakePlaylists,
@@ -148,13 +148,7 @@ describe("Library", () => {
 
   it("explains where entries come from when the library is empty", async () => {
     await renderLibrary(
-      spotifyApiFakeWith(() => ({
-        likedSongsCount: Effect.succeed(0),
-        currentUserPlaylists: Stream.empty,
-        savedAlbums: Stream.empty,
-        followedArtists: Stream.empty,
-        savedShows: Stream.empty,
-      })),
+      spotifyApiFakeWithEmptyLibrary(() => ({ likedSongsCount: Effect.succeed(0) })),
     )
 
     expect(

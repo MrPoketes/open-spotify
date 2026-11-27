@@ -1,4 +1,4 @@
-import { Effect, Layer, Option } from "effect"
+import { Effect, Layer, Option, Stream } from "effect"
 import { SpotifyApi } from "./spotify-api"
 import { spotifyFakeAccessToken, spotifyFakeServer } from "./spotify-fake-server"
 import type { PlaybackState } from "./spotify-playback-state"
@@ -20,6 +20,20 @@ export const spotifyApiFakeWith = (
       return SpotifyApi.of({ ...spotify, ...overrides(spotify) })
     }),
   ).pipe(Layer.provide(spotifyApiFake))
+
+// The fake with an empty library, plus the given overrides, such as the one
+// library stream a test reads. Tests that render the sidebar's library use it
+// (AGENTS.md, Tests): the fixtures' sixty-odd entries slow every render.
+export const spotifyApiFakeWithEmptyLibrary = (
+  overrides: (spotify: SpotifyApi["Service"]) => Partial<SpotifyApi["Service"]> = () => ({}),
+) =>
+  spotifyApiFakeWith((spotify) => ({
+    currentUserPlaylists: Stream.empty,
+    savedAlbums: Stream.empty,
+    followedArtists: Stream.empty,
+    savedShows: Stream.empty,
+    ...overrides(spotify),
+  }))
 
 // Changes the playback state the fake reports, as an override that other
 // overrides can join.

@@ -153,6 +153,16 @@ describe("the sidebar's icon rail", () => {
     expect(sidebar()).toHaveStyle({ width: "300px" })
   })
 
+  // The rail does not show Folder options, so focus on it would drop to the page.
+  it("moves focus to the toggle when Ctrl+B hides the focused control", async () => {
+    await renderAppShell()
+
+    screen.getByRole("button", { name: "Folder options" }).focus()
+    await userEvent.keyboard("{Control>}b{/Control}")
+
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveFocus()
+  })
+
   it("snaps to the rail when the divider is dragged well past the narrowest width, and opens when dragged back out", async () => {
     await renderAppShell({ savedSidebarWidth: 300 })
 

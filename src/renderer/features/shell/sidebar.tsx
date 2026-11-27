@@ -1,5 +1,14 @@
 import { FolderCog } from "lucide-react"
-import { memo, use, useCallback, useMemo, useState } from "react"
+import {
+  memo,
+  use,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react"
 import {
   collapsedSidebarWidth,
   defaultSidebarWidth,
@@ -24,15 +33,40 @@ interface SidebarProps {
   readonly savedCollapsed: boolean
 }
 
-function useSidebarCollapse(savedCollapsed: boolean) {
+// The other width may not show the focused control, such as a section
+// heading or a row, which would drop focus to the page. So focus that was in
+// the sidebar moves to the toggle, which both widths show.
+function useFocusToggleAfterChange(
+  sidebarRef: RefObject<HTMLElement | null>,
+  toggleRef: RefObject<HTMLButtonElement | null>,
+) {
+  const isFocusInSidebar = useRef(false)
+  // Runs after every render, but acts only after a change noted focus.
+  useLayoutEffect(() => {
+    if (!isFocusInSidebar.current) return
+    isFocusInSidebar.current = false
+    toggleRef.current?.focus()
+  })
+  return useCallback(() => {
+    isFocusInSidebar.current = sidebarRef.current?.contains(document.activeElement) === true
+  }, [sidebarRef])
+}
+
+function useSidebarCollapse(
+  savedCollapsed: boolean,
+  sidebarRef: RefObject<HTMLElement | null>,
+  toggleRef: RefObject<HTMLButtonElement | null>,
+) {
   const runtime = use(RendererRuntimeContext)
   const [isCollapsed, setCollapsedState] = useState(savedCollapsed)
+  const noteFocus = useFocusToggleAfterChange(sidebarRef, toggleRef)
   const setCollapsed = useCallback(
     (shouldCollapse: boolean) => {
+      noteFocus()
       setCollapsedState(shouldCollapse)
       runtime.runFork(saveSetting("sidebarCollapsed", shouldCollapse))
     },
-    [runtime],
+    [runtime, noteFocus],
   )
   const toggleCollapsed = useCallback(() => setCollapsed(!isCollapsed), [isCollapsed, setCollapsed])
   useKeyboardShortcut("toggleSidebar", toggleCollapsed)
@@ -48,17 +82,28 @@ function useSidebarCollapse(savedCollapsed: boolean) {
 export function Sidebar({ savedWidth, savedCollapsed }: SidebarProps) {
   const runtime = use(RendererRuntimeContext)
   const [width, setWidth] = useState(savedWidth)
-  const { isCollapsed, setCollapsed, toggleCollapsed, rail } = useSidebarCollapse(savedCollapsed)
+  const sidebarRef = useRef<HTMLElement>(null)
+  const toggleRef = useRef<HTMLButtonElement>(null)
+  const { isCollapsed, setCollapsed, toggleCollapsed, rail } = useSidebarCollapse(
+    savedCollapsed,
+    sidebarRef,
+    toggleRef,
+  )
 
   return (
     <>
       <nav
+        ref={sidebarRef}
         aria-label="Library"
         style={{ width: isCollapsed ? collapsedSidebarWidth : width }}
         className="flex shrink-0 flex-col gap-3 pt-3"
       >
         <SidebarRailContext value={rail}>
-          <SidebarContents isCollapsed={isCollapsed} onToggleCollapsed={toggleCollapsed} />
+          <SidebarContents
+            isCollapsed={isCollapsed}
+            onToggleCollapsed={toggleCollapsed}
+            toggleRef={toggleRef}
+          />
         </SidebarRailContext>
       </nav>
       <PaneDivider
@@ -83,6 +128,7 @@ export function Sidebar({ savedWidth, savedCollapsed }: SidebarProps) {
 interface SidebarContentsProps {
   readonly isCollapsed: boolean
   readonly onToggleCollapsed: () => void
+  readonly toggleRef: RefObject<HTMLButtonElement | null>
 }
 
 // Dragging the divider changes the width on every pointer move, and
@@ -91,11 +137,11 @@ interface SidebarContentsProps {
 // and keyboard focus still scroll it.
 const SidebarContents = memo(function SidebarContents({
   isCollapsed,
-  onToggleCollapsed,
+  ...headerProps
 }: SidebarContentsProps) {
   return (
     <>
-      <SidebarHeader isCollapsed={isCollapsed} onToggleCollapsed={onToggleCollapsed} />
+      <SidebarHeader isCollapsed={isCollapsed} {...headerProps} />
       {/* One drag area holds both, so library rows can be dropped on folders. */}
       <RowDragArea>
         <div
@@ -112,13 +158,17 @@ const SidebarContents = memo(function SidebarContents({
 // The outcome of a folders file action lives here, apart from the library, so
 // that showing it does not re-render every library row. The toggle comes
 // first in both widths, so it stays mounted and keeps focus when pressed.
-function SidebarHeader({ isCollapsed, onToggleCollapsed }: SidebarContentsProps) {
+function SidebarHeader({ isCollapsed, onToggleCollapsed, toggleRef }: SidebarContentsProps) {
   const foldersFileActions = useFoldersFileActions()
 
   return (
     <div className="flex flex-col px-2">
       <div className={`flex h-10 items-center gap-1 ${isCollapsed ? "justify-center" : ""}`}>
-        <SidebarToggleButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
+        <SidebarToggleButton
+          ref={toggleRef}
+          isCollapsed={isCollapsed}
+          onToggle={onToggleCollapsed}
+        />
         <h2
           className={
             isCollapsed ? "sr-only" : "flex-1 font-display text-xl font-bold tracking-tight"

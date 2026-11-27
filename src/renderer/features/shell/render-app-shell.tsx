@@ -8,13 +8,13 @@ import {
 } from "@tanstack/react-router"
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Stream, type Layer, type ManagedRuntime } from "effect"
+import type { Layer, ManagedRuntime } from "effect"
 import type { ReactNode } from "react"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext, type RendererServices } from "../../lib/renderer-runtime"
 import type { SpotifyApi } from "../spotify/spotify-api"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { spotifyApiFakeWithEmptyLibrary } from "../spotify/spotify-api-fake"
 import { defaultPlayOnThisComputer } from "../this-computer/play-on-this-computer-context"
 import type { WebPlaybackSdk } from "../this-computer/web-playback-sdk"
 import { AppShell } from "./app-shell"
@@ -34,13 +34,7 @@ export const appShellRuntimeWith = ({
   ...runtimeOptions
 }: AppShellRuntimeOptions) =>
   fakeRendererRuntime({
-    spotifyApi: spotifyApiFakeWith((fakeSpotify) => ({
-      currentUserPlaylists: Stream.empty,
-      savedAlbums: Stream.empty,
-      followedArtists: Stream.empty,
-      savedShows: Stream.empty,
-      ...spotify(fakeSpotify),
-    })),
+    spotifyApi: spotifyApiFakeWithEmptyLibrary(spotify),
     ...runtimeOptions,
   })
 
