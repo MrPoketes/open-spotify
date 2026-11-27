@@ -23,7 +23,7 @@ function JumpBackInCards({ contexts }: { readonly contexts: ReadonlyArray<PageCo
       <LoadedContent
         state={state}
         loadingMessage={loadingMessage}
-        skeleton="tiles"
+        shape="tiles"
         failureMessage={failureMessage}
         onRetry={retry}
       >

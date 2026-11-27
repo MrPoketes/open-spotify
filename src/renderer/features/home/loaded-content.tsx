@@ -7,7 +7,7 @@ import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 interface LoadedContentProps<A> {
   readonly state: LoadState<A, SpotifyApiError>
   readonly loadingMessage: string
-  readonly skeleton: SkeletonShape
+  readonly shape: SkeletonShape
   readonly failureMessage: string
   readonly onRetry: () => void
   readonly children: (value: A) => ReactNode
@@ -17,13 +17,13 @@ interface LoadedContentProps<A> {
 export function LoadedContent<A>({
   state,
   loadingMessage,
-  skeleton,
+  shape,
   failureMessage,
   onRetry,
   children,
 }: LoadedContentProps<A>) {
   if (state.status === "loading") {
-    return <LoadingSkeleton message={loadingMessage} shape={skeleton} />
+    return <LoadingSkeleton message={loadingMessage} shape={shape} />
   }
   if (state.status === "failed") {
     return <SpotifyLoadFailure error={state.error} message={failureMessage} onRetry={onRetry} />

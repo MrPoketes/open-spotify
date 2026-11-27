@@ -11,7 +11,7 @@ export function ShortcutKeyCaps({ shortcut, isMac }: ShortcutKeyCapsProps) {
   return keyComboLabels(shortcutKeys(shortcut, isMac), isMac).map((label) => (
     <kbd
       key={label}
-      className="min-w-6 rounded-small bg-surface-raised px-2 text-center text-xs font-semibold"
+      className="inline-block min-w-6 rounded-small bg-surface-raised px-2 text-center text-xs font-semibold"
     >
       {label}
     </kbd>

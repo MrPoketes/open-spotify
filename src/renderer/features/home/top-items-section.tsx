@@ -27,7 +27,7 @@ export function TopItemsSection<A>({ kind, topItems, renderItems }: TopItemsSect
       <LoadedContent
         state={topItems.state}
         loadingMessage={`Loading your top ${kind}…`}
-        skeleton={kind === "artists" ? "roundCards" : "rows"}
+        shape={kind === "artists" ? "roundCards" : "rows"}
         failureMessage={`Your top ${kind} didn't load.`}
         onRetry={topItems.retry}
       >

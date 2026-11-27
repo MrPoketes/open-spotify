@@ -23,8 +23,7 @@ const loadFirstPages = Effect.fn("loadFirstPages")(function* (query: string) {
 const hasNoResults = ({ tracks, artists, albums, playlists }: SearchResults) =>
   [tracks, artists, albums, playlists].every(({ items }) => items.every((item) => item === null))
 
-// The cover of the top track, or of the top album when no track matches,
-// colors the top of the page.
+// The top result's cover colors the top of the page.
 const topResultArtwork = ({ tracks, albums }: SearchResults) =>
   tracks.items.find((track) => track !== null)?.album.images ??
   albums.items.find((album) => album !== null)?.images ??

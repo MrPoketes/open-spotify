@@ -153,8 +153,8 @@ these sizes:
 | `text-sm`   | 14 px | List rows, sidebar items, buttons, inputs                                  |
 | `text-base` | 16 px | Body text                                                                  |
 | `text-xl`   | 20 px | Section headings                                                           |
-| `text-3xl`  | 30 px | Page titles                                                                |
-| `text-5xl`  | 48 px | Page titles that open a page: Home's greeting, search, an album's header   |
+| `text-3xl`  | 30 px | Titles of Settings, login, onboarding, and not-found pages                 |
+| `text-5xl`  | 48 px | Home's greeting; search's title; the header of an album, artist, etc.      |
 
 Weights: 400 for body, 500 for resting toggle options, 600 for emphasis, buttons, and active
 items, 700 for headings. Headings from `text-xl` up use `font-display` (lint enforces it) and
