@@ -250,7 +250,8 @@ cannot fail for a meaningful reason should not exist.
 
 The main and preload bundles include their dependencies, so the packaged app ships no
 `node_modules`. Install every package as a dev dependency (`pnpm add -D name@exact-version`)
-and pin the exact version. Explain in the PR why a new dependency is worth adding.
+and pin the exact version; `lint/dependency-pins.test.ts` fails otherwise. Explain in the PR why a
+new dependency is worth adding.
 
 ## When you find slop
 
