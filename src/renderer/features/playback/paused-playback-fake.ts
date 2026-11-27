@@ -1,6 +1,5 @@
-import { Effect, Option } from "effect"
 import type { SpotifyApi } from "../spotify/spotify-api"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { playbackStateChangedBy, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { PlaybackState } from "../spotify/spotify-playback-state"
 
 type PlaybackChange = (playback: PlaybackState) => PlaybackState
@@ -15,9 +14,7 @@ export const pausedPlaybackWithSeek = (
   change: PlaybackChange = unchanged,
 ) =>
   spotifyApiFakeWith((spotify) => ({
-    getPlaybackState: spotify.getPlaybackState.pipe(
-      Effect.map(Option.map((playback) => ({ ...change(playback), isPlaying: false }))),
-    ),
+    ...playbackStateChangedBy((playback) => ({ ...change(playback), isPlaying: false }))(spotify),
     seek: seek(spotify),
   }))
 

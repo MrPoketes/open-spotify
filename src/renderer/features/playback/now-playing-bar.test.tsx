@@ -11,6 +11,7 @@ import { SpotifyResponseError, type SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith, spotifyApiFakeWithPlayback } from "../spotify/spotify-api-fake"
 import { fakeEpisode, fakeLocalTrack, fakePlayingTrack } from "../spotify/spotify-fixtures"
 import { PlayableItem } from "../spotify/spotify-playable-item"
+import { deviceButton, openPicker, pickerButton } from "./device-picker-queries"
 import { NowPlayingBar } from "./now-playing-bar"
 
 const noActiveDevice = { getPlaybackState: Effect.succeedNone }
@@ -39,17 +40,6 @@ const playing = (fixture: unknown) =>
   }))
 
 const nowPlaying = () => screen.findByRole("region", { name: "Now playing" })
-
-const pickerButton = (deviceLabel: string) =>
-  screen.findByRole("button", { name: `Choose a device. ${deviceLabel}` })
-
-const openPicker = async (deviceLabel = "Playing on Mira's Laptop") => {
-  await userEvent.click(await pickerButton(deviceLabel))
-  return screen.getByRole("dialog", { name: "Connect to a device" })
-}
-
-const deviceButton = async (picker: HTMLElement, name: RegExp) =>
-  within(picker).findByRole("button", { name })
 
 describe("NowPlayingBar", () => {
   it("shows what is playing and on which device", async () => {

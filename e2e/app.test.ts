@@ -5,7 +5,12 @@ import {
   type ElectronApplication,
   type Page,
 } from "@playwright/test"
-import { fakeSpotifyAccounts, logInThroughOnboarding, serveFakeWebApi } from "./fake-spotify"
+import {
+  fakeSpotifyAccounts,
+  logInThroughOnboarding,
+  serveFakeWebApi,
+  serveFakeWebPlaybackSdk,
+} from "./fake-spotify"
 import { packagedAppExecutable } from "./packaged-app"
 
 // The history shortcuts each platform's browsers use (keyboard-shortcuts.ts).
@@ -54,6 +59,7 @@ test("starts on onboarding, logs in against fake Spotify, and moves between page
   appWindow,
 }) => {
   await serveFakeWebApi(electronApp.context())
+  await serveFakeWebPlaybackSdk(electronApp.context())
   await fakeSpotifyAccounts(electronApp)
 
   await expect(appWindow.getByRole("heading", { name: "Connect Open Spotify" })).toBeVisible()

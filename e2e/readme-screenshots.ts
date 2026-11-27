@@ -1,7 +1,12 @@
 import path from "node:path"
 import { _electron, test } from "@playwright/test"
 import { builtInThemes } from "../src/shared/built-in-themes"
-import { fakeSpotifyAccounts, logInThroughOnboarding, serveFakeWebApi } from "./fake-spotify"
+import {
+  fakeSpotifyAccounts,
+  logInThroughOnboarding,
+  serveFakeWebApi,
+  serveFakeWebPlaybackSdk,
+} from "./fake-spotify"
 import { packagedAppExecutable } from "./packaged-app"
 
 const imagesDirectory = path.join(import.meta.dirname, "..", "docs", "images")
@@ -15,6 +20,7 @@ test("takes a screenshot of the main view in every built-in theme", async () => 
   })
   const appWindow = await electronApp.firstWindow()
   await serveFakeWebApi(electronApp.context())
+  await serveFakeWebPlaybackSdk(electronApp.context())
   await fakeSpotifyAccounts(electronApp)
   await logInThroughOnboarding(appWindow)
 

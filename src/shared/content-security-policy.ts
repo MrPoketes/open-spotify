@@ -6,9 +6,13 @@ export const scriptNoncePlaceholder = "open-spotify-script-nonce"
 
 export function contentSecurityPolicy(scriptNonce: string): string {
   return [
-    // Anything not allowed below is blocked: plugins, frames, workers.
+    // Anything not allowed below is blocked, such as plugins and workers.
     "default-src 'none'",
-    `script-src 'self' 'nonce-${scriptNonce}'`,
+    // The Web Playback SDK's script adds a hidden iframe from the same host,
+    // and plays audio inside it. The iframe's own policy governs its
+    // websocket, licence and audio requests, so they need nothing here.
+    `script-src 'self' 'nonce-${scriptNonce}' https://sdk.scdn.co`,
+    "frame-src https://sdk.scdn.co",
     "style-src 'self'",
     "font-src 'self'",
     // Spotify serves cover art from many hosts under these two domains, for

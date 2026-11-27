@@ -34,8 +34,27 @@ Options weighed:
 - The `app://` scheme is standard and secure (`src/main/renderer-protocol.ts`), which EME requires.
 - Login asks for the `streaming` scope. A saved session that lacks any scope the app asks for is
   cleared and answers `SessionExpired`, so the user logs in once to grant it.
-- Remote control through Spotify Connect stays as it is. "This computer" is an extra device, added
-  by ARM-165 to ARM-167, which also record here the origins the SDK needs in the CSP.
+- Remote control through Spotify Connect stays as it is. "This computer" is an extra device in the
+  existing device picker, added by ARM-165 to ARM-167.
+- The renderer's `WebPlaybackSdk` service (`src/renderer/features/this-computer/web-playback-sdk.ts`)
+  loads `https://sdk.scdn.co/spotify-player.js` and is the only code that sets
+  `window.onSpotifyWebPlaybackSDKReady`. The SDK's player joins Spotify Connect as "Open Spotify",
+  so other Spotify apps list it under the app's name, and Open Spotify's own picker shows it as
+  "This computer". It asks the main process for a fresh access token every time the SDK wants one.
+  It lives as long as the app shell, which unmounts on log out, so the next account never sees the
+  previous account's player.
+
+## Content Security Policy
+
+The SDK script runs in the app's page and does only one thing there: it adds a hidden iframe,
+`https://sdk.scdn.co/embedded/index.html`, with `allow="encrypted-media; autoplay"`, and talks to it
+with `postMessage`. The iframe plays the audio. Its websocket to Spotify Connect, its Widevine
+licence requests and its audio downloads come from the iframe's document, which is cross-origin and
+carries its own policy, so the app's policy (`src/shared/content-security-policy.ts`) does not
+govern them. The app's policy therefore adds only:
+
+- `https://sdk.scdn.co` to `script-src`, for `spotify-player.js`;
+- `frame-src https://sdk.scdn.co`, for the iframe.
 
 ## When the licence fails
 

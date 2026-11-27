@@ -31,15 +31,19 @@ The same view in the built-in light theme:
 Spotify limits what a third-party client can do, so check these before you install:
 
 - **Spotify Premium.** Spotify lets only Premium accounts control playback from another app.
-- **An official Spotify app running somewhere** (desktop, phone, or speaker). Open Spotify plays
-  no audio itself: it is a remote control for that app through Spotify Connect; see
-  [decision 0002](docs/decisions/0002-playback-through-spotify-connect.md).
+- **Somewhere to play.** Open Spotify controls playback through Spotify Connect, so it can play
+  on an official Spotify app (desktop, phone, or speaker). It also tries to play on this
+  computer itself, as the "This computer" device, through Spotify's Web Playback SDK. Spotify
+  does not support the SDK in desktop apps and may refuse it, so keep an official app at hand;
+  see [decision 0002](docs/decisions/0002-playback-through-spotify-connect.md) and
+  [decision 0007](docs/decisions/0007-widevine-through-castlabs-electron.md).
 - **Your own Spotify Client ID** (free, about five minutes). Spotify allows only five users per
   Client ID, so Open Spotify cannot ship a shared one; see
   [decision 0003](docs/decisions/0003-bring-your-own-client-id.md).
   1. Open the [Spotify developer dashboard](https://developer.spotify.com/dashboard) and create
      an app.
-  2. Add the redirect URI `http://127.0.0.1:43821/callback` and select **Web API**.
+  2. Add the redirect URI `http://127.0.0.1:43821/callback` and select **Web API** and
+     **Web Playback SDK**.
   3. Under **User Management**, add the email of your Spotify account.
   4. Paste the Client ID into Open Spotify on first launch.
 

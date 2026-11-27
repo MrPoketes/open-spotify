@@ -9,6 +9,8 @@ import { AccentButton } from "../../ui/pill-button"
 import { useRovingFocus, type RovingRowProps } from "../../ui/use-roving-focus"
 import type { Device } from "../spotify/spotify-device"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
+import { withThisComputer } from "../this-computer/this-computer-device"
+import { ThisComputerDeviceIdContext } from "../this-computer/this-computer-device-id-context"
 import { describeDeviceType } from "./device-type"
 import { Player } from "./player"
 
@@ -22,6 +24,7 @@ interface DeviceListProps {
 }
 
 export function DeviceList({ onDeviceChosen }: DeviceListProps) {
+  const thisComputerDeviceId = use(ThisComputerDeviceIdContext)
   const { state: availableDevices, retry } = useLoad(
     listAvailableDevices,
     "The device list failed to load",
@@ -41,7 +44,9 @@ export function DeviceList({ onDeviceChosen }: DeviceListProps) {
     )
   }
 
-  if (availableDevices.value.length === 0) {
+  const devices = withThisComputer(availableDevices.value, thisComputerDeviceId)
+
+  if (devices.length === 0) {
     return (
       <div className="flex flex-col items-start gap-2 text-sm">
         <p>No devices found.</p>
@@ -53,7 +58,7 @@ export function DeviceList({ onDeviceChosen }: DeviceListProps) {
     )
   }
 
-  return <DeviceChoices devices={availableDevices.value} onDeviceChosen={onDeviceChosen} />
+  return <DeviceChoices devices={devices} onDeviceChosen={onDeviceChosen} />
 }
 
 interface DeviceChoicesProps extends DeviceListProps {

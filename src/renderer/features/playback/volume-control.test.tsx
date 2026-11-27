@@ -1,12 +1,12 @@
 // oxlint-disable-next-line no-restricted-imports -- user-event cannot drag or step a native range input in jsdom
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Effect, Option } from "effect"
+import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { StatusMessageContext, type StatusMessage } from "../../ui/status-message-context"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { playbackStateChangedBy, spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import type { Device } from "../spotify/spotify-device"
 import { rejectedCommand } from "../spotify/spotify-fake-rejected-command"
 import { fakeTrack } from "../spotify/spotify-fixtures"
@@ -25,11 +25,10 @@ const muteButton = (name: "Mute" | "Unmute") => screen.findByRole("button", { na
 const recordingVolumes = (changeDevice: (device: Device) => Device = (device) => device) => {
   const sentVolumes: Array<number> = []
   const layer = spotifyApiFakeWith((spotify) => ({
-    getPlaybackState: spotify.getPlaybackState.pipe(
-      Effect.map(
-        Option.map((playback) => ({ ...playback, device: changeDevice(playback.device) })),
-      ),
-    ),
+    ...playbackStateChangedBy((playback) => ({
+      ...playback,
+      device: changeDevice(playback.device),
+    }))(spotify),
     setVolume: (volumePercent) =>
       Effect.suspend(() => {
         sentVolumes.push(volumePercent)

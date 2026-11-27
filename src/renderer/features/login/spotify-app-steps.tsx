@@ -15,7 +15,7 @@ export function SpotifyAppSteps() {
           <CopyButton text={spotifyRedirectUri} subject="Redirect URI" />
         </span>
       </li>
-      <li>Under the APIs the app uses, select Web API, then save the app.</li>
+      <li>Under the APIs the app uses, select Web API and Web Playback SDK, then save the app.</li>
       <li>
         In the app&apos;s settings, open User Management and add the name and email address of your
         Spotify account.
