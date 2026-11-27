@@ -15,6 +15,7 @@ import { noNewDateWithArguments } from "./rules/no-new-date-with-arguments.ts"
 import { noRawInvisibleCharacters } from "./rules/no-raw-invisible-characters.ts"
 import { noRawSql } from "./rules/no-raw-sql.ts"
 import { noRendererRuntimeImport } from "./rules/no-renderer-runtime-import.ts"
+import { noSharedFakeMainProcess } from "./rules/no-shared-fake-main-process.ts"
 import { noStaleFileReferences } from "./rules/no-stale-file-references.ts"
 import { noThrow } from "./rules/no-throw.ts"
 import { noTryCatch } from "./rules/no-try-catch.ts"
@@ -46,6 +47,7 @@ export default definePlugin({
     "no-raw-invisible-characters": noRawInvisibleCharacters,
     "no-raw-sql": noRawSql,
     "no-renderer-runtime-import": noRendererRuntimeImport,
+    "no-shared-fake-main-process": noSharedFakeMainProcess,
     "no-stale-file-references": noStaleFileReferences,
     "no-throw": noThrow,
     "no-try-catch": noTryCatch,
