@@ -699,10 +699,9 @@ It is not modal: the page keeps scrolling under it, and a click outside closes i
 reaches what it lands on. It is an Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`)
 with 4 px of padding, 4 px below the button and aligned to its right edge, or to its left edge for
 a button near the left of the main view, which would otherwise clip the menu. Items are `text-sm`
-rows with
-`rounded-small` corners that turn `surface-raised` while highlighted: under the pointer, with
-keyboard focus, or while their submenu is open. An item that opens a dialog ends its label with an
-ellipsis ("Import folders…").
+rows with `rounded-small` corners that turn `surface-raised` while highlighted: under the pointer,
+with keyboard focus, or while their submenu is open. An item that opens a dialog ends its label
+with an ellipsis ("Import folders…").
 
 A context menu (`ContextMenu` in `src/renderer/ui`, on shadcn's Context Menu) opens on
 right-click, `Shift+F10`, or the context-menu key, at the pointer or, from the keyboard, under the
