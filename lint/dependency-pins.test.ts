@@ -30,6 +30,8 @@ describe("findDependencyPinViolations", () => {
     "npm:vite@^8.3.8",
     "github:vitejs/vite",
     "github:vitejs/vite#semver:^8.3.8",
+    "github:vitejs/vite#main",
+    "git+https://github.com/vitejs/vite.git#develop",
   ])("reports the dev dependency version %s, which is not exact", (version) => {
     const manifest = manifestWith({ devDependencies: { vite: version } })
 
@@ -43,6 +45,7 @@ describe("findDependencyPinViolations", () => {
     "1.0.0-rc.6",
     "github:castlabs/electron-releases#v45.2.1+wvcus",
     "git+https://github.com/vitejs/vite.git#v8.3.8",
+    "github:vitejs/vite#0123456789abcdef0123456789abcdef01234567",
   ])("accepts the pinned dev dependency version %s", (version) => {
     const manifest = manifestWith({ devDependencies: { vite: version } })
 
@@ -53,7 +56,7 @@ describe("findDependencyPinViolations", () => {
     const manifest = manifestWith({ devDependencies: { vite: 8 } })
 
     expect(findDependencyPinViolations(manifest)).toEqual([
-      "package.json: could not decode the dependency fields",
+      'package.json: could not decode the dependency fields: Expected string\n  at ["devDependencies"]["vite"]',
     ])
   })
 
