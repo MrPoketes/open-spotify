@@ -119,6 +119,9 @@ export class DesktopBridge extends Context.Service<
     readonly logIn: Effect.Effect<void, LogInError | DesktopBridgeError>
     readonly cancelLogIn: Effect.Effect<void, DesktopBridgeError>
     readonly getAccessToken: Effect.Effect<string, AccessTokenError | DesktopBridgeError>
+    // Whether the main process installed the Widevine CDM, without which the
+    // Web Playback SDK cannot play protected audio.
+    readonly isWidevineInstalled: Effect.Effect<boolean, DesktopBridgeError>
     readonly logOut: Effect.Effect<void, DesktopBridgeError>
     readonly getFolderTree: Effect.Effect<FolderTree, DesktopBridgeError>
     readonly createFolder: (
@@ -207,6 +210,7 @@ export class DesktopBridge extends Context.Service<
           reply._tag === "AccessToken" ? Effect.succeed(reply.accessToken) : Effect.fail(reply),
         ),
       ),
+      isWidevineInstalled: send(ipcChannels.isWidevineInstalled, Schema.Boolean),
       logOut: send(ipcChannels.logOut, Schema.Undefined),
       getFolderTree: send(ipcChannels.getFolderTree, FolderTree),
       ...folderChanges(sender),

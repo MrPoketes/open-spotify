@@ -125,6 +125,26 @@ describe("WebPlaybackSdk", () => {
     }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
   )
 
+  // The device picker explains why this computer cannot play until the SDK
+  // is ready again.
+  it.effect("reports each SDK error until the SDK is ready again", () =>
+    Effect.gen(function* () {
+      const sdk = installLoadedSdk()
+      const thisComputer = yield* connect
+      const failures = yield* collectStream(thisComputer.failure)
+      assert.strictEqual(yield* Queue.take(failures), null)
+
+      sdk.createdPlayer().emit("account_error", { message: "Premium required" })
+      assert.strictEqual(yield* Queue.take(failures), "account_error")
+      // Spotify documents a message on every error, but one without it still
+      // tells the user that this computer cannot play.
+      sdk.createdPlayer().emit("playback_error", {})
+      assert.strictEqual(yield* Queue.take(failures), "playback_error")
+      sdk.createdPlayer().emit("ready", { device_id: "fake-sdk-device" })
+      assert.strictEqual(yield* Queue.take(failures), null)
+    }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
+  )
+
   // Access tokens expire after an hour, and the SDK asks again when it needs
   // a new one.
   it.effect("answers each token request from the SDK with a fresh access token", () =>

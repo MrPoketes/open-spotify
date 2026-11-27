@@ -59,8 +59,9 @@ govern them. The app's policy therefore adds only:
 ## When the licence fails
 
 Nothing else breaks. Widevine and the SDK only add a device. If Widevine does not install, the log
-says so. If the SDK fails to start or Spotify rejects the licence, the "This computer" entry shows
-the SDK's error (ARM-166), and every other device keeps working.
+says so, the renderer learns it over IPC, and the "This computer" entry says "Protected playback
+isn't available on this computer" without loading the SDK. If the SDK fails to start or Spotify
+rejects the licence, the entry shows why (ARM-166), and every other device keeps working.
 
 ## VMP signing and releases
 

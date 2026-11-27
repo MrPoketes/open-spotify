@@ -9,6 +9,7 @@ export const ipcChannels = {
   logIn: "auth:log-in",
   cancelLogIn: "auth:cancel-log-in",
   getAccessToken: "auth:get-access-token",
+  isWidevineInstalled: "widevine:is-installed",
   logOut: "auth:log-out",
   getFolderTree: "folders:get-tree",
   createFolder: "folders:create",

@@ -13,6 +13,8 @@ const installTimeout = Duration.seconds(30)
 // Takes castlabs' `components.whenReady` as a parameter, so tests can run it
 // without Electron. Remote control through Spotify Connect needs no Widevine,
 // so a failure here only rules out playing on this computer and never fails.
+// Answers whether Widevine installed, so the renderer can say why this
+// computer cannot play.
 export const installWidevine = (whenWidevineReady: () => Promise<unknown>) =>
   Effect.tryPromise({
     try: whenWidevineReady,
@@ -23,7 +25,10 @@ export const installWidevine = (whenWidevineReady: () => Promise<unknown>) =>
       orElse: () => Effect.fail(new WidevineInstallError({ cause: "Widevine took too long" })),
     }),
     Effect.flatMap((installed) => Effect.logInfo("Widevine is ready", installed)),
+    Effect.as(true),
     Effect.catch((error) =>
-      Effect.logWarning("Widevine did not install, so this computer cannot play audio", error),
+      Effect.logWarning("Widevine did not install, so this computer cannot play audio", error).pipe(
+        Effect.as(false),
+      ),
     ),
   )

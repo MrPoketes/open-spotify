@@ -13,6 +13,7 @@ import { fakeFolderChannels } from "./fake-folder-channels"
 // Both default to the user canceling.
 interface FakeMainProcessOptions {
   readonly environmentClientId?: string
+  readonly isWidevineInstalled?: boolean
   readonly folderTree?: FolderTree
   readonly importedThemes?: ReadonlyArray<LibraryTheme>
   readonly importThemeReply?: typeof ImportThemeReply.Encoded
@@ -26,6 +27,7 @@ interface FakeMainProcessOptions {
 // OPEN_SPOTIFY_CLIENT_ID.
 export const fakeMainProcess = ({
   environmentClientId,
+  isWidevineInstalled = true,
   folderTree = [],
   importedThemes: storedImportedThemes = [],
   importThemeReply = { _tag: "ThemeImportCanceled" },
@@ -46,6 +48,7 @@ export const fakeMainProcess = ({
       return { _tag: "IpcSucceeded", value: undefined }
     },
     [ipcChannels.getEnvironmentClientId]: () => environmentClientId ?? null,
+    [ipcChannels.isWidevineInstalled]: () => isWidevineInstalled,
     ...fakeFolderChannels(folderTree),
     [ipcChannels.listImportedThemes]: () => [...importedThemes.values()],
     [ipcChannels.importThemeFile]: () => {
