@@ -15,9 +15,8 @@ interface PlayerControlButtonProps {
   readonly ref?: Ref<HTMLButtonElement>
 }
 
-// Play or pause is the bar's one primary action: a larger accent disc with a
-// filled glyph. The other controls are ghost icon buttons, and a toggle that is
-// on turns accent and gains a dot.
+// Play or pause is the bar's one primary action, so it alone is an accent
+// disc.
 const appearance = (isOn: boolean | undefined, isPrimary: boolean | undefined) => {
   if (isPrimary === true) {
     return "size-10 shadow-raised [&_svg]:fill-current"

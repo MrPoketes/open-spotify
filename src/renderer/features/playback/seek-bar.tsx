@@ -146,7 +146,8 @@ export function SeekBar({ unavailableReason, onSeek, onSeekBy }: SeekBarProps) {
             ? undefined
             : `${formatTrackDuration(shownPositionMs)} of ${formatTrackDuration(durationMs)}`
         }
-        // Base UI needs a max above zero, which nothing playing does not have.
+        // Base UI refuses a max equal to its min, and with nothing playing the
+        // duration is 0.
         max={Math.max(durationMs, 1)}
         step={1000}
         value={shownPositionMs}

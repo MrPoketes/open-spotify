@@ -19,8 +19,8 @@ interface SummaryArtworkTileProps {
   readonly size?: SummarySize
 }
 
-// The 40 px artwork of a library row, which the sidebar's icon rail shows on
-// its own.
+// The artwork of a library row (40 px), which the sidebar's icon rail shows on
+// its own, or of what plays in the now-playing bar (56 px).
 export function SummaryArtworkTile({ artwork, size = "row" }: SummaryArtworkTileProps) {
   const { round, ...artworkProps } = artwork
   return (
@@ -39,8 +39,8 @@ interface ArtworkSummaryProps {
   readonly size?: SummarySize
 }
 
-// The library row layout from docs/design.md: 40 px artwork beside the name and
-// a muted line that says what the item is.
+// The library row layout from docs/design.md: the artwork beside the name and a
+// muted line that says what the item is.
 export function ArtworkSummary({ artwork, title, details, size = "row" }: ArtworkSummaryProps) {
   const isLead = size === "lead"
   return (

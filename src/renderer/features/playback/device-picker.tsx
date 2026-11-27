@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useRef, type RefObject } from "react"
 import { buttonVariants } from "../../ui/button-variants"
 import { cn } from "../../ui/class-names"
 import { creditsLabelClassName } from "../../ui/credits-label-class-name"
+import { overlayPanelClassName } from "../../ui/overlay-panel-class-name"
 import { DeviceList } from "./device-list"
 
 interface DevicePickerProps {
@@ -98,7 +99,7 @@ function DevicePickerPanel({ pickerRef, onClose, onCloseAndRestoreFocus }: Devic
       open
       aria-labelledby={headingId}
       tabIndex={-1}
-      className="absolute right-0 bottom-full left-auto mb-3 flex w-80 flex-col gap-1 rounded-large bg-surface-overlay p-2 text-foreground shadow-overlay transition-[opacity,translate] duration-200 ease-out starting:translate-y-2 starting:opacity-0"
+      className={`absolute right-0 bottom-full left-auto mb-3 flex w-80 flex-col gap-1 p-2 text-foreground ${overlayPanelClassName}`}
     >
       <h2 id={headingId} className={`px-3 pt-2 pb-1 ${creditsLabelClassName}`}>
         Connect to a device

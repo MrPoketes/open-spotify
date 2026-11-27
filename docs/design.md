@@ -507,10 +507,10 @@ says that audio plays in the Spotify app or on another device, next to a "Choose
 that opens the picker.
 
 After the device picker come a mute button and a 96 px volume slider for the active device,
-labelled "Volume" and read as "60%". The arrow keys step it by 1 %. Moving it shows the new
-volume at once and sends it once the slider has rested for 250 ms, so a drag or a held arrow key
-sends one request. The change then behaves like any other control's: it holds for a second after
-Spotify accepts it, and a rejected change goes back with a `text-xs` `danger` alert under the
+labelled "Volume" and read as "60%". The arrow keys step it by 1 %, and Shift with an arrow,
+`PageUp`, and `PageDown` by 10 %. Moving it shows the new volume at once and sends it once the
+slider has rested for 250 ms, so a drag or a held arrow key sends one request. The change then
+behaves like any other control's: it holds for a second after Spotify accepts it, and a rejected change goes back with a `text-xs` `danger` alert under the
 slider, which overlays the bar's bottom edge so the controls beside it stay put. Mute (`Volume2`)
 turns the volume down to zero and becomes Unmute (`VolumeX`), which restores the last volume
 above zero, or 50 % when Spotify has reported none since the app opened. Both are unavailable
@@ -611,10 +611,10 @@ and the artists or "Show episode"). The playing item shows a 16 px `Volume2` ico
 place of a number and its title in `accent`, as the playing row of a track list does. The numbers
 are hidden from screen readers, since the list already says where a row is. Each upcoming item is
 a 48 px row button with `rounded-small` corners that takes `surface-raised` on hover, and its
-number turns into a filled 14 px `Play` icon on hover and keyboard focus. The list is one tab stop
-with roving focus. Pressing a row plays that item. Spotify has no endpoint for that, so the app reads the queue again, finds the
-item, and skips to the next item once for every item before it; if the item has left the queue,
-an alert under the list says so. A row points into the list it was shown in, so from the moment
+number turns into a filled 14 px `Play` icon on hover and keyboard focus. The list is one tab
+stop with roving focus. Pressing a row plays that item. Spotify has no endpoint for that, so the
+app reads the queue again, finds the item, and skips to the next item once for every item before
+it; if the item has left the queue, an alert under the list says so. A row points into the list it was shown in, so from the moment
 a row is pressed until the queue read after that press arrives, the list ignores presses and is
 `aria-busy`. A double-click therefore plays the item once. When the new list arrives, focus goes
 to the row at the pressed row's position (or the last row, if the list got shorter), because the

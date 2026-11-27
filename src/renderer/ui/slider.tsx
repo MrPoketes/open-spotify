@@ -24,7 +24,9 @@ interface SliderProps {
   readonly step: number
   readonly value: number
   readonly onValueChange: (value: number) => void
-  // Fires once a pointer lets go of the thumb or the rail.
+  // Fires once a pointer lets go of the thumb or the rail, and on every step
+  // Base UI takes itself: each arrow, page, Home, or End key the caller does
+  // not prevent, and each change assistive technology makes.
   readonly onValueCommitted?: (value: number) => void
   readonly onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
   readonly onKeyUp?: () => void

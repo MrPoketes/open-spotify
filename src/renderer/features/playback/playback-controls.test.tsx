@@ -144,6 +144,10 @@ describe("NowPlayingBar seek bar", () => {
     await renderNowPlayingBarAlone(pausedPlayback)
     const slider = await seekBar()
     await showsPosition(slider, "0:42 of 2:30")
+    // The slider starts unavailable while playback loads, and must say it is
+    // available once it has loaded.
+    expect(slider).toHaveAttribute("aria-disabled", "false")
+    expect(slider).toHaveAccessibleDescription("Playback position")
 
     slider.focus()
     await userEvent.keyboard("{ArrowRight}")

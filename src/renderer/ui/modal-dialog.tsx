@@ -1,4 +1,5 @@
 import { useEffect, useId, type ReactNode, type RefObject } from "react"
+import { overlayPanelClassName } from "./overlay-panel-class-name"
 
 interface ModalDialogProps {
   readonly heading: string
@@ -22,7 +23,7 @@ export function ModalDialog({ heading, ref, onClose, children }: ModalDialogProp
       ref={ref}
       aria-labelledby={headingId}
       onClose={onClose}
-      className="m-auto w-80 rounded-large bg-surface-overlay p-4 text-foreground shadow-overlay transition-[opacity,translate] duration-200 ease-out backdrop:bg-canvas/60 starting:translate-y-2 starting:opacity-0"
+      className={`m-auto w-80 p-4 text-foreground backdrop:bg-canvas/60 ${overlayPanelClassName}`}
     >
       <div className="flex flex-col gap-4">
         <h2 id={headingId} className="font-display text-xl font-bold">
