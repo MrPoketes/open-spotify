@@ -11,6 +11,7 @@ const frameworkExports = [
   { file: /^src\/renderer\/routes\//, name: "Route" },
   { file: /^src\/renderer\/router\.tsx$/, name: "getRouter" },
   { file: /^scripts\/vmp-sign-package\.ts$/, name: "afterPack" },
+  { file: /^scripts\/vmp-sign-package\.ts$/, name: "afterSign" },
 ]
 
 const exportedDeclaration =

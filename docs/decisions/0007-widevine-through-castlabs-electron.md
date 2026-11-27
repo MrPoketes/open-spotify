@@ -59,9 +59,11 @@ and re-signs the macOS app. On a packaged Windows build, `castlabs_evs.vmp sign-
 The release workflow (`.github/workflows/release.yml`) therefore signs Windows and macOS packages
 with EVS when the repository has the secrets `EVS_ACCOUNT_NAME` and `EVS_PASSWD`. It installs the
 `castlabs-evs` Python client, refreshes the account's tokens, and passes
-`scripts/vmp-sign-package.ts` to electron-builder as its `afterPack` hook. That hook runs before
-macOS code signing, which is the order castlabs requires. Without the secrets, the installers
-still build, without VMP signatures.
+`scripts/vmp-sign-package.ts` to electron-builder as a hook. castlabs requires VMP signing before
+code signing on macOS and after it on Windows, so macOS signs in `afterPack` and Windows in
+`afterSign`. On Windows, `afterPack` would also be too early for another reason: electron-builder
+rewrites the executable's icon and version resources after it, even without a certificate.
+Without the secrets, the installers still build, without VMP signatures.
 
 To set it up, the owner creates a free EVS account with
 `python -m pip install castlabs-evs` and `python -m castlabs_evs.account signup`, then adds the
