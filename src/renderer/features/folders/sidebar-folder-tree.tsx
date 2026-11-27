@@ -4,8 +4,8 @@ import type { Folder, FolderTree } from "../../../shared/folders"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
 import { useSavedSettingState } from "../../lib/use-saved-setting-state"
-import { Button } from "../../ui/button"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
+import { IconButton } from "../../ui/icon-button"
 import { TreeView } from "../../ui/tree-view"
 import { visibleTreeRows } from "../../ui/visible-tree-rows"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
@@ -99,16 +99,12 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
         <h3 id={headingId} className="text-sm font-semibold text-muted">
           Folders
         </h3>
-        <Button
-          variant="ghost"
-          size="icon"
+        <IconButton
           ref={newFolderButtonRef}
-          aria-label="New folder"
-          title="New folder"
+          label="New folder"
+          icon={FolderPlus}
           onClick={() => createFolder(null)}
-        >
-          <FolderPlus aria-hidden size={20} />
-        </Button>
+        />
       </div>
       {tree.length === 0 ? null : (
         <TreeView

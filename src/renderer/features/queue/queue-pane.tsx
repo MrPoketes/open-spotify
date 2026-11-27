@@ -9,7 +9,7 @@ import {
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { saveSetting } from "../../lib/saved-setting"
 import { useStreamValue } from "../../lib/use-stream-value"
-import { Button } from "../../ui/button"
+import { IconButton } from "../../ui/icon-button"
 import { LoadingMessage } from "../../ui/loading-message"
 import { PaneDivider } from "../../ui/pane-divider"
 import { loginDestinationFor } from "../login/login-destination"
@@ -61,15 +61,7 @@ export function QueuePane({ ref, isOpen, savedWidth, onClose }: QueuePaneProps) 
           <h2 id={headingId} className="font-display text-xl font-bold">
             Queue
           </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Close queue"
-            title="Close queue"
-            onClick={onClose}
-          >
-            <X aria-hidden size={20} />
-          </Button>
+          <IconButton label="Close queue" icon={X} onClick={onClose} />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
           <QueueBody />

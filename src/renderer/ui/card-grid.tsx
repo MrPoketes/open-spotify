@@ -2,6 +2,7 @@ import { Link, type LinkProps } from "@tanstack/react-router"
 import type { LucideIcon } from "lucide-react"
 import type { Ref } from "react"
 import { Artwork, type ArtworkSource } from "./artwork"
+import { cardGridClassNames, type CardGridLayout } from "./card-grid-class-names"
 import type { MenuItem } from "./menu-list"
 import { RovingList } from "./roving-list"
 import { useContextMenu } from "./use-context-menu"
@@ -19,15 +20,6 @@ export interface GridCard {
   readonly roundArtwork?: boolean
   // What the user can do with the card's item, offered in its context menu.
   readonly menuItems?: ReadonlyArray<MenuItem>
-}
-
-// Cards stand artwork above the name; tiles put small artwork beside it, so a
-// row of shortcuts takes little height.
-type CardGridLayout = "cards" | "tiles"
-
-const gridClassNames: Record<CardGridLayout, string> = {
-  cards: "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-6",
-  tiles: "grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2",
 }
 
 interface CardGridProps {
@@ -49,7 +41,7 @@ export function CardGrid({ id, label, cards, layout = "cards", ref, rowFocusRef 
       label={label}
       rows={cards}
       rowKey={(card) => card.key}
-      className={gridClassNames[layout]}
+      className={cardGridClassNames[layout]}
       renderRow={(card, rovingProps) => (
         <CardLink card={card} layout={layout} rovingProps={rovingProps} />
       )}

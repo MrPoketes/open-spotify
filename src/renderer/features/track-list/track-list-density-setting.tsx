@@ -1,12 +1,9 @@
 import { use, useId } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
-import { SegmentedControl } from "../../ui/segmented-control"
+import { SegmentedControl, type SegmentedControlOption } from "../../ui/segmented-control"
 import { TrackListDensityContext } from "./track-list-density-context"
 
-const densityOptions: ReadonlyArray<{
-  readonly value: TrackListDensity
-  readonly label: string
-}> = [
+const densityOptions: ReadonlyArray<SegmentedControlOption<TrackListDensity>> = [
   { value: "comfortable", label: "Comfortable" },
   { value: "dense", label: "Dense" },
 ]

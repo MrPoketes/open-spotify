@@ -1,9 +1,9 @@
-import { SegmentedControl } from "../../ui/segmented-control"
+import { SegmentedControl, type SegmentedControlOption } from "../../ui/segmented-control"
 import type { TimeRange } from "../spotify/spotify-listening-history"
 
 // Spotify computes long_term from about a year of listening, so it is not
 // labelled "All time".
-const timeRangeOptions: ReadonlyArray<{ readonly value: TimeRange; readonly label: string }> = [
+const timeRangeOptions: ReadonlyArray<SegmentedControlOption<TimeRange>> = [
   { value: "short_term", label: "Last 4 weeks" },
   { value: "medium_term", label: "Last 6 months" },
   { value: "long_term", label: "Last year" },

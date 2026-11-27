@@ -1,7 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router"
 import { ChevronLeft, ChevronRight, House, Settings } from "lucide-react"
-import { Button } from "../../ui/button"
 import { buttonVariants } from "../../ui/button-variants"
+import { IconButton } from "../../ui/icon-button"
 import { SearchField } from "../search/search-field"
 
 const iconLinkClassName = buttonVariants({ variant: "ghost", size: "icon" })
@@ -14,24 +14,8 @@ export function TopBar() {
       <Link to="/" aria-label="Home" title="Home" className={iconLinkClassName}>
         <House aria-hidden size={20} />
       </Link>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Go back"
-        title="Go back"
-        onClick={() => router.history.back()}
-      >
-        <ChevronLeft aria-hidden size={20} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Go forward"
-        title="Go forward"
-        onClick={() => router.history.forward()}
-      >
-        <ChevronRight aria-hidden size={20} />
-      </Button>
+      <IconButton label="Go back" icon={ChevronLeft} onClick={() => router.history.back()} />
+      <IconButton label="Go forward" icon={ChevronRight} onClick={() => router.history.forward()} />
       <div className="ml-3 flex min-w-0 flex-1">
         <SearchField />
       </div>

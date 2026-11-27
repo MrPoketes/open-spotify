@@ -1,6 +1,6 @@
 import { X } from "lucide-react"
 import { use, useId, useRef } from "react"
-import { Button } from "../../ui/button"
+import { IconButton } from "../../ui/icon-button"
 import { IsMacContext } from "./is-mac-context"
 import { keyComboLabels } from "./key-combo"
 import {
@@ -83,15 +83,7 @@ export function ShortcutsDialog() {
         <h2 id={headingId} className="font-display text-xl font-bold">
           Keyboard shortcuts
         </h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Close"
-          title="Close"
-          onClick={() => dialogRef.current?.close()}
-        >
-          <X aria-hidden size={20} />
-        </Button>
+        <IconButton label="Close" icon={X} onClick={() => dialogRef.current?.close()} />
       </div>
       <div className="flex flex-col gap-4">
         {shortcutGroups.map((group) => (

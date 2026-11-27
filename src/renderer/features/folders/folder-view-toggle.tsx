@@ -1,7 +1,7 @@
 import type { FolderView } from "../../../shared/folder-view"
-import { SegmentedControl } from "../../ui/segmented-control"
+import { SegmentedControl, type SegmentedControlOption } from "../../ui/segmented-control"
 
-const viewOptions: ReadonlyArray<{ readonly value: FolderView; readonly label: string }> = [
+const viewOptions: ReadonlyArray<SegmentedControlOption<FolderView>> = [
   { value: "grid", label: "Grid" },
   { value: "list", label: "List" },
 ]

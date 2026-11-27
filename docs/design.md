@@ -546,13 +546,14 @@ opens and back to "Edit a copy" when it closes. A built-in or imported theme is 
 place: the editor starts from a copy named "<theme> (copy)".
 
 From the top: Name and Author fields side by side, a "Color scheme" radio group (Dark, Light),
-then one `fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows) with a field
+then one `fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows, Artwork) with a field
 for every token. The fields come from the `Theme` Schema, so a new token appears without changes
 to the editor. Each field is labelled with its token name, and its control fits the value:
 
 - **Colors:** the native color picker beside a hex text field. Both edit the same value.
 - **Radii and spacing:** a number field and a unit list (`px`, `rem`, `em`).
 - **Fonts and shadows:** a text field for the CSS value.
+- **Artwork wash:** a text field for the opacity, from 0 to 1.
 
 Every valid change applies to the whole app at once. An invalid value gets a `danger` ring and a
 `text-xs` `danger` message under its field that describes it (`aria-describedby`), and the app

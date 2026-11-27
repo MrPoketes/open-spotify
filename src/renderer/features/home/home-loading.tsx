@@ -1,3 +1,4 @@
+import { cardGridClassNames } from "../../ui/card-grid-class-names"
 import { Skeleton } from "../../ui/skeleton"
 
 const placeholderKeys = (count: number) => Array.from({ length: count }, (_, index) => index)
@@ -6,7 +7,7 @@ const placeholderKeys = (count: number) => Array.from({ length: count }, (_, ind
 // its layout instead of jumping when the content arrives.
 const homeSkeletons = {
   tiles: (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2">
+    <div className={cardGridClassNames.tiles}>
       {placeholderKeys(8).map((key) => (
         <Skeleton key={key} className="h-16" />
       ))}
@@ -20,7 +21,7 @@ const homeSkeletons = {
     </div>
   ),
   cards: (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-6">
+    <div className={cardGridClassNames.cards}>
       {placeholderKeys(5).map((key) => (
         <Skeleton key={key} className="aspect-square rounded-full" />
       ))}

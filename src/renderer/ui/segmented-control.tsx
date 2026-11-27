@@ -1,6 +1,6 @@
 import { ToggleGroup, ToggleGroupItem } from "./toggle-group"
 
-interface SegmentedControlOption<Value extends string> {
+export interface SegmentedControlOption<Value extends string> {
   readonly value: Value
   readonly label: string
 }
