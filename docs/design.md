@@ -153,8 +153,8 @@ these sizes:
 | `text-sm`   | 14 px | List rows, sidebar items, buttons, inputs                                  |
 | `text-base` | 16 px | Body text                                                                  |
 | `text-xl`   | 20 px | Section headings                                                           |
-| `text-3xl`  | 30 px | Page titles                                                                |
-| `text-5xl`  | 48 px | Home's greeting; the header of an album, artist, etc.                      |
+| `text-3xl`  | 30 px | Titles of Settings, login, onboarding, and not-found pages                 |
+| `text-5xl`  | 48 px | Home's greeting; search's title; the header of an album, artist, etc.      |
 
 Weights: 400 for body, 500 for resting toggle options, 600 for emphasis, buttons, and active
 items, 700 for headings. Headings from `text-xl` up use `font-display` (lint enforces it) and
@@ -207,8 +207,8 @@ scrolls away with the page, while the top bar takes on its background. Its
 opacity is the `artwork-wash` token (0.45 in the dark theme, 0.3 in the light one), and a theme
 that sets it to 0 turns the wash off. It is decorative and hidden from screen readers. The
 smallest image Spotify lists is enough, since it is blurred. Home takes it from the cover of the
-track played last, and every page with a page header from its cover (see Page header); a page
-without artwork, such as Liked Songs or a folder, shows none. The now-playing bar has a smaller one:
+track played last, search from the cover of its top track (see Search), and every page with a page
+header from its cover (see Page header); a page without artwork, such as Liked Songs or a folder, shows none. The now-playing bar has a smaller one:
 the playing cover's wash fills the left third of the bar, behind what plays, and fades out into the
 `canvas` to the right and above, so the bar takes on the music's color without becoming a panel.
 
@@ -242,7 +242,8 @@ two keep the app's meaning.
 
 - **default:** `accent` with `on-accent` text, for the one primary action of a view.
 - **secondary:** `surface-raised`, for the other actions beside it.
-- **outline:** a `border` edge on the surface, for low-key actions such as Retry and Copy.
+- **outline:** a `border` edge on the surface, for low-key actions such as Retry, Copy, and
+  search's Load more.
 - **ghost:** `muted` icon or text that turns `foreground` on a `surface-raised` hover, for
   toolbars and icon buttons.
 
@@ -571,8 +572,10 @@ an artist, title, details line) holds its place.
 A page's sections each start with a `text-xl` heading over a `border` hairline, like the rules
 that divide a sleeve's back, with any control (a time range switch, Show all) at the hairline's
 right end (`src/renderer/ui/page-section.tsx`). The heading row has the same height with or
-without a control, so side-by-side sections line up. Home's sections, an artist's discography, a
-show's Episodes, and each disc of a multi-disc album use it.
+without a control, so side-by-side sections line up. Home's sections, search's result sections, an
+artist's discography, a show's Episodes, and each disc of a multi-disc album use it. A page that
+does not yet know which sections it will have, such as search while it searches, holds their place
+with section skeletons: a heading-shaped bar over the same hairline, above the content's skeleton.
 
 ### Playing from a page
 
@@ -798,22 +801,30 @@ first pause opens `/search?q=…` as a new page, which Back leaves; later pauses
 in place, so Back does not step through every pause. When Back or Forward returns to an earlier
 search, the field shows its query. `Escape` clears the field and the results.
 
-The page title says "Results for “query”". Below it come up to four sections, in this order:
-Tracks (the track list), Artists, Albums, and Playlists (card grids). A
+The page opens like Home: a `text-5xl` title, "Results for “query”", with "Results for" in `muted`
+so the query stands out, over the artwork wash from the cover of the top track (or of the top
+album when no track matches). Below it come up to four page sections (see Page sections), 48 px
+apart, in this order: Tracks (the track list), Artists, Albums, and Playlists (card grids). A
 section with no results is left out. Artist cards have round artwork and say "Artist"; album
 cards name the album's artists; playlist cards say "By owner". Each section shows 10 results,
-the most Spotify returns per request in development mode, and a secondary
-"Load more" button under it fetches the next 10 for that section alone. Search breaks the
-scroll-to-load rule (see Loading, empty, and error states) because its sections are stacked: a
-track list that grew as it scrolled would push the other sections out of reach. While a page
-loads, the button stays focusable with `aria-disabled` and "Loading more tracks…" sits beside it.
-When the page fails, an alert with Retry takes the button's place. Focus follows the button
+the most Spotify returns per request in development mode, and a small outline "Load more" button
+with a `ChevronDown` icon under it fetches the next 10 for that section alone. It is outline, like
+the Retry that takes its place when a page fails, so a page of stacked sections stays calm. Search
+breaks the scroll-to-load rule (see Loading, empty, and error states) because its sections are
+stacked: a track list that grew as it scrolled would push the other sections out of reach. While a
+page loads, the button stays focusable with `aria-disabled` and "Loading more tracks…" sits beside
+it. When the page fails, an alert with Retry takes the button's place. Focus follows the button
 when it goes away: to Retry after a failure, back to "Load more" when Retry asks again, and to
 the first new result when the last page loads.
 
-Before anything is typed the page asks for a query. A query that matches nothing says
-"No results for “query”." A new query replaces the old results with "Searching…" and starts
-from a fresh page, so an earlier query's results can never show up after a later one's.
+Before anything is typed, the page is titled "Search" and asks for a query: "Search for tracks,
+artists, albums, and playlists.", then a `text-sm` `muted` line naming the shortcut, "Press `/` to
+jump to the search field from anywhere.", with the key set as a key cap, as in the shortcuts
+dialog. A query that matches nothing says "No results for “query”." at 600 weight, with a
+`text-sm` `muted` line under it: "Check the spelling, or try fewer or different words." A new
+query replaces the old results with section skeletons for tracks, artists, and albums, and
+"Searching…" for screen readers, and starts from a fresh page, so an earlier query's results can
+never show up after a later one's.
 
 ### Menus
 
@@ -970,10 +981,11 @@ announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 ### Loading, empty, and error states
 
 - While a list or page loads, it says so inside an `output` element, so screen readers announce
-  it. Home shows skeletons in the shape of its sections (`src/renderer/ui/skeleton.tsx`) and keeps
-  the message for screen readers, and so do the sidebar library and the pages with a page header
-  (a skeleton cover, round for an artist, beside a title and a details line). Other screens show
-  the message in `muted` text until their redesign. No spinner.
+  it. Home and search show skeletons in the shape of their sections (tiles, rows, or round or
+  square cards, from `src/renderer/ui/loading-skeleton.tsx`) and keep the message for screen
+  readers, and so do the sidebar library and the pages with a page header (a skeleton cover, round
+  for an artist, beside a title and a details line). Other screens show the message in `muted`
+  text until their redesign. No spinner.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, after a 16 px `muted` `CircleAlert` icon,
   with a small outline Retry button under it (`src/renderer/ui/error-with-retry.tsx`). It stays

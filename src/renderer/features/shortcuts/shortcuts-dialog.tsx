@@ -2,15 +2,14 @@ import { X } from "lucide-react"
 import { use, useId, useRef } from "react"
 import { IconButton } from "../../ui/icon-button"
 import { IsMacContext } from "./is-mac-context"
-import { keyComboLabels } from "./key-combo"
 import {
   rowShortcuts,
   shortcutGroups,
-  shortcutKeys,
   windowShortcuts,
   type KeyboardShortcut,
   type ShortcutGroupName,
 } from "./keyboard-shortcuts"
+import { ShortcutKeyCaps } from "./shortcut-key-caps"
 import { useKeyboardShortcut } from "./use-keyboard-shortcut"
 
 const allShortcuts = [...Object.values(windowShortcuts), ...Object.values(rowShortcuts)]
@@ -33,14 +32,7 @@ function ShortcutEntry({ shortcut, isMac }: ShortcutEntryProps) {
         {shortcut.description}
       </dt>
       <dd aria-labelledby={termId} className="flex gap-1">
-        {keyComboLabels(shortcutKeys(shortcut, isMac), isMac).map((label) => (
-          <kbd
-            key={label}
-            className="min-w-6 rounded-small bg-surface-raised px-2 text-center text-xs font-semibold"
-          >
-            {label}
-          </kbd>
-        ))}
+        <ShortcutKeyCaps shortcut={shortcut} isMac={isMac} />
       </dd>
     </div>
   )
