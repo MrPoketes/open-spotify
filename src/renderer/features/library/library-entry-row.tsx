@@ -5,6 +5,7 @@ import type { KeyboardEvent } from "react"
 import { ArtworkSummary } from "../../ui/artwork-summary"
 import { ContextMenu } from "../../ui/context-menu"
 import { rowActionClassName } from "../../ui/row-action-class-name"
+import { sidebarRowClassNames } from "../../ui/sidebar-row-class-names"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { toSpotifyItem, useAddToFolder } from "../folders/use-add-to-folder"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
@@ -55,7 +56,7 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
     <div
       ref={setNodeRef}
       {...listeners}
-      className={`group flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised ${isDragging ? "opacity-50" : ""}`}
+      className={`group flex items-center ${sidebarRowClassNames.surface} ${isDragging ? "opacity-50" : ""}`}
     >
       <ContextMenu menu={entryMenu}>
         <Link
@@ -67,7 +68,7 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
           }}
           onKeyDown={togglePinWithKey}
           aria-keyshortcuts={pinShortcut.ariaKeyShortcuts}
-          className="flex min-w-0 flex-1 rounded-small px-2 py-1"
+          className={sidebarRowClassNames.link}
         >
           <ArtworkSummary
             artwork={libraryEntryArtwork(entry)}

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type FocusEvent, type KeyboardEvent } from "react"
 import { hasShortcutModifier } from "../../ui/has-shortcut-modifier"
+import { Input } from "../../ui/input"
 import { blankFolderNameMessage } from "./blank-folder-name-message"
 
 // Where focus goes once the rename ends and the row replaces the field. After
@@ -75,7 +76,7 @@ export function FolderRenameField({ folderName, onRename, onCancel }: FolderRena
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <input
+      <Input
         ref={input}
         aria-label="Folder name"
         value={name}
@@ -84,7 +85,6 @@ export function FolderRenameField({ folderName, onRename, onCancel }: FolderRena
         onBlur={saveOnLeave}
         aria-invalid={isInvalid}
         aria-describedby={isInvalid ? errorId : undefined}
-        className="w-full rounded-small bg-surface-raised px-2 py-1 text-sm aria-invalid:ring-2 aria-invalid:ring-danger"
       />
       {isInvalid ? (
         <p id={errorId} role="alert" className="text-xs text-danger">

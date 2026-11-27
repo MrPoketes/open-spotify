@@ -1,17 +1,17 @@
 import { Link } from "@tanstack/react-router"
+import { FolderOpen } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import type { Folder, FolderTree } from "../../../shared/folders"
 import { Artwork } from "../../ui/artwork"
 import { ArtworkSummary } from "../../ui/artwork-summary"
 import { ContextMenu } from "../../ui/context-menu"
+import { sidebarRowClassNames } from "../../ui/sidebar-row-class-names"
 import type { TreeItemProps } from "../../ui/tree-view"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import { describeFolderEntry } from "./folder-entry-description"
 import { FolderRenameField, type FocusAfterRename } from "./folder-rename-field"
 import type { PlacedFolder, PlacedItem } from "./folder-tree-nodes"
 import { useMoveFolderEntry } from "./use-move-folder-entry"
-
-const rowClassName = "flex min-w-0 flex-1 rounded-small py-1 pr-2"
 
 export interface SidebarFolderActions {
   readonly createFolderInside: (folder: Folder) => void
@@ -37,7 +37,10 @@ export function SidebarFolderRow({
   actions,
 }: SidebarFolderRowProps) {
   const folder = placed.entry
-  const { name, details, icon, page } = describeFolderEntry(folder)
+  const { name, details, icon: closedIcon, page } = describeFolderEntry(folder)
+  // The chevron sits at the far end of the row, so the tile shows an open
+  // folder too.
+  const icon = itemProps["aria-expanded"] === true ? FolderOpen : closedIcon
   const { moveWithKey, ariaKeyShortcuts, moveToFolderItem } = useMoveFolderEntry(placed, tree)
   const folderMenu = {
     label: `Actions for ${name}`,
@@ -58,7 +61,7 @@ export function SidebarFolderRow({
         {...itemProps}
         tabIndex={-1}
         aria-label={name}
-        className={`${rowClassName} items-center gap-3`}
+        className={`${sidebarRowClassNames.link} items-center gap-3`}
       >
         <Artwork sources={[]} placeholderIcon={icon} size={40} className="rounded-small" />
         <FolderRenameField
@@ -87,7 +90,7 @@ export function SidebarFolderRow({
           moveWithKey(event)
         }}
         aria-keyshortcuts={`${renameShortcut.ariaKeyShortcuts} ${ariaKeyShortcuts}`}
-        className={rowClassName}
+        className={sidebarRowClassNames.link}
       >
         <ArtworkSummary
           artwork={{ sources: [], placeholderIcon: icon, round: false }}
@@ -122,7 +125,7 @@ export function SpotifyItemRow({ placed, tree, itemProps }: SpotifyItemRowProps)
           moveWithKey(event)
         }}
         aria-keyshortcuts={ariaKeyShortcuts}
-        className={rowClassName}
+        className={sidebarRowClassNames.link}
       >
         <ArtworkSummary
           artwork={{ sources: artwork, placeholderIcon: icon, round: isArtist }}

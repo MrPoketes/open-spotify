@@ -3,13 +3,13 @@ import { useState } from "react"
 import { defaultLibrarySections } from "../../../shared/library-layout"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
-import { LoadingMessage } from "../../ui/loading-message"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { arrangeLibrary } from "./arrange-library"
 import { HiddenLibrarySections } from "./hidden-library-sections"
 import { loadLibraryEntries, type LibraryEntry } from "./library-entries"
 import { LibraryFilterBar } from "./library-filter-bar"
 import { filterLibraryEntries, hasLibraryFilters, noLibraryFilters } from "./library-filters"
+import { LibraryLoading } from "./library-loading"
 import { useLibraryPlaylists, type LibraryPlaylistsLoad } from "./library-playlists"
 import { LibrarySectionGroup, PinnedLibrarySection } from "./library-section-group"
 import { nameFilterFocusKey } from "./use-focus-after-change"
@@ -29,11 +29,7 @@ export function Library() {
   const { state, retry } = useLoad(loadLibrary(useLibraryPlaylists()), "The library failed to load")
 
   if (state.status === "loading") {
-    return (
-      <div className="px-2">
-        <LoadingMessage>Loading your library…</LoadingMessage>
-      </div>
-    )
+    return <LibraryLoading />
   }
 
   if (state.status === "failed") {
