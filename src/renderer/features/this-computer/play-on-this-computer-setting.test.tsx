@@ -1,6 +1,8 @@
 import { cleanup, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
+import type { DesktopApi } from "../../../preload/desktop-api"
+import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { deviceButton, openPicker } from "../playback/device-picker-queries"
@@ -9,16 +11,17 @@ import { defaultPlayOnThisComputer } from "./play-on-this-computer-context"
 import { PlayOnThisComputerSetting } from "./play-on-this-computer-setting"
 import { readyWebPlaybackSdk } from "./web-playback-sdk-fake"
 
-const loadSavedPlayOnThisComputer = () =>
-  fakeRendererRuntime({ mainProcess: window.desktop }).runPromise(
+const loadSavedPlayOnThisComputer = (mainProcess: DesktopApi) =>
+  fakeRendererRuntime({ mainProcess }).runPromise(
     loadSavedSetting("playOnThisComputer", defaultPlayOnThisComputer),
   )
 
-const launchApp = async (savedPlayOnThisComputer: boolean) => {
+// The app loads the saved choice at launch and hands it to the app shell.
+const launchApp = async (mainProcess: DesktopApi) => {
   const sdk = readyWebPlaybackSdk()
   await renderAppShell({
-    runtime: appShellRuntimeWith({ webPlaybackSdk: sdk.layer }),
-    savedPlayOnThisComputer,
+    runtime: appShellRuntimeWith({ mainProcess, webPlaybackSdk: sdk.layer }),
+    savedPlayOnThisComputer: await loadSavedPlayOnThisComputer(mainProcess),
     albumPageContent: <PlayOnThisComputerSetting />,
   })
   return sdk
@@ -43,7 +46,7 @@ const closePicker = async () => {
 
 describe("PlayOnThisComputerSetting", () => {
   it("disconnects this computer when turned off and connects it again when turned on", async () => {
-    const sdk = await launchApp(true)
+    const sdk = await launchApp(fakeMainProcess())
     await waitFor(() => expect(sdk.sdkPlayer.isConnected).toBe(true))
 
     await userEvent.click(playOnThisComputerSwitch())
@@ -64,12 +67,13 @@ describe("PlayOnThisComputerSetting", () => {
   })
 
   it("keeps this computer off after a restart once turned off", async () => {
-    await launchApp(await loadSavedPlayOnThisComputer())
+    const mainProcess = fakeMainProcess()
+    await launchApp(mainProcess)
     await userEvent.click(playOnThisComputerSwitch())
-    await waitFor(async () => expect(await loadSavedPlayOnThisComputer()).toBe(false))
+    await waitFor(async () => expect(await loadSavedPlayOnThisComputer(mainProcess)).toBe(false))
     cleanup()
 
-    const sdk = await launchApp(await loadSavedPlayOnThisComputer())
+    const sdk = await launchApp(mainProcess)
 
     expect(playOnThisComputerSwitch()).not.toBeChecked()
     const picker = await openLoadedPicker()
