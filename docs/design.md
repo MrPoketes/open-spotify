@@ -401,7 +401,7 @@ track".
 Under the controls, a seek bar shows how far into the item playback is: the elapsed time, a
 slider, and the total time, in `text-xs` `muted` `tabular-nums` (`-:--` while nothing plays).
 Every slider in the app is the shared range slider (`src/renderer/ui/range-slider.tsx`): a
-16 px tall native range input over a 4 px `rounded-full` track in `muted`, filled with `accent` up
+16 px tall native range input over a 4 px `rounded-full` rail in `muted`, filled with `accent` up
 to a 12 px `accent` thumb. Arrow, page, `Home`, and `End` keys held with Ctrl, Alt, or Cmd do not
 move it, since they belong to the app-wide shortcuts.
 Between polls the slider moves on by itself while playback plays, and stands still while it is
@@ -902,8 +902,9 @@ colors, fonts, radii, or shadows.
 Native controls that the browser partly draws (`<input type="range">`, `<input type="checkbox">`,
 `<input type="radio">`, `<progress>`, and `<meter>`) bypass the theme too: `accent-color` styles
 only part of them, leaving the rest in browser colors from `color-scheme`. Give each one
-`appearance-none` and style its parts (such as `::-webkit-slider-runnable-track` and
-`::-webkit-slider-thumb`) with theme tokens.
+`appearance-none` and style its parts (such as a range input's rail through
+`::-webkit-slider-runnable-track` and its thumb through `::-webkit-slider-thumb`) with theme
+tokens.
 
 The full list of tokens, with the class each one drives and what it is for, is the
 [token reference in themes.md](themes.md#token-reference). Use each token only for the purpose
