@@ -25,7 +25,7 @@ export const spotifyApiFakeWith = (
 // library stream a test reads. Tests that render the sidebar's library use it
 // (AGENTS.md, Tests): the fixtures' sixty-odd entries slow every render.
 export const spotifyApiFakeWithEmptyLibrary = (
-  overrides: (spotify: SpotifyApi["Service"]) => Partial<SpotifyApi["Service"]> = () => ({}),
+  overrides: (spotify: SpotifyApi["Service"]) => Partial<SpotifyApi["Service"]>,
 ) =>
   spotifyApiFakeWith((spotify) => ({
     currentUserPlaylists: Stream.empty,

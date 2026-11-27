@@ -163,6 +163,17 @@ describe("the sidebar's icon rail", () => {
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveFocus()
   })
 
+  it("leaves focus outside the sidebar where it is when Ctrl+B collapses it", async () => {
+    await renderAppShell()
+
+    const queueButton = screen.getByRole("button", { name: "Queue" })
+    queueButton.focus()
+    await userEvent.keyboard("{Control>}b{/Control}")
+
+    expect(sidebar()).toHaveStyle({ width: "72px" })
+    expect(queueButton).toHaveFocus()
+  })
+
   it("snaps to the rail when the divider is dragged well past the narrowest width, and opens when dragged back out", async () => {
     await renderAppShell({ savedSidebarWidth: 300 })
 
