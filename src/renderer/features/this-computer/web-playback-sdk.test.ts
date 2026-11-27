@@ -185,8 +185,8 @@ describe("WebPlaybackSdk", () => {
 
       sdk.createdPlayer().emit("account_error", { message: "Premium required" })
       connection.settle(false)
-      // Lets the player follow the failed connect() before it gets ready, which
-      // clears the error, so the null below comes after every earlier failure.
+      // Lets the failed connect() reach the player before ready, which clears
+      // the error and so marks the end of the failures to check.
       yield* Effect.yieldNow
       sdk.createdPlayer().emit("ready", { device_id: "fake-sdk-device" })
 
@@ -220,6 +220,25 @@ describe("WebPlaybackSdk", () => {
       yield* TestClock.adjust("30 seconds")
 
       assert.strictEqual(yield* Queue.take(failures), "initialization_error")
+    }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
+  )
+
+  // The SDK can report ready while connect() stays pending, and a player
+  // that is ready can play.
+  it.effect("does not report a ready player as unable to start when connect() times out", () =>
+    Effect.gen(function* () {
+      const sdk = installLoadedSdk(neverConnecting)
+      const thisComputer = yield* connect
+      const failures = yield* collectStream(thisComputer.failure)
+      assert.strictEqual(yield* Queue.take(failures), null)
+      sdk.createdPlayer().emit("ready", { device_id: "fake-sdk-device" })
+      assert.strictEqual(yield* Queue.take(failures), null)
+
+      yield* TestClock.adjust("30 seconds")
+      // This error marks the end of the failures to check.
+      sdk.createdPlayer().emit("account_error", { message: "Premium required" })
+
+      assert.strictEqual(yield* Queue.take(failures), "account_error")
     }).pipe(Effect.scoped, Effect.provide(sdkLayer)),
   )
 
