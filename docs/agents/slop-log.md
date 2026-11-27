@@ -5,6 +5,7 @@ the permanent fix (a lint rule or an `AGENTS.md` rule). Newest first.
 
 | Date       | Pattern                                                                                           | Fix                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 2026-11-27 | An unused, unpinned production dependency (`"cn": "^0.5.2"`) that `pnpm check` let in (PR #159)   | Check `lint/dependency-pins.test.ts`                                        |
 | 2026-11-27 | Calling a switch's background its `track` (`trackStyle`, "an `accent` track") again (PR #157)     | `AGENTS.md` rule 1 example: a switch's or slider's background is its `rail` |
 | 2026-11-27 | Test helpers sharing one fake main process, so tests read settings earlier tests saved (PR #157)  | `AGENTS.md` "Tests" rule and `open-spotify/no-shared-fake-main-process`     |
 | 2026-11-26 | Raw SQL string queries hiding column names and result shapes until runtime                        | Drizzle query builder and `open-spotify/no-raw-sql`                         |
