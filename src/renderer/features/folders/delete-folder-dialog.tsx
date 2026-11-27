@@ -1,8 +1,8 @@
 import { useRef } from "react"
 import type { Folder } from "../../../shared/folders"
+import { Button } from "../../ui/button"
 import { formatCount } from "../../ui/format-count"
 import { ModalDialog } from "../../ui/modal-dialog"
-import { AccentButton, SecondaryButton } from "../../ui/pill-button"
 
 // Everything a delete takes with it: the folders inside, and everything in
 // them.
@@ -31,14 +31,17 @@ export function DeleteFolderDialog({ folder, onDelete, onClose }: DeleteFolderDi
     <ModalDialog heading={`Delete ${folder.name}?`} ref={dialogRef} onClose={onClose}>
       <p className="text-sm">{describeDeletion(folder)}</p>
       <div className="flex justify-end gap-2">
-        <SecondaryButton label="Cancel" onClick={() => dialogRef.current?.close()} />
-        <AccentButton
-          label="Delete folder"
+        <Button variant="secondary" onClick={() => dialogRef.current?.close()}>
+          Cancel
+        </Button>
+        <Button
           onClick={() => {
             onDelete()
             dialogRef.current?.close()
           }}
-        />
+        >
+          Delete folder
+        </Button>
       </div>
     </ModalDialog>
   )

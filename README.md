@@ -7,7 +7,7 @@ want the app to fit the way they listen. Pick a theme or write your own, down to
 font, and corner. Put anything in folders: playlists, artists, albums, and shows, side by side.
 It is free and open source, and it controls the Spotify account you already have.
 
-![Open Spotify in its dark theme: the library on the left, a playlist in the main view, and the now-playing bar below](docs/images/main-view-dark.png)
+![Open Spotify in its dark theme: the library on the left, Home in the main view with the colors of the last played cover behind it, and the now-playing bar below](docs/images/main-view-dark.png)
 
 Open Spotify is an unofficial client. It is not affiliated with, endorsed by, or sponsored by
 Spotify. Spotify is a trademark of Spotify AB.
@@ -24,7 +24,7 @@ Spotify. Spotify is a trademark of Spotify AB.
 
 The same view in the built-in light theme:
 
-![Open Spotify in its light theme, showing the same playlist](docs/images/main-view-light.png)
+![Open Spotify in its light theme, showing the same view](docs/images/main-view-light.png)
 
 ## Requirements
 

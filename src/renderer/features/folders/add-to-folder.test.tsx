@@ -17,6 +17,7 @@ import { DiscographySection } from "../artist/discography-section"
 import { Library } from "../library/library"
 import { PlaylistPage } from "../playlist/playlist-page"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { coverUrl } from "../spotify/spotify-fixtures"
 import { FakeMainView } from "../track-list/fake-main-view"
 import { TrackList } from "../track-list/track-list"
 import type { TrackListEntry } from "../track-list/track-row"
@@ -34,7 +35,7 @@ const quietRivers: TrackListEntry = {
   title: "Quiet Rivers",
   artists: [{ id: "0OdUWJ0sBjDrqHygGUXeCF", name: "Kite Theory" }],
   album: { id: "2noRn2Aes5aoNVsU6iWThc", name: "Low Orbit" },
-  artwork: [{ url: "https://covers.open-spotify.invalid/low-orbit.jpg", width: 640 }],
+  artwork: [{ url: coverUrl("low-orbit"), width: 640 }],
   addedAt: null,
   durationMs: 200_000,
 }

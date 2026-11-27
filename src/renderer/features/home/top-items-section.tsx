@@ -17,7 +17,7 @@ export function TopItemsSection<A>({ kind, topItems, renderItems }: TopItemsSect
   const title = `Your top ${kind}`
   const timeRangeSwitch = (
     <TimeRangeSwitch
-      legend={`Time range for your top ${kind}`}
+      label={`Time range for your top ${kind}`}
       timeRange={topItems.timeRange}
       onChange={topItems.showTimeRange}
     />
@@ -27,6 +27,7 @@ export function TopItemsSection<A>({ kind, topItems, renderItems }: TopItemsSect
       <LoadedContent
         state={topItems.state}
         loadingMessage={`Loading your top ${kind}…`}
+        skeleton={kind === "artists" ? "cards" : "rows"}
         failureMessage={`Your top ${kind} didn't load.`}
         onRetry={topItems.retry}
       >

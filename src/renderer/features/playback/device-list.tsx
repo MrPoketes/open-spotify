@@ -3,9 +3,9 @@ import { Volume2 } from "lucide-react"
 import { use, useState, type KeyboardEvent } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useLoad } from "../../lib/use-load"
+import { Button } from "../../ui/button"
 import { LoadingMessage } from "../../ui/loading-message"
 import { menuRowClassName } from "../../ui/menu-row-class-name"
-import { AccentButton } from "../../ui/pill-button"
 import { useRovingFocus, type RovingRowProps } from "../../ui/use-roving-focus"
 import type { Device } from "../spotify/spotify-device"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
@@ -59,7 +59,7 @@ export function DeviceList({ onDeviceChosen }: DeviceListProps) {
         <p className="text-muted">
           Open the Spotify app on this computer, your phone, or a speaker, then look again.
         </p>
-        <AccentButton label="Look again" onClick={retry} />
+        <Button onClick={retry}>Look again</Button>
       </div>
     )
   }

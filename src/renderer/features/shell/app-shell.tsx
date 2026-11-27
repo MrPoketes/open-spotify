@@ -52,12 +52,13 @@ function AppShellLayout({
       <ThisComputerProvider savedPlayOnThisComputer={savedPlayOnThisComputer}>
         <LibraryPlaylistsProvider>
           <FoldersProvider>
-            <div className="flex h-screen flex-col gap-2 p-2">
+            <div className="flex h-screen flex-col gap-1 p-2 pb-0">
               <div className="flex min-h-0 flex-1">
                 <Sidebar savedWidth={savedSidebarWidth} />
-                <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
+                {/* The top bar floats over the main view, so a page's artwork wash shows behind it. */}
+                <div className="relative isolate flex min-w-0 flex-1 flex-col overflow-hidden rounded-large bg-surface shadow-raised main-view-timeline-scope">
                   <TopBar />
-                  <main className="min-h-0 flex-1 overflow-y-auto p-6">
+                  <main className="min-h-0 flex-1 overflow-y-auto px-8 pt-18 pb-12 main-view-scroll-timeline">
                     <TrackListDensityProvider savedDensity={savedTrackListDensity}>
                       <EditablePlaylistsProvider>
                         <OpenDevicePickerContext value={openDevicePicker}>

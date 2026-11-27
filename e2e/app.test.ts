@@ -5,6 +5,7 @@ import {
   type ElectronApplication,
   type Page,
 } from "@playwright/test"
+import { serveFakeCoverArt } from "./fake-cover-art"
 import {
   fakeSpotifyAccounts,
   logInThroughOnboarding,
@@ -16,15 +17,11 @@ import { packagedAppExecutable } from "./packaged-app"
 // The history shortcuts each platform's browsers use (keyboard-shortcuts.ts).
 const goBackShortcut = process.platform === "darwin" ? "Meta+BracketLeft" : "Alt+ArrowLeft"
 
-// The fixtures' cover art lives on a made-up host that the content security
-// policy blocks, so every cover logs an error that says nothing about the app.
-const fakeCoverHost = "covers.open-spotify.invalid"
-
 // Read back from the page's history rather than from listeners, which would
 // miss whatever the window logged before the test attached them.
 async function windowErrors(appWindow: Page): Promise<Array<string>> {
   const consoleErrors = (await appWindow.consoleMessages())
-    .filter((message) => message.type() === "error" && !message.text().includes(fakeCoverHost))
+    .filter((message) => message.type() === "error")
     .map((message) => message.text())
   const pageErrors = (await appWindow.pageErrors()).map((error) => error.message)
   return [...consoleErrors, ...pageErrors]
@@ -60,6 +57,7 @@ test("starts on onboarding, logs in against fake Spotify, and moves between page
 }) => {
   await serveFakeWebApi(electronApp.context())
   await serveFakeWebPlaybackSdk(electronApp.context())
+  await serveFakeCoverArt(electronApp.context())
   await fakeSpotifyAccounts(electronApp)
 
   await expect(appWindow.getByRole("heading", { name: "Connect Open Spotify" })).toBeVisible()

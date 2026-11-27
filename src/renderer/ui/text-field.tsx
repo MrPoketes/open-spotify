@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from "react"
+import { Input } from "./input"
 
 interface TextFieldProps {
   readonly label: string
@@ -32,11 +33,11 @@ export function TextField({
   }, [focusOnMount])
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <label htmlFor={inputId} className="text-sm font-semibold">
         {label}
       </label>
-      <input
+      <Input
         ref={input}
         id={inputId}
         value={value}
@@ -45,7 +46,6 @@ export function TextField({
         spellCheck={spellCheck}
         aria-invalid={errorMessage !== undefined}
         aria-describedby={errorMessage === undefined ? undefined : errorId}
-        className="rounded-small bg-surface-raised px-3 py-2 text-base aria-invalid:ring-2 aria-invalid:ring-danger"
       />
       {errorMessage !== undefined && (
         <p id={errorId} role="alert" className="text-xs text-danger">

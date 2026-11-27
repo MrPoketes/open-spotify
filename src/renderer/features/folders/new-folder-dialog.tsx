@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from "react"
+import { Button } from "../../ui/button"
 import { ModalDialog } from "../../ui/modal-dialog"
-import { AccentButton, SecondaryButton } from "../../ui/pill-button"
 import { TextField } from "../../ui/text-field"
 import { blankFolderNameMessage } from "./blank-folder-name-message"
 
@@ -36,8 +36,10 @@ export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
           errorMessage={triedToCreate && isNameBlank ? blankFolderNameMessage : undefined}
         />
         <div className="flex justify-end gap-2">
-          <SecondaryButton label="Cancel" onClick={() => dialogRef.current?.close()} />
-          <AccentButton type="submit" label="Create folder" />
+          <Button variant="secondary" onClick={() => dialogRef.current?.close()}>
+            Cancel
+          </Button>
+          <Button type="submit">Create folder</Button>
         </div>
       </form>
     </ModalDialog>

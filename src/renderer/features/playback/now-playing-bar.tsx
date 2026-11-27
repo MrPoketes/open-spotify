@@ -1,7 +1,7 @@
 import { Navigate } from "@tanstack/react-router"
 import { ListMusic } from "lucide-react"
 import { use, type RefObject } from "react"
-import { AccentButton } from "../../ui/pill-button"
+import { Button } from "../../ui/button"
 import { loginDestinationFor } from "../login/login-destination"
 import type { SpotifyAccessDenied, SpotifyApiError } from "../spotify/spotify-api"
 import { SpotifyDashboardLink } from "../spotify/spotify-dashboard-link"
@@ -48,7 +48,7 @@ export function NowPlayingBar({
   return (
     <section
       aria-label="Now playing"
-      className="grid h-18 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-medium bg-surface-raised px-4 shadow-raised"
+      className="grid h-20 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 px-3"
     >
       <div className="min-w-0">
         <NowPlayingSummary
@@ -136,7 +136,7 @@ function NowPlayingSummary({ playerState, onChooseDevice }: NowPlayingSummaryPro
           <p className="text-xs text-muted">Audio plays in the Spotify app or on another device.</p>
         </div>
         <div className="shrink-0">
-          <AccentButton label="Choose a device" onClick={onChooseDevice} />
+          <Button onClick={onChooseDevice}>Choose a device</Button>
         </div>
       </div>
     )

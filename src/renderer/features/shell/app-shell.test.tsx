@@ -139,6 +139,15 @@ describe("AppShell", () => {
     expect(await screen.findByRole("heading", { name: "Settings" })).toBeInTheDocument()
   })
 
+  // Home has no entry in the sidebar, so the top bar is the way back to it.
+  it("opens Home from the top bar", async () => {
+    await renderAppShell()
+
+    await userEvent.click(screen.getByRole("link", { name: "Home" }))
+
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument()
+  })
+
   it("goes forward again after going back", async () => {
     await renderAppShell()
 

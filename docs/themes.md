@@ -44,10 +44,12 @@ Rules for `tokens`:
 - **Colors are hex:** `#rgb` or `#rrggbb`. Names like `orange` and functions like `rgb()` are
   rejected, so that the contrast of every theme can be checked.
 - **Radii and spacing are lengths** in `px`, `rem`, or `em`, such as `8px` or `0.25rem`, or `0`.
-- **Fonts are CSS `font-family` values**, such as `"Inter", system-ui, sans-serif`. The app does
-  not download fonts, so a font only appears if it is installed on the listener's computer.
-  Always end with a generic family (`sans-serif`, `serif`, `monospace`).
+- **Fonts are CSS `font-family` values**, such as `"Inter", system-ui, sans-serif`. The app ships
+  one font, `"Schibsted Grotesk Variable"`, and downloads none, so any other font only appears if
+  it is installed on the listener's computer. Always end with a generic family (`sans-serif`,
+  `serif`, `monospace`).
 - **Shadows are CSS `box-shadow` values**, such as `0 2px 8px rgb(0 0 0 / 0.35)`, or `none`.
+- **Opacities are numbers from 0 to 1**, such as `0.45`.
 
 ## Token reference
 
@@ -61,14 +63,14 @@ A color token works with every Tailwind color utility: `bg-<suffix>`, `text-<suf
 
 | Token                   | Class suffix      | Purpose                                                         |
 | ----------------------- | ----------------- | --------------------------------------------------------------- |
-| `color-canvas`          | `canvas`          | The window background, visible in the gaps between panes        |
-| `color-surface`         | `surface`         | Pane backgrounds: sidebar, main view, right pane                |
-| `color-surface-raised`  | `surface-raised`  | Hovered rows and cards, inputs, the now-playing bar             |
+| `color-canvas`          | `canvas`          | The window, under the sidebar and the now-playing bar           |
+| `color-surface`         | `surface`         | The sheets: the main view and the right pane                    |
+| `color-surface-raised`  | `surface-raised`  | Inputs, tiles, toggle groups, hovered rows and cards            |
 | `color-surface-overlay` | `surface-overlay` | Menus, dialogs, the command palette, toasts                     |
 | `color-border`          | `border`          | Decorative dividers only; never the only edge of a control      |
 | `color-foreground`      | `foreground`      | Primary text and icons; the default text color                  |
 | `color-muted`           | `muted`           | Secondary text: artists, metadata, placeholders, inactive icons |
-| `color-accent`          | `accent`          | Primary actions, the playing track, active navigation, progress |
+| `color-accent`          | `accent`          | Primary actions, the playing track, progress                    |
 | `color-on-accent`       | `on-accent`       | Text and icons drawn on top of `accent`                         |
 | `color-focus`           | `focus`           | The keyboard focus ring around every focused control            |
 | `color-danger`          | `danger`          | Errors and destructive actions                                  |
@@ -82,11 +84,11 @@ A color token works with every Tailwind color utility: `bg-<suffix>`, `text-<suf
 
 ### Radii
 
-| Token           | Class            | Purpose                             |
-| --------------- | ---------------- | ----------------------------------- |
-| `radius-small`  | `rounded-small`  | Rows, inputs, small artwork         |
-| `radius-medium` | `rounded-medium` | Panes, cards, artwork in grids      |
-| `radius-large`  | `rounded-large`  | Dialogs, menus, the command palette |
+| Token           | Class            | Purpose                            |
+| --------------- | ---------------- | ---------------------------------- |
+| `radius-small`  | `rounded-small`  | Rows, small buttons, small artwork |
+| `radius-medium` | `rounded-medium` | Buttons, inputs, tiles, artwork    |
+| `radius-large`  | `rounded-large`  | Sheets, cards, dialogs, menus      |
 
 ### Spacing
 
@@ -96,10 +98,16 @@ A color token works with every Tailwind color utility: `bg-<suffix>`, `text-<suf
 
 ### Shadows
 
-| Token            | Class            | Purpose                                                     |
-| ---------------- | ---------------- | ----------------------------------------------------------- |
-| `shadow-raised`  | `shadow-raised`  | Raised elements: hovered cards, inputs, the now-playing bar |
-| `shadow-overlay` | `shadow-overlay` | Overlays: menus, dialogs, the command palette, toasts       |
+| Token            | Class            | Purpose                                               |
+| ---------------- | ---------------- | ----------------------------------------------------- |
+| `shadow-raised`  | `shadow-raised`  | The sheets, and covers lifted off them                |
+| `shadow-overlay` | `shadow-overlay` | Overlays: menus, dialogs, the command palette, toasts |
+
+### Artwork
+
+| Token          | Class                  | Purpose                                                                        |
+| -------------- | ---------------------- | ------------------------------------------------------------------------------ |
+| `artwork-wash` | `opacity-artwork-wash` | How strongly blurred artwork colors the top of the main view; `0` turns it off |
 
 ## Contrast
 

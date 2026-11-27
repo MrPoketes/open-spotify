@@ -1,8 +1,8 @@
 import type { LucideIcon } from "lucide-react"
 import { useId, useRef, useState, type KeyboardEvent } from "react"
+import { buttonVariants } from "./button-variants"
 import { closeWhenFocusLeaves } from "./close-when-focus-leaves"
 import { hasShortcutModifier } from "./has-shortcut-modifier"
-import { iconControlClassName } from "./icon-control-class-name"
 import { MenuList, type MenuItem, type MenuOpenFocus } from "./menu-list"
 
 interface MenuButtonProps {
@@ -51,7 +51,7 @@ export function MenuButton({ label, icon: Icon, items, menuAlignment = "right" }
         aria-controls={menuOpenedOn === null ? undefined : menuId}
         onClick={() => setMenuOpenedOn(menuOpenedOn === null ? "first" : null)}
         onKeyDown={openWithKeyboard}
-        className={iconControlClassName}
+        className={buttonVariants({ variant: "ghost", size: "icon" })}
       >
         <Icon aria-hidden size={20} />
       </button>

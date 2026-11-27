@@ -1,7 +1,7 @@
 import { useId, type FormEvent } from "react"
 import type { Theme } from "../../../shared/theme"
 import type { LibraryTheme } from "../../../shared/theme-library"
-import { AccentButton, SecondaryButton } from "../../ui/pill-button"
+import { Button } from "../../ui/button"
 import { TextField } from "../../ui/text-field"
 import { themeTokenGroups } from "./theme-token-fields"
 import { TokenInput } from "./theme-token-input"
@@ -76,8 +76,10 @@ export function ThemeEditor({ savedTheme, onSave, onCancel }: ThemeEditorProps) 
         </p>
       )}
       <div className="flex gap-2">
-        <AccentButton type="submit" label="Save theme" />
-        <SecondaryButton label="Cancel" onClick={onCancel} />
+        <Button type="submit">Save theme</Button>
+        <Button variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
       </div>
     </form>
   )

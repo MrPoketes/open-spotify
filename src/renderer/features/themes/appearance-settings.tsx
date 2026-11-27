@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { Theme } from "../../../shared/theme"
 import { findLibraryTheme, type LibraryTheme } from "../../../shared/theme-library"
-import { SecondaryButton } from "../../ui/pill-button"
+import { Button } from "../../ui/button"
 import type { SavedThemeLibrary } from "./saved-theme"
 import { ThemeEditor } from "./theme-editor"
 import { ThemeFileButtons } from "./theme-file-buttons"
@@ -68,11 +68,13 @@ export function AppearanceSettings({ library }: { readonly library: SavedThemeLi
         }
       />
       <div>
-        <SecondaryButton
+        <Button
+          variant="secondary"
           ref={editButton}
-          label="Edit a copy"
           onClick={() => setThemeToEdit(findLibraryTheme(themes, chosenThemeId).theme)}
-        />
+        >
+          Edit a copy
+        </Button>
       </div>
       <ThemeFileButtons onImport={addTheme} />
     </div>

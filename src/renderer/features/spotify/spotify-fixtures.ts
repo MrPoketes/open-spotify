@@ -2,8 +2,11 @@
 
 export const fakeListenerId = "fake-listener"
 
-// The .invalid domain never resolves, so the UI shows its image fallback.
-export const coverUrl = (id: string) => `https://covers.open-spotify.invalid/${id}.jpg`
+// On Spotify's cover host, which the content security policy allows, but no
+// real cover has this path. The end-to-end tests draw a cover for it
+// (e2e/fake-cover-art.ts); anywhere else it fails to load and the UI shows its
+// image fallback.
+export const coverUrl = (id: string) => `https://i.scdn.co/image/open-spotify-fake-${id}`
 
 const pickInTurn = <A>(values: readonly [A, ...Array<A>], index: number): A =>
   values[index % values.length] ?? values[0]

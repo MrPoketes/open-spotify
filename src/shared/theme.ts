@@ -16,6 +16,10 @@ export const CssLength = Schema.String.check(
 
 const CssValue = Schema.String.check(Schema.isNonEmpty({ expected: "a value" }))
 
+const Opacity = Schema.String.check(
+  Schema.isPattern(/^(0(\.\d+)?|1(\.0+)?)$/, { expected: "an opacity from 0 to 1, like 0.4" }),
+)
+
 // docs/themes.md describes each token. Each one becomes the CSS custom
 // property `--theme-<token>`.
 export const themeTokenSchemas = {
@@ -38,34 +42,39 @@ export const themeTokenSchemas = {
   spacing: CssLength,
   "shadow-raised": CssValue,
   "shadow-overlay": CssValue,
+  "artwork-wash": Opacity,
 }
 
 export type ThemeToken = keyof typeof themeTokenSchemas
 
-const systemFontStack =
-  'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+// Schibsted Grotesk ships with the app (src/renderer/styles/app.css), so the
+// default look is the same on every platform. The system fonts behind it cover
+// the scripts it lacks.
+const defaultFontStack =
+  '"Schibsted Grotesk Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
 
 // The default dark theme's values.
 export const defaultThemeTokens: Record<ThemeToken, string> = {
-  "color-canvas": "#0c0e13",
-  "color-surface": "#14171f",
-  "color-surface-raised": "#1d212c",
-  "color-surface-overlay": "#252a37",
-  "color-border": "#343a4a",
-  "color-foreground": "#eceef4",
-  "color-muted": "#9ba2b4",
+  "color-canvas": "#0b0a09",
+  "color-surface": "#161412",
+  "color-surface-raised": "#221f1b",
+  "color-surface-overlay": "#2b2722",
+  "color-border": "#38322c",
+  "color-foreground": "#f3eee7",
+  "color-muted": "#aaa196",
   "color-accent": "#ff8f66",
   "color-on-accent": "#24100a",
   "color-focus": "#8db3ff",
-  "color-danger": "#ff7081",
-  "font-body": systemFontStack,
-  "font-display": systemFontStack,
-  "radius-small": "4px",
-  "radius-medium": "8px",
-  "radius-large": "14px",
+  "color-danger": "#ff7a88",
+  "font-body": defaultFontStack,
+  "font-display": defaultFontStack,
+  "radius-small": "6px",
+  "radius-medium": "10px",
+  "radius-large": "16px",
   spacing: "0.25rem",
-  "shadow-raised": "0 2px 8px rgb(0 0 0 / 0.35)",
-  "shadow-overlay": "0 12px 32px rgb(0 0 0 / 0.5)",
+  "shadow-raised": "0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35)",
+  "shadow-overlay": "0 2px 6px rgb(0 0 0 / 0.4), 0 20px 48px rgb(0 0 0 / 0.55)",
+  "artwork-wash": "0.45",
 }
 
 // A theme written before a token existed keeps working: the token takes the

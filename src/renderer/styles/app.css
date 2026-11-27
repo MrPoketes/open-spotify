@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@fontsource-variable/schibsted-grotesk";
 
 /*
  * The `--theme-*` properties are set on the document root by the theme engine
@@ -44,18 +45,68 @@
 
   --shadow-raised: var(--theme-shadow-raised);
   --shadow-overlay: var(--theme-shadow-overlay);
+
+  /*
+   * shadcn/ui's names for the same tokens, so a component added with the
+   * shadcn CLI follows the theme as it comes (docs/design.md, Components).
+   * shadcn's `muted` and `accent` are surface colors, while the app's are text
+   * and brand colors, so those two keep the app's meaning: a CLI component's
+   * `bg-muted` or `bg-accent` becomes `bg-surface-raised`.
+   */
+  --color-background: var(--theme-color-surface);
+  --color-card: var(--theme-color-surface-raised);
+  --color-card-foreground: var(--theme-color-foreground);
+  --color-popover: var(--theme-color-surface-overlay);
+  --color-popover-foreground: var(--theme-color-foreground);
+  --color-primary: var(--theme-color-accent);
+  --color-primary-foreground: var(--theme-color-on-accent);
+  --color-secondary: var(--theme-color-surface-raised);
+  --color-secondary-foreground: var(--theme-color-foreground);
+  --color-muted-foreground: var(--theme-color-muted);
+  --color-accent-foreground: var(--theme-color-foreground);
+  --color-destructive: var(--theme-color-danger);
+  --color-input: var(--theme-color-border);
+  --color-ring: var(--theme-color-focus);
+  --radius-sm: var(--theme-radius-small);
+  --radius-md: var(--theme-radius-small);
+  --radius-lg: var(--theme-radius-medium);
+  --radius-xl: var(--theme-radius-large);
+  --shadow-sm: var(--theme-shadow-raised);
+  --shadow-md: var(--theme-shadow-overlay);
+  --shadow-lg: var(--theme-shadow-overlay);
+}
+
+/* How strongly artwork colors the page behind it (docs/design.md, Artwork wash). */
+@utility opacity-artwork-wash {
+  opacity: var(--theme-artwork-wash);
 }
 
 @layer base {
   body {
     background-color: var(--theme-color-canvas);
     color: var(--theme-color-foreground);
+    -webkit-font-smoothing: antialiased;
   }
 
   /* One focus style everywhere, so no component can ship without one. */
   :focus-visible {
     outline: 2px solid var(--theme-color-focus);
     outline-offset: 2px;
+  }
+
+  /* Parts of the page the browser draws follow the theme too. */
+  ::selection {
+    background-color: color-mix(in srgb, var(--theme-color-accent) 35%, transparent);
+    color: var(--theme-color-foreground);
+  }
+
+  * {
+    scrollbar-color: var(--theme-color-border) transparent;
+    scrollbar-width: thin;
+  }
+
+  input {
+    caret-color: var(--theme-color-accent);
   }
 
   /*
@@ -71,5 +122,35 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/*
+ * The top bar floats over the main view and gains a background once the view
+ * scrolls, so a page's artwork wash shows behind it at the top. The main
+ * view's scroll position drives the change, with no script.
+ */
+@utility main-view-timeline-scope {
+  timeline-scope: --main-view;
+}
+
+@utility main-view-scroll-timeline {
+  scroll-timeline: --main-view block;
+}
+
+@utility solid-once-scrolled {
+  animation: solid-once-scrolled linear both;
+  animation-timeline: --main-view;
+  animation-range: 0 48px;
+}
+
+@keyframes solid-once-scrolled {
+  from {
+    background-color: transparent;
+    box-shadow: none;
+  }
+  to {
+    background-color: var(--theme-color-surface);
+    box-shadow: 0 1px 0 var(--theme-color-border);
   }
 }

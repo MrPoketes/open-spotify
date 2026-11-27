@@ -4,5 +4,9 @@
     { "path": "./tsconfig.node.json" },
     { "path": "./tsconfig.web.json" },
     { "path": "./tsconfig.e2e.json" }
-  ]
+  ],
+  // Read only by the shadcn CLI, to place the components it adds in
+  // src/renderer/ui (components.json). No project compiles with it, so code
+  // cannot import through "@/": change what the CLI writes to relative imports.
+  "compilerOptions": { "paths": { "@/*": ["./src/renderer/*"] } }
 }

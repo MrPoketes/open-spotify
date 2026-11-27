@@ -1,7 +1,7 @@
 import { Effect } from "effect"
 import { useId, type ReactNode, type Ref } from "react"
+import { Button } from "../../ui/button"
 import { LoadingMessage } from "../../ui/loading-message"
-import { SecondaryButton } from "../../ui/pill-button"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
@@ -62,13 +62,15 @@ export function ResultSection<A>(props: ResultSectionProps<A>) {
       {loadControl === "load-more" ? (
         <div className="flex items-center gap-4">
           {/* Disabled with aria-disabled rather than disabled, so the button keeps focus while its page loads. */}
-          <SecondaryButton
-            label="Load more"
+          <Button
+            variant="secondary"
             aria-label={`Load more ${kind}`}
             aria-disabled={nextPage.status === "loading"}
             onClick={loadNextPage}
             ref={loadMoreRef}
-          />
+          >
+            Load more
+          </Button>
           {nextPage.status === "loading" ? (
             <LoadingMessage>{`Loading more ${kind}…`}</LoadingMessage>
           ) : null}
