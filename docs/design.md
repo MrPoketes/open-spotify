@@ -443,8 +443,9 @@ list at once.
 
 A Playback section follows Appearance. Its "Play on this computer" switch, on by default, sits at
 the right end of a row whose `text-sm` 600-weight label and `text-xs` `muted` description name it.
-The switch is a 40 × 24 px `button` with `role="switch"`: an `accent` track with an `on-accent`
-thumb on the right when on, a `muted` track with a `surface` thumb on the left when off. Turning
+The switch is a 40 × 24 px `button` with `role="switch"`: an `accent` rail with an `on-accent`
+thumb on the right when on, a `muted` rail with a `surface` thumb on the left when off. It dims
+on hover and press like a filter chip, and clicking its label toggles it too. Turning
 it off disconnects the Web Playback SDK's player and takes "This computer" out of the device
 picker at once; turning it on connects the player again.
 
