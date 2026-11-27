@@ -2,8 +2,11 @@ import type { Device } from "../spotify/spotify-device"
 
 const thisComputerName = "This computer"
 
+// A device without an id never matches, even while this computer has none.
 export const shownDeviceName = (device: Device, thisComputerDeviceId: string | null) =>
-  device.id === thisComputerDeviceId ? thisComputerName : device.name
+  thisComputerDeviceId !== null && device.id === thisComputerDeviceId
+    ? thisComputerName
+    : device.name
 
 // Spotify's device list can lag behind the SDK's ready event, so this
 // computer is listed as soon as the SDK reports its device.

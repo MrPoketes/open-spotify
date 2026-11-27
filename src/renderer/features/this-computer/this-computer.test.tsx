@@ -86,6 +86,21 @@ describe("This computer", () => {
     expect(await pickerButton("Playing on This computer")).toBeInTheDocument()
   })
 
+  // Spotify does not guarantee a device id, and this computer has none while
+  // the SDK is not ready.
+  it("keeps the name of a device without an id while the Web Playback SDK is not ready", async () => {
+    await renderAppShell({
+      runtime: appShellRuntimeWith({
+        spotify: playbackStateChangedBy((playback) => ({
+          ...playback,
+          device: { ...playback.device, id: null },
+        })),
+      }),
+    })
+
+    expect(await pickerButton("Playing on Mira's Laptop")).toBeInTheDocument()
+  })
+
   // The SDK's player keeps a volume of its own, which decides how loud this
   // computer plays. Spotify can keep reporting the volume from before a
   // change for a while, and passing a polled volume on would undo the change.
@@ -101,6 +116,30 @@ describe("This computer", () => {
     fireEvent.change(slider, { target: { value: "30" } })
 
     await waitFor(() => expect(sdk.sdkPlayer.volumes).toEqual([30]))
+  })
+
+  it("keeps a volume set while another device plays away from the SDK's player", async () => {
+    const sentToSpotify: Array<number> = []
+    const sdk = readyWebPlaybackSdk()
+    await renderAppShell({
+      runtime: appShellRuntimeWith({
+        spotify: (spotify) => ({
+          setVolume: (volumePercent) =>
+            Effect.sync(() => sentToSpotify.push(volumePercent)).pipe(
+              Effect.andThen(spotify.setVolume(volumePercent)),
+            ),
+        }),
+        webPlaybackSdk: sdk.layer,
+      }),
+    })
+    await pickerButton("Playing on Mira's Laptop")
+    const slider = await screen.findByRole("slider", { name: "Volume" })
+    await waitFor(() => expect(slider).toHaveValue("60"))
+
+    fireEvent.change(slider, { target: { value: "30" } })
+
+    await waitFor(() => expect(sentToSpotify).toEqual([30]))
+    expect(sdk.sdkPlayer.volumes).toEqual([])
   })
 
   // The app shell unmounts when the user logs out, and the next account must
