@@ -164,6 +164,28 @@ describe("the sidebar's icon rail", () => {
     expect(sidebar()).toHaveStyle({ width: "272px" })
   })
 
+  // On its way to the rail the drag passes the narrowest width, which must not
+  // replace the width the user had.
+  it("opens at the width it had after being dragged to the rail", async () => {
+    await renderAppShell({ savedSidebarWidth: 300 })
+
+    await dragSidebarDivider(-250)
+    await userEvent.click(screen.getByRole("button", { name: "Expand sidebar" }))
+
+    expect(sidebar()).toHaveStyle({ width: "300px" })
+  })
+
+  it("opens a collapsed sidebar only with the divider's widening keys", async () => {
+    await renderAppShell({ savedSidebarWidth: 300, savedSidebarCollapsed: true })
+
+    sidebarDivider().focus()
+    await userEvent.keyboard("{ArrowLeft}{Home}")
+    expect(sidebar()).toHaveStyle({ width: "72px" })
+
+    await userEvent.keyboard("{ArrowRight}")
+    expect(sidebar()).toHaveStyle({ width: "300px" })
+  })
+
   it("keeps the sidebar collapsed after a restart", async () => {
     const runtime = appShellRuntimeWith({})
     const loadSavedCollapsed = loadSavedSetting("sidebarCollapsed", false)

@@ -906,8 +906,7 @@ announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 - While a list or page loads, it says so inside an `output` element, so screen readers announce
   it. Home shows skeletons in the shape of its sections (`src/renderer/ui/skeleton.tsx`) and keeps
   the message for screen readers, and so does the sidebar library; other screens show the
-  message in `muted` text until their
-  redesign. No spinner.
+  message in `muted` text until their redesign. No spinner.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, after a 16 px `muted` `CircleAlert` icon,
   with a small outline Retry button under it (`src/renderer/ui/error-with-retry.tsx`). It stays

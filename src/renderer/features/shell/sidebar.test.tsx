@@ -6,10 +6,12 @@ import { describe, expect, it } from "vitest"
 import type { DesktopApi } from "../../../preload/desktop-api"
 import type { FolderTree } from "../../../shared/folders"
 import { ipcChannels } from "../../../shared/ipc-channels"
+import { AccessTokenUnavailable, SessionExpired } from "../../../shared/spotify-auth-replies"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { openAddToFolder } from "../folders/add-to-folder-menu-queries"
 import { FoldersProvider } from "../folders/folders-provider"
+import type { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { Sidebar } from "./sidebar"
 
@@ -206,18 +208,38 @@ const runningTree: FolderTree = [
   { _tag: "Folder", id: "6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4e04", name: "Focus", entries: [] },
 ]
 
-const renderRail = (mainProcess: DesktopApi = fakeMainProcess()) =>
-  renderSidebar(
+type LibraryStreams = Partial<
+  Pick<SpotifyApi["Service"], "currentUserPlaylists" | "savedAlbums" | "savedShows">
+>
+
+// The rail lists every library entry, so each test gets only the library
+// streams it reads.
+const renderRail = (
+  mainProcess: DesktopApi = fakeMainProcess(),
+  library: (spotify: SpotifyApi["Service"]) => LibraryStreams = () => ({}),
+) =>
+  renderScreen(
     <FoldersProvider>
       <Sidebar savedWidth={280} savedCollapsed />
     </FoldersProvider>,
     mainProcess,
+    spotifyApiFakeWith((spotify) => ({
+      currentUserPlaylists: Stream.empty,
+      savedAlbums: Stream.empty,
+      followedArtists: Stream.empty,
+      savedShows: Stream.empty,
+      ...library(spotify),
+    })),
   )
+
+const withPlaylists = (spotify: SpotifyApi["Service"]) => ({
+  currentUserPlaylists: spotify.currentUserPlaylists,
+})
 
 describe("Sidebar icon rail", () => {
   // The rail shows no text, so the accessible name is all a screen reader has.
   it("names each library entry, which shows only its artwork", async () => {
-    await renderRail()
+    await renderRail(fakeMainProcess(), withPlaylists)
 
     const entry = await screen.findByRole("link", {
       name: "Late Night Drive, Playlist · Mira Kaelin",
@@ -228,7 +250,7 @@ describe("Sidebar icon rail", () => {
   })
 
   it("shows an entry's name in a tooltip on hover and on keyboard focus", async () => {
-    await renderRail()
+    await renderRail(fakeMainProcess(), withPlaylists)
     const entry = await screen.findByRole("link", { name: /^Late Night Drive/ })
 
     await userEvent.hover(entry)
@@ -245,7 +267,7 @@ describe("Sidebar icon rail", () => {
   })
 
   it("opens an entry's page from the rail", async () => {
-    const router = await renderRail()
+    const router = await renderRail(fakeMainProcess(), withPlaylists)
 
     await userEvent.click(await screen.findByRole("link", { name: /^Late Night Drive/ }))
 
@@ -281,6 +303,27 @@ describe("Sidebar icon rail", () => {
 
     expect(screen.getByRole("button", { name: "Collapse sidebar" })).toBeInTheDocument()
     expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument()
+  })
+
+  it("goes to the login screen when the library fails for an expired session", async () => {
+    const router = await renderRail(fakeMainProcess(), () => ({
+      savedShows: Stream.fail(new SessionExpired()),
+    }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+    expect(router.state.location.search).toEqual({ sessionExpired: true })
+  })
+
+  it("offers to expand the sidebar when the library fails for a reason Retry can fix", async () => {
+    await renderRail(fakeMainProcess(), () => ({
+      savedShows: Stream.fail(new AccessTokenUnavailable({ message: "Spotify is unreachable" })),
+    }))
+
+    expect(
+      await screen.findByRole("button", {
+        name: "Your library didn't load. Expand the sidebar to see why.",
+      }),
+    ).toBeInTheDocument()
   })
 
   it("moves between folders with the arrow keys instead of opening one", async () => {

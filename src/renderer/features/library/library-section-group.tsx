@@ -46,7 +46,8 @@ export function LibrarySectionGroup({
             <ChevronIcon aria-hidden size={14} />
           </button>
         </h3>
-        <span className={shownOnRowHoverClassName}>
+        {/* An open menu keeps its button shown while focus is in the menu. */}
+        <span className={`${shownOnRowHoverClassName} has-aria-expanded:opacity-100`}>
           <MenuButton label={`${name} section options`} icon={Ellipsis} items={menuActions} />
         </span>
       </div>

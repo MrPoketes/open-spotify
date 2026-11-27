@@ -48,6 +48,8 @@ export function SidebarFolderTree() {
     return null
   }
   if (rail !== null) {
+    // An empty list would be announced as one; the rail shows nothing here.
+    if (folderTree.state.value.length === 0) return null
     return <SidebarFolderRail tree={folderTree.state.value} />
   }
   return (

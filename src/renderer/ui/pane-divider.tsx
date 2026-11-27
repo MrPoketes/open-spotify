@@ -50,7 +50,8 @@ export function PaneDivider({
   // Whole pixels, because high-DPI screens report fractional pointer positions.
   const clampWidth = (width: number) => Math.round(clamp(width, minimumWidth, maximumWidth))
 
-  // Any resize from the keyboard opens a collapsed pane.
+  // Only a resize that widens the pane (see widthForKey) reaches a collapsed
+  // one, and opens it.
   const resizeTo = (width: number) => {
     if (isCollapsed) collapse.onCollapsedChange(false)
     const clampedWidth = clampWidth(width)
@@ -62,12 +63,16 @@ export function PaneDivider({
   }
 
   // Collapsing is decided on the width the pointer asks for, before it is
-  // held to the minimum. A collapsed pane keeps the width it opens to.
+  // held to the minimum. Collapsing puts back the width the drag started
+  // from, so the pane opens to it again rather than to the minimum.
   const followPointer = (requestedWidth: number, previous: DragState): DragState => {
     const shouldCollapse =
       collapse !== undefined && requestedWidth < collapsesAt(collapse, minimumWidth)
     if (shouldCollapse !== previous.isCollapsed) collapse?.onCollapsedChange(shouldCollapse)
-    if (shouldCollapse) return { ...previous, isCollapsed: true }
+    if (shouldCollapse) {
+      onResize(paneWidth)
+      return { width: paneWidth, isCollapsed: true }
+    }
     const width = clampWidth(requestedWidth)
     onResize(width)
     return { width, isCollapsed: false }
@@ -81,12 +86,17 @@ export function PaneDivider({
     onResizeEnd,
   })
 
-  const widthForKey: Partial<Record<string, number>> = {
-    ArrowLeft: shownWidth - keyboardStep * growDirection,
-    ArrowRight: shownWidth + keyboardStep * growDirection,
-    Home: minimumWidth,
-    End: maximumWidth,
-  }
+  // A collapsed pane ignores the keys that would narrow it, and the key that
+  // widens it by a step opens it at the width it had.
+  const growKey = growDirection === 1 ? "ArrowRight" : "ArrowLeft"
+  const widthForKey: Partial<Record<string, number>> = isCollapsed
+    ? { [growKey]: paneWidth, End: maximumWidth }
+    : {
+        ArrowLeft: paneWidth - keyboardStep * growDirection,
+        ArrowRight: paneWidth + keyboardStep * growDirection,
+        Home: minimumWidth,
+        End: maximumWidth,
+      }
 
   const resizeWithKeyboard = (event: KeyboardEvent) => {
     const width = widthForKey[event.key]
