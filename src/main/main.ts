@@ -27,9 +27,11 @@ const start = Effect.gen(function* () {
   yield* Effect.promise(() => app.whenReady())
   restrictWebPermissions()
   serveRendererFiles()
-  registerIpcHandlers()
   // A page that opens before the Widevine CDM is installed cannot use it.
-  yield* installWidevine(() => components.whenReady([components.WIDEVINE_CDM_ID]))
+  const isWidevineInstalled = yield* installWidevine(() =>
+    components.whenReady([components.WIDEVINE_CDM_ID]),
+  )
+  registerIpcHandlers(isWidevineInstalled)
   yield* createMainWindow
   // Electron emits `activate` at launch too, possibly before the window above
   // exists, so the Dock icon reopens a window only once startup has opened one.

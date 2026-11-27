@@ -10,9 +10,11 @@ import { ImportedThemeId, type LibraryTheme } from "../../shared/theme-library"
 import { fakeFolderChannels } from "./fake-folder-channels"
 
 // The theme file channels reply as if the user had answered their dialogs.
-// Both default to the user canceling.
+// Both default to the user canceling. Widevine is installed unless a test
+// says otherwise.
 interface FakeMainProcessOptions {
   readonly environmentClientId?: string
+  readonly isWidevineInstalled?: boolean
   readonly folderTree?: FolderTree
   readonly importedThemes?: ReadonlyArray<LibraryTheme>
   readonly importThemeReply?: typeof ImportThemeReply.Encoded
@@ -26,6 +28,7 @@ interface FakeMainProcessOptions {
 // OPEN_SPOTIFY_CLIENT_ID.
 export const fakeMainProcess = ({
   environmentClientId,
+  isWidevineInstalled = true,
   folderTree = [],
   importedThemes: storedImportedThemes = [],
   importThemeReply = { _tag: "ThemeImportCanceled" },
@@ -46,6 +49,7 @@ export const fakeMainProcess = ({
       return { _tag: "IpcSucceeded", value: undefined }
     },
     [ipcChannels.getEnvironmentClientId]: () => environmentClientId ?? null,
+    [ipcChannels.isWidevineInstalled]: () => isWidevineInstalled,
     ...fakeFolderChannels(folderTree),
     [ipcChannels.listImportedThemes]: () => [...importedThemes.values()],
     [ipcChannels.importThemeFile]: () => {

@@ -4,15 +4,24 @@ import { TestClock } from "effect/testing"
 import { installWidevine } from "./widevine"
 
 // The main window opens only after this finishes, and remote control through
-// Spotify Connect must work on computers where Widevine never arrives.
+// Spotify Connect must work on computers where Widevine never arrives. The
+// answer tells the renderer whether this computer can play protected audio.
 describe("installWidevine", () => {
-  it.effect("finishes without failing when the Widevine install fails", () =>
+  it.effect("answers that Widevine is installed once the install finishes", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
-        installWidevine(() => Promise.reject(new Error("component update failed"))),
+      const isInstalled = yield* installWidevine(() => Promise.resolve("installed"))
+
+      assert.isTrue(isInstalled)
+    }),
+  )
+
+  it.effect("answers that Widevine is missing, without failing, when the install fails", () =>
+    Effect.gen(function* () {
+      const isInstalled = yield* installWidevine(() =>
+        Promise.reject(new Error("component update failed")),
       )
 
-      assert.strictEqual(exit._tag, "Success")
+      assert.isFalse(isInstalled)
     }),
   )
 
@@ -21,9 +30,9 @@ describe("installWidevine", () => {
       const install = yield* Effect.forkChild(installWidevine(() => new Promise(() => {})))
 
       yield* TestClock.adjust("30 seconds")
-      const exit = yield* Fiber.await(install)
+      const isInstalled = yield* Fiber.join(install)
 
-      assert.strictEqual(exit._tag, "Success")
+      assert.isFalse(isInstalled)
     }),
   )
 })

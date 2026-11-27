@@ -40,10 +40,13 @@ declare global {
   }
 }
 
-class WebPlaybackSdkError extends Schema.TaggedError<WebPlaybackSdkError>()("WebPlaybackSdkError", {
-  reason: Schema.String,
-  cause: Schema.optional(Schema.Defect()),
-}) {}
+export class WebPlaybackSdkError extends Schema.TaggedError<WebPlaybackSdkError>()(
+  "WebPlaybackSdkError",
+  {
+    reason: Schema.String,
+    cause: Schema.optional(Schema.Defect()),
+  },
+) {}
 
 const ReadyEvent = Schema.Struct({ device_id: Schema.String })
 
@@ -55,6 +58,8 @@ const sdkErrorEvents = [
   "account_error",
   "playback_error",
 ] as const
+
+export type SdkErrorEvent = (typeof sdkErrorEvents)[number]
 
 const sdkEventNames = ["ready", "not_ready", ...sdkErrorEvents] as const
 
@@ -106,17 +111,26 @@ const answerTokenRequests = (
     Effect.forever,
   )
 
-const followEvent = (event: SdkEvent, deviceId: SubscriptionRef.SubscriptionRef<string | null>) => {
+interface PlayerState {
+  readonly deviceId: SubscriptionRef.SubscriptionRef<string | null>
+  readonly failure: SubscriptionRef.SubscriptionRef<SdkErrorEvent | null>
+}
+
+// The SDK reports no recovery from an error, so an error holds until the
+// player is ready again.
+const followEvent = (event: SdkEvent, { deviceId, failure }: PlayerState) => {
   if (event.name === "ready") {
     return Schema.decodeUnknownEffect(ReadyEvent)(event.payload).pipe(
       Effect.flatMap((ready) => SubscriptionRef.set(deviceId, ready.device_id)),
+      Effect.andThen(SubscriptionRef.set(failure, null)),
       Effect.catch((error) => Effect.logError("The SDK reported an unreadable device", error)),
     )
   }
   if (event.name === "not_ready") {
     return SubscriptionRef.set(deviceId, null)
   }
-  return Schema.decodeUnknownEffect(ErrorEvent)(event.payload).pipe(
+  return SubscriptionRef.set(failure, event.name).pipe(
+    Effect.andThen(Schema.decodeUnknownEffect(ErrorEvent)(event.payload)),
     Effect.flatMap(({ message }) => Effect.logError(`The SDK reported ${event.name}`, message)),
     Effect.catch((error) => Effect.logError(`The SDK reported an unreadable ${event.name}`, error)),
   )
@@ -139,6 +153,9 @@ export interface ThisComputerPlayer {
   // The Spotify Connect device id while the SDK is ready to play, and null
   // while it is not.
   readonly deviceId: Stream.Stream<string | null>
+  // The SDK's latest error, and null while it has reported none since it was
+  // last ready.
+  readonly failure: Stream.Stream<SdkErrorEvent | null>
   // From 0 to 100, like the Web API.
   readonly setVolume: (volumePercent: number) => Effect.Effect<void, WebPlaybackSdkError>
 }
@@ -175,19 +192,23 @@ const connectThisComputer = Effect.fn("WebPlaybackSdk.connect")(function* (
   const SpotifyPlayer = yield* loadedSdk
   const tokenRequests = yield* Queue.unbounded<(accessToken: string) => void>()
   const events = yield* Queue.unbounded<SdkEvent>()
-  const deviceId = yield* SubscriptionRef.make<string | null>(null)
+  const playerState: PlayerState = {
+    deviceId: yield* SubscriptionRef.make<string | null>(null),
+    failure: yield* SubscriptionRef.make<SdkErrorEvent | null>(null),
+  }
   const player = yield* acquirePlayer(SpotifyPlayer, tokenRequests)
   listenTo(player, events)
   yield* Effect.forkScoped(answerTokenRequests(tokenRequests, accessToken))
   yield* Effect.forkScoped(
     Queue.take(events).pipe(
-      Effect.flatMap((event) => followEvent(event, deviceId)),
+      Effect.flatMap((event) => followEvent(event, playerState)),
       Effect.forever,
     ),
   )
   yield* connectPlayer(player)
   return {
-    deviceId: SubscriptionRef.changes(deviceId),
+    deviceId: SubscriptionRef.changes(playerState.deviceId),
+    failure: SubscriptionRef.changes(playerState.failure),
     setVolume: setVolumeOf(player),
   }
 })

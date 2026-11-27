@@ -354,6 +354,14 @@ The picker is a non-modal popover above its button: `surface-overlay`, `shadow-o
 name in `text-sm`, and the type in `text-xs` `muted`. The active device is drawn in `accent`,
 adds "Playing here" to its type line and a `Volume2` icon, and carries `aria-current`.
 
+"This computer" is listed once the Web Playback SDK is ready, and also when it cannot play, so
+the user sees why instead of the entry disappearing: the SDK failed to start, Spotify refused
+the login or the account (Premium is required), playback failed, or Widevine did not install
+("Protected playback isn't available on this computer"). The reason takes the type line's place
+in `text-xs` `danger`, and the row keeps full opacity so the reason stays readable. Without a
+device to play on, the row is `aria-disabled`; after a failed play it can still be picked. When
+Spotify refuses the login, the app goes to the login screen instead.
+
 Opening the picker moves focus into it. The active device is listed first. The device list is
 one tab stop, starting on the first device, and moves like any other list (see Keyboard).
 `Escape` or choosing a device closes the picker and returns focus to its button; clicking or

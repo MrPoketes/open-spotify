@@ -63,7 +63,8 @@ interface ShellOptions {
   readonly albumPageContent?: ReactNode
 }
 
-// Starts on a second page so there is a page to go back to.
+// Starts on a second page so there is a page to go back to. The returned
+// router shows where the shell navigated to.
 export const renderAppShell = async ({
   savedSidebarWidth = 280,
   savedRightPaneWidth = 320,
@@ -115,7 +116,7 @@ export const renderAppShell = async ({
     </RendererRuntimeContext>,
   )
   await screen.findByRole("heading", { name: "Album" })
-  return view
+  return { ...view, router }
 }
 
 export const openQueue = async () => {

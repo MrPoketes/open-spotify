@@ -22,7 +22,7 @@ import {
   saveEditedThemeFromIpc,
 } from "./themes-ipc"
 
-export function registerIpcHandlers(): void {
+export function registerIpcHandlers(isWidevineInstalled: boolean): void {
   ipcMain.handle(ipcChannels.getAppInfo, (): AppInfo => ({
     name: app.getName(),
     version: app.getVersion(),
@@ -43,6 +43,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(ipcChannels.logIn, () => mainRuntime.runPromise(logInFromIpc))
   ipcMain.handle(ipcChannels.cancelLogIn, () => mainRuntime.runPromise(cancelLogInFromIpc))
   ipcMain.handle(ipcChannels.getAccessToken, () => mainRuntime.runPromise(getAccessTokenFromIpc))
+  ipcMain.handle(ipcChannels.isWidevineInstalled, () => isWidevineInstalled)
   ipcMain.handle(ipcChannels.logOut, () => mainRuntime.runPromise(logOutFromIpc))
   ipcMain.handle(ipcChannels.listImportedThemes, () =>
     mainRuntime.runPromise(listImportedThemesFromIpc),

@@ -1,5 +1,7 @@
 import { Effect, Ref, Stream } from "effect"
+import { DesktopBridge } from "../../lib/desktop-bridge"
 import { Player, type VolumeChange } from "../playback/player"
+import type { ThisComputerFailure } from "./this-computer-failure"
 import { WebPlaybackSdk, type ThisComputerPlayer } from "./web-playback-sdk"
 
 // Each volume the user sets while this computer plays also goes straight to
@@ -18,10 +20,18 @@ const passOnVolumeChange = Effect.fn("passOnVolumeChange")(function* (
 })
 
 // Makes this computer a Spotify Connect device until interrupted, and reports
-// its device id each time it changes. A failure is logged and leaves every
-// other device usable.
+// its device id and why it cannot play each time they change. A failure
+// leaves every other device usable.
 export const addThisComputerDevice = Effect.fn("addThisComputerDevice")(
-  function* (onDeviceIdChange: (deviceId: string | null) => void) {
+  function* (
+    onDeviceIdChange: (deviceId: string | null) => void,
+    onFailureChange: (failure: ThisComputerFailure | null) => void,
+  ) {
+    const bridge = yield* DesktopBridge
+    if (!(yield* bridge.isWidevineInstalled)) {
+      onFailureChange("widevine_missing")
+      return
+    }
     const sdk = yield* WebPlaybackSdk
     const player = yield* Player
     const thisComputer = yield* sdk.connect
@@ -33,6 +43,9 @@ export const addThisComputerDevice = Effect.fn("addThisComputerDevice")(
             Effect.andThen(Effect.sync(() => onDeviceIdChange(deviceId))),
           ),
         ),
+        Stream.runForEach(thisComputer.failure, (failure) =>
+          Effect.sync(() => onFailureChange(failure)),
+        ),
         Stream.runForEach(player.volumeChanges, (volumeChange) =>
           passOnVolumeChange(thisComputer, thisComputerDeviceId, volumeChange),
         ),
@@ -41,5 +54,12 @@ export const addThisComputerDevice = Effect.fn("addThisComputerDevice")(
     )
   },
   Effect.scoped,
-  Effect.catch((error) => Effect.logError("This computer is not a Spotify Connect device", error)),
+  (addition, _onDeviceIdChange, onFailureChange) =>
+    addition.pipe(
+      Effect.catch((error) =>
+        Effect.logError("This computer is not a Spotify Connect device", error).pipe(
+          Effect.andThen(Effect.sync(() => onFailureChange("initialization_error"))),
+        ),
+      ),
+    ),
 )

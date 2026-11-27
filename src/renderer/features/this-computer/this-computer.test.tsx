@@ -3,17 +3,27 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect } from "effect"
 import { describe, expect, it } from "vitest"
+import { fakeMainProcess } from "../../lib/fake-main-process"
 import { deviceButton, openPicker, pickerButton } from "../playback/device-picker-queries"
 import { appShellRuntimeWith, renderAppShell } from "../shell/render-app-shell"
 import { playbackStateChangedBy } from "../spotify/spotify-api-fake"
 import { fakeDevices } from "../spotify/spotify-fixtures"
-import { fakeThisComputerDeviceId, readyWebPlaybackSdk } from "./web-playback-sdk-fake"
+import {
+  fakeThisComputerDeviceId,
+  readyWebPlaybackSdk,
+  webPlaybackSdkFailingToConnect,
+  webPlaybackSdkReporting,
+} from "./web-playback-sdk-fake"
 
 // Spotify reports the active device at 60 %. It is this computer.
 const playingOnThisComputer = playbackStateChangedBy((playback) => ({
   ...playback,
   device: { ...playback.device, id: fakeThisComputerDeviceId },
 }))
+
+const recordingTransfers = (transferredTo: Array<string>) => () => ({
+  transferPlayback: (deviceId: string) => Effect.sync(() => transferredTo.push(deviceId)),
+})
 
 describe("This computer", () => {
   // Spotify's device list can lag behind the SDK's ready event.
@@ -63,9 +73,7 @@ describe("This computer", () => {
     const sdk = readyWebPlaybackSdk()
     await renderAppShell({
       runtime: appShellRuntimeWith({
-        spotify: () => ({
-          transferPlayback: (deviceId) => Effect.sync(() => transferredTo.push(deviceId)),
-        }),
+        spotify: recordingTransfers(transferredTo),
         webPlaybackSdk: sdk.layer,
       }),
     })
@@ -154,5 +162,91 @@ describe("This computer", () => {
     view.unmount()
 
     await waitFor(() => expect(sdk.sdkPlayer.isConnected).toBe(false))
+  })
+
+  describe("when it cannot play", () => {
+    // Before the SDK was ever ready, there is no device to play on.
+    it.each([
+      ["initialization_error", "The Spotify player couldn't start on this computer"],
+      ["account_error", "Playing on this computer needs Spotify Premium"],
+      ["playback_error", "Spotify couldn't play on this computer"],
+    ] as const)("lists this computer with the reason for %s", async (sdkError, reason) => {
+      await renderAppShell({
+        runtime: appShellRuntimeWith({ webPlaybackSdk: webPlaybackSdkReporting(sdkError) }),
+      })
+
+      const picker = await openPicker()
+
+      const thisComputer = await deviceButton(picker, /^This computer/)
+      expect(thisComputer).toHaveTextContent(reason)
+      expect(thisComputer).toHaveAttribute("aria-disabled", "true")
+    })
+
+    // A failed play does not take the device away, so the user can try again.
+    it("keeps this computer selectable after a failed play while the SDK is ready", async () => {
+      const transferredTo: Array<string> = []
+      await renderAppShell({
+        runtime: appShellRuntimeWith({
+          spotify: recordingTransfers(transferredTo),
+          webPlaybackSdk: webPlaybackSdkReporting("playback_error", fakeThisComputerDeviceId),
+        }),
+      })
+      const picker = await openPicker()
+
+      await userEvent.click(
+        await deviceButton(picker, /^This computer\s*Spotify couldn't play on this computer/),
+      )
+
+      await waitFor(() => expect(transferredTo).toEqual([fakeThisComputerDeviceId]))
+    })
+
+    it("explains that the player did not start when the SDK fails to connect", async () => {
+      await renderAppShell({
+        runtime: appShellRuntimeWith({ webPlaybackSdk: webPlaybackSdkFailingToConnect }),
+      })
+
+      const picker = await openPicker()
+
+      expect(
+        await deviceButton(picker, /^This computer\s*The Spotify player couldn't start/),
+      ).toBeInTheDocument()
+    })
+
+    // The SDK rejected the access token, which a new login replaces.
+    it("goes to the login screen when the SDK reports an authentication error", async () => {
+      const { router } = await renderAppShell({
+        runtime: appShellRuntimeWith({
+          webPlaybackSdk: webPlaybackSdkReporting("authentication_error"),
+        }),
+      })
+
+      await waitFor(() => expect(router.state.location.pathname).toBe("/login"))
+      expect(router.state.location.search).toEqual({ sessionExpired: true })
+    })
+
+    // Without Widevine the SDK cannot play protected audio, so it is not
+    // loaded at all, and remote control keeps working (decision 0007).
+    it("says protected playback is unavailable when Widevine did not install", async () => {
+      const transferredTo: Array<string> = []
+      const sdk = readyWebPlaybackSdk()
+      await renderAppShell({
+        runtime: appShellRuntimeWith({
+          mainProcess: fakeMainProcess({ isWidevineInstalled: false }),
+          spotify: recordingTransfers(transferredTo),
+          webPlaybackSdk: sdk.layer,
+        }),
+      })
+      const picker = await openPicker()
+
+      expect(
+        await deviceButton(
+          picker,
+          /^This computer\s*Protected playback isn't available on this computer$/,
+        ),
+      ).toHaveAttribute("aria-disabled", "true")
+      expect(sdk.sdkPlayer.isConnected).toBe(false)
+      await userEvent.click(within(picker).getByRole("button", { name: /^Mira's Phone/ }))
+      await waitFor(() => expect(transferredTo).toEqual(["fake-device-phone"]))
+    })
   })
 })
