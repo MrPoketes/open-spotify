@@ -17,6 +17,7 @@ export const SettingKey = Schema.Literals([
   "pinnedLibraryEntries",
   "librarySections",
   "expandedFolders",
+  "playOnThisComputer",
 ])
 
 export type SettingKey = typeof SettingKey.Type
@@ -33,6 +34,7 @@ export const settingSchemas = {
   pinnedLibraryEntries: PinnedLibraryEntries,
   librarySections: LibrarySections,
   expandedFolders: ExpandedFolders,
+  playOnThisComputer: Schema.Boolean,
 } satisfies Record<SettingKey, Schema.Top>
 
 export type SettingValue<K extends SettingKey> = (typeof settingSchemas)[K]["Type"]

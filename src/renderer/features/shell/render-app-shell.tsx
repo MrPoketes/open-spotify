@@ -10,11 +10,13 @@ import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Stream, type Layer, type ManagedRuntime } from "effect"
 import type { ReactNode } from "react"
+import type { DesktopApi } from "../../../preload/desktop-api"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext, type RendererServices } from "../../lib/renderer-runtime"
 import type { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { defaultPlayOnThisComputer } from "../this-computer/play-on-this-computer-context"
 import type { WebPlaybackSdk } from "../this-computer/web-playback-sdk"
 import { AppShell } from "./app-shell"
 
@@ -24,6 +26,7 @@ import { AppShell } from "./app-shell"
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 
 interface AppShellRuntimeOptions {
+  readonly mainProcess?: DesktopApi
   readonly spotify?: (spotify: SpotifyApi["Service"]) => Partial<SpotifyApi["Service"]>
   readonly webPlaybackSdk?: Layer.Layer<WebPlaybackSdk>
 }
@@ -32,11 +35,12 @@ interface AppShellRuntimeOptions {
 // rendering the fixtures' sixty-odd entries in the sidebar ran the first test
 // past its timeout on a busy machine.
 export const appShellRuntimeWith = ({
+  mainProcess = window.desktop,
   spotify = () => ({}),
   ...runtimeOptions
 }: AppShellRuntimeOptions) =>
   fakeRendererRuntime({
-    mainProcess: window.desktop,
+    mainProcess,
     spotifyApi: spotifyApiFakeWith((fakeSpotify) => ({
       currentUserPlaylists: Stream.empty,
       savedAlbums: Stream.empty,
@@ -52,6 +56,7 @@ export const appShellRuntime = appShellRuntimeWith({})
 interface ShellOptions {
   readonly savedSidebarWidth?: number
   readonly savedRightPaneWidth?: number
+  readonly savedPlayOnThisComputer?: boolean
   readonly platform?: string
   readonly runtime?: ManagedRuntime.ManagedRuntime<RendererServices, never>
   // Shown under the album page's heading.
@@ -62,6 +67,7 @@ interface ShellOptions {
 export const renderAppShell = async ({
   savedSidebarWidth = 280,
   savedRightPaneWidth = 320,
+  savedPlayOnThisComputer = defaultPlayOnThisComputer,
   platform = "win32",
   runtime = appShellRuntime,
   albumPageContent = null,
@@ -72,6 +78,7 @@ export const renderAppShell = async ({
         savedSidebarWidth={savedSidebarWidth}
         savedRightPaneWidth={savedRightPaneWidth}
         savedTrackListDensity="comfortable"
+        savedPlayOnThisComputer={savedPlayOnThisComputer}
         platform={platform}
       >
         <Outlet />

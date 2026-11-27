@@ -20,6 +20,7 @@ interface AppShellProps {
   readonly savedSidebarWidth: number
   readonly savedRightPaneWidth: number
   readonly savedTrackListDensity: TrackListDensity
+  readonly savedPlayOnThisComputer: boolean
   readonly platform: string
   readonly children: ReactNode
 }
@@ -38,6 +39,7 @@ function AppShellLayout({
   savedSidebarWidth,
   savedRightPaneWidth,
   savedTrackListDensity,
+  savedPlayOnThisComputer,
   children,
 }: Omit<AppShellProps, "platform">) {
   const { isQueueOpen, toggleQueue, closeQueue, queueButtonRef, queuePaneRef } = useQueuePane()
@@ -47,7 +49,7 @@ function AppShellLayout({
 
   return (
     <StatusMessageProvider>
-      <ThisComputerProvider>
+      <ThisComputerProvider savedPlayOnThisComputer={savedPlayOnThisComputer}>
         <LibraryPlaylistsProvider>
           <FoldersProvider>
             <div className="flex h-screen flex-col gap-2 p-2">

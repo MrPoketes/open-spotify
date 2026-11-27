@@ -441,6 +441,14 @@ Below them, "Track list rows" offers Comfortable and Dense as two filter chips i
 with a `text-xs` `muted` line that says what Dense changes. The choice applies to every track
 list at once.
 
+A Playback section follows Appearance. Its "Play on this computer" switch, on by default, sits at
+the right end of a row whose `text-sm` 600-weight label and `text-xs` `muted` description name it.
+The switch is a 40 × 24 px `button` with `role="switch"`: an `accent` rail with an `on-accent`
+thumb on the right when on, a `muted` rail with a `surface` thumb on the left when off. It dims
+on hover and press like a filter chip, and clicking its label toggles it too. Turning
+it off disconnects the Web Playback SDK's player and takes "This computer" out of the device
+picker at once; turning it on connects the player again.
+
 ### Theme editor
 
 The editor takes the place of the theme picker and its buttons in the Appearance section, so a

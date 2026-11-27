@@ -2,6 +2,7 @@ import { createFileRoute, getRouteApi } from "@tanstack/react-router"
 import { LogOutButton } from "../../features/login/log-out-button"
 import { AppearanceSettings } from "../../features/themes/appearance-settings"
 import { loadSavedThemeLibrary } from "../../features/themes/saved-theme"
+import { PlayOnThisComputerSetting } from "../../features/this-computer/play-on-this-computer-setting"
 import { TrackListDensitySetting } from "../../features/track-list/track-list-density-setting"
 import { rendererRuntime } from "../../lib/renderer-runtime"
 
@@ -28,6 +29,12 @@ function SettingsPage() {
         </h2>
         <AppearanceSettings library={library} />
         <TrackListDensitySetting />
+      </section>
+      <section aria-labelledby="playback-heading" className="flex flex-col gap-4">
+        <h2 id="playback-heading" className="font-display text-xl font-bold">
+          Playback
+        </h2>
+        <PlayOnThisComputerSetting />
       </section>
       <section aria-labelledby="account-heading" className="flex flex-col items-start gap-4">
         <h2 id="account-heading" className="font-display text-xl font-bold">
