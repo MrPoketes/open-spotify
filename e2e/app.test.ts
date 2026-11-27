@@ -70,3 +70,23 @@ test("starts on onboarding, logs in against fake Spotify, and moves between page
   await expect(appWindow.getByRole("heading", { name: "Hello, Mira Kaelin" })).toBeVisible()
   expect(await windowErrors(appWindow)).toEqual([])
 })
+
+// Playing on this computer needs Widevine, which only the castlabs Electron
+// build provides and which the main process installs before the window opens.
+test("reports Widevine as available to the page", async ({ appWindow }) => {
+  const widevineAccess = await appWindow.evaluate(() =>
+    navigator
+      .requestMediaKeySystemAccess("com.widevine.alpha", [
+        {
+          initDataTypes: ["cenc"],
+          audioCapabilities: [{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }],
+        },
+      ])
+      .then(
+        () => "granted",
+        (error: unknown) => String(error),
+      ),
+  )
+
+  expect(widevineAccess).toBe("granted")
+})

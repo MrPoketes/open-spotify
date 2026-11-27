@@ -6,6 +6,11 @@ const StoredSession = Schema.Struct({
   refreshToken: Schema.String,
   // Epoch milliseconds, so the value survives JSON.
   accessTokenExpiresAt: Schema.Number,
+  // Sessions saved before the app recorded scopes decode with none, so
+  // freshAccessToken sends them through login to grant the current ones.
+  grantedScopes: Schema.Array(Schema.String).pipe(
+    Schema.withDecodingDefaultKey(Effect.succeed([])),
+  ),
 })
 
 type StoredSession = typeof StoredSession.Type
@@ -70,6 +75,7 @@ export const makeStoredSession = Effect.fn("makeStoredSession")(function* (sessi
   readonly refreshToken: string
   readonly accessToken: string
   readonly expiresInSeconds: number
+  readonly grantedScopes: ReadonlyArray<string>
 }) {
   const now = yield* Clock.currentTimeMillis
   return {
@@ -77,5 +83,6 @@ export const makeStoredSession = Effect.fn("makeStoredSession")(function* (sessi
     refreshToken: session.refreshToken,
     accessToken: session.accessToken,
     accessTokenExpiresAt: now + session.expiresInSeconds * 1000,
+    grantedScopes: session.grantedScopes,
   } satisfies StoredSession
 })

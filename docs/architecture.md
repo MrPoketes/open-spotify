@@ -21,7 +21,9 @@ Open Spotify is an Electron app with three parts that run in separate processes.
 
 Owns everything that needs Node or must stay out of reach of web content:
 
-- the application window and the `app://` protocol that serves the built UI;
+- the application window and the `app://` protocol that serves the built UI. The app runs on
+  castlabs Electron, and the window opens once its Widevine CDM is installed, so the Web Playback
+  SDK can play protected audio ([decision 0007](decisions/0007-widevine-through-castlabs-electron.md));
 - local storage (themes, folders, settings) in SQLite through Drizzle ORM
   (`drizzle-orm/effect-sqlite-node`) over `@effect/sql-sqlite-node`, which uses Node's built-in
   `node:sqlite`, so there is no native module to compile. Tables are defined once in

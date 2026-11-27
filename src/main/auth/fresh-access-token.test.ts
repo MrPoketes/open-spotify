@@ -1,6 +1,7 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Fiber } from "effect"
 import { TestClock } from "effect/testing"
+import { requestedScopes } from "./authorization-request"
 import {
   fakeBrowser,
   fakeSpotifySession,
@@ -101,6 +102,23 @@ describe("SpotifySession.getAccessToken", () => {
       assert.strictEqual(tokenAfterRateLimit, "access-token-2")
     }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
   })
+
+  // A session granted before the app asked for a scope, such as `streaming`,
+  // cannot use what that scope allows, so the user must grant it once.
+  it.effect(
+    "answers SessionExpired for a session saved without a scope the app now asks for",
+    () => {
+      const spotifyAccounts = makeFakeSpotifyAccounts()
+      return Effect.gen(function* () {
+        const scopesBeforeStreaming = requestedScopes.filter((scope) => scope !== "streaming")
+        const session = yield* restoreFakeSession(spotifyAccounts, scopesBeforeStreaming)
+
+        const error = yield* Effect.flip(session.getAccessToken)
+
+        assert.strictEqual(error._tag, "SessionExpired")
+      }).pipe(Effect.provide(sessionWithoutLogin(spotifyAccounts)))
+    },
+  )
 
   it.effect("gives up on a refresh after Spotify stalls for 15 seconds", () => {
     const spotifyAccounts = makeFakeSpotifyAccounts()

@@ -8,6 +8,10 @@ files:
   - dist/client/**
   - package.json
 asar: true
+# Electron comes from castlabs' build, which adds Widevine (decision 0007), so
+# its binaries download from castlabs' releases instead of Electron's.
+electronDownload:
+  mirror: https://github.com/castlabs/electron-releases/releases/download/
 artifactName: ${name}-${version}-${arch}.${ext}
 win:
   target: nsis

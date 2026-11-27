@@ -38,7 +38,8 @@ src/renderer/   The React UI, built by TanStack Start in SPA mode.
 e2e/            Playwright tests that launch the packaged Electron app, and the README
                 screenshot script.
 lint/           Project-specific oxlint rules and the unused-export check.
-scripts/        Developer scripts run by hand, such as icon generation.
+scripts/        Developer scripts run by hand, such as icon generation, and the release
+                build's VMP-signing hook.
 build/          Packaging resources: the app icon source and its generated files.
 docs/           Architecture, decisions, agent playbooks.
 ```
@@ -220,8 +221,12 @@ cannot fail for a meaningful reason should not exist.
   Check the current [Web API docs](https://developer.spotify.com/documentation/web-api)
   before relying on an endpoint.
 - **Playback is remote control through Spotify Connect.** Audio plays in the official Spotify
-  app or on another device. Do not use the Web Playback SDK or librespot. See
+  app or on another device. Do not use librespot. See
   [decision 0002](docs/decisions/0002-playback-through-spotify-connect.md).
+- **The Web Playback SDK only adds a device.** The app runs on castlabs Electron, which adds
+  Widevine, so the SDK can make this computer a Spotify Connect device. Spotify may refuse its
+  licence, so remote control must keep working when the SDK fails, and the failure must be
+  visible. See [decision 0007](docs/decisions/0007-widevine-through-castlabs-electron.md).
 - **Users bring their own Client ID**, entered on first launch. See
   [decision 0003](docs/decisions/0003-bring-your-own-client-id.md).
 - Auth is OAuth PKCE with the loopback redirect `http://127.0.0.1:43821/callback`.

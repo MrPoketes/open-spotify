@@ -66,12 +66,15 @@ export async function fakeSpotifyAccounts(electronApp: ElectronApplication): Pro
       safeStorage.setUsePlainTextEncryption(true)
 
       const networkFetch = globalThis.fetch
+      // Like Spotify, the fake grants every scope the login asks for.
+      let grantedScope = ""
       shell.openExternal = async (authorizeUrl) => {
         const authorizeQuery = new URL(authorizeUrl).searchParams
         // Spotify never calls back to a redirect URI the user did not register.
         if (authorizeQuery.get("redirect_uri") !== redirectUri) {
           return
         }
+        grantedScope = authorizeQuery.get("scope") ?? ""
         const state = authorizeQuery.get("state") ?? ""
         const callbackUrl = new URL(redirectUri)
         callbackUrl.search = new URLSearchParams({ code: "fake-code", state }).toString()
@@ -86,6 +89,7 @@ export async function fakeSpotifyAccounts(electronApp: ElectronApplication): Pro
           access_token: accessToken,
           refresh_token: "fake-refresh-token",
           expires_in: 3600,
+          scope: grantedScope,
         }
         return Promise.resolve(Response.json(tokens))
       }

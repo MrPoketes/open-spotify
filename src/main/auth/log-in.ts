@@ -54,6 +54,7 @@ export const logIn = Effect.fn("logIn")(
       refreshToken: issuedTokens.refresh_token,
       accessToken: issuedTokens.access_token,
       expiresInSeconds: issuedTokens.expires_in,
+      grantedScopes: issuedTokens.scope.split(" "),
     })
     yield* sessionLock.withPermit(tokenStore.save(session))
   },

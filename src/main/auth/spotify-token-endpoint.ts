@@ -22,6 +22,8 @@ const IssuedTokens = Schema.Struct({
   access_token: Schema.String,
   expires_in: Schema.Number,
   refresh_token: Schema.String,
+  // The granted scopes, separated by spaces.
+  scope: Schema.String,
 })
 
 // Spotify may or may not rotate the refresh token when it refreshes.

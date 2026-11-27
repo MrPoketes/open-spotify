@@ -3,9 +3,9 @@ import { Effect } from "effect"
 
 const spotifyAuthorizeUrl = "https://accounts.spotify.com/authorize"
 
-// Everything the roadmap needs is requested at the first login, so a later
-// feature never has to send the user through login again for one more scope.
-const scopes = [
+// A saved session that lacks one of these scopes, because it was granted
+// before the app asked for it, is sent through login again (freshAccessToken).
+export const requestedScopes = [
   "user-library-read",
   "user-library-modify",
   "playlist-read-private",
@@ -21,6 +21,8 @@ const scopes = [
   "user-follow-modify",
   "user-read-private",
   "user-read-email",
+  // Lets the Web Playback SDK play audio on this computer.
+  "streaming",
 ]
 
 interface AuthorizationRequest {
@@ -42,7 +44,7 @@ export const makeAuthorizationRequest = (clientId: string, redirectUri: string) 
       client_id: clientId,
       response_type: "code",
       redirect_uri: redirectUri,
-      scope: scopes.join(" "),
+      scope: requestedScopes.join(" "),
       state,
       code_challenge_method: "S256",
       code_challenge: codeChallenge,
