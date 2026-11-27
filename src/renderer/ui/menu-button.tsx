@@ -19,7 +19,9 @@ const menuAlignments = { left: "start", right: "end" } as const
 
 export function MenuButton({ label, icon: Icon, items, menuAlignment = "right" }: MenuButtonProps) {
   return (
-    <MenuPrimitive.Root>
+    // Not modal, unlike Base UI's default: the page keeps scrolling, and a
+    // click outside closes the menu and still reaches what it lands on.
+    <MenuPrimitive.Root modal={false}>
       <MenuPrimitive.Trigger
         aria-label={label}
         title={label}

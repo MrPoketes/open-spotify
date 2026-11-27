@@ -695,9 +695,11 @@ Menu) and follows the WAI-ARIA menu button pattern: `Enter`, `Space`, or `↓` o
 item, `↑` on the last, and a click opens it with focus on the menu itself, where `↓` moves to the
 first item. The arrow keys wrap, `Home` and `End` jump to the ends, `Escape` or `Shift+Tab`
 closes it and returns focus to the button, and `Tab` closes it and moves on to the next control.
-It is an Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`) with 4 px of padding,
-4 px below the button and aligned to its right edge, or to its left edge for a button near the left
-of the main view, which would otherwise clip the menu. Items are `text-sm` rows with
+It is not modal: the page keeps scrolling under it, and a click outside closes it and still
+reaches what it lands on. It is an Overlay (`surface-overlay`, `shadow-overlay`, `rounded-large`)
+with 4 px of padding, 4 px below the button and aligned to its right edge, or to its left edge for
+a button near the left of the main view, which would otherwise clip the menu. Items are `text-sm`
+rows with
 `rounded-small` corners that turn `surface-raised` while highlighted: under the pointer, with
 keyboard focus, or while their submenu is open. An item that opens a dialog ends its label with an
 ellipsis ("Import folders…").
@@ -801,8 +803,9 @@ types no Latin letter, as on a Cyrillic layout or with macOS Option, the key in 
 position works instead.
 
 No shortcut fires while focus is in a text field, and only shortcuts held with `Ctrl`, `Alt`, or
-`Cmd` fire while a menu has focus (see Menus). `Space` leaves a focused button to press itself. On a focused link, which `Space` would only scroll past, or a
-focused radio button, which is already checked, it plays or pauses. Holding the keys down runs a
+`Cmd` fire while a menu has focus (see Menus). `Space` leaves a focused button to press itself.
+On a focused link, which `Space` would only scroll past, or a focused radio button, which is
+already checked, it plays or pauses. Holding the keys down runs a
 shortcut once, except for the volume, which keeps stepping like a volume key. Quick presses add
 up: each seek starts from where the last one moved the seek bar, before Spotify reports it, and
 the volume slider shows each step at once and sends the total once the presses stop. A seek stays

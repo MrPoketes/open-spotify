@@ -8,6 +8,7 @@ import type { FolderTree } from "../../../shared/folders"
 import { ipcChannels } from "../../../shared/ipc-channels"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
+import { openAddToFolder } from "../folders/add-to-folder-menu-queries"
 import { FoldersProvider } from "../folders/folders-provider"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
 import { Sidebar } from "./sidebar"
@@ -81,9 +82,8 @@ describe("Sidebar folder menu", () => {
       keys: "[MouseRight]",
       target: await screen.findByRole("link", { name: /^Small Hours/ }),
     })
-    await user.click(await screen.findByRole("menuitem", { name: "Add to folder" }))
+    const folderSubmenu = await openAddToFolder(user)
 
-    const folderSubmenu = await screen.findByRole("menu", { name: "Add to folder" })
     expect(within(folderSubmenu).getByRole("menuitemcheckbox", { name: "Imported" })).toBeVisible()
   })
 

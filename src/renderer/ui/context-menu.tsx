@@ -41,6 +41,7 @@ export function ContextMenu({ menu, children }: ContextMenuProps) {
     event.currentTarget.dispatchEvent(
       new MouseEvent("contextmenu", { bubbles: true, clientX: left, clientY: bottom }),
     )
+    // Set after the event, whose handler clears the flag for a right-click.
     openedWithKeyboard.current = true
   }
 
