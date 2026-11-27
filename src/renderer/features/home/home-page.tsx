@@ -1,6 +1,7 @@
 import { Effect } from "effect"
 import { useLoad, type LoadState } from "../../lib/use-load"
 import { ArtworkWash } from "../../ui/artwork-wash"
+import { pageTitleClassName } from "../../ui/page-title-class-name"
 import { SpotifyApi, type SpotifyApiError } from "../spotify/spotify-api"
 import type { TimeRange } from "../spotify/spotify-listening-history"
 import type { PlayHistory } from "../spotify/spotify-play-history"
@@ -59,7 +60,7 @@ export function HomePage() {
     <div className="@container relative flex flex-col gap-12">
       <ArtworkWash placement="page" sources={lastPlayedArtwork(recentlyPlayed.state)} />
       <div className="flex flex-col gap-3 pt-6">
-        <h1 className="font-display text-5xl font-bold tracking-tight">{greeting(user.state)}</h1>
+        <h1 className={pageTitleClassName}>{greeting(user.state)}</h1>
         {isNewAccount ? (
           <p className="max-w-prose text-muted">
             Welcome to Open Spotify. Play some music in Spotify, and what you listen to will show up

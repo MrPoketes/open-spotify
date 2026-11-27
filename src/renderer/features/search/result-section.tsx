@@ -1,7 +1,9 @@
 import { Effect } from "effect"
-import { useId, type ReactNode, type Ref } from "react"
+import { ChevronDown } from "lucide-react"
+import type { ReactNode, Ref } from "react"
 import { Button } from "../../ui/button"
 import { LoadingMessage } from "../../ui/loading-message"
+import { PageSection } from "../../ui/page-section"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
@@ -31,7 +33,6 @@ const loadControlFor = (nextPage: NextPageState, hasMore: boolean): LoadControl 
 // Spotify for the next page of this kind alone.
 export function ResultSection<A>(props: ResultSectionProps<A>) {
   const { query, type, title, firstPage, pageOf, children } = props
-  const headingId = useId()
   const loadPage = Effect.fn("ResultSection.loadPage")(function* (offset: number) {
     const spotify = yield* SpotifyApi
     return pageOf(yield* spotify.search(query, [type], offset))
@@ -46,10 +47,7 @@ export function ResultSection<A>(props: ResultSectionProps<A>) {
     return null
   }
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-4">
-      <h2 id={headingId} className="font-display text-xl font-bold">
-        {title}
-      </h2>
+    <PageSection title={title}>
       {children(results, resultRowsRef)}
       {nextPage.status === "failed" ? (
         <SpotifyLoadFailure
@@ -63,12 +61,14 @@ export function ResultSection<A>(props: ResultSectionProps<A>) {
         <div className="flex items-center gap-4">
           {/* Disabled with aria-disabled rather than disabled, so the button keeps focus while its page loads. */}
           <Button
-            variant="secondary"
+            variant="outline"
+            size="sm"
             aria-label={`Load more ${kind}`}
             aria-disabled={nextPage.status === "loading"}
             onClick={loadNextPage}
             ref={loadMoreRef}
           >
+            <ChevronDown aria-hidden size={14} />
             Load more
           </Button>
           {nextPage.status === "loading" ? (
@@ -76,6 +76,6 @@ export function ResultSection<A>(props: ResultSectionProps<A>) {
           ) : null}
         </div>
       ) : null}
-    </section>
+    </PageSection>
   )
 }

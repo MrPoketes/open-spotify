@@ -6,6 +6,7 @@ import { ContextMenu } from "./context-menu"
 import { openedContextMenu } from "./context-menu-content"
 import { MenuButton } from "./menu-button"
 import type { MenuItem } from "./menu-items"
+import { pageTitleClassName } from "./page-title-class-name"
 import { Skeleton } from "./skeleton"
 
 const coverSize = 224
@@ -79,10 +80,7 @@ export function PageHeader({
             className={`${isRound ? "rounded-full" : "rounded-medium"} shadow-raised`}
           />
           <div className="flex min-w-0 flex-col gap-3">
-            <h1
-              id={titleId}
-              className="font-display text-5xl font-bold tracking-tight text-balance break-words"
-            >
+            <h1 id={titleId} className={pageTitleClassName}>
               {title}
             </h1>
             <p className="text-sm text-muted">

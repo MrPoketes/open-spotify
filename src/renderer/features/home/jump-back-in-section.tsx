@@ -1,10 +1,10 @@
 import { useLoad, type LoadState } from "../../lib/use-load"
 import { CardGrid } from "../../ui/card-grid"
+import { LoadingSkeleton } from "../../ui/loading-skeleton"
 import { PageSection } from "../../ui/page-section"
 import { useWithFolderMenu } from "../folders/use-with-folder-menu"
 import type { SpotifyApiError } from "../spotify/spotify-api"
 import type { PlayHistory } from "../spotify/spotify-play-history"
-import { HomeLoading } from "./home-loading"
 import { loadJumpBackInCards, recentPageContexts, type PageContext } from "./jump-back-in"
 import { LoadedContent } from "./loaded-content"
 
@@ -49,7 +49,7 @@ export function JumpBackInSection({ recentlyPlayed }: JumpBackInSectionProps) {
   if (recentlyPlayed.status === "loading") {
     return (
       <PageSection title={title}>
-        <HomeLoading message={loadingMessage} skeleton="tiles" />
+        <LoadingSkeleton message={loadingMessage} shape="tiles" />
       </PageSection>
     )
   }
