@@ -4,6 +4,8 @@ import { useId, type CSSProperties, type KeyboardEvent } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { Artwork, type ArtworkSource } from "../../ui/artwork"
 import { ContextMenu } from "../../ui/context-menu"
+import { creditsLabelClassName } from "../../ui/credits-label-class-name"
+import { Skeleton } from "../../ui/skeleton"
 import { ArtistLinks } from "../artist/artist-links"
 import { useAddToFolder } from "../folders/use-add-to-folder"
 import { formatArtistNames } from "../spotify/format-artist-names"
@@ -72,25 +74,28 @@ const addedAtFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }
 
 export function TrackListHeader({ layout }: { readonly layout: TrackListLayout }) {
   return (
-    <tr aria-rowindex={1} className={`${trackColumns(layout)} h-9 text-left text-xs text-muted`}>
-      <th scope="col" className="text-right font-normal">
+    // A hairline rules the column names off from the rows, as on a sleeve's
+    // tracklist.
+    <tr
+      aria-rowindex={1}
+      className={`${trackColumns(layout)} ${creditsLabelClassName} mb-2 h-9 border-b border-border text-left`}
+    >
+      <th scope="col" className="text-right">
         #
       </th>
-      <th scope="col" className="font-normal">
-        Title
-      </th>
+      <th scope="col">Title</th>
       {showsAlbum(layout) ? (
-        <th scope="col" className="hidden font-normal @xl:block">
+        <th scope="col" className="hidden @xl:block">
           Album
         </th>
       ) : null}
       {showsDateAdded(layout) ? (
-        <th scope="col" className="hidden font-normal @3xl:block">
+        <th scope="col" className="hidden @3xl:block">
           Date added
         </th>
       ) : null}
       <th scope="col" aria-label="Duration" className="flex justify-end">
-        <Clock aria-hidden size={16} />
+        <Clock aria-hidden size={14} />
       </th>
     </tr>
   )
@@ -249,7 +254,7 @@ function PlaceholderCells({ layout, density }: PlaceholderCellsProps) {
           placeholderIcon={spotifyItemKinds.track.icon}
         />
       ) : null}
-      <span className="h-3 w-2/5 rounded-small bg-surface-raised" />
+      <Skeleton className="h-3 w-2/5 rounded-small" />
     </td>
   )
 }

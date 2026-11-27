@@ -5,8 +5,7 @@ import { useLoad } from "../../lib/use-load"
 import { useSavedSettingState } from "../../lib/use-saved-setting-state"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { formatCount } from "../../ui/format-count"
-import { LoadingMessage } from "../../ui/loading-message"
-import { PageHeader } from "../../ui/page-header"
+import { PageHeader, PageHeaderLoading } from "../../ui/page-header"
 import { FolderBreadcrumb } from "./folder-breadcrumb"
 import { FolderEntryGrid } from "./folder-entry-grid"
 import { FolderEntryList } from "./folder-entry-list"
@@ -29,7 +28,7 @@ export function FolderPage({ folderId }: { readonly folderId: string }) {
     return <ErrorWithRetry message="This folder didn't load." onRetry={folderTree.retry} />
   }
   if (folderTree.state.status === "loading" || savedView.state.status !== "loaded") {
-    return <LoadingMessage>Loading folder…</LoadingMessage>
+    return <PageHeaderLoading message="Loading folder…" />
   }
   const location = locateFolder(folderTree.state.value, folderId)
   if (location === undefined) {
@@ -56,16 +55,13 @@ function LoadedFolder({ location, savedView }: LoadedFolderProps) {
           kind="Folder"
           title={folder.name}
           cover={{ sources: [], placeholderIcon: FolderIcon }}
+          details={[formatCount(folder.entries.length, "item", "items")]}
           playButton={
             trackUris.length === 0 ? undefined : (
               <FolderPlayButton folder={folder} trackUris={trackUris} />
             )
           }
-        >
-          <p className="text-xs text-muted tabular-nums">
-            {formatCount(folder.entries.length, "item", "items")}
-          </p>
-        </PageHeader>
+        />
       </div>
       {folder.entries.length === 0 && (
         <p className="text-muted">

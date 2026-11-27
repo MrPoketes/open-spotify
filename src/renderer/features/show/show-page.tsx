@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { useLoad } from "../../lib/use-load"
-import { LoadingMessage } from "../../ui/loading-message"
+import { PageHeaderLoading } from "../../ui/page-header"
 import { SpotifyApi } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { EpisodeList } from "./episode-list"
@@ -18,7 +18,7 @@ export function ShowPage({ showId }: { readonly showId: string }) {
   const { state, retry } = useLoad(loadShow(showId), "The show failed to load")
 
   if (state.status === "loading") {
-    return <LoadingMessage>Loading show…</LoadingMessage>
+    return <PageHeaderLoading message="Loading show…" />
   }
   if (state.status === "failed") {
     return (
@@ -28,7 +28,7 @@ export function ShowPage({ showId }: { readonly showId: string }) {
   const { show, firstPage } = state.value
   return (
     <div className="flex flex-col gap-8">
-      <ShowHeader show={show} />
+      <ShowHeader show={show} episodeCount={firstPage.total} />
       <EpisodeList showId={showId} showUri={show.uri} firstPage={firstPage} />
     </div>
   )

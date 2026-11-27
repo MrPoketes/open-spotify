@@ -27,12 +27,9 @@ export function AlbumHeader({ album, totalDurationMs }: AlbumHeaderProps) {
       title={album.name}
       cover={{ sources: album.images, placeholderIcon: spotifyItemKinds.album.icon }}
       menuItems={[addToFolder(album)]}
+      byline={<ArtistLinks artists={album.artists} />}
+      details={details}
       playButton={<ContextPlayButton contextUri={album.uri} contextName={album.name} />}
-    >
-      <p className="text-sm text-muted">
-        <ArtistLinks artists={album.artists} />
-        {` · ${details.join(" · ")}`}
-      </p>
-    </PageHeader>
+    />
   )
 }

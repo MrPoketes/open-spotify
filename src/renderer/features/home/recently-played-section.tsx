@@ -1,8 +1,8 @@
 import type { LoadState } from "../../lib/use-load"
+import { PageSection } from "../../ui/page-section"
 import type { SpotifyApiError } from "../spotify/spotify-api"
 import type { PlayHistory } from "../spotify/spotify-play-history"
 import { UndatedTrackList } from "../track-list/undated-track-list"
-import { HomeSection } from "./home-section"
 import { LoadedContent } from "./loaded-content"
 
 const recentTrackCount = 10
@@ -21,7 +21,7 @@ export function RecentlyPlayedSection({ recentlyPlayed, onRetry }: RecentlyPlaye
     return null
   }
   return (
-    <HomeSection title="Recently played">
+    <PageSection title="Recently played">
       <LoadedContent
         state={recentlyPlayed}
         loadingMessage="Loading recently played tracks…"
@@ -38,6 +38,6 @@ export function RecentlyPlayedSection({ recentlyPlayed, onRetry }: RecentlyPlaye
           />
         )}
       </LoadedContent>
-    </HomeSection>
+    </PageSection>
   )
 }

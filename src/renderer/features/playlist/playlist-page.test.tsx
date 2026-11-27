@@ -56,7 +56,7 @@ const renderedRowIndexes = () => trackRows().map((row) => row.getAttribute("aria
 const tabToTracks = (user: ReturnType<typeof userEvent.setup>) => user.keyboard("{Tab>4/}")
 
 describe("PlaylistPage", () => {
-  it("shows the playlist's name, description, owner, track count, and duration", async () => {
+  it("shows the playlist's name, description, kind, owner, track count, and duration", async () => {
     await renderPlaylistPage("fake-playlist-late-night-drive")
 
     expect(
@@ -64,15 +64,17 @@ describe("PlaylistPage", () => {
     ).toBeInTheDocument()
     expect(screen.getByText("Long roads & low lights.")).toBeInTheDocument()
     // 100 of the 120 tracks arrive with the playlist, so the total is estimated.
-    expect(
-      screen.getByText(/^Mira Kaelin · 120 tracks · about \d+ hr \d+ min$/),
-    ).toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "Late Night Drive" })).toHaveTextContent(
+      /Playlist · Mira Kaelin · 120 tracks · about \d+ hr \d+ min/,
+    )
   })
 
   it("shows the exact total duration when every track arrives with the playlist", async () => {
     await renderPlaylistPage("fake-playlist-morning-coffee")
 
-    expect(await screen.findByText("Mira Kaelin · 15 tracks · 1 hr 26 min")).toBeInTheDocument()
+    expect(await screen.findByRole("group", { name: "Morning Coffee" })).toHaveTextContent(
+      "Playlist · Mira Kaelin · 15 tracks · 1 hr 26 min",
+    )
   })
 
   it("loads the next page of tracks when the list scrolls to them", async () => {
@@ -287,7 +289,9 @@ describe("PlaylistPage", () => {
     await renderPlaylistPage("fake-playlist-ideas")
 
     expect(await screen.findByText(/This playlist is empty/)).toBeInTheDocument()
-    expect(screen.getByText("Mira Kaelin · 0 tracks")).toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "Ideas for Later" })).toHaveTextContent(
+      "Playlist · Mira Kaelin · 0 tracks",
+    )
     expect(screen.queryByRole("table")).toBeNull()
   })
 

@@ -128,7 +128,7 @@ describe("FolderPage", () => {
     await renderFolderPage(runningId)
 
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Running")
-    expect(screen.getByText("7 items")).toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "Running" })).toHaveTextContent("Folder · 7 items")
   })
 
   it("shows the same entries in the grid and in the list", async () => {
@@ -249,7 +249,7 @@ describe("FolderPage", () => {
 
       expect(await screen.findByText("Removed from Running")).toBeInTheDocument()
       expect(within(entries).queryByRole("link", { name: /Low Orbit/ })).not.toBeInTheDocument()
-      expect(screen.getByText("6 items")).toBeInTheDocument()
+      expect(screen.getByRole("group", { name: "Running" })).toHaveTextContent("Folder · 6 items")
     },
   )
 

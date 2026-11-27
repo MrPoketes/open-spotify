@@ -1,10 +1,10 @@
 import { useLoad, type LoadState } from "../../lib/use-load"
 import { CardGrid } from "../../ui/card-grid"
+import { PageSection } from "../../ui/page-section"
 import { useWithFolderMenu } from "../folders/use-with-folder-menu"
 import type { SpotifyApiError } from "../spotify/spotify-api"
 import type { PlayHistory } from "../spotify/spotify-play-history"
 import { HomeLoading } from "./home-loading"
-import { HomeSection } from "./home-section"
 import { loadJumpBackInCards, recentPageContexts, type PageContext } from "./jump-back-in"
 import { LoadedContent } from "./loaded-content"
 
@@ -19,7 +19,7 @@ function JumpBackInCards({ contexts }: { readonly contexts: ReadonlyArray<PageCo
     return null
   }
   return (
-    <HomeSection title={title}>
+    <PageSection title={title}>
       <LoadedContent
         state={state}
         loadingMessage={loadingMessage}
@@ -35,7 +35,7 @@ function JumpBackInCards({ contexts }: { readonly contexts: ReadonlyArray<PageCo
           />
         )}
       </LoadedContent>
-    </HomeSection>
+    </PageSection>
   )
 }
 
@@ -48,9 +48,9 @@ interface JumpBackInSectionProps {
 export function JumpBackInSection({ recentlyPlayed }: JumpBackInSectionProps) {
   if (recentlyPlayed.status === "loading") {
     return (
-      <HomeSection title={title}>
+      <PageSection title={title}>
         <HomeLoading message={loadingMessage} skeleton="tiles" />
-      </HomeSection>
+      </PageSection>
     )
   }
   // Recently played reports a failed play history, with the Retry that

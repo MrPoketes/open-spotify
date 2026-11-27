@@ -22,6 +22,7 @@ export const buttonVariants = cva(
         default: "h-9 rounded-medium px-4",
         sm: "h-8 rounded-small px-3 text-xs",
         icon: "size-8 rounded-full",
+        play: "size-14 rounded-full shadow-raised",
       },
     },
     defaultVariants: {

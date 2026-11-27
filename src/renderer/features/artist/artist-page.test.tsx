@@ -64,14 +64,14 @@ const showAllAlbumsUntilRetry = async () => {
 }
 
 describe("ArtistPage", () => {
-  it("shows the artist's name and genres", async () => {
+  it("shows the artist's name, and the kind and genres under it", async () => {
     await renderArtistPage("fake-artist-0")
 
     const header = await screen.findByRole("group", { name: "Northbound Static" })
     expect(
       within(header).getByRole("heading", { name: "Northbound Static", level: 1 }),
     ).toBeInTheDocument()
-    expect(within(header).getByText("dream pop, shoegaze")).toBeInTheDocument()
+    expect(header).toHaveTextContent("Artist · dream pop, shoegaze")
   })
 
   it("plays the artist from the play button, and pauses them from the same button", async () => {

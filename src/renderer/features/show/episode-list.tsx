@@ -1,5 +1,5 @@
 import { Effect } from "effect"
-import { useId } from "react"
+import { PageSection } from "../../ui/page-section"
 import { NextPageFooter } from "../spotify/next-page-footer"
 import { SpotifyApi } from "../spotify/spotify-api"
 import type { ShowEpisodePage } from "../spotify/spotify-show"
@@ -15,7 +15,6 @@ interface EpisodeListProps {
 
 // Later pages load as the end of the list scrolls into view.
 export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
-  const headingId = useId()
   const loadPage = Effect.fn("EpisodeList.loadPage")(function* (offset: number) {
     const spotify = yield* SpotifyApi
     return yield* spotify.getShowEpisodePage(showId, offset)
@@ -29,10 +28,7 @@ export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
   )
 
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-4">
-      <h2 id={headingId} className="font-display text-xl font-bold">
-        Episodes
-      </h2>
+    <PageSection title="Episodes">
       {episodes.length === 0 && !hasMoreEpisodes && (
         <p className="text-muted">This show has no episodes yet.</p>
       )}
@@ -46,6 +42,6 @@ export function EpisodeList({ showId, showUri, firstPage }: EpisodeListProps) {
         wantsNextPage={hasMoreEpisodes}
         retryRef={retryRef}
       />
-    </section>
+    </PageSection>
   )
 }

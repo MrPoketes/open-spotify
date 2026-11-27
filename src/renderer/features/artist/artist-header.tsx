@@ -15,12 +15,9 @@ export function ArtistHeader({ artist }: { readonly artist: Artist }) {
         placeholderIcon: spotifyItemKinds.artist.icon,
         isRound: true,
       }}
+      details={artist.genres.length > 0 ? [artist.genres.join(", ")] : []}
       menuItems={[addToFolder(artist)]}
       playButton={<ContextPlayButton contextUri={artist.uri} contextName={artist.name} />}
-    >
-      {artist.genres.length > 0 ? (
-        <p className="text-sm text-muted">{artist.genres.join(", ")}</p>
-      ) : null}
-    </PageHeader>
+    />
   )
 }
