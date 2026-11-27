@@ -4,6 +4,7 @@ import { use, useState, type KeyboardEvent } from "react"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useLoad } from "../../lib/use-load"
 import { Button } from "../../ui/button"
+import { cn } from "../../ui/class-names"
 import { LoadingMessage } from "../../ui/loading-message"
 import { menuRowClassName } from "../../ui/menu-row-class-name"
 import { useRovingFocus, type RovingRowProps } from "../../ui/use-roving-focus"
@@ -33,16 +34,22 @@ export function DeviceList({ onDeviceChosen }: DeviceListProps) {
   )
 
   if (availableDevices.status === "loading") {
-    return <LoadingMessage>Looking for devices…</LoadingMessage>
+    return (
+      <div className="px-3 py-2">
+        <LoadingMessage>Looking for devices…</LoadingMessage>
+      </div>
+    )
   }
 
   if (availableDevices.status === "failed") {
     return (
-      <SpotifyLoadFailure
-        error={availableDevices.error}
-        message="Your devices didn't load."
-        onRetry={retry}
-      />
+      <div className="px-3 py-2">
+        <SpotifyLoadFailure
+          error={availableDevices.error}
+          message="Your devices didn't load."
+          onRetry={retry}
+        />
+      </div>
     )
   }
 
@@ -54,7 +61,7 @@ export function DeviceList({ onDeviceChosen }: DeviceListProps) {
 
   if (deviceEntries.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-2 text-sm">
+      <div className="flex flex-col items-start gap-2 px-3 py-2 text-sm">
         <p>No devices found.</p>
         <p className="text-muted">
           Open the Spotify app on this computer, your phone, or a speaker, then look again.
@@ -156,9 +163,17 @@ function DeviceChoice({
       onKeyDown={onKeyDown}
       className={`${menuRowClassName} ${disabledClassName}`}
     >
-      <Icon aria-hidden size={20} className={device.isActive ? "text-accent" : "text-muted"} />
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-medium",
+          device.isActive ? "bg-accent text-on-accent" : "bg-surface text-muted",
+        )}
+      >
+        <Icon size={20} />
+      </span>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className={`truncate text-sm ${device.isActive ? "font-semibold text-accent" : ""}`}>
+        <span className={cn("truncate text-sm", device.isActive && "font-semibold")}>
           {device.name}
         </span>
         {failureReason === null ? (

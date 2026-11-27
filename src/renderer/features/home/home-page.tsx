@@ -57,7 +57,7 @@ export function HomePage() {
 
   return (
     <div className="@container relative flex flex-col gap-12">
-      <ArtworkWash sources={lastPlayedArtwork(recentlyPlayed.state)} />
+      <ArtworkWash placement="page" sources={lastPlayedArtwork(recentlyPlayed.state)} />
       <div className="flex flex-col gap-3 pt-6">
         <h1 className="font-display text-5xl font-bold tracking-tight">{greeting(user.state)}</h1>
         {isNewAccount ? (

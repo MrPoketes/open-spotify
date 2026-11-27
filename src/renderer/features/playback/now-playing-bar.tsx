@@ -1,6 +1,7 @@
 import { Navigate } from "@tanstack/react-router"
 import { ListMusic } from "lucide-react"
 import { use, type RefObject } from "react"
+import { ArtworkWash } from "../../ui/artwork-wash"
 import { Button } from "../../ui/button"
 import { loginDestinationFor } from "../login/login-destination"
 import type { SpotifyAccessDenied, SpotifyApiError } from "../spotify/spotify-api"
@@ -10,6 +11,7 @@ import { shownDeviceName } from "../this-computer/this-computer-device"
 import { ThisComputerDeviceIdContext } from "../this-computer/this-computer-device-id-context"
 import { DevicePicker } from "./device-picker"
 import { NowPlayingItemSummary } from "./now-playing-item-summary"
+import { playableItemArtwork } from "./playable-item-description"
 import { PlaybackControls } from "./playback-controls"
 import { PlayerControlButton } from "./player-control-button"
 import { usePlayerState, type PlayerStateOrLoading } from "./use-player-state"
@@ -23,6 +25,13 @@ const deviceLabel = (playerState: PlayerStateOrLoading, thisComputerDeviceId: st
     return "No active device"
   }
   return "Devices"
+}
+
+const playingArtwork = (playerState: PlayerStateOrLoading) => {
+  if (playerState.status !== "active" || playerState.playback.item === null) {
+    return []
+  }
+  return playableItemArtwork(playerState.playback.item)
 }
 
 interface NowPlayingBarProps {
@@ -48,8 +57,9 @@ export function NowPlayingBar({
   return (
     <section
       aria-label="Now playing"
-      className="grid h-20 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 px-3"
+      className="relative isolate grid h-20 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 px-3"
     >
+      <ArtworkWash placement="nowPlaying" sources={playingArtwork(playerState)} />
       <div className="min-w-0">
         <NowPlayingSummary
           playerState={playerState}

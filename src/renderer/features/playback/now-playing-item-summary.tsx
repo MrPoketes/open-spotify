@@ -14,6 +14,7 @@ interface NowPlayingItemSummaryProps {
 export function NowPlayingItemSummary({ item }: NowPlayingItemSummaryProps) {
   return (
     <ArtworkSummary
+      size="lead"
       artwork={playableItemSummaryArtwork(item)}
       title={<NowPlayingTitle item={item} />}
       details={

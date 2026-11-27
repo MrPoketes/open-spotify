@@ -1,9 +1,9 @@
 import { Effect, Stream } from "effect"
-import { use, useEffect, useEffectEvent, useState, type KeyboardEvent } from "react"
+import { use, useState, type KeyboardEvent } from "react"
 import { clamp } from "../../lib/clamp"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { useStreamValue } from "../../lib/use-stream-value"
-import { RangeSlider } from "../../ui/range-slider"
+import { Slider } from "../../ui/slider"
 import { formatTrackDuration } from "../track-list/format-duration"
 import type { PlaybackProgress } from "./playback-progress"
 import { Player } from "./player"
@@ -53,38 +53,29 @@ type HeldPosition =
 
 // While the user drags the thumb or holds down a key, the slider follows them,
 // and it seeks once they let go: a held key repeats about 30 times a second,
-// and every request counts against Spotify's rate limit. The native change
-// event fires once the thumb is let go, while React's onChange fires on every
-// step of the drag.
+// and every request counts against Spotify's rate limit. The slider commits a
+// drag once the thumb is let go, and a key once it comes back up.
 function useSeekOnRelease(progress: PlaybackProgress | null, onSeek: (positionMs: number) => void) {
-  const [slider, setSlider] = useState<HTMLInputElement | null>(null)
   const [held, setHeld] = useState<HeldPosition | null>(null)
 
   const hold = (positionMs: number) => setHeld({ status: "holding", positionMs })
+  const seekTo = (positionMs: number) => {
+    setHeld({ status: "released", positionMs, progressAtRelease: progress })
+    onSeek(positionMs)
+  }
   const release = () => {
     if (held?.status === "holding") {
-      setHeld({ status: "released", positionMs: held.positionMs, progressAtRelease: progress })
-      onSeek(held.positionMs)
+      seekTo(held.positionMs)
     }
   }
-  const releaseThumb = useEffectEvent(release)
-
-  useEffect(() => {
-    if (slider === null) {
-      return undefined
-    }
-    const seekToThumb = () => releaseThumb()
-    slider.addEventListener("change", seekToThumb)
-    return () => slider.removeEventListener("change", seekToThumb)
-  }, [slider])
 
   const isShown =
     held?.status === "holding" || (held !== null && held.progressAtRelease === progress)
   return {
-    sliderRef: setSlider,
     heldPositionMs: isShown ? held.positionMs : null,
     isHolding: held?.status === "holding",
     hold,
+    seekTo,
     release,
   }
 }
@@ -102,7 +93,7 @@ export function SeekBar({ unavailableReason, onSeek, onSeekBy }: SeekBarProps) {
   const runtime = use(RendererRuntimeContext)
   const progress = useStreamValue(playbackProgress, null)
   const reason = unavailableReason ?? (progress === null ? "Nothing is playing." : null)
-  const { sliderRef, heldPositionMs, isHolding, hold, release } = useSeekOnRelease(
+  const { heldPositionMs, isHolding, hold, seekTo, release } = useSeekOnRelease(
     progress,
     (positionMs) => {
       if (reason === null) {
@@ -142,33 +133,25 @@ export function SeekBar({ unavailableReason, onSeek, onSeekBy }: SeekBarProps) {
     }
   }
 
-  const elapsedFraction = durationMs === 0 ? 0 : shownPositionMs / durationMs
-
   return (
     <div className="flex w-[40vw] max-w-xl items-center gap-2 text-xs text-muted tabular-nums">
       <span aria-hidden className="min-w-10 text-right">
         {progress === null ? "-:--" : formatTrackDuration(shownPositionMs)}
       </span>
-      <RangeSlider
-        ref={sliderRef}
-        filledFraction={elapsedFraction}
-        aria-label="Playback position"
-        title={reason ?? "Playback position"}
-        aria-disabled={reason !== null}
-        aria-valuetext={
+      <Slider
+        label="Playback position"
+        unavailableReason={reason}
+        valueText={
           progress === null
             ? undefined
             : `${formatTrackDuration(shownPositionMs)} of ${formatTrackDuration(durationMs)}`
         }
-        min={0}
-        max={durationMs}
+        // Base UI needs a max above zero, which nothing playing does not have.
+        max={Math.max(durationMs, 1)}
         step={1000}
         value={shownPositionMs}
-        onChange={(event) => {
-          if (reason === null) {
-            hold(event.target.valueAsNumber)
-          }
-        }}
+        onValueChange={hold}
+        onValueCommitted={seekTo}
         onKeyDown={stepFromKeyboard}
         onKeyUp={release}
         onBlur={release}

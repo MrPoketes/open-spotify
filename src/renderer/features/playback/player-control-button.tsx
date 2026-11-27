@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import type { Ref } from "react"
+import { buttonVariants } from "../../ui/button-variants"
+import { cn } from "../../ui/class-names"
 
 interface PlayerControlButtonProps {
   readonly label: string
@@ -13,14 +15,17 @@ interface PlayerControlButtonProps {
   readonly ref?: Ref<HTMLButtonElement>
 }
 
+// Play or pause is the bar's one primary action: a larger accent disc with a
+// filled glyph. The other controls are ghost icon buttons, and a toggle that is
+// on turns accent and gains a dot.
 const appearance = (isOn: boolean | undefined, isPrimary: boolean | undefined) => {
   if (isPrimary === true) {
-    return "bg-accent text-on-accent not-aria-disabled:hover:opacity-90"
+    return "size-10 shadow-raised [&_svg]:fill-current"
   }
   if (isOn === true) {
-    return "text-accent not-aria-disabled:hover:bg-surface-overlay"
+    return "text-accent not-disabled:not-aria-disabled:hover:text-accent"
   }
-  return "text-muted not-aria-disabled:hover:bg-surface-overlay not-aria-disabled:hover:text-foreground"
+  return ""
 }
 
 // aria-disabled instead of disabled keeps an unavailable control focusable,
@@ -45,11 +50,15 @@ export function PlayerControlButton({
       aria-pressed={isOn}
       aria-disabled={isUnavailable}
       onClick={isUnavailable ? undefined : onPress}
-      className={`relative flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-120 ease-out aria-disabled:opacity-50 ${appearance(isOn, isPrimary)}`}
+      className={cn(
+        buttonVariants({ variant: isPrimary === true ? "default" : "ghost", size: "icon" }),
+        "relative",
+        appearance(isOn, isPrimary),
+      )}
     >
-      <Icon aria-hidden size={20} />
+      <Icon aria-hidden size={isPrimary === true ? 18 : 20} />
       {isOn === true && (
-        <span aria-hidden className="absolute bottom-0 size-1 rounded-full bg-accent" />
+        <span aria-hidden className="absolute bottom-0.5 size-1 rounded-full bg-accent" />
       )}
     </button>
   )
