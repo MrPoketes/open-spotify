@@ -9,6 +9,7 @@ import {
   type Ref,
   type RefObject,
 } from "react"
+import { topBarHeight } from "../../ui/main-view-insets"
 import type { RowFocusHandle } from "../../ui/use-roving-focus"
 import type { PlaybackStart } from "../spotify/spotify-player-requests"
 import { TrackListDensityContext } from "./track-list-density-context"
@@ -89,6 +90,7 @@ export function TrackList({
     estimateSize: () => trackRowHeight[density],
     overscan: 10,
     scrollMargin: rowsOffset,
+    scrollPaddingStart: topBarHeight,
   })
   // The virtualiser keeps the row sizes it worked out and does not notice a
   // new estimate, so a change of density must make it start over.

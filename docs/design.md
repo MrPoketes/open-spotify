@@ -87,6 +87,9 @@ lands, it keeps its earlier styling inside the new shell, and its section below 
   its right end. It is transparent while the view is scrolled to the top, so the artwork wash
   shows behind it, and turns `surface` with a `border` hairline under it once the view has
   scrolled 48 px. The main view's scroll position drives that change in CSS, with no script.
+  Content starts 16 px below the bar, and whatever scrolls into view (a focused control, a row
+  moved to with the arrow keys) stops below it instead of under it
+  (`src/renderer/ui/main-view-insets.ts`).
 - Card grids (albums, artists, folders) use `repeat(auto-fill, minmax(160px, 1fr))` with a
   24 px gap, so the column count follows the pane width. Tile grids (Home's Jump back in) use
   `repeat(auto-fill, minmax(240px, 1fr))` with an 8 px gap.
@@ -209,7 +212,9 @@ are decorative (`aria-hidden`); the control that holds them carries the accessib
 
 Controls come from [shadcn/ui](https://ui.shadcn.com) on Base UI (`@base-ui/react`), added with
 the shadcn CLI into `src/renderer/ui/` and restyled to this document. To add one, run
-`pnpm dlx shadcn@latest add <component>`, then make its imports relative (the CLI writes `@/ui/…`
+`pnpm dlx shadcn@latest add <component>`, then check `package.json`: the CLI adds packages to
+`dependencies` with a caret range, which AGENTS.md forbids, so remove what it added or move it to
+an exact dev dependency. Make its imports relative (the CLI writes `@/ui/…`
 paths and a broken `cn` import; `cn` is in `src/renderer/ui/class-names.ts`), delete the exports
 nothing uses, and adapt its classes: no `dark:` variants, no focus rings (the global
 `:focus-visible` outline stays), no arbitrary radii, and `bg-surface-raised` for shadcn's
@@ -248,10 +253,10 @@ option always chosen: Home's time ranges, the folder page's Grid / List, and Set
 rows.
 
 The sidebar library has a toggle group across its width, one option per kind (Playlists, Albums,
-Artists, Shows), with a name filter under it. Pressing the pressed kind again shows every kind. The filters stay at the top
-of the pane while the list scrolls. When the filters match nothing, the list says so instead of
-going blank. The sidebar folders sit above the filters and scroll away first, since the filters
-apply only to the library.
+Artists, Shows), with a name filter under it. Pressing the pressed kind again shows every kind. The
+filters stay at the top of the pane while the list scrolls. When the filters match nothing, the list
+says so instead of going blank. The sidebar folders sit above the filters and scroll away first,
+since the filters apply only to the library.
 
 #### Text fields
 
@@ -279,13 +284,13 @@ Spotify and always shows `Heart` on `accent`. Its page header shows the same til
 
 ### Sidebar sections and pins
 
-The sidebar library is split into sections: Liked Songs, Playlists, Albums, Artists, and Shows,
-in the order the user chose. Each section starts with a heading button (`text-sm`, 600,
-`muted`, with a 16 px chevron) that collapses or expands it and sets `aria-expanded`, and a
-"section options" menu with Move up, Move down, and Hide section. Moves swap with the
-neighbouring section on screen, so hidden and empty sections never make a move look like it did
-nothing. Hidden sections are listed under the library as round `surface-raised` "Show Albums"
-buttons, until the sidebar's redesign. A section with no entries left after the filters is not shown.
+The sidebar library is split into sections: Liked Songs, Playlists, Albums, Artists, and Shows, in
+the order the user chose. Each section starts with a heading button (`text-sm`, 600, `muted`, with a
+16 px chevron) that collapses or expands it and sets `aria-expanded`, and a "section options" menu
+with Move up, Move down, and Hide section. Moves swap with the neighbouring section on screen, so
+hidden and empty sections never make a move look like it did nothing. Hidden sections are listed
+under the library as round `surface-raised` "Show Albums" buttons, until the sidebar's redesign. A
+section with no entries left after the filters is not shown.
 
 Any entry can be pinned. Pinned entries leave their section for a "Pinned" section that always sits
 at the top, in the order they were pinned. Each row has a pin button that shows on hover or while
@@ -545,10 +550,10 @@ hovered row cannot preview over the theme being edited. Focus moves to its Name 
 opens and back to "Edit a copy" when it closes. A built-in or imported theme is never edited in
 place: the editor starts from a copy named "<theme> (copy)".
 
-From the top: Name and Author fields side by side, a "Color scheme" radio group (Dark, Light),
-then one `fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows, Artwork) with a field
-for every token. The fields come from the `Theme` Schema, so a new token appears without changes
-to the editor. Each field is labelled with its token name, and its control fits the value:
+From the top: Name and Author fields side by side, a "Color scheme" radio group (Dark, Light), then
+one `fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows, Artwork) with a field
+for every token. The fields come from the `Theme` Schema, so a new token appears without changes to
+the editor. Each field is labelled with its token name, and its control fits the value:
 
 - **Colors:** the native color picker beside a hex text field. Both edit the same value.
 - **Radii and spacing:** a number field and a unit list (`px`, `rem`, `em`).
@@ -599,11 +604,11 @@ control for "Last 4 weeks", "Last 6 months" (the default), and "Last year". Spot
 longest range from about a year of listening, so the app does not call it "All time".
 
 Each section loads on its own, with a skeleton in its shape (tiles, rows, or round cards) and its
-loading message for screen readers. One failing section leaves the others in place. Jump back in
-and Recently played both come from the play history, so when it fails to load, only Recently
-played says so, and its Retry loads it for both. A section with nothing to show is left out. A top section stays
-once the user picks another time range, so the switch back stays too, and says when that range
-has nothing. An account with no listening history at all sees a short welcome message instead.
+loading message for screen readers. One failing section leaves the others in place. Jump back in and
+Recently played both come from the play history, so when it fails to load, only Recently played says
+so, and its Retry loads it for both. A section with nothing to show is left out. A top section stays
+once the user picks another time range, so the switch back stays too, and says when that range has
+nothing. An account with no listening history at all sees a short welcome message instead.
 
 Log out and the app version live in Settings, under Account.
 
@@ -641,7 +646,8 @@ button always plays from the first track. Spotify reports no context for a list 
 cannot tell that the folder is playing and switch to `Pause`. A failed play behaves as on every
 other page: the status message says why, and with no active device the device picker opens.
 
-Below the play button, at the right end, a Grid / List segmented control. The choice is the `folderView` setting and applies to every folder.
+Below the play button, at the right end, a Grid / List segmented control. The choice is the
+`folderView` setting and applies to every folder.
 
 - **Grid:** cards in the standard card grid, each with square artwork (round for artists), the
   name in `text-sm` at 600, and the kind in `text-xs` `muted`. A nested folder says how many
@@ -825,11 +831,12 @@ announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, after a 16 px `muted` `CircleAlert` icon,
   with a small outline Retry button under it (`src/renderer/ui/error-with-retry.tsx`). It stays
-  quiet because a page can show several at once: the accent is for what plays. Failed Spotify loads add a short `text-xs` `muted`
-  detail line under the message (and in the now-playing bar and queue pane) so the user can see
-  why Spotify rejected or could not answer the request. When a later page of a long list fails,
-  the rows already loaded stay and the error sits below them. A virtualised list can fail in the
-  middle, so its error sticks to the bottom of the view and shows wherever the user has scrolled.
+  quiet because a page can show several at once: the accent is for what plays. Failed Spotify loads
+  add a short `text-xs` `muted` detail line under the message (and in the now-playing bar and queue
+  pane) so the user can see why Spotify rejected or could not answer the request. When a later page
+  of a long list fails, the rows already loaded stay and the error sits below them. A virtualised
+  list can fail in the middle, so its error sticks to the bottom of the view and shows wherever the
+  user has scrolled.
 - An auth failure on a Spotify load (`NotLoggedIn` or `SessionExpired`) never shows Retry, since
   retrying cannot bring back a session. Instead it sends the user to `/login` (with
   `sessionExpired: true` for `SessionExpired`). A development-mode 403 (`SpotifyAccessDenied` —

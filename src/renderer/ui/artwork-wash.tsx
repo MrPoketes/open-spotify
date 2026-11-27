@@ -1,4 +1,5 @@
 import type { ArtworkSource } from "./artwork"
+import { mainViewContentTop } from "./main-view-insets"
 
 interface ArtworkWashProps {
   // Widest first, the order Spotify lists image sizes in.
@@ -7,8 +8,8 @@ interface ArtworkWashProps {
 
 // The artwork, blurred far past recognition, colors the top of the page and
 // fades into the surface (docs/design.md, Artwork wash). It bleeds through the
-// main view's padding (app-shell.tsx) to the edges of the sheet and up behind
-// the floating top bar, and scrolls away with the page. The page's root must
+// main view's padding to the edges of the sheet (px-8 in app-shell.tsx) and up
+// behind the floating top bar, and scrolls away with the page. The page's root must
 // be positioned. The theme's artwork-wash token sets its strength, and a theme
 // that sets it to 0 turns it off.
 export function ArtworkWash({ sources }: ArtworkWashProps) {
@@ -20,7 +21,8 @@ export function ArtworkWash({ sources }: ArtworkWashProps) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -inset-x-8 -top-18 -z-10 h-96 overflow-hidden"
+      style={{ top: -mainViewContentTop }}
+      className="pointer-events-none absolute -inset-x-8 -z-10 h-96 overflow-hidden"
     >
       <img
         src={smallestSource.url}

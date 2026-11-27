@@ -1,5 +1,6 @@
 import { useCallback, useState, type ReactNode } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
+import { mainViewContentTop, topBarHeight } from "../../ui/main-view-insets"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
 import { FoldersProvider } from "../folders/folders-provider"
 import { LibraryPlaylistsProvider } from "../library/library-playlists-provider"
@@ -58,7 +59,10 @@ function AppShellLayout({
                 {/* The top bar floats over the main view, so a page's artwork wash shows behind it. */}
                 <div className="relative isolate flex min-w-0 flex-1 flex-col overflow-hidden rounded-large bg-surface shadow-raised main-view-timeline-scope">
                   <TopBar />
-                  <main className="min-h-0 flex-1 overflow-y-auto px-8 pt-18 pb-12 main-view-scroll-timeline">
+                  <main
+                    style={{ paddingTop: mainViewContentTop, scrollPaddingTop: topBarHeight }}
+                    className="min-h-0 flex-1 overflow-y-auto px-8 pb-12 main-view-scroll-timeline"
+                  >
                     <TrackListDensityProvider savedDensity={savedTrackListDensity}>
                       <EditablePlaylistsProvider>
                         <OpenDevicePickerContext value={openDevicePicker}>
