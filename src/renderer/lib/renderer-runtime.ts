@@ -3,9 +3,10 @@ import { createContext } from "react"
 import { Player } from "../features/playback/player"
 import { SpotifyAccessToken } from "../features/spotify/spotify-access-token"
 import { SpotifyApi } from "../features/spotify/spotify-api"
+import { WebPlaybackSdk } from "../features/this-computer/web-playback-sdk"
 import { DesktopBridge } from "./desktop-bridge"
 
-export type RendererServices = DesktopBridge | SpotifyApi | Player
+export type RendererServices = DesktopBridge | SpotifyApi | Player | WebPlaybackSdk
 
 // Forked fibers have no caller to receive a failure, so every typed error must
 // be handled before runFork.
@@ -19,7 +20,7 @@ type RendererRuntime = Omit<ManagedRuntime.ManagedRuntime<RendererServices, neve
 // Runs Effect programs from React and router code. Every service the
 // renderer depends on is provided here, in one place.
 export const rendererRuntime: RendererRuntime = ManagedRuntime.make(
-  Player.layer.pipe(
+  Layer.mergeAll(Player.layer, WebPlaybackSdk.layer).pipe(
     Layer.provideMerge(SpotifyApi.layer),
     Layer.provideMerge(SpotifyAccessToken.layer),
     Layer.provideMerge(DesktopBridge.layer),

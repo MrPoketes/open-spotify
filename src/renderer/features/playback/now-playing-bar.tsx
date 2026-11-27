@@ -1,11 +1,13 @@
 import { Navigate } from "@tanstack/react-router"
 import { ListMusic } from "lucide-react"
-import type { RefObject } from "react"
+import { use, type RefObject } from "react"
 import { AccentButton } from "../../ui/pill-button"
 import { loginDestinationFor } from "../login/login-destination"
 import type { SpotifyAccessDenied, SpotifyApiError } from "../spotify/spotify-api"
 import { SpotifyDashboardLink } from "../spotify/spotify-dashboard-link"
 import { spotifyErrorDetail } from "../spotify/spotify-error-detail"
+import { shownDeviceName } from "../this-computer/this-computer-device"
+import { ThisComputerDeviceIdContext } from "../this-computer/this-computer-device-id-context"
 import { DevicePicker } from "./device-picker"
 import { NowPlayingItemSummary } from "./now-playing-item-summary"
 import { PlaybackControls } from "./playback-controls"
@@ -13,9 +15,9 @@ import { PlayerControlButton } from "./player-control-button"
 import { usePlayerState, type PlayerStateOrLoading } from "./use-player-state"
 import { VolumeControl } from "./volume-control"
 
-const deviceLabel = (playerState: PlayerStateOrLoading) => {
+const deviceLabel = (playerState: PlayerStateOrLoading, thisComputerDeviceId: string | null) => {
   if (playerState.status === "active") {
-    return `Playing on ${playerState.playback.device.name}`
+    return `Playing on ${shownDeviceName(playerState.playback.device, thisComputerDeviceId)}`
   }
   if (playerState.status === "noActiveDevice") {
     return "No active device"
@@ -41,6 +43,7 @@ export function NowPlayingBar({
   onDevicePickerOpenChange,
 }: NowPlayingBarProps) {
   const playerState = usePlayerState()
+  const thisComputerDeviceId = use(ThisComputerDeviceIdContext)
 
   return (
     <section
@@ -64,7 +67,7 @@ export function NowPlayingBar({
           onPress={onQueueToggle}
         />
         <DevicePicker
-          deviceLabel={deviceLabel(playerState)}
+          deviceLabel={deviceLabel(playerState, thisComputerDeviceId)}
           isOpen={isDevicePickerOpen}
           onOpenChange={onDevicePickerOpenChange}
         />

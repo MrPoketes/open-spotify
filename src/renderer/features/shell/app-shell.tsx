@@ -9,6 +9,7 @@ import { QueuePane } from "../queue/queue-pane"
 import { useQueuePane } from "../queue/use-queue-pane"
 import { IsMacContext } from "../shortcuts/is-mac-context"
 import { ShortcutsDialog } from "../shortcuts/shortcuts-dialog"
+import { ThisComputerProvider } from "../this-computer/this-computer-provider"
 import { EditablePlaylistsProvider } from "../track-actions/editable-playlists-provider"
 import { TrackListDensityProvider } from "../track-list/track-list-density-provider"
 import { Sidebar } from "./sidebar"
@@ -46,41 +47,43 @@ function AppShellLayout({
 
   return (
     <StatusMessageProvider>
-      <LibraryPlaylistsProvider>
-        <FoldersProvider>
-          <div className="flex h-screen flex-col gap-2 p-2">
-            <div className="flex min-h-0 flex-1">
-              <Sidebar savedWidth={savedSidebarWidth} />
-              <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
-                <TopBar />
-                <main className="min-h-0 flex-1 overflow-y-auto p-6">
-                  <TrackListDensityProvider savedDensity={savedTrackListDensity}>
-                    <EditablePlaylistsProvider>
-                      <OpenDevicePickerContext value={openDevicePicker}>
-                        {children}
-                      </OpenDevicePickerContext>
-                    </EditablePlaylistsProvider>
-                  </TrackListDensityProvider>
-                </main>
+      <ThisComputerProvider>
+        <LibraryPlaylistsProvider>
+          <FoldersProvider>
+            <div className="flex h-screen flex-col gap-2 p-2">
+              <div className="flex min-h-0 flex-1">
+                <Sidebar savedWidth={savedSidebarWidth} />
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-medium bg-surface">
+                  <TopBar />
+                  <main className="min-h-0 flex-1 overflow-y-auto p-6">
+                    <TrackListDensityProvider savedDensity={savedTrackListDensity}>
+                      <EditablePlaylistsProvider>
+                        <OpenDevicePickerContext value={openDevicePicker}>
+                          {children}
+                        </OpenDevicePickerContext>
+                      </EditablePlaylistsProvider>
+                    </TrackListDensityProvider>
+                  </main>
+                </div>
+                <QueuePane
+                  ref={queuePaneRef}
+                  isOpen={isQueueOpen}
+                  savedWidth={savedRightPaneWidth}
+                  onClose={closeQueue}
+                />
               </div>
-              <QueuePane
-                ref={queuePaneRef}
-                isOpen={isQueueOpen}
-                savedWidth={savedRightPaneWidth}
-                onClose={closeQueue}
+              <NowPlayingBar
+                isQueueOpen={isQueueOpen}
+                onQueueToggle={toggleQueue}
+                queueButtonRef={queueButtonRef}
+                isDevicePickerOpen={isDevicePickerOpen}
+                onDevicePickerOpenChange={setDevicePickerOpen}
               />
             </div>
-            <NowPlayingBar
-              isQueueOpen={isQueueOpen}
-              onQueueToggle={toggleQueue}
-              queueButtonRef={queueButtonRef}
-              isDevicePickerOpen={isDevicePickerOpen}
-              onDevicePickerOpenChange={setDevicePickerOpen}
-            />
-          </div>
-        </FoldersProvider>
-        <ShortcutsDialog />
-      </LibraryPlaylistsProvider>
+          </FoldersProvider>
+          <ShortcutsDialog />
+        </LibraryPlaylistsProvider>
+      </ThisComputerProvider>
     </StatusMessageProvider>
   )
 }

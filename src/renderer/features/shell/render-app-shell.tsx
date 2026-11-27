@@ -8,12 +8,14 @@ import {
 } from "@tanstack/react-router"
 import { render, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { Stream, type ManagedRuntime } from "effect"
+import { Stream, type Layer, type ManagedRuntime } from "effect"
 import type { ReactNode } from "react"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { fakeRendererRuntime } from "../../lib/fake-renderer-runtime"
 import { RendererRuntimeContext, type RendererServices } from "../../lib/renderer-runtime"
+import type { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import type { WebPlaybackSdk } from "../this-computer/web-playback-sdk"
 import { AppShell } from "./app-shell"
 
 // Installed on import so pane widths saved during a drag can be read back from
@@ -21,18 +23,31 @@ import { AppShell } from "./app-shell"
 // build a runtime over it too.
 Object.defineProperty(window, "desktop", { value: fakeMainProcess() })
 
+interface AppShellRuntimeOptions {
+  readonly spotify?: (spotify: SpotifyApi["Service"]) => Partial<SpotifyApi["Service"]>
+  readonly webPlaybackSdk?: Layer.Layer<WebPlaybackSdk>
+}
+
 // The library is left empty because no test of the shell reads it, and
 // rendering the fixtures' sixty-odd entries in the sidebar ran the first test
 // past its timeout on a busy machine.
-export const appShellRuntime = fakeRendererRuntime({
-  mainProcess: window.desktop,
-  spotifyApi: spotifyApiFakeWith(() => ({
-    currentUserPlaylists: Stream.empty,
-    savedAlbums: Stream.empty,
-    followedArtists: Stream.empty,
-    savedShows: Stream.empty,
-  })),
-})
+export const appShellRuntimeWith = ({
+  spotify = () => ({}),
+  ...runtimeOptions
+}: AppShellRuntimeOptions) =>
+  fakeRendererRuntime({
+    mainProcess: window.desktop,
+    spotifyApi: spotifyApiFakeWith((fakeSpotify) => ({
+      currentUserPlaylists: Stream.empty,
+      savedAlbums: Stream.empty,
+      followedArtists: Stream.empty,
+      savedShows: Stream.empty,
+      ...spotify(fakeSpotify),
+    })),
+    ...runtimeOptions,
+  })
+
+export const appShellRuntime = appShellRuntimeWith({})
 
 interface ShellOptions {
   readonly savedSidebarWidth?: number

@@ -54,6 +54,28 @@ export async function serveFakeWebApi(context: BrowserContext): Promise<void> {
   )
 }
 
+// The real Web Playback SDK cannot sign in with the fake access token, and its
+// hidden iframe then logs errors a few seconds after login. This stand-in is
+// served from the SDK's own URL, so the content security policy still decides
+// whether the script may load, and its player never becomes ready.
+const fakeWebPlaybackSdkScript = `
+window.Spotify = {
+  Player: class {
+    addListener() { return true }
+    connect() { return Promise.resolve(true) }
+    disconnect() {}
+    setVolume() { return Promise.resolve() }
+  },
+}
+window.onSpotifyWebPlaybackSDKReady()
+`
+
+export async function serveFakeWebPlaybackSdk(context: BrowserContext): Promise<void> {
+  await context.route("https://sdk.scdn.co/spotify-player.js", (route) =>
+    route.fulfill({ contentType: "text/javascript", body: fakeWebPlaybackSdkScript }),
+  )
+}
+
 // Login runs in the main process, out of Playwright's network interception,
 // so its two ways out are replaced inside the running app: the system browser
 // approves the login at once, and fetch answers only Spotify's token endpoint
