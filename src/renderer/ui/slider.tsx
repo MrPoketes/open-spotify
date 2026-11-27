@@ -80,7 +80,6 @@ export function Slider({
     <SliderPrimitive.Root
       {...range}
       min={0}
-      title={unavailableReason ?? label}
       onValueChange={(value) => {
         if (!isUnavailable) {
           onValueChange(value)
@@ -94,6 +93,10 @@ export function Slider({
       className="group/slider w-full"
     >
       <SliderPrimitive.Control
+        // The pointer rests on the control, so its title shows the reason on
+        // hover. On the root, which Base UI makes a group, the title would also
+        // name the group, and a screen reader would read the reason twice.
+        title={unavailableReason ?? label}
         className={cn(
           "relative flex h-4 w-full cursor-pointer touch-none items-center select-none",
           isUnavailable && "cursor-default opacity-50",
