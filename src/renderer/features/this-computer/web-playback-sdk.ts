@@ -181,8 +181,9 @@ export interface ThisComputerPlayer {
   // The Spotify Connect device id while the SDK is ready to play, and null
   // while it is not.
   readonly deviceId: Stream.Stream<string | null>
-  // The SDK's latest error, and null while it has reported none since it was
-  // last ready.
+  // Why the player cannot play: the SDK's latest error, or
+  // initialization_error when connect() failed without one. Null while
+  // neither has happened since the player was last ready.
   readonly failure: Stream.Stream<SdkErrorEvent | null>
   // From 0 to 100, like the Web API.
   readonly setVolume: (volumePercent: number) => Effect.Effect<void, WebPlaybackSdkError>
