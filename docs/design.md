@@ -158,7 +158,7 @@ items, 700 for headings. Headings from `text-xl` up use `font-display` (lint enf
 `tracking-tight`. Durations and counts use `tabular-nums` so columns line up. The labels that
 divide the sidebar (Folders, Pinned, the library sections, Hidden) are set like the credits on a
 sleeve's back: `text-xs`, 600, `uppercase`, `tracking-wider`, `muted`
-(`src/renderer/ui/section-label-class-name.ts`).
+(`src/renderer/ui/sidebar-heading-class-names.ts`).
 
 ### Radii
 
@@ -263,25 +263,25 @@ since the filters apply only to the library.
 
 #### Text fields
 
-A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 6 px
-gap between them. The input (`src/renderer/ui/input.tsx`) is `surface-raised` with
-`rounded-medium` corners, 36 px tall with 12 px inside, and `text-sm` text; it turns
-`surface-overlay` on hover. An invalid field gets a `danger` ring and a `text-xs` `danger`
-message in an `alert` under it, which also describes it (`aria-describedby`). The onboarding
-Client ID, the theme editor's Name and Author, and the New folder dialog's Name use it
-(`src/renderer/ui/text-field.tsx`); the folder tree's inline rename uses the bare input. The Client ID turns off autocomplete and spell check, since
-it is not a word. The search field and the library's name filter use the same input, the search
-field as a pill with a search icon.
+A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 6 px gap
+between them. The input (`src/renderer/ui/input.tsx`) is `surface-raised` with `rounded-medium`
+corners, 36 px tall with 12 px inside, and `text-sm` text; it turns `surface-overlay` on hover. An
+invalid field gets a `danger` ring and a `text-xs` `danger` message in an `alert` under it, which
+also describes it (`aria-describedby`). The onboarding Client ID, the theme editor's Name and
+Author, and the New folder dialog's Name use it (`src/renderer/ui/text-field.tsx`); the folder
+tree's inline rename uses the bare input. The Client ID turns off autocomplete and spell check,
+since it is not a word. The search field and the library's name filter use the same input, the
+search field as a pill with a search icon.
 
 ### Library rows
 
-Sidebar entries are 48 px rows: 40 px artwork, the name in `text-sm`, and a `text-xs` `muted`
-line that says what the entry is ("Playlist · owner", "Album · artist", "Artist", "Show").
-Images are given to the browser as a `srcset`, so it downloads the smallest size that is sharp
-on the current screen. Rows sit on the `canvas` with `rounded-small` corners and take
-`surface-raised` on hover; the row whose page is open keeps `surface-raised`, so the sidebar shows
-where the user is (`src/renderer/ui/sidebar-row-class-names.ts`, which the folder tree's rows share).
-While the library loads, six skeleton rows in the same shape stand in for it.
+Sidebar entries are 48 px rows: 40 px artwork, the name in `text-sm`, and a `text-xs` `muted` line
+that says what the entry is ("Playlist · owner", "Album · artist", "Artist", "Show"). Images are
+given to the browser as a `srcset`, so it downloads the smallest size that is sharp on the current
+screen. Rows sit on the `canvas` with `rounded-small` corners and take `surface-raised` on hover;
+the row whose page is open keeps `surface-raised`, so the sidebar shows where the user is
+(`src/renderer/ui/sidebar-row-class-names.ts`, which the folder tree's rows share). While the
+library loads, six skeleton rows in the same shape stand in for it.
 
 When artwork is missing or fails to load, a `surface-raised` tile with a `muted` Lucide icon for
 the kind stands in: `ListMusic` for playlists, `Disc3` for albums, `MicVocal` for artists,
@@ -325,16 +325,16 @@ Pins are the `pinnedLibraryEntries` setting and the section order and states are
 
 ### Sidebar folders
 
-The user's folders sit above the library sections under a "Folders" heading, as a tree that
-follows the WAI-ARIA tree view pattern. Its rows look like library rows (the shared
-`ArtworkSummary`), with 16 px more indent for each level, so top-level artwork lines up with the
-library's. Each folder row ends with a 32 px round chevron button, where library rows have their
-pin button, and its tile shows `FolderOpen` instead of `Folder` while it is expanded. The tree is one tab stop: the up and down arrows (or `j` and `k`) move through the
-visible rows, the right arrow expands a folder and then moves into it, the left arrow collapses
-a folder or moves to its parent, and `Enter` opens the row's page. Clicking a row opens its
-page, and clicking a chevron expands or collapses the folder and moves focus to its row, so
-focus is never lost inside a folder that closes. The chevron stays out of the tab order and the
-accessibility tree, since the row announces whether it is expanded.
+The user's folders sit above the library sections under a "Folders" heading, as a tree that follows
+the WAI-ARIA tree view pattern. Its rows look like library rows (the shared `ArtworkSummary`), with
+16 px more indent for each level, so top-level artwork lines up with the library's. Each folder row
+ends with a 32 px round chevron button, where library rows have their pin button, and its tile shows
+`FolderOpen` instead of `Folder` while it is expanded. The tree is one tab stop: the up and down
+arrows (or `j` and `k`) move through the visible rows, the right arrow expands a folder and then
+moves into it, the left arrow collapses a folder or moves to its parent, and `Enter` opens the row's
+page. Clicking a row opens its page, and clicking a chevron expands or collapses the folder and
+moves focus to its row, so focus is never lost inside a folder that closes. The chevron stays out of
+the tab order and the accessibility tree, since the row announces whether it is expanded.
 
 Every way of rearranging the tree works from the keyboard. `Alt+↑` and `Alt+↓` (`Option+↑` and
 `Option+↓` on macOS) move the focused entry up or down among its siblings; the row's
@@ -347,18 +347,18 @@ screen. The status message reports each move ("Moved Warm-up down"); a move the 
 refuses leaves the tree as it was and says why ("Couldn't move Warm-up. A folder can't go inside
 itself.").
 
-The mouse can rearrange the tree too, by dragging a row; a press that moves less than 4 px is
-still a click. Letting go on the top or bottom quarter of a folder's row, or the top or bottom half
-of a Spotify item's, puts the entry on the line above or below that row, which a 2 px `accent` line
-indented to the row's level shows, starting at an 8 px `accent` ring that marks the level. Letting go on the middle of a folder puts the entry last inside
-it, which the folder shows with `surface-raised` and a 2 px `accent` outline. The line below an
-expanded folder is the line above its first child. A drop that is not allowed shows no indicator
-and does nothing: a folder inside itself or a folder within it, a Spotify item at the top level, or
-a drop that leaves the entry where it is. Resting for 600 ms on the middle half of a collapsed
-folder while dragging, where a drop inside it is on offer, opens it. The dragged row is dimmed to
-50 % opacity, and the status message reports the drop like a keyboard move ("Moved Warm-up up",
-"Moved Warm-up to Focus"). Dragging is for the mouse only, since the keyboard moves above do the
-same.
+The mouse can rearrange the tree too, by dragging a row; a press that moves less than 4 px is still
+a click. Letting go on the top or bottom quarter of a folder's row, or the top or bottom half of a
+Spotify item's, puts the entry on the line above or below that row, which a 2 px `accent` line
+indented to the row's level shows, starting at an 8 px `accent` ring that marks the level. Letting
+go on the middle of a folder puts the entry last inside it, which the folder shows with
+`surface-raised` and a 2 px `accent` outline. The line below an expanded folder is the line above
+its first child. A drop that is not allowed shows no indicator and does nothing: a folder inside
+itself or a folder within it, a Spotify item at the top level, or a drop that leaves the entry where
+it is. Resting for 600 ms on the middle half of a collapsed folder while dragging, where a drop
+inside it is on offer, opens it. The dragged row is dimmed to 50 % opacity, and the status message
+reports the drop like a keyboard move ("Moved Warm-up up", "Moved Warm-up to Focus"). Dragging is
+for the mouse only, since the keyboard moves above do the same.
 
 A playlist, album, artist, or show can also be dragged from the library sections onto a folder,
 which adds it last there, as "Add to folder" does, and the status message says so ("Added to

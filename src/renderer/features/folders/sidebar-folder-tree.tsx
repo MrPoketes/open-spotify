@@ -7,7 +7,7 @@ import { useSavedSettingState } from "../../lib/use-saved-setting-state"
 import { ArtworkSummary } from "../../ui/artwork-summary"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { IconButton } from "../../ui/icon-button"
-import { sectionLabelClassName } from "../../ui/section-label-class-name"
+import { sidebarHeadingClassNames } from "../../ui/sidebar-heading-class-names"
 import { TreeView } from "../../ui/tree-view"
 import { visibleTreeRows } from "../../ui/visible-tree-rows"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
@@ -116,8 +116,8 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
 
   return (
     <div className="flex flex-col pb-2">
-      <div className="flex h-8 items-center justify-between gap-2 pr-2 pl-2">
-        <h3 id={headingId} className={sectionLabelClassName}>
+      <div className={sidebarHeadingClassNames.row}>
+        <h3 id={headingId} className={sidebarHeadingClassNames.label}>
           Folders
         </h3>
         <IconButton

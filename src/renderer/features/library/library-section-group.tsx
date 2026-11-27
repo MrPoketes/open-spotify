@@ -4,7 +4,7 @@ import type { LibrarySection } from "../../../shared/library-layout"
 import { MenuButton } from "../../ui/menu-button"
 import type { MenuAction } from "../../ui/menu-items"
 import { shownOnRowHoverClassName } from "../../ui/row-action-class-name"
-import { sectionLabelClassName } from "../../ui/section-label-class-name"
+import { sidebarHeadingClassNames } from "../../ui/sidebar-heading-class-names"
 import type { LibraryEntry } from "./library-entries"
 import { LibraryEntryList } from "./library-entry-list"
 import type { LibraryEntryActions } from "./library-entry-row"
@@ -32,7 +32,7 @@ export function LibrarySectionGroup({
 
   return (
     <section aria-label={name} className="flex flex-col pt-4">
-      <div className="group flex h-8 items-center justify-between gap-2 pr-2 pl-2">
+      <div className={`group ${sidebarHeadingClassNames.row}`}>
         <h3>
           <button
             ref={entryActions.focusAfterChange(sectionFocusKey(section.kind))}
@@ -40,7 +40,7 @@ export function LibrarySectionGroup({
             aria-expanded={!section.collapsed}
             aria-controls={section.collapsed ? undefined : listId}
             onClick={onToggleCollapsed}
-            className={`flex items-center gap-1 rounded-small py-1 transition-colors duration-120 ease-out hover:text-foreground ${sectionLabelClassName}`}
+            className={`flex items-center gap-1 rounded-small py-1 transition-colors duration-120 ease-out hover:text-foreground ${sidebarHeadingClassNames.label}`}
           >
             {name}
             <ChevronIcon aria-hidden size={14} />
@@ -65,7 +65,9 @@ interface PinnedLibrarySectionProps {
 export function PinnedLibrarySection({ entries, entryActions }: PinnedLibrarySectionProps) {
   return (
     <section aria-label="Pinned" className="flex flex-col pt-4">
-      <h3 className={`flex h-8 items-center px-2 ${sectionLabelClassName}`}>Pinned</h3>
+      <h3 className={`${sidebarHeadingClassNames.row} ${sidebarHeadingClassNames.label}`}>
+        Pinned
+      </h3>
       <LibraryEntryList entries={entries} pinned actions={entryActions} />
     </section>
   )

@@ -1,7 +1,7 @@
 import { Eye } from "lucide-react"
 import type { LibraryEntryKind, LibrarySection } from "../../../shared/library-layout"
 import { Button } from "../../ui/button"
-import { sectionLabelClassName } from "../../ui/section-label-class-name"
+import { sidebarHeadingClassNames } from "../../ui/sidebar-heading-class-names"
 import { librarySectionNames } from "./library-section-names"
 import { showSectionFocusKey, type FocusAfterChange } from "./use-focus-after-change"
 
@@ -22,7 +22,9 @@ export function HiddenLibrarySections({
   }
   return (
     <div className="flex flex-col pt-4">
-      <h3 className={`flex h-8 items-center px-2 ${sectionLabelClassName}`}>Hidden</h3>
+      <h3 className={`${sidebarHeadingClassNames.row} ${sidebarHeadingClassNames.label}`}>
+        Hidden
+      </h3>
       <div className="flex flex-wrap gap-1">
         {hiddenSections.map(({ kind }) => (
           <Button

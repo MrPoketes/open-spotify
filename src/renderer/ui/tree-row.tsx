@@ -2,6 +2,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import type { ReactNode } from "react"
 import { buttonVariants } from "./button-variants"
+import { cn } from "./class-names"
 import { sidebarRowClassNames } from "./sidebar-row-class-names"
 import type { TreeDropPosition } from "./tree-drop"
 
@@ -97,7 +98,11 @@ export function Expander({ isBranch, isExpanded, onToggle }: ExpanderProps) {
       // assistive technology.
       onMouseDown={(event) => event.preventDefault()}
       onClick={onToggle}
-      className={`mr-2 ${buttonVariants({ variant: "ghost", size: "icon" })}`}
+      // The row under it already takes surface-raised on hover.
+      className={cn(
+        buttonVariants({ variant: "ghost", size: "icon" }),
+        "mr-2 not-disabled:not-aria-disabled:hover:bg-surface-overlay",
+      )}
     >
       <ChevronIcon size={16} />
     </button>
