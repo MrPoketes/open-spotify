@@ -1,8 +1,13 @@
+import { Navigate } from "@tanstack/react-router"
 import { Effect } from "effect"
-import { useState } from "react"
+import { use, useState } from "react"
 import { defaultLibrarySections } from "../../../shared/library-layout"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
+import { loginDestinationFor } from "../login/login-destination"
+import { RailFailure } from "../shell/rail-failure"
+import { SidebarRailContext } from "../shell/sidebar-rail-context"
+import type { SpotifyApiError } from "../spotify/spotify-api"
 import { SpotifyLoadFailure } from "../spotify/spotify-load-failure"
 import { arrangeLibrary } from "./arrange-library"
 import { HiddenLibrarySections } from "./hidden-library-sections"
@@ -11,6 +16,7 @@ import { LibraryFilterBar } from "./library-filter-bar"
 import { filterLibraryEntries, hasLibraryFilters, noLibraryFilters } from "./library-filters"
 import { LibraryLoading } from "./library-loading"
 import { useLibraryPlaylists, type LibraryPlaylistsLoad } from "./library-playlists"
+import { LibraryRail } from "./library-rail"
 import { LibrarySectionGroup, PinnedLibrarySection } from "./library-section-group"
 import { nameFilterFocusKey } from "./use-focus-after-change"
 import { useLibraryLayout, type SavedLibraryLayout } from "./use-library-layout"
@@ -27,24 +33,19 @@ const loadLibrary = (loadPlaylists: LibraryPlaylistsLoad) =>
 
 export function Library() {
   const { state, retry } = useLoad(loadLibrary(useLibraryPlaylists()), "The library failed to load")
+  const isRail = use(SidebarRailContext) !== null
 
   if (state.status === "loading") {
     return <LibraryLoading />
   }
 
   if (state.status === "failed") {
-    return (
-      <div className="px-2">
-        <SpotifyLoadFailure
-          error={state.error}
-          message="Your library didn't load."
-          onRetry={retry}
-        />
-      </div>
-    )
+    return <LibraryFailure error={state.error} onRetry={retry} />
   }
 
+  // The rail has no room for the explanation, and nothing to show.
   if (state.value.entries.length === 0) {
+    if (isRail) return null
     return (
       <p className="px-2 text-sm text-muted">
         Playlists, albums, artists, and shows you save will appear here.
@@ -54,6 +55,30 @@ export function Library() {
 
   const { entries, ...savedLayout } = state.value
   return <ArrangedLibraryView entries={entries} savedLayout={savedLayout} />
+}
+
+interface LibraryFailureProps {
+  readonly error: SpotifyApiError
+  readonly onRetry: () => void
+}
+
+// In the icon rail an expired session still goes to login, as
+// SpotifyLoadFailure sends it in the full sidebar.
+function LibraryFailure({ error, onRetry }: LibraryFailureProps) {
+  const rail = use(SidebarRailContext)
+  const message = "Your library didn't load."
+  if (rail === null) {
+    return (
+      <div className="px-2">
+        <SpotifyLoadFailure error={error} message={message} onRetry={onRetry} />
+      </div>
+    )
+  }
+  const destination = loginDestinationFor(error)
+  if (destination !== null) {
+    return <Navigate {...destination} />
+  }
+  return <RailFailure message={message} rail={rail} />
 }
 
 // The library is not empty here, so when nothing shows, either the filters
@@ -72,6 +97,17 @@ interface ArrangedLibraryViewProps {
 function ArrangedLibraryView({ entries, savedLayout }: ArrangedLibraryViewProps) {
   const [filters, setFilters] = useState(noLibraryFilters)
   const layout = useLibraryLayout(savedLayout)
+  const isRail = use(SidebarRailContext) !== null
+  const entryActions = { togglePin: layout.togglePin, focusAfterChange: layout.focusAfterChange }
+  // The rail has no filters to show, so it leaves them out.
+  if (isRail) {
+    return (
+      <LibraryRail
+        {...arrangeLibrary(entries, layout.pinnedUris, layout.sections)}
+        entryActions={entryActions}
+      />
+    )
+  }
   const matchingEntries = filterLibraryEntries(entries, filters)
   const { pinnedEntries, shownSections } = arrangeLibrary(
     matchingEntries,
@@ -79,7 +115,6 @@ function ArrangedLibraryView({ entries, savedLayout }: ArrangedLibraryViewProps)
     layout.sections,
   )
   const isEmpty = pinnedEntries.length === 0 && shownSections.length === 0
-  const entryActions = { togglePin: layout.togglePin, focusAfterChange: layout.focusAfterChange }
 
   // The output stays mounted while entries show: screen readers only announce
   // changes to a live region that was already on the page.

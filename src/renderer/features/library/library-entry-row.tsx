@@ -1,13 +1,15 @@
 import { useDraggable } from "@dnd-kit/core"
 import { Link } from "@tanstack/react-router"
 import { Pin, PinOff } from "lucide-react"
-import type { KeyboardEvent } from "react"
-import { ArtworkSummary } from "../../ui/artwork-summary"
+import { use, type KeyboardEvent } from "react"
+import { ArtworkSummary, SummaryArtworkTile } from "../../ui/artwork-summary"
 import { ContextMenu } from "../../ui/context-menu"
 import { rowActionClassName } from "../../ui/row-action-class-name"
 import { sidebarRowClassNames } from "../../ui/sidebar-row-class-names"
+import { Tooltip } from "../../ui/tooltip"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { toSpotifyItem, useAddToFolder } from "../folders/use-add-to-folder"
+import { SidebarRailContext } from "../shell/sidebar-rail-context"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import type { LibraryEntry } from "./library-entries"
 import { libraryEntryArtwork } from "./library-entry-artwork"
@@ -25,10 +27,10 @@ interface LibraryEntryRowProps {
   readonly actions: LibraryEntryActions
 }
 
-// The pin button stays out of the tab order, so a list remains one tab stop
-// (docs/design.md); keyboard users pin the focused row with a shortcut instead.
+// In the sidebar's icon rail the row shows only its artwork, and its name in
+// a tooltip and its accessible name; the pin shortcut still works there.
 export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: LibraryEntryRowProps) {
-  const pinLabel = pinned ? `Unpin ${entry.name}` : `Pin ${entry.name} to the top`
+  const isRail = use(SidebarRailContext) !== null
   const focusAfterPin = actions.focusAfterChange(entry.uri)
   const addToFolder = useAddToFolder()
   const pinShortcut = useRowShortcut("togglePin")
@@ -59,34 +61,57 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
       className={`group flex items-center ${sidebarRowClassNames.surface} ${isDragging ? "opacity-50" : ""}`}
     >
       <ContextMenu menu={entryMenu}>
-        <Link
-          {...entry.page}
-          {...rovingProps}
-          ref={(row: HTMLElement | null) => {
-            rovingProps.ref(row)
-            focusAfterPin(row)
-          }}
-          onKeyDown={togglePinWithKey}
-          aria-keyshortcuts={pinShortcut.ariaKeyShortcuts}
-          className={sidebarRowClassNames.link}
-        >
-          <ArtworkSummary
-            artwork={libraryEntryArtwork(entry)}
-            title={entry.name}
-            details={entry.details}
-          />
-        </Link>
+        <Tooltip label={entry.name} details={entry.details} disabled={!isRail}>
+          <Link
+            {...entry.page}
+            {...rovingProps}
+            ref={(row: HTMLElement | null) => {
+              rovingProps.ref(row)
+              focusAfterPin(row)
+            }}
+            onKeyDown={togglePinWithKey}
+            aria-keyshortcuts={pinShortcut.ariaKeyShortcuts}
+            aria-label={isRail ? `${entry.name}, ${entry.details}` : undefined}
+            className={sidebarRowClassNames.link}
+          >
+            {isRail ? (
+              <SummaryArtworkTile artwork={libraryEntryArtwork(entry)} />
+            ) : (
+              <ArtworkSummary
+                artwork={libraryEntryArtwork(entry)}
+                title={entry.name}
+                details={entry.details}
+              />
+            )}
+          </Link>
+        </Tooltip>
       </ContextMenu>
-      <button
-        type="button"
-        tabIndex={-1}
-        aria-label={pinLabel}
-        title={`${pinLabel} (${pinShortcut.label})`}
-        onClick={() => actions.togglePin(entry)}
-        className={`mr-2 ${rowActionClassName}`}
-      >
-        {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}
-      </button>
+      {isRail ? null : <PinButton entry={entry} pinned={pinned} actions={actions} />}
     </div>
+  )
+}
+
+interface PinButtonProps {
+  readonly entry: LibraryEntry
+  readonly pinned: boolean
+  readonly actions: LibraryEntryActions
+}
+
+// The pin button stays out of the tab order, so a list remains one tab stop
+// (docs/design.md); keyboard users pin the focused row with a shortcut instead.
+function PinButton({ entry, pinned, actions }: PinButtonProps) {
+  const pinLabel = pinned ? `Unpin ${entry.name}` : `Pin ${entry.name} to the top`
+  const pinShortcut = useRowShortcut("togglePin")
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label={pinLabel}
+      title={`${pinLabel} (${pinShortcut.label})`}
+      onClick={() => actions.togglePin(entry)}
+      className={`mr-2 ${rowActionClassName}`}
+    >
+      {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}
+    </button>
   )
 }

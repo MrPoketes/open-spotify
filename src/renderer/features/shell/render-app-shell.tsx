@@ -46,6 +46,7 @@ export const appShellRuntimeWith = ({
 
 interface ShellOptions {
   readonly savedSidebarWidth?: number
+  readonly savedSidebarCollapsed?: boolean
   readonly savedRightPaneWidth?: number
   readonly savedPlayOnThisComputer?: boolean
   readonly platform?: string
@@ -58,6 +59,7 @@ interface ShellOptions {
 // router shows where the shell navigated to.
 export const renderAppShell = async ({
   savedSidebarWidth = 280,
+  savedSidebarCollapsed = false,
   savedRightPaneWidth = 320,
   savedPlayOnThisComputer = defaultPlayOnThisComputer,
   platform = "win32",
@@ -68,6 +70,7 @@ export const renderAppShell = async ({
     component: () => (
       <AppShell
         savedSidebarWidth={savedSidebarWidth}
+        savedSidebarCollapsed={savedSidebarCollapsed}
         savedRightPaneWidth={savedRightPaneWidth}
         savedTrackListDensity="comfortable"
         savedPlayOnThisComputer={savedPlayOnThisComputer}

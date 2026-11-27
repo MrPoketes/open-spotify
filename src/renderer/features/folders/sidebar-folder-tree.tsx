@@ -1,5 +1,5 @@
 import { Folder as FolderIcon, FolderPlus } from "lucide-react"
-import { useId, useState } from "react"
+import { use, useId, useState } from "react"
 import type { Folder, FolderTree } from "../../../shared/folders"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
@@ -10,9 +10,12 @@ import { IconButton } from "../../ui/icon-button"
 import { sidebarHeadingClassNames } from "../../ui/sidebar-heading-class-names"
 import { TreeView } from "../../ui/tree-view"
 import { visibleTreeRows } from "../../ui/visible-tree-rows"
+import { RailFailure } from "../shell/rail-failure"
+import { SidebarRailContext } from "../shell/sidebar-rail-context"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { useFolderTree } from "./folder-tree"
 import { folderTreeNodes } from "./folder-tree-nodes"
+import { SidebarFolderRail } from "./sidebar-folder-rail"
 import {
   SidebarFolderRow,
   SpotifyItemRow,
@@ -31,8 +34,10 @@ export function SidebarFolderTree() {
     loadSavedSetting("expandedFolders", []),
     "The expanded folders failed to load",
   )
+  const rail = use(SidebarRailContext)
 
   if (folderTree.state.status === "failed") {
+    if (rail !== null) return <RailFailure message="Your folders didn't load." rail={rail} />
     return (
       <div className="px-2 pb-2">
         <ErrorWithRetry message="Your folders didn't load." onRetry={folderTree.retry} />
@@ -41,6 +46,9 @@ export function SidebarFolderTree() {
   }
   if (folderTree.state.status === "loading" || savedExpandedFolderIds.state.status !== "loaded") {
     return null
+  }
+  if (rail !== null) {
+    return <SidebarFolderRail tree={folderTree.state.value} />
   }
   return (
     <LoadedFolderTree

@@ -79,6 +79,7 @@ lands, it keeps its earlier styling inside the new shell, and its section below 
 └───────────────────────────────────────────────────────────────────┘
 ```
 
+- The sidebar collapses to a 72 px icon rail (see Sidebar rail).
 - The window is `canvas` with an 8 px margin. The sidebar and the now-playing bar sit on it with
   no panel of their own. The main view and the right pane are sheets: `surface`, `radius-large`
   corners, `shadow-raised`. The gaps between them double as resize handles.
@@ -261,6 +262,15 @@ filters stay at the top of the pane while the list scrolls. When the filters mat
 says so instead of going blank. The sidebar folders sit above the filters and scroll away first,
 since the filters apply only to the library.
 
+#### Tooltips
+
+A tooltip (`src/renderer/ui/tooltip.tsx`) names a control that shows no text, such as a row in the
+sidebar rail. It opens to the right of its element on hover after 300 ms, or at once on keyboard
+focus, and closes when the pointer or focus leaves. It is a `surface-overlay` panel with
+`shadow-overlay` and `rounded-small` corners: the name in `text-xs` 600, and a `muted` line under
+it that says what the item is. The element keeps its own accessible name; the tooltip only shows
+it. Icon buttons elsewhere keep their native `title`.
+
 #### Text fields
 
 A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 6 px gap
@@ -322,6 +332,38 @@ hidden section, it says that instead, so a hidden section never looks like a mis
 
 Pins are the `pinnedLibraryEntries` setting and the section order and states are the
 `librarySections` setting, so both survive a restart.
+
+### Sidebar rail
+
+The sidebar collapses to a 72 px icon rail, so a small window gives the main view more room. The
+toggle is a ghost icon button before the "Your library" heading (`PanelLeftClose`, "Collapse
+sidebar"), which stays in the same place and becomes "Expand sidebar" (`PanelLeftOpen`) in the
+rail, so it keeps focus when pressed. `Ctrl+B` (`Cmd+B` on macOS) does the same from anywhere.
+Dragging the divider more than halfway from the narrowest width (200 px) towards the rail snaps
+the sidebar to the rail, and dragging it back out opens it at the dragged width; a resize from
+the keyboard opens it too. The divider reports "Collapsed" while the rail shows. The choice is the
+`sidebarCollapsed` setting, next to `sidebarWidth`, and the full width is kept for when it opens.
+
+In the rail every row shows only its 40 px artwork or icon, in the same column as in the full
+sidebar. Its accessible name is its name and what it is ("Late Night Drive, Playlist · Mira
+Kaelin"), and a tooltip shows both on hover and keyboard focus. The rows keep their keyboard use:
+each list is one tab stop moved through with the arrow keys, `Enter` opens the row's page, `P`
+pins a library entry, and the context menu still offers Add to folder. The heading, the filters,
+the section headings, the Folders heading and its New folder button, and the hidden sections are
+left out; a `border` hairline divides the folders, the pinned entries, and each shown section,
+and each list is named for its section. Every shown section lists its entries, collapsed or not,
+since the rail has no heading to expand one with, and the filters do not apply.
+
+Each top-level folder is a button in the rail. `Enter`, `Space`, or a click opens its contents in
+a menu to the right: "Open Running" first, for the folder's page, then its entries, with a
+submenu for each folder inside it, nested as deep as the tree goes. Choosing an entry opens its
+page. The up and down arrows move between the folders instead of opening one. To rename, create,
+or rearrange folders, the user expands the sidebar.
+
+A load that fails in the rail shows a `CircleAlert` icon button named for the failure ("Your
+library didn't load. Expand the sidebar to see why."), which expands the sidebar to show the
+message and its Retry. An expired session still goes to login. While the library loads, the rail
+shows only the skeletons' tiles; an empty library or a user without folders shows nothing there.
 
 ### Sidebar folders
 
@@ -808,6 +850,7 @@ Alt, macOS uses Cmd and Option.
 | `/`                             | `/`                           | Search                                  |
 | `Alt+←` / `Alt+→`               | `Cmd+[` / `Cmd+]`             | Go back / forward                       |
 | `Alt+Shift+Q`                   | `Option+Shift+Q`              | Show or hide the queue                  |
+| `Ctrl+B`                        | `Cmd+B`                       | Collapse or expand the sidebar          |
 | `?`                             | `?`                           | Show the shortcuts dialog               |
 | `P` on a row                    | `P` on a row                  | Pin or unpin a library entry            |
 | `F2` on a row                   | `F2` on a row                 | Rename a folder in the sidebar          |

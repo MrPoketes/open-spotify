@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Stream } from "effect"
 import type { ReactNode } from "react"
@@ -49,7 +49,7 @@ const mainProcessFailing = (): DesktopApi => ({
 describe("Sidebar folder menu", () => {
   it("imports folders from the keyboard and says how many were added", async () => {
     await renderSidebar(
-      <Sidebar savedWidth={280} />,
+      <Sidebar savedWidth={280} savedCollapsed={false} />,
       mainProcessReplying({
         [ipcChannels.importFolders]: { _tag: "FoldersImported", folderCount: 3 },
       }),
@@ -70,7 +70,7 @@ describe("Sidebar folder menu", () => {
     const user = userEvent.setup()
     await renderSidebar(
       <FoldersProvider>
-        <Sidebar savedWidth={280} />
+        <Sidebar savedWidth={280} savedCollapsed={false} />
       </FoldersProvider>,
       mainProcessImportingOneFolder(),
     )
@@ -89,7 +89,7 @@ describe("Sidebar folder menu", () => {
 
   it("confirms that the folders were exported", async () => {
     await renderSidebar(
-      <Sidebar savedWidth={280} />,
+      <Sidebar savedWidth={280} savedCollapsed={false} />,
       mainProcessReplying({ [ipcChannels.exportFolders]: { _tag: "FoldersExported" } }),
     )
 
@@ -101,7 +101,7 @@ describe("Sidebar folder menu", () => {
 
   it("explains why a folders file was refused", async () => {
     await renderSidebar(
-      <Sidebar savedWidth={280} />,
+      <Sidebar savedWidth={280} savedCollapsed={false} />,
       mainProcessReplying({
         [ipcChannels.importFolders]: { _tag: "FoldersFileUnsupportedVersion", version: 2 },
       }),
@@ -118,7 +118,7 @@ describe("Sidebar folder menu", () => {
   // A folder the user cannot write to, or a file that disappears before it is
   // read, fails in the main process instead of with a reply.
   it("says so when the folders cannot be exported", async () => {
-    await renderSidebar(<Sidebar savedWidth={280} />, mainProcessFailing())
+    await renderSidebar(<Sidebar savedWidth={280} savedCollapsed={false} />, mainProcessFailing())
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
     await userEvent.click(await screen.findByRole("menuitem", { name: "Export folders…" }))
@@ -127,7 +127,7 @@ describe("Sidebar folder menu", () => {
   })
 
   it("says so when a folders file cannot be imported", async () => {
-    await renderSidebar(<Sidebar savedWidth={280} />, mainProcessFailing())
+    await renderSidebar(<Sidebar savedWidth={280} savedCollapsed={false} />, mainProcessFailing())
 
     await userEvent.click(await screen.findByRole("button", { name: "Folder options" }))
     await userEvent.click(await screen.findByRole("menuitem", { name: "Import folders…" }))
@@ -146,7 +146,7 @@ describe("Sidebar folder tree", () => {
   it("shows the folder tree above the library sections", async () => {
     await renderSidebar(
       <FoldersProvider>
-        <Sidebar savedWidth={280} />
+        <Sidebar savedWidth={280} savedCollapsed={false} />
       </FoldersProvider>,
       fakeMainProcess({ folderTree: roadTripTree }),
     )
@@ -161,7 +161,7 @@ describe("Sidebar folder tree", () => {
     const user = userEvent.setup()
     await renderSidebar(
       <FoldersProvider>
-        <Sidebar savedWidth={280} />
+        <Sidebar savedWidth={280} savedCollapsed={false} />
       </FoldersProvider>,
       mainProcessImportingOneFolder(),
     )
@@ -170,5 +170,127 @@ describe("Sidebar folder tree", () => {
     await user.click(await screen.findByRole("menuitem", { name: "Import folders…" }))
 
     expect(await screen.findByRole("treeitem", { name: /^Imported/ })).toBeInTheDocument()
+  })
+})
+
+const runningId = "6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4e02"
+
+// Running holds a playlist and Warm-up, which holds an album.
+const runningTree: FolderTree = [
+  {
+    _tag: "Folder",
+    id: runningId,
+    name: "Running",
+    entries: [
+      {
+        _tag: "SpotifyItem",
+        uri: "spotify:playlist:37i9dQZF1DX76Wlfdnj7AP",
+        name: "Easy Start",
+        imageUrl: null,
+      },
+      {
+        _tag: "Folder",
+        id: "6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4e03",
+        name: "Warm-up",
+        entries: [
+          {
+            _tag: "SpotifyItem",
+            uri: "spotify:album:4aawyAB9vmqN3uQ7FjRGTy",
+            name: "Pace",
+            imageUrl: null,
+          },
+        ],
+      },
+    ],
+  },
+  { _tag: "Folder", id: "6f1c1b7e-2f0a-4c55-9d1e-0a1b2c3d4e04", name: "Focus", entries: [] },
+]
+
+const renderRail = (mainProcess: DesktopApi = fakeMainProcess()) =>
+  renderSidebar(
+    <FoldersProvider>
+      <Sidebar savedWidth={280} savedCollapsed />
+    </FoldersProvider>,
+    mainProcess,
+  )
+
+describe("Sidebar icon rail", () => {
+  // The rail shows no text, so the accessible name is all a screen reader has.
+  it("names each library entry, which shows only its artwork", async () => {
+    await renderRail()
+
+    const entry = await screen.findByRole("link", {
+      name: "Late Night Drive, Playlist · Mira Kaelin",
+    })
+
+    expect(entry).toHaveTextContent("")
+    expect(screen.getByRole("list", { name: "Playlists" })).toContainElement(entry)
+  })
+
+  it("shows an entry's name in a tooltip on hover and on keyboard focus", async () => {
+    await renderRail()
+    const entry = await screen.findByRole("link", { name: /^Late Night Drive/ })
+
+    await userEvent.hover(entry)
+    expect(await screen.findByText("Late Night Drive")).toBeInTheDocument()
+    await userEvent.unhover(entry)
+    await waitFor(() => expect(screen.queryByText("Late Night Drive")).not.toBeInTheDocument())
+
+    // Past the Expand sidebar button and the Liked Songs list.
+    await userEvent.tab()
+    await userEvent.tab()
+    await userEvent.tab()
+    expect(entry).toHaveFocus()
+    expect(await screen.findByText("Late Night Drive")).toBeInTheDocument()
+  })
+
+  it("opens an entry's page from the rail", async () => {
+    const router = await renderRail()
+
+    await userEvent.click(await screen.findByRole("link", { name: /^Late Night Drive/ }))
+
+    expect(router.state.location.pathname).toMatch(/^\/playlist\//)
+  })
+
+  it("opens a folder's contents beside the rail, down to the entries of a folder inside it", async () => {
+    const router = await renderRail(fakeMainProcess({ folderTree: runningTree }))
+    const running = await screen.findByRole("button", { name: "Running, Folder · 2 items" })
+
+    running.focus()
+    await userEvent.keyboard("{Enter}")
+    const menu = await screen.findByRole("menu", { name: "Running" })
+    expect(within(menu).getByRole("menuitem", { name: "Open Running" })).toBeInTheDocument()
+    expect(within(menu).getByRole("menuitem", { name: "Easy Start" })).toBeInTheDocument()
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Warm-up" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Pace" }))
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/album/4aawyAB9vmqN3uQ7FjRGTy"),
+    )
+  })
+
+  // The rail has no room for the message and Retry, so it must lead to them.
+  it("expands the sidebar to show a failure the rail has no room for", async () => {
+    await renderRail(mainProcessFailing())
+
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Your folders didn't load. Expand the sidebar to see why.",
+      }),
+    )
+
+    expect(screen.getByRole("button", { name: "Collapse sidebar" })).toBeInTheDocument()
+    expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument()
+  })
+
+  it("moves between folders with the arrow keys instead of opening one", async () => {
+    await renderRail(fakeMainProcess({ folderTree: runningTree }))
+    const running = await screen.findByRole("button", { name: /^Running/ })
+
+    running.focus()
+    await userEvent.keyboard("{ArrowDown}")
+
+    expect(screen.getByRole("button", { name: /^Focus/ })).toHaveFocus()
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument()
   })
 })

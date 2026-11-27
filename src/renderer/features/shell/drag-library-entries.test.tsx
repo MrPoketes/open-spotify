@@ -23,7 +23,7 @@ const renderSidebar = (tree: FolderTree = folderTree) =>
   renderScreen(
     <StatusMessageProvider>
       <FoldersProvider>
-        <Sidebar savedWidth={280} />
+        <Sidebar savedWidth={280} savedCollapsed={false} />
       </FoldersProvider>
     </StatusMessageProvider>,
     fakeMainProcess({ folderTree: tree }),

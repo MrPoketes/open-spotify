@@ -4,7 +4,7 @@ import type { ArtworkSource } from "../../ui/artwork"
 import { formatCount } from "../../ui/format-count"
 import { spotifyItemKinds, type SpotifyItemKind } from "../spotify/spotify-item-kinds"
 
-type FolderEntryPage =
+export type FolderEntryPage =
   | { readonly to: "/folder/$folderId"; readonly params: { readonly folderId: string } }
   | { readonly to: "/playlist/$playlistId"; readonly params: { readonly playlistId: string } }
   | { readonly to: "/artist/$artistId"; readonly params: { readonly artistId: string } }
