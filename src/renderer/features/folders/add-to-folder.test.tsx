@@ -16,7 +16,7 @@ import { AlbumPage } from "../album/album-page"
 import { DiscographySection } from "../artist/discography-section"
 import { Library } from "../library/library"
 import { PlaylistPage } from "../playlist/playlist-page"
-import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
+import { spotifyApiFakeWithEmptyLibrary } from "../spotify/spotify-api-fake"
 import { coverUrl } from "../spotify/spotify-fixtures"
 import { FakeMainView } from "../track-list/fake-main-view"
 import { TrackList } from "../track-list/track-list"
@@ -81,10 +81,7 @@ const renderWithFolders = async (
     // shared fixtures' sixty-odd other entries made every test render them on
     // load and again after each folder change, which made the first test the
     // slowest in the suite and ran it past its timeout on a busy machine.
-    spotifyApiFakeWith((spotify) => ({
-      currentUserPlaylists: Stream.empty,
-      followedArtists: Stream.empty,
-      savedShows: Stream.empty,
+    spotifyApiFakeWithEmptyLibrary((spotify) => ({
       savedAlbums: Stream.make(lowOrbit),
       getAlbum: (albumId) =>
         spotify

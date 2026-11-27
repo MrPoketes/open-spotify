@@ -24,6 +24,7 @@ const loadAppShell = Effect.gen(function* () {
   return yield* Effect.all({
     appInfo: bridge.getAppInfo,
     savedSidebarWidth: loadSavedSetting("sidebarWidth", defaultSidebarWidth),
+    savedSidebarCollapsed: loadSavedSetting("sidebarCollapsed", false),
     savedRightPaneWidth: loadSavedSetting("rightPaneWidth", defaultRightPaneWidth),
     savedTrackListDensity: loadSavedSetting("trackListDensity", defaultTrackListDensity),
     savedPlayOnThisComputer: loadSavedSetting("playOnThisComputer", defaultPlayOnThisComputer),
@@ -34,6 +35,7 @@ function AppLayout() {
   const {
     appInfo,
     savedSidebarWidth,
+    savedSidebarCollapsed,
     savedRightPaneWidth,
     savedTrackListDensity,
     savedPlayOnThisComputer,
@@ -42,6 +44,7 @@ function AppLayout() {
   return (
     <AppShell
       savedSidebarWidth={savedSidebarWidth}
+      savedSidebarCollapsed={savedSidebarCollapsed}
       savedRightPaneWidth={savedRightPaneWidth}
       savedTrackListDensity={savedTrackListDensity}
       savedPlayOnThisComputer={savedPlayOnThisComputer}

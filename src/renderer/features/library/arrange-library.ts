@@ -6,7 +6,7 @@ interface ShownLibrarySection {
   readonly entries: ReadonlyArray<LibraryEntry>
 }
 
-interface ArrangedLibrary {
+export interface ArrangedLibrary {
   readonly pinnedEntries: ReadonlyArray<LibraryEntry>
   readonly shownSections: ReadonlyArray<ShownLibrarySection>
 }

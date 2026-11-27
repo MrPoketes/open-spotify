@@ -84,6 +84,11 @@ export const windowShortcuts = {
     group: "General",
     keys: { key: "q", alt: true, shift: true },
   },
+  toggleSidebar: {
+    description: "Collapse or expand the sidebar",
+    group: "General",
+    keys: { key: "b", primary: true },
+  },
   showShortcuts: { description: "Show keyboard shortcuts", group: "General", keys: { key: "?" } },
 } satisfies Record<string, KeyboardShortcut>
 

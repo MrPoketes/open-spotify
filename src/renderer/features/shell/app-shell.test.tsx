@@ -66,13 +66,15 @@ describe.each(resizablePanes)("the $name divider", (resizablePane) => {
     expect(resizablePane.pane()).toHaveStyle({ width: "350px" })
   })
 
+  // Dragging the sidebar much further collapses it to its rail (tested below),
+  // so the pointer goes only a little past the narrowest width.
   it("keeps the pane between its narrowest and widest width while dragging", async () => {
     await resizablePane.renderWithWidth(300)
 
     await dragDivider(2000)
     expect(divider()).toHaveAttribute("aria-valuenow", String(resizablePane.maximumWidth))
 
-    await dragDivider(-2000)
+    await dragDivider(resizablePane.minimumWidth - resizablePane.maximumWidth - 30)
     expect(divider()).toHaveAttribute("aria-valuenow", String(resizablePane.minimumWidth))
   })
 
@@ -114,6 +116,114 @@ describe.each(resizablePanes)("the $name divider", (resizablePane) => {
     await resizablePane.renderWithWidth(await runtime.runPromise(loadSavedWidth), runtime)
 
     expect(divider()).toHaveAttribute("aria-valuenow", "350")
+  })
+})
+
+const sidebar = () => screen.getByRole("navigation", { name: "Library" })
+
+const dragSidebarDivider = async (distance: number) => {
+  await userEvent.pointer([
+    { keys: "[MouseLeft>]", target: sidebarDivider(), coords: { clientX: 500 } },
+    { coords: { clientX: 500 + distance } },
+    { keys: "[/MouseLeft]" },
+  ])
+}
+
+describe("the sidebar's icon rail", () => {
+  it("collapses the sidebar to the rail and back with its button, which keeps focus", async () => {
+    await renderAppShell({ savedSidebarWidth: 300 })
+
+    await userEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }))
+    expect(sidebar()).toHaveStyle({ width: "72px" })
+    const expandButton = screen.getByRole("button", { name: "Expand sidebar" })
+    expect(expandButton).toHaveFocus()
+
+    await userEvent.click(expandButton)
+    expect(sidebar()).toHaveStyle({ width: "300px" })
+    expect(screen.getByRole("button", { name: "Collapse sidebar" })).toHaveFocus()
+  })
+
+  it("collapses and expands the sidebar with Ctrl+B", async () => {
+    await renderAppShell({ savedSidebarWidth: 300 })
+
+    await userEvent.keyboard("{Control>}b{/Control}")
+    expect(sidebar()).toHaveStyle({ width: "72px" })
+
+    await userEvent.keyboard("{Control>}b{/Control}")
+    expect(sidebar()).toHaveStyle({ width: "300px" })
+  })
+
+  // The rail does not show Folder options, so focus on it would drop to the page.
+  it("moves focus to the toggle when Ctrl+B hides the focused control", async () => {
+    await renderAppShell()
+
+    screen.getByRole("button", { name: "Folder options" }).focus()
+    await userEvent.keyboard("{Control>}b{/Control}")
+
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveFocus()
+  })
+
+  it("leaves focus outside the sidebar where it is when Ctrl+B collapses it", async () => {
+    await renderAppShell()
+
+    const queueButton = screen.getByRole("button", { name: "Queue" })
+    queueButton.focus()
+    await userEvent.keyboard("{Control>}b{/Control}")
+
+    expect(sidebar()).toHaveStyle({ width: "72px" })
+    expect(queueButton).toHaveFocus()
+  })
+
+  it("snaps to the rail when the divider is dragged well past the narrowest width, and opens when dragged back out", async () => {
+    await renderAppShell({ savedSidebarWidth: 300 })
+
+    await dragSidebarDivider(-250)
+    expect(sidebar()).toHaveStyle({ width: "72px" })
+    expect(sidebarDivider()).toHaveAttribute("aria-valuetext", "Collapsed")
+
+    await dragSidebarDivider(200)
+    expect(sidebar()).toHaveStyle({ width: "272px" })
+  })
+
+  // On its way to the rail the drag passes the narrowest width, which must not
+  // replace the width the user had.
+  it("opens at the width it had after being dragged to the rail", async () => {
+    await renderAppShell({ savedSidebarWidth: 300 })
+
+    await dragSidebarDivider(-250)
+    await userEvent.click(screen.getByRole("button", { name: "Expand sidebar" }))
+
+    expect(sidebar()).toHaveStyle({ width: "300px" })
+  })
+
+  it("opens a collapsed sidebar only with the divider's widening keys", async () => {
+    await renderAppShell({ savedSidebarWidth: 300, savedSidebarCollapsed: true })
+
+    sidebarDivider().focus()
+    await userEvent.keyboard("{ArrowLeft}{Home}")
+    expect(sidebar()).toHaveStyle({ width: "72px" })
+
+    await userEvent.keyboard("{ArrowRight}")
+    expect(sidebar()).toHaveStyle({ width: "300px" })
+  })
+
+  it("keeps the sidebar collapsed after a restart", async () => {
+    const runtime = appShellRuntimeWith({})
+    const loadSavedCollapsed = loadSavedSetting("sidebarCollapsed", false)
+    const firstLaunch = await renderAppShell({ runtime })
+    await userEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }))
+    await waitFor(async () => {
+      expect(await runtime.runPromise(loadSavedCollapsed)).toBe(true)
+    })
+    firstLaunch.unmount()
+
+    await renderAppShell({
+      runtime,
+      savedSidebarCollapsed: await runtime.runPromise(loadSavedCollapsed),
+    })
+
+    expect(sidebar()).toHaveStyle({ width: "72px" })
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeInTheDocument()
   })
 })
 

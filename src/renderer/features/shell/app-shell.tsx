@@ -18,6 +18,7 @@ import { useHistoryShortcuts } from "./use-history-shortcuts"
 
 interface AppShellProps {
   readonly savedSidebarWidth: number
+  readonly savedSidebarCollapsed: boolean
   readonly savedRightPaneWidth: number
   readonly savedTrackListDensity: TrackListDensity
   readonly savedPlayOnThisComputer: boolean
@@ -37,6 +38,7 @@ export function AppShell({ platform, ...layoutProps }: AppShellProps) {
 
 function AppShellLayout({
   savedSidebarWidth,
+  savedSidebarCollapsed,
   savedRightPaneWidth,
   savedTrackListDensity,
   savedPlayOnThisComputer,
@@ -54,7 +56,7 @@ function AppShellLayout({
           <FoldersProvider>
             <div className="flex h-screen flex-col gap-1 p-2 pb-0">
               <div className="flex min-h-0 flex-1">
-                <Sidebar savedWidth={savedSidebarWidth} />
+                <Sidebar savedWidth={savedSidebarWidth} savedCollapsed={savedSidebarCollapsed} />
                 {/* The top bar floats over the main view, so a page's artwork wash shows behind it. */}
                 <div className="relative isolate flex min-w-0 flex-1 flex-col overflow-hidden rounded-large bg-surface shadow-raised main-view-timeline-scope">
                   <TopBar />

@@ -1,16 +1,21 @@
-import { FolderPlus } from "lucide-react"
-import { useId, useState } from "react"
+import { Folder as FolderIcon, FolderPlus } from "lucide-react"
+import { use, useId, useState } from "react"
 import type { Folder, FolderTree } from "../../../shared/folders"
 import { loadSavedSetting } from "../../lib/saved-setting"
 import { useLoad } from "../../lib/use-load"
 import { useSavedSettingState } from "../../lib/use-saved-setting-state"
+import { ArtworkSummary } from "../../ui/artwork-summary"
 import { ErrorWithRetry } from "../../ui/error-with-retry"
 import { IconButton } from "../../ui/icon-button"
+import { sidebarHeadingClassNames } from "../../ui/sidebar-heading-class-names"
 import { TreeView } from "../../ui/tree-view"
 import { visibleTreeRows } from "../../ui/visible-tree-rows"
+import { RailFailure } from "../shell/rail-failure"
+import { SidebarRailContext } from "../shell/sidebar-rail-context"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { useFolderTree } from "./folder-tree"
 import { folderTreeNodes } from "./folder-tree-nodes"
+import { SidebarFolderRail } from "./sidebar-folder-rail"
 import {
   SidebarFolderRow,
   SpotifyItemRow,
@@ -29,8 +34,10 @@ export function SidebarFolderTree() {
     loadSavedSetting("expandedFolders", []),
     "The expanded folders failed to load",
   )
+  const rail = use(SidebarRailContext)
 
   if (folderTree.state.status === "failed") {
+    if (rail !== null) return <RailFailure message="Your folders didn't load." rail={rail} />
     return (
       <div className="px-2 pb-2">
         <ErrorWithRetry message="Your folders didn't load." onRetry={folderTree.retry} />
@@ -39,6 +46,11 @@ export function SidebarFolderTree() {
   }
   if (folderTree.state.status === "loading" || savedExpandedFolderIds.state.status !== "loaded") {
     return null
+  }
+  if (rail !== null) {
+    // An empty list would be announced as one; the rail shows nothing here.
+    if (folderTree.state.value.length === 0) return null
+    return <SidebarFolderRail tree={folderTree.state.value} />
   }
   return (
     <LoadedFolderTree
@@ -60,6 +72,25 @@ function useExpandedFolders(savedExpandedFolderIds: ReadonlyArray<string>) {
         : [...expandedFolderIds, folderId],
     )
   return { expandedKeys: new Set(expandedFolderIds), toggleExpanded }
+}
+
+// Without it the heading and its New folder button would sit over nothing, and
+// a new user would not learn what folders are for.
+function NoFolders() {
+  return (
+    <div className="px-2 py-1">
+      <ArtworkSummary
+        artwork={{
+          sources: [],
+          placeholderIcon: FolderIcon,
+          placeholderColors: "border border-dashed border-border text-muted",
+          round: false,
+        }}
+        title={<span className="text-muted">No folders yet</span>}
+        details="Group anything you've saved"
+      />
+    </div>
+  )
 }
 
 interface LoadedFolderTreeProps {
@@ -95,8 +126,8 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
 
   return (
     <div className="flex flex-col pb-2">
-      <div className="flex items-center justify-between gap-2 pl-2">
-        <h3 id={headingId} className="text-sm font-semibold text-muted">
+      <div className={sidebarHeadingClassNames.row}>
+        <h3 id={headingId} className={sidebarHeadingClassNames.label}>
           Folders
         </h3>
         <IconButton
@@ -106,7 +137,9 @@ function LoadedFolderTree({ tree, savedExpandedFolderIds }: LoadedFolderTreeProp
           onClick={() => createFolder(null)}
         />
       </div>
-      {tree.length === 0 ? null : (
+      {tree.length === 0 ? (
+        <NoFolders />
+      ) : (
         <TreeView
           labelledBy={headingId}
           nodes={nodes}

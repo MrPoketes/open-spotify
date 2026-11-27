@@ -79,6 +79,7 @@ lands, it keeps its earlier styling inside the new shell, and its section below 
 └───────────────────────────────────────────────────────────────────┘
 ```
 
+- The sidebar collapses to a 72 px icon rail (see Sidebar rail).
 - The window is `canvas` with an 8 px margin. The sidebar and the now-playing bar sit on it with
   no panel of their own. The main view and the right pane are sheets: `surface`, `radius-large`
   corners, `shadow-raised`. The gaps between them double as resize handles.
@@ -144,18 +145,21 @@ License), so the app looks the same on every platform; the system UI font behind
 scripts it lacks. A theme sets its own families with `font-body` and `font-display`. Use only
 these sizes:
 
-| Class       | Size  | Use                                                   |
-| ----------- | ----- | ----------------------------------------------------- |
-| `text-xs`   | 12 px | Metadata: durations, dates, counts; toggle options    |
-| `text-sm`   | 14 px | List rows, sidebar items, buttons, inputs             |
-| `text-base` | 16 px | Body text                                             |
-| `text-xl`   | 20 px | Section headings                                      |
-| `text-3xl`  | 30 px | Page titles                                           |
-| `text-5xl`  | 48 px | Home's greeting; the header of an album, artist, etc. |
+| Class       | Size  | Use                                                                        |
+| ----------- | ----- | -------------------------------------------------------------------------- |
+| `text-xs`   | 12 px | Metadata: durations, dates, counts; toggle options; sidebar section labels |
+| `text-sm`   | 14 px | List rows, sidebar items, buttons, inputs                                  |
+| `text-base` | 16 px | Body text                                                                  |
+| `text-xl`   | 20 px | Section headings                                                           |
+| `text-3xl`  | 30 px | Page titles                                                                |
+| `text-5xl`  | 48 px | Home's greeting; the header of an album, artist, etc.                      |
 
 Weights: 400 for body, 500 for resting toggle options, 600 for emphasis, buttons, and active
 items, 700 for headings. Headings from `text-xl` up use `font-display` (lint enforces it) and
-`tracking-tight`. Durations and counts use `tabular-nums` so columns line up.
+`tracking-tight`. Durations and counts use `tabular-nums` so columns line up. The labels that
+divide the sidebar (Folders, Pinned, the library sections, Hidden) are set like the credits on a
+sleeve's back: `text-xs`, 600, `uppercase`, `tracking-wider`, `muted`
+(`src/renderer/ui/sidebar-heading-class-names.ts`).
 
 ### Radii
 
@@ -258,42 +262,62 @@ filters stay at the top of the pane while the list scrolls. When the filters mat
 says so instead of going blank. The sidebar folders sit above the filters and scroll away first,
 since the filters apply only to the library.
 
+#### Tooltips
+
+A tooltip (`src/renderer/ui/tooltip.tsx`) names a control that shows no text, such as a row in the
+sidebar rail. It opens to the right of its element on hover after 300 ms, or at once on keyboard
+focus, and closes when the pointer or focus leaves. It is a `surface-overlay` panel with
+`shadow-overlay` and `rounded-small` corners: the name in `text-xs` 600, and a `muted` line under
+it that says what the item is. The element keeps its own accessible name; the tooltip only shows
+it. Icon buttons elsewhere keep their native `title`.
+
 #### Text fields
 
-A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 6 px
-gap between them. The input (`src/renderer/ui/input.tsx`) is `surface-raised` with
-`rounded-medium` corners, 36 px tall with 12 px inside, and `text-sm` text; it turns
-`surface-overlay` on hover. An invalid field gets a `danger` ring and a `text-xs` `danger`
-message in an `alert` under it, which also describes it (`aria-describedby`). The onboarding
-Client ID, the theme editor's Name and Author, and the New folder dialog's Name use it
-(`src/renderer/ui/text-field.tsx`). The Client ID turns off autocomplete and spell check, since
-it is not a word. The search field and the library's name filter use the same input, the search
-field as a pill with a search icon.
+A text field has its label above it (`text-sm`, 600 weight, joined with `htmlFor`) and a 6 px gap
+between them. The input (`src/renderer/ui/input.tsx`) is `surface-raised` with `rounded-medium`
+corners, 36 px tall with 12 px inside, and `text-sm` text; it turns `surface-overlay` on hover. An
+invalid field gets a `danger` ring and a `text-xs` `danger` message in an `alert` under it, which
+also describes it (`aria-describedby`). The onboarding Client ID, the theme editor's Name and
+Author, and the New folder dialog's Name use it (`src/renderer/ui/text-field.tsx`); the folder
+tree's inline rename uses the bare input. The Client ID turns off autocomplete and spell check,
+since it is not a word. The search field and the library's name filter use the same input, the
+search field as a pill with a search icon.
 
 ### Library rows
 
-Sidebar entries are 48 px rows: 40 px artwork, the name in `text-sm`, and a `text-xs` `muted`
-line that says what the entry is ("Playlist · owner", "Album · artist", "Artist", "Show").
-Images are given to the browser as a `srcset`, so it downloads the smallest size that is sharp
-on the current screen.
+Sidebar entries are 48 px rows: 40 px artwork, the name in `text-sm`, and a `text-xs` `muted` line
+that says what the entry is ("Playlist · owner", "Album · artist", "Artist", "Show"). Images are
+given to the browser as a `srcset`, so it downloads the smallest size that is sharp on the current
+screen. Rows sit on the `canvas` with `rounded-small` corners and take `surface-raised` on hover;
+the row whose page is open keeps `surface-raised`, so the sidebar shows where the user is
+(`src/renderer/ui/sidebar-row-class-names.ts`, which the folder tree's rows share). While the
+library loads, six skeleton rows in the same shape stand in for it.
 
 When artwork is missing or fails to load, a `surface-raised` tile with a `muted` Lucide icon for
 the kind stands in: `ListMusic` for playlists, `Disc3` for albums, `MicVocal` for artists,
 `Radio` for shows, `Music` for tracks, `Folder` for folders. Liked Songs has no artwork from
-Spotify and always shows `Heart` on `accent`. Its page header shows the same tile at cover size.
+Spotify and always shows a filled `Heart` in `on-accent` on `accent`, the one label-like tile in
+the sidebar. Its page header shows the same tile at cover size
+(`src/renderer/features/liked-songs/liked-songs-cover.ts`).
 
 ### Sidebar sections and pins
 
 The sidebar library is split into sections: Liked Songs, Playlists, Albums, Artists, and Shows, in
-the order the user chose. Each section starts with a heading button (`text-sm`, 600, `muted`, with a
-16 px chevron) that collapses or expands it and sets `aria-expanded`, and a "section options" menu
-with Move up, Move down, and Hide section. Moves swap with the neighbouring section on screen, so
-hidden and empty sections never make a move look like it did nothing. Hidden sections are listed
-under the library as round `surface-raised` "Show Albums" buttons, until the sidebar's redesign. A
-section with no entries left after the filters is not shown.
+the order the user chose. Each section starts with a 32 px heading row, 16 px below the section
+before it. Its heading button (a section label, see Type, followed by a 14 px chevron that points
+right when collapsed and down when expanded) collapses or expands the section and sets
+`aria-expanded`. Every label, chevron or not, starts on the left edge of the rows' artwork. A
+"section options" menu button with Move up, Move down, and Hide section ends the row, lined up
+with the rows' pin buttons; like them it shows only while the heading row is hovered or holds
+focus, or while its menu is open, so five sections do not show five `Ellipsis` icons at rest. It
+stays in the tab order. Moves swap with the neighbouring section on screen, so hidden and empty
+sections never make a move look like it did nothing. Hidden sections are listed under the library
+below a "Hidden" label, as small ghost buttons with an `Eye` icon ("Show Albums"). A section with
+no entries left after the filters is not shown.
 
 Any entry can be pinned. Pinned entries leave their section for a "Pinned" section that always sits
-at the top, in the order they were pinned. Each row has a pin button that shows on hover or while
+at the top, in the order they were pinned. Its label has no chevron or menu, since it cannot be
+collapsed, moved, or hidden. Each row has a pin button that shows on hover or while
 the row has focus. It stays out of the tab order so each section's list is still one tab stop;
 keyboard users press `P` on a focused row instead, which the button's tooltip, the row's
 `aria-keyshortcuts`, and the shortcuts dialog announce. When a change moves or removes the focused
@@ -309,17 +333,55 @@ hidden section, it says that instead, so a hidden section never looks like a mis
 Pins are the `pinnedLibraryEntries` setting and the section order and states are the
 `librarySections` setting, so both survive a restart.
 
+### Sidebar rail
+
+The sidebar collapses to a 72 px icon rail, so a small window gives the main view more room. The
+toggle is a ghost icon button before the "Your library" heading (`PanelLeftClose`, "Collapse
+sidebar"), which stays in the same place and becomes "Expand sidebar" (`PanelLeftOpen`) in the
+rail, so it keeps focus when pressed. `Ctrl+B` (`Cmd+B` on macOS) does the same from anywhere;
+when focus was in the sidebar, it moves to the toggle, since the other width may not show the
+focused control.
+
+Dragging the divider more than halfway from the narrowest width (200 px) towards the rail snaps
+the sidebar to the rail, and dragging it back out opens it at the dragged width. On the keyboard,
+the divider's widening arrow opens it at its earlier width and `End` at the widest; the narrowing
+arrow and `Home` do nothing while it is collapsed. The divider reports "Collapsed" while the rail
+shows. The choice is the `sidebarCollapsed` setting, next to `sidebarWidth`, and the full width is
+kept for when it opens.
+
+In the rail every row shows only its 40 px artwork or icon, in the same column as in the full
+sidebar. Its accessible name is its name and what it is ("Late Night Drive, Playlist · Mira
+Kaelin"), and a tooltip shows both on hover and keyboard focus. The rows keep their keyboard use:
+each list is one tab stop moved through with the arrow keys, `Enter` opens the row's page, `P`
+pins a library entry, and the context menu still offers Add to folder. The heading, the filters,
+the section headings, the Folders heading and its New folder button, and the hidden sections are
+left out; a `border` hairline divides the folders, the pinned entries, and each shown section,
+and each list is named for its section. Every shown section lists its entries, collapsed or not,
+since the rail has no heading to expand one with, and the filters do not apply.
+
+Each top-level folder is a button in the rail. `Enter`, `Space`, or a click opens its contents in
+a menu to the right: "Open Running" first, for the folder's page, then its entries, with a
+submenu for each folder inside it, nested as deep as the tree goes. Choosing an entry opens its
+page. The up and down arrows move between the folders instead of opening one. To rename, create,
+or rearrange folders, the user expands the sidebar.
+
+A load that fails in the rail shows a `CircleAlert` icon button named for the failure ("Your
+library didn't load. Expand the sidebar to see why."), which expands the sidebar to show the
+message and its Retry. An expired session still goes to login. While the library loads, the rail
+shows only the skeletons' tiles; an empty library or a user without folders shows nothing there.
+
 ### Sidebar folders
 
-The user's folders sit above the library sections under a "Folders" heading, as a tree that
-follows the WAI-ARIA tree view pattern. Its rows look like library rows (the shared
-`ArtworkSummary`), with a 16 px chevron in front of each folder and 16 px more indent for each
-level. The tree is one tab stop: the up and down arrows (or `j` and `k`) move through the
-visible rows, the right arrow expands a folder and then moves into it, the left arrow collapses
-a folder or moves to its parent, and `Enter` opens the row's page. Clicking a row opens its
-page, and clicking a chevron expands or collapses the folder and moves focus to its row, so
-focus is never lost inside a folder that closes. The chevron stays out of the tab order and the
-accessibility tree, since the row announces whether it is expanded.
+The user's folders sit above the library sections under a "Folders" heading, as a tree that follows
+the WAI-ARIA tree view pattern. Its rows look like library rows (the shared `ArtworkSummary`), with
+16 px more indent for each level, so top-level artwork lines up with the library's. Each folder row
+ends with a 32 px round chevron button, where library rows have their pin button, and its tile shows
+`FolderOpen` instead of `Folder` while it is expanded. The tree is one tab stop: the up and down
+arrows (or `j` and `k`) move through the visible rows, the right arrow expands a folder and then
+moves into it, the left arrow collapses a folder or moves to its parent, and `Enter` opens the row's
+page. Clicking a row opens its page, and clicking a chevron expands or collapses the folder and
+moves focus to its row, so focus is never lost inside a folder that closes. The chevron stays out of
+the tab order and the accessibility tree, since the row announces whether it is expanded.
 
 Every way of rearranging the tree works from the keyboard. `Alt+↑` and `Alt+↓` (`Option+↑` and
 `Option+↓` on macOS) move the focused entry up or down among its siblings; the row's
@@ -332,18 +394,18 @@ screen. The status message reports each move ("Moved Warm-up down"); a move the 
 refuses leaves the tree as it was and says why ("Couldn't move Warm-up. A folder can't go inside
 itself.").
 
-The mouse can rearrange the tree too, by dragging a row; a press that moves less than 4 px is
-still a click. Letting go on the top or bottom quarter of a folder's row, or the top or bottom half
-of a Spotify item's, puts the entry on the line above or below that row, which a 2 px `accent` line
-indented to the row's level shows. Letting go on the middle of a folder puts the entry last inside
-it, which the folder shows with `surface-raised` and a 2 px `accent` outline. The line below an
-expanded folder is the line above its first child. A drop that is not allowed shows no indicator
-and does nothing: a folder inside itself or a folder within it, a Spotify item at the top level, or
-a drop that leaves the entry where it is. Resting for 600 ms on the middle half of a collapsed
-folder while dragging, where a drop inside it is on offer, opens it. The dragged row is dimmed to
-50 % opacity, and the status message reports the drop like a keyboard move ("Moved Warm-up up",
-"Moved Warm-up to Focus"). Dragging is for the mouse only, since the keyboard moves above do the
-same.
+The mouse can rearrange the tree too, by dragging a row; a press that moves less than 4 px is still
+a click. Letting go on the top or bottom quarter of a folder's row, or the top or bottom half of a
+Spotify item's, puts the entry on the line above or below that row, which a 2 px `accent` line
+indented to the row's level shows, starting at an 8 px `accent` ring that marks the level. Letting
+go on the middle of a folder puts the entry last inside it, which the folder shows with
+`surface-raised` and a 2 px `accent` outline. The line below an expanded folder is the line above
+its first child. A drop that is not allowed shows no indicator and does nothing: a folder inside
+itself or a folder within it, a Spotify item at the top level, or a drop that leaves the entry where
+it is. Resting for 600 ms on the middle half of a collapsed folder while dragging, where a drop
+inside it is on offer, opens it. The dragged row is dimmed to 50 % opacity, and the status message
+reports the drop like a keyboard move ("Moved Warm-up up", "Moved Warm-up to Focus"). Dragging is
+for the mouse only, since the keyboard moves above do the same.
 
 A playlist, album, artist, or show can also be dragged from the library sections onto a folder,
 which adds it last there, as "Add to folder" does, and the status message says so ("Added to
@@ -356,16 +418,20 @@ since no folder can hold it.
 Folders start collapsed. The ones the user expands are the `expandedFolders` setting, so they
 stay open after a restart.
 
-A 32 px `FolderPlus` icon button named "New folder" ends the Folders heading row and creates a
-top-level folder. The heading and the button show even for a user without folders, since the
-button is how they make their first one; the tree under them is left out until there is a folder.
+The Folders label heads a 32 px row like a library section's, and a 32 px `FolderPlus` icon button
+named "New folder" ends it and creates a top-level folder. The heading and the button show even
+for a user without folders, since the button is how they make their first one. Until there is a
+folder, a row-shaped placeholder stands where the tree goes, so the heading never sits over
+nothing: a 40 px tile with a dashed `border` edge and a `muted` `Folder` icon, "No folders yet" in
+`muted`, and "Group anything you've saved" under it. It is not a control, since the button above
+already makes the folder.
 Each folder row has a context menu with New folder (a folder inside it, which opens it), Rename,
 Move to folder, and Delete…; a Spotify item in the tree has Move to folder alone (see above).
 
 A new folder starts in inline rename mode, named "New folder" with the name selected, so typing
 replaces it. Rename, or `F2` on a focused folder (which its `aria-keyshortcuts` announces), puts
-a `surface-raised` `rounded-small` text field named "Folder name" in place of the row's text, in
-`text-sm` to keep the row's height. `Enter` saves and `Escape` cancels; leaving the field saves
+the shared input (see Text fields) named "Folder name" in place of the row's text; at 36 px it
+fits inside the 48 px row. `Enter` saves and `Escape` cancels; leaving the field saves
 too, as in a file manager, but switching to another app does not end the rename. Keys held with
 `Ctrl`, `Alt`, or `Cmd` still reach app-wide shortcuts. A blank name is refused like the New
 folder dialog's: a `danger` ring and "Enter a name for the folder." under the field. While the
@@ -789,6 +855,7 @@ Alt, macOS uses Cmd and Option.
 | `/`                             | `/`                           | Search                                  |
 | `Alt+←` / `Alt+→`               | `Cmd+[` / `Cmd+]`             | Go back / forward                       |
 | `Alt+Shift+Q`                   | `Option+Shift+Q`              | Show or hide the queue                  |
+| `Ctrl+B`                        | `Cmd+B`                       | Collapse or expand the sidebar          |
 | `?`                             | `?`                           | Show the shortcuts dialog               |
 | `P` on a row                    | `P` on a row                  | Pin or unpin a library entry            |
 | `F2` on a row                   | `F2` on a row                 | Rename a folder in the sidebar          |
@@ -843,8 +910,8 @@ announce every message (`useShowStatusMessage` in `src/renderer/ui`).
 
 - While a list or page loads, it says so inside an `output` element, so screen readers announce
   it. Home shows skeletons in the shape of its sections (`src/renderer/ui/skeleton.tsx`) and keeps
-  the message for screen readers; other screens show the message in `muted` text until their
-  redesign. No spinner.
+  the message for screen readers, and so does the sidebar library; other screens show the
+  message in `muted` text until their redesign. No spinner.
 - An empty list says what will appear there. It never leaves a blank pane.
 - A failed load says so in plain text inside an `alert`, after a 16 px `muted` `CircleAlert` icon,
   with a small outline Retry button under it (`src/renderer/ui/error-with-retry.tsx`). It stays

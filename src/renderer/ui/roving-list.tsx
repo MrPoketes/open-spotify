@@ -8,7 +8,7 @@ interface RovingListProps<Row> {
   readonly renderRow: (row: Row, rovingProps: RovingRowProps) => ReactNode
   readonly className: string
   readonly id?: string | undefined
-  readonly label?: string
+  readonly label?: string | undefined
   readonly ref?: Ref<HTMLUListElement> | undefined
   readonly rowFocusRef?: Ref<RowFocusHandle> | undefined
 }

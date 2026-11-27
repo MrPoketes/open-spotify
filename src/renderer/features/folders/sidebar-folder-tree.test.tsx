@@ -114,6 +114,17 @@ describe("SidebarFolderTree", () => {
     expect(await treeItem("Cycling")).toHaveFocus()
   })
 
+  // Without it the Folders heading and its button sit over nothing.
+  it("says there are no folders yet until the user creates one", async () => {
+    await renderScreen(sidebarFolderTree, fakeMainProcess())
+
+    expect(await screen.findByText("No folders yet")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "New folder" }))
+    await renameField()
+
+    expect(screen.queryByText("No folders yet")).not.toBeInTheDocument()
+  })
+
   it("creates a folder inside a folder from its context menu", async () => {
     await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Focus")

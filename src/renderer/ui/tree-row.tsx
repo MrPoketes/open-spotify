@@ -1,6 +1,9 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import type { ReactNode } from "react"
+import { buttonVariants } from "./button-variants"
+import { cn } from "./class-names"
+import { sidebarRowClassNames } from "./sidebar-row-class-names"
 import type { TreeDropPosition } from "./tree-drop"
 
 const levelIndent = 16
@@ -19,7 +22,9 @@ interface TreeRowProps {
 }
 
 // The whole row can be dragged and dropped on. Dragging leaves the tree item's
-// role and keyboard handling alone, since only the mouse drags.
+// role and keyboard handling alone, since only the mouse drags. The expander
+// ends the row, so every item's artwork starts on the same edge as the rows
+// outside the tree, indented only by its level.
 export function TreeRow({
   rowKey,
   level,
@@ -40,10 +45,10 @@ export function TreeRow({
       {...draggable.listeners}
       role="none"
       style={{ paddingLeft: indent }}
-      className={`relative flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised ${highlightWhenDroppedInside} ${isDragged ? "opacity-50" : ""}`}
+      className={`relative flex items-center ${sidebarRowClassNames.surface} ${highlightWhenDroppedInside} ${isDragged ? "opacity-50" : ""}`}
     >
-      {expander}
       {children}
+      {expander}
       {dropPosition === "before" || dropPosition === "after" ? (
         <DropLine position={dropPosition} indent={indent} />
       ) : null}
@@ -56,13 +61,16 @@ interface DropLineProps {
   readonly indent: number
 }
 
+// The ring at the start of the line marks the level the entry lands at.
 function DropLine({ position, indent }: DropLineProps) {
   return (
     <span
       aria-hidden
       style={{ left: indent }}
-      className={`pointer-events-none absolute right-0 h-0.5 rounded-full bg-accent ${position === "before" ? "top-0" : "bottom-0"}`}
-    />
+      className={`pointer-events-none absolute right-0 h-0.5 bg-accent ${position === "before" ? "top-0" : "bottom-0"}`}
+    >
+      <span className="absolute -top-0.75 -left-1 size-2 rounded-full border-2 border-accent bg-canvas" />
+    </span>
   )
 }
 
@@ -78,7 +86,7 @@ interface ExpanderProps {
 // tree.
 export function Expander({ isBranch, isExpanded, onToggle }: ExpanderProps) {
   if (!isBranch) {
-    return <span aria-hidden className="w-6 shrink-0" />
+    return null
   }
   const ChevronIcon = isExpanded ? ChevronDown : ChevronRight
   return (
@@ -90,7 +98,11 @@ export function Expander({ isBranch, isExpanded, onToggle }: ExpanderProps) {
       // assistive technology.
       onMouseDown={(event) => event.preventDefault()}
       onClick={onToggle}
-      className="flex h-8 w-6 shrink-0 items-center justify-center rounded-small text-muted transition-colors duration-120 ease-out hover:text-foreground"
+      // The row under it already takes surface-raised on hover.
+      className={cn(
+        buttonVariants({ variant: "ghost", size: "icon" }),
+        "mr-2 not-disabled:not-aria-disabled:hover:bg-surface-overlay",
+      )}
     >
       <ChevronIcon size={16} />
     </button>

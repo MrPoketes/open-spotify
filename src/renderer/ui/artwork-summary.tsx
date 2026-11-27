@@ -15,13 +15,21 @@ interface ArtworkSummaryProps {
   readonly details: ReactNode
 }
 
+// The 40 px artwork of a library row, which the sidebar's icon rail shows on
+// its own.
+export function SummaryArtworkTile({ artwork }: { readonly artwork: SummaryArtwork }) {
+  const { round, ...artworkProps } = artwork
+  return (
+    <Artwork {...artworkProps} size={40} className={round ? "rounded-full" : "rounded-small"} />
+  )
+}
+
 // The library row layout from docs/design.md: 40 px artwork beside the name and
 // a muted line that says what the item is.
 export function ArtworkSummary({ artwork, title, details }: ArtworkSummaryProps) {
-  const { round, ...artworkProps } = artwork
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <Artwork {...artworkProps} size={40} className={round ? "rounded-full" : "rounded-small"} />
+      <SummaryArtworkTile artwork={artwork} />
       <div className="flex min-w-0 flex-col">
         <span className="truncate text-sm">{title}</span>
         <span className="truncate text-xs text-muted">{details}</span>
