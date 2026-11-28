@@ -36,6 +36,11 @@
   --font-body: var(--theme-font-body);
   --font-display: var(--theme-font-display);
   --default-font-family: var(--theme-font-body);
+  /*
+   * Tailwind's preflight sets code, kbd, samp, and pre in this family, and
+   * without it they fall back to a platform monospace no theme can change.
+   */
+  --default-mono-font-family: var(--theme-font-body);
 
   --radius-small: var(--theme-radius-small);
   --radius-medium: var(--theme-radius-medium);

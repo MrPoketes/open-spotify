@@ -27,7 +27,7 @@ export function LoginButtons({ isWaiting, onLogIn, onCancel }: LoginButtonsProps
 
   return (
     <div className="flex gap-2">
-      <Button ref={logInButton} disabled={isWaiting} onClick={onLogIn}>
+      <Button ref={logInButton} disabled={isWaiting} onClick={onLogIn} className="flex-1">
         Log in with Spotify
       </Button>
       {isWaiting && (
