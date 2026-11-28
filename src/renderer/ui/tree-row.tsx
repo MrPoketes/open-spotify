@@ -6,7 +6,8 @@ import { cn } from "./class-names"
 import { sidebarRowClassNames } from "./sidebar-row-class-names"
 import type { TreeDropPosition } from "./tree-drop"
 
-const levelIndent = 16
+// Spacing steps each level indents by, so a theme's spacing scales the tree.
+const levelIndentSteps = 4
 
 const highlightWhenDroppedInside =
   "has-data-[drop-position=inside]:bg-surface-raised has-data-[drop-position=inside]:outline-2 has-data-[drop-position=inside]:-outline-offset-2 has-data-[drop-position=inside]:outline-accent"
@@ -35,7 +36,7 @@ export function TreeRow({
 }: TreeRowProps) {
   const draggable = useDraggable({ id: rowKey })
   const droppable = useDroppable({ id: rowKey })
-  const indent = (level - 1) * levelIndent
+  const indent = `calc(var(--theme-spacing) * ${(level - 1) * levelIndentSteps})`
   return (
     <div
       ref={(row) => {
@@ -58,7 +59,7 @@ export function TreeRow({
 
 interface DropLineProps {
   readonly position: "before" | "after"
-  readonly indent: number
+  readonly indent: string
 }
 
 // The ring at the start of the line marks the level the entry lands at.

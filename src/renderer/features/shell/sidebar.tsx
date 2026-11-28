@@ -95,6 +95,7 @@ export function Sidebar({ savedWidth, savedCollapsed }: SidebarProps) {
       <nav
         ref={sidebarRef}
         aria-label="Library"
+        // oxlint-disable-next-line open-spotify/no-fixed-style-lengths -- Pane widths are pixels: PaneDivider measures the pointer and reports aria-valuenow in pixels, and the collapsed width is the lowest of them.
         style={{ width: isCollapsed ? collapsedSidebarWidth : width }}
         className="flex shrink-0 flex-col gap-3 pt-3"
       >

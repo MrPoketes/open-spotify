@@ -131,6 +131,7 @@ export function PageHeaderLoading({ message, isRound = false }: PageHeaderLoadin
     <div className="flex items-end gap-6 pt-6">
       <output className="sr-only">{message}</output>
       <Skeleton
+        // oxlint-disable-next-line open-spotify/no-fixed-style-lengths -- The skeleton holds the place of the cover Artwork, which takes its size in pixels because its srcset `sizes` cannot read a CSS variable.
         style={{ width: coverSize, height: coverSize }}
         className={`shrink-0 ${isRound ? "rounded-full" : ""}`}
       />
