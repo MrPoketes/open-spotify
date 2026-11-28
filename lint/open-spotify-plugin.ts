@@ -7,6 +7,7 @@ import { noDomNodeAccess } from "./rules/no-dom-node-access.ts"
 import { noEffectPromise } from "./rules/no-effect-promise.ts"
 import { noEffectRun } from "./rules/no-effect-run.ts"
 import { noEffectWithSpan } from "./rules/no-effect-with-span.ts"
+import { noFixedStyleLengths } from "./rules/no-fixed-style-lengths.ts"
 import { noHardCodedColors } from "./rules/no-hard-coded-colors.ts"
 import { noInlineModifierCheck } from "./rules/no-inline-modifier-check.ts"
 import { noJunkDrawerModules } from "./rules/no-junk-drawer-modules.ts"
@@ -39,6 +40,7 @@ export default definePlugin({
     "no-effect-promise": noEffectPromise,
     "no-effect-run": noEffectRun,
     "no-effect-with-span": noEffectWithSpan,
+    "no-fixed-style-lengths": noFixedStyleLengths,
     "no-hard-coded-colors": noHardCodedColors,
     "no-inline-modifier-check": noInlineModifierCheck,
     "no-junk-drawer-modules": noJunkDrawerModules,

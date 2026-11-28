@@ -1,5 +1,6 @@
 import { defineRule, type ESTree } from "@oxlint/plugins"
 import { repoRelativePath } from "../repo-relative-path.ts"
+import { unwrapTypeAssertions } from "../unwrap-type-assertions.ts"
 
 const attributeName = "aria-keyshortcuts"
 const allowedShortcutLiteral = "Shift+F10"
@@ -75,21 +76,8 @@ function checkStringLiteral(node: LiteralNode, report: ReportNode): void {
   }
 }
 
-function unwrapExpression(node: ESTree.Expression): ESTree.Expression {
-  let current = node
-  while (
-    current.type === "TSAsExpression" ||
-    current.type === "TSSatisfiesExpression" ||
-    current.type === "TSNonNullExpression" ||
-    current.type === "TSTypeAssertion"
-  ) {
-    current = current.expression
-  }
-  return current
-}
-
 function checkExpression(rawNode: ESTree.Expression, report: ReportNode): void {
-  const node = unwrapExpression(rawNode)
+  const node = unwrapTypeAssertions(rawNode)
   if (node.type === "Literal") {
     checkStringLiteral(node, report)
     return
@@ -156,7 +144,7 @@ function checkConcatenationPart(
   if (node.type === "PrivateIdentifier") {
     return
   }
-  const unwrapped = unwrapExpression(node)
+  const unwrapped = unwrapTypeAssertions(node)
   if (unwrapped.type === "Literal") {
     if (typeof unwrapped.value === "string" && isDisallowedShortcutPart(unwrapped.value)) {
       report(unwrapped)

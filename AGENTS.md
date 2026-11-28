@@ -164,6 +164,11 @@ migration inside a step uses Drizzle. See
 - Follow [docs/design.md](docs/design.md) for layout, spacing, type, motion, and accessibility.
 - Style with Tailwind classes that use **theme tokens** (CSS custom properties). Never hard-code
   a color, font, or radius: a theme must be able to change every pixel.
+- Layout lengths a theme should scale (padding, margin, gap, width, height, inset, scroll
+  padding) come from the spacing scale: a class such as `pt-4` or `h-14`, or
+  `calc(var(--theme-spacing) * n)` in CSS. A `style` prop holds only values worked out at run
+  time, such as a pane width the user dragged or a virtualiser's total size, never a pixel
+  constant (`open-spotify/no-fixed-style-lengths`).
 - Use semantic elements (`button`, `a`, `nav`, `ul`). Everything is reachable and usable from
   the keyboard and has an accessible name.
 
