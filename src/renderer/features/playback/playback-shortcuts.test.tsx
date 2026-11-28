@@ -7,7 +7,9 @@ import { describe, expect, it } from "vitest"
 import { fakeMainProcess } from "../../lib/fake-main-process"
 import { renderScreen } from "../../lib/render-screen"
 import { MenuButton } from "../../ui/menu-button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
+import { Switch } from "../../ui/switch"
 import { IsMacContext } from "../shortcuts/is-mac-context"
 import type { SpotifyApi } from "../spotify/spotify-api"
 import { spotifyApiFakeWith } from "../spotify/spotify-api-fake"
@@ -22,8 +24,8 @@ interface RenderOptions {
   readonly onMenuItemChosen?: () => void
 }
 
-// With a text field beside the bar, and the status message the app shell
-// shows above it.
+// With a text field and other controls beside the bar, and the status message
+// the app shell shows above it.
 const renderNowPlayingBar = async ({
   isMac = false,
   spotifyApi,
@@ -40,6 +42,16 @@ const renderNowPlayingBar = async ({
           icon={Ellipsis}
           items={[{ label: "Hide section", onSelect: onMenuItemChosen }]}
         />
+        <Switch aria-label="Play on this computer" defaultChecked />
+        <Select defaultValue="px">
+          <SelectTrigger aria-label="Unit">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="px">px</SelectItem>
+            <SelectItem value="rem">rem</SelectItem>
+          </SelectContent>
+        </Select>
         {nowPlayingBarAlone}
       </StatusMessageProvider>
     </IsMacContext>,
@@ -156,7 +168,7 @@ describe("playback shortcuts", () => {
   })
 
   // A focused radio button is always the checked one, so Space has nothing
-  // to press. The theme editor's color scheme is one.
+  // to press.
   it("pauses with Space while a radio button has focus", async () => {
     await renderNowPlayingBar()
 
@@ -177,6 +189,34 @@ describe("playback shortcuts", () => {
     await userEvent.keyboard(" ")
 
     expect(await control("Play")).toBeInTheDocument()
+  })
+
+  // Settings' switches are spans with the switch role, not buttons.
+  it("flips a focused switch with Space instead of pausing", async () => {
+    await renderNowPlayingBar()
+    const playOnThisComputer = screen.getByRole("switch", { name: "Play on this computer" })
+
+    playOnThisComputer.focus()
+    await userEvent.keyboard(" ")
+
+    expect(playOnThisComputer).not.toBeChecked()
+    expect(await control("Pause")).toBeInTheDocument()
+  })
+
+  // Space opens a select and chooses its focused option, as in the theme
+  // editor's unit lists, so choosing a unit must not also pause the music.
+  it("leaves Space to a select, which opens and chooses with it", async () => {
+    await renderNowPlayingBar()
+    const unit = screen.getByRole("combobox", { name: "Unit" })
+
+    unit.focus()
+    await userEvent.keyboard(" ")
+    await userEvent.keyboard("{ArrowDown}")
+    await waitFor(() => expect(screen.getByRole("option", { name: "rem" })).toHaveFocus())
+    await userEvent.keyboard(" ")
+
+    await waitFor(() => expect(unit).toHaveTextContent("rem"))
+    expect(await control("Pause")).toBeInTheDocument()
   })
 
   it("presses the focused button with Space instead of pausing", async () => {

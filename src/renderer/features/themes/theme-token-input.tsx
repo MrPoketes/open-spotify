@@ -3,7 +3,7 @@ import { useId } from "react"
 import type { ContrastShortfall } from "../../../shared/theme-contrast"
 import { cn } from "../../ui/class-names"
 import { ContrastWarnings } from "./contrast-warnings"
-import { TokenControl } from "./theme-token-controls"
+import { TokenFieldControl } from "./theme-token-controls"
 import { tokenValueProblem, type TokenField } from "./theme-token-fields"
 
 const tokenLabelClassName = "text-xs font-semibold"
@@ -47,7 +47,7 @@ export function TokenInput({ field, value, contrastShortfalls, onChange }: Token
           {field.token}
         </label>
       )}
-      <TokenControl
+      <TokenFieldControl
         field={field}
         value={value}
         validity={{

@@ -304,9 +304,9 @@ corners, 36 px tall with 12 px inside, and `text-sm` text; it turns `surface-ove
 invalid field gets a `danger` ring and a `text-xs` `danger` message in an `alert` under it, which
 also describes it (`aria-describedby`). The onboarding Client ID, the theme editor's Name and
 Author, and the New folder dialog's Name use it (`src/renderer/ui/text-field.tsx`); the folder
-tree's inline rename and the theme editor's token fields use the bare input. The Client ID turns off autocomplete and spell check,
-since it is not a word. The search field and the library's name filter use the same input, the
-search field as a pill with a search icon.
+tree's inline rename and the theme editor's token fields use the bare input. The Client ID turns
+off autocomplete and spell check, since it is not a word. The search field and the library's name
+filter use the same input, the search field as a pill with a search icon.
 
 ### Library rows
 
@@ -683,9 +683,8 @@ previewing. Built-in themes have no delete button.
 
 Below the list, one row of secondary buttons: "Edit a copy" opens the theme editor on a copy of
 the chosen theme, and "Import theme…" and "Export current theme…" open the operating system's
-file dialogs. A result is reported in `muted` text inside an
-`output` element; a rejected file shows the reason in `danger` text inside an `alert`. The dialogs are
-modal to the app window.
+file dialogs. A result is reported in `muted` text inside an `output` element; a rejected file
+shows the reason in `danger` text inside an `alert`. The dialogs are modal to the app window.
 
 Below them, under a `border` hairline, the "Track list rows" setting offers Comfortable and Dense
 in a segmented control. The choice applies to every track list at once.
@@ -735,11 +734,9 @@ and never block saving.
 Save theme (a default button) and Cancel sit in a bar at the bottom of the form, above a `border`
 hairline on `surface`, that sticks to the bottom of the main view while the form scrolls, so they
 stay in reach among dozens of fields. Save theme stores the copy as an imported theme and chooses
-it; with a field
-still invalid or the name or author empty, it says so in an `alert` instead. A theme the main
-process refuses, such as one named like a built-in theme, shows its reason in the same `alert`.
-Cancel (a secondary button), or leaving the page, discards the changes and restores the
-saved theme.
+it; with a field still invalid or the name or author empty, it says so in an `alert` instead. A
+theme the main process refuses, such as one named like a built-in theme, shows its reason in the
+same `alert`. Cancel, or leaving the page, discards the changes and restores the saved theme.
 
 ### Home page
 
@@ -975,8 +972,8 @@ types no Latin letter, as on a Cyrillic layout or with macOS Option, the key in 
 position works instead.
 
 No shortcut fires while focus is in a text field, and only shortcuts held with `Ctrl`, `Alt`, or
-`Cmd` fire while a menu has focus (see Menus). `Space` leaves a focused button to press itself.
-On a focused link, which `Space` would only scroll past, or a focused radio button, which is
+`Cmd` fire while a menu has focus (see Menus). `Space` leaves a focused button to press itself,
+a focused switch to flip itself, and a focused select option to be chosen. On a focused link, which `Space` would only scroll past, or a focused radio button, which is
 already checked, it plays or pauses. Holding the keys down runs a shortcut once, except for the
 volume, which keeps stepping like a volume key. Quick presses add up: each seek starts from where
 the last one moved the seek bar, before Spotify reports it, and the volume slider shows each step

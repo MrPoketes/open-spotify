@@ -60,7 +60,7 @@ function AppShellLayout({
                 {/* The top bar floats over the main view, so a page's artwork wash shows behind it. */}
                 <div className="relative isolate flex min-w-0 flex-1 flex-col overflow-hidden rounded-large bg-surface shadow-raised main-view-timeline-scope">
                   <TopBar />
-                  <main className="min-h-0 flex-1 scroll-pt-(--top-bar-height) overflow-y-auto px-8 pt-(--main-view-content-top) pb-12 main-view-scroll-timeline">
+                  <main className="min-h-0 flex-1 scroll-pt-(--top-bar-height) overflow-y-auto px-8 pt-(--main-view-content-top) pb-(--main-view-content-bottom) main-view-scroll-timeline">
                     <TrackListDensityProvider savedDensity={savedTrackListDensity}>
                       <EditablePlaylistsProvider>
                         <OpenDevicePickerContext value={openDevicePicker}>

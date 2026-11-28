@@ -55,7 +55,6 @@ export function ThemeEditor({ savedTheme, onSave, onCancel }: ThemeEditorProps) 
         )}
       </SettingRow>
       {themeTokenGroups.map((group) => (
-        // The fields sit in two columns when the form is wide enough.
         <fieldset key={group.heading} className="@container">
           <legend className={`mb-4 w-full border-b border-border pb-2 ${creditsLabelClassName}`}>
             {group.heading}
@@ -77,9 +76,9 @@ export function ThemeEditor({ savedTheme, onSave, onCancel }: ThemeEditorProps) 
       ))}
       {/* The theme has dozens of fields, so its buttons stay in reach at the
           bottom of the view while the form scrolls. Sticking stops at the main
-          view's content box, so the offset reaches down through its pb-12 to
-          the sheet's edge, where nothing scrolls past underneath. */}
-      <div className="sticky -bottom-12 flex flex-col gap-3 border-t border-border bg-surface py-4">
+          view's content box, so the offset reaches down through its bottom
+          padding to the sheet's edge, where nothing scrolls past underneath. */}
+      <div className="sticky -bottom-(--main-view-content-bottom) flex flex-col gap-3 border-t border-border bg-surface py-4">
         {editor.saveProblem !== null && (
           <p role="alert" className="text-sm text-danger">
             {editor.saveProblem}

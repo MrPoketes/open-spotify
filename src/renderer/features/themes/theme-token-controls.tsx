@@ -70,7 +70,7 @@ function LengthControl({ token, value, validity, onChange }: ControlProps) {
         step="any"
         value={amount}
         onChange={(event) => onChange(`${event.target.value}${unit}`)}
-        className="w-24 [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-24 tabular-nums [&::-webkit-inner-spin-button]:appearance-none"
       />
       <Select
         value={unit}
@@ -95,16 +95,10 @@ function LengthControl({ token, value, validity, onChange }: ControlProps) {
   )
 }
 
-const opacityStep = 0.05
-
-// Rounded to whole percents, so a stepped value is stored as "0.45" rather
-// than "0.45000000000000007".
-const opacityPercent = (opacity: number) => Math.round(opacity * 100)
-
 // An opacity from 0 to 1, shown as a percentage. 0 turns the effect off, so the
 // value says "Off" rather than "0%".
 function OpacityControl({ token, value, onChange }: Omit<ControlProps, "validity">) {
-  const percent = opacityPercent(Number(value))
+  const percent = Math.round(Number(value) * 100)
   const shownValue = percent === 0 ? "Off" : `${percent}%`
 
   return (
@@ -114,9 +108,9 @@ function OpacityControl({ token, value, onChange }: Omit<ControlProps, "validity
         valueText={shownValue}
         unavailableReason={null}
         max={1}
-        step={opacityStep}
+        step={0.05}
         value={Number(value)}
-        onValueChange={(opacity) => onChange(String(opacityPercent(opacity) / 100))}
+        onValueChange={(opacity) => onChange(String(opacity))}
       />
       <span aria-hidden className="w-10 shrink-0 text-right text-sm tabular-nums">
         {shownValue}
@@ -125,7 +119,7 @@ function OpacityControl({ token, value, onChange }: Omit<ControlProps, "validity
   )
 }
 
-interface TokenControlProps {
+interface TokenFieldControlProps {
   readonly field: TokenField
   readonly value: string
   readonly validity: FieldValidity
@@ -133,7 +127,7 @@ interface TokenControlProps {
 }
 
 // The control that fits the token's value (docs/design.md, Theme editor).
-export function TokenControl({ field, value, validity, onChange }: TokenControlProps) {
+export function TokenFieldControl({ field, value, validity, onChange }: TokenFieldControlProps) {
   const { token } = field
   if (field.control === "color") {
     return <ColorControl token={token} value={value} validity={validity} onChange={onChange} />

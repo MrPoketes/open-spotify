@@ -138,6 +138,18 @@ describe("ThemeEditor", () => {
     expect(appliedToken("artwork-wash")).toBe("0.5")
   })
 
+  // 0 turns the wash off, and the slider says so rather than "0%".
+  it("turns the artwork wash off at the slider's lowest value", async () => {
+    await openEditor()
+    const artworkWash = screen.getByRole("slider", { name: "artwork-wash" })
+
+    artworkWash.focus()
+    await userEvent.keyboard("{Home}")
+
+    expect(appliedToken("artwork-wash")).toBe("0")
+    expect(artworkWash).toHaveAttribute("aria-valuetext", "Off")
+  })
+
   it("flags an invalid value next to its field and keeps it off the app", async () => {
     await openEditor()
     const accentField = screen.getByLabelText("color-accent")
