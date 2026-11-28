@@ -1,5 +1,7 @@
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { X } from "lucide-react"
-import { use, useId, useRef } from "react"
+import { use, useId, useState } from "react"
+import { DialogContent, DialogTitle } from "../../ui/dialog"
 import { IconButton } from "../../ui/icon-button"
 import { IsMacContext } from "./is-mac-context"
 import {
@@ -52,36 +54,25 @@ function ShortcutGroup({ group, isMac }: ShortcutGroupProps) {
   )
 }
 
-// A modal dialog: the browser traps focus inside it, closes it on Escape, and
-// returns focus to where it was.
 export function ShortcutsDialog() {
-  const dialogRef = useRef<HTMLDialogElement>(null)
-  const headingId = useId()
+  const [isOpen, setIsOpen] = useState(false)
   const isMac = use(IsMacContext)
 
-  useKeyboardShortcut("showShortcuts", () => {
-    if (dialogRef.current?.open === false) {
-      dialogRef.current.showModal()
-    }
-  })
+  useKeyboardShortcut("showShortcuts", () => setIsOpen(true))
 
   return (
-    <dialog
-      ref={dialogRef}
-      aria-labelledby={headingId}
-      className="m-auto w-full max-w-md rounded-large bg-surface-overlay p-6 text-foreground shadow-overlay transition-[opacity,translate] duration-200 ease-out backdrop:bg-canvas/60 starting:open:translate-y-2 starting:open:opacity-0"
-    >
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 id={headingId} className="font-display text-xl font-bold">
-          Keyboard shortcuts
-        </h2>
-        <IconButton label="Close" icon={X} onClick={() => dialogRef.current?.close()} />
-      </div>
-      <div className="flex flex-col gap-4">
-        {shortcutGroups.map((group) => (
-          <ShortcutGroup key={group} group={group} isMac={isMac} />
-        ))}
-      </div>
-    </dialog>
+    <DialogPrimitive.Root open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent className="w-full max-w-md p-6">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <DialogTitle>Keyboard shortcuts</DialogTitle>
+          <IconButton label="Close" icon={X} onClick={() => setIsOpen(false)} />
+        </div>
+        <div className="flex flex-col gap-4">
+          {shortcutGroups.map((group) => (
+            <ShortcutGroup key={group} group={group} isMac={isMac} />
+          ))}
+        </div>
+      </DialogContent>
+    </DialogPrimitive.Root>
   )
 }

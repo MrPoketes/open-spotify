@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { IsMacContext } from "./is-mac-context"
@@ -55,6 +55,22 @@ describe("ShortcutsDialog", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Close" }))
 
     expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument()
+  })
+
+  it("closes with Escape and gives focus back to where it was", async () => {
+    render(<button type="button">Play</button>)
+    render(<ShortcutsDialog />)
+    screen.getByRole("button", { name: "Play" }).focus()
+
+    await userEvent.keyboard("?")
+    const dialog = screen.getByRole("dialog", { name: "Keyboard shortcuts" })
+    await waitFor(() => expect(within(dialog).getByRole("button", { name: "Close" })).toHaveFocus())
+    await userEvent.keyboard("{Escape}")
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument(),
+    )
+    expect(screen.getByRole("button", { name: "Play" })).toHaveFocus()
   })
 
   it("stays closed when ? is typed in a text field", async () => {

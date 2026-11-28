@@ -1,8 +1,9 @@
+import type { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { useRef } from "react"
 import type { Folder } from "../../../shared/folders"
 import { Button } from "../../ui/button"
+import { Dialog } from "../../ui/dialog"
 import { formatCount } from "../../ui/format-count"
-import { ModalDialog } from "../../ui/modal-dialog"
 
 // Everything a delete takes with it: the folders inside, and everything in
 // them.
@@ -26,23 +27,23 @@ interface DeleteFolderDialogProps {
 }
 
 export function DeleteFolderDialog({ folder, onDelete, onClose }: DeleteFolderDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
+  const dialogActions = useRef<DialogPrimitive.Root.Actions>(null)
   return (
-    <ModalDialog heading={`Delete ${folder.name}?`} ref={dialogRef} onClose={onClose}>
+    <Dialog title={`Delete ${folder.name}?`} actionsRef={dialogActions} onClosed={onClose}>
       <p className="text-sm">{describeDeletion(folder)}</p>
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={() => dialogRef.current?.close()}>
+        <Button variant="secondary" onClick={() => dialogActions.current?.close()}>
           Cancel
         </Button>
         <Button
           onClick={() => {
             onDelete()
-            dialogRef.current?.close()
+            dialogActions.current?.close()
           }}
         >
           Delete folder
         </Button>
       </div>
-    </ModalDialog>
+    </Dialog>
   )
 }

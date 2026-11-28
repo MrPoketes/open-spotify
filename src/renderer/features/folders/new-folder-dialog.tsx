@@ -1,6 +1,7 @@
+import type { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { useRef, useState, type FormEvent } from "react"
 import { Button } from "../../ui/button"
-import { ModalDialog } from "../../ui/modal-dialog"
+import { Dialog } from "../../ui/dialog"
 import { TextField } from "../../ui/text-field"
 import { blankFolderNameMessage } from "./blank-folder-name-message"
 
@@ -9,9 +10,10 @@ interface NewFolderDialogProps {
   readonly onClose: () => void
 }
 
-// Focus returns to the opener of the menu when the dialog closes.
+// Focus starts in the Name field and returns to the opener of the menu when
+// the dialog closes.
 export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
+  const dialogActions = useRef<DialogPrimitive.Root.Actions>(null)
   const [name, setName] = useState("")
   const [triedToCreate, setTriedToCreate] = useState(false)
   const isNameBlank = name.trim() === ""
@@ -23,11 +25,11 @@ export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
       return
     }
     onCreate(name.trim())
-    dialogRef.current?.close()
+    dialogActions.current?.close()
   }
 
   return (
-    <ModalDialog heading="New folder" ref={dialogRef} onClose={onClose}>
+    <Dialog title="New folder" actionsRef={dialogActions} onClosed={onClose}>
       <form onSubmit={create} className="flex flex-col gap-4">
         <TextField
           label="Name"
@@ -36,12 +38,12 @@ export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
           errorMessage={triedToCreate && isNameBlank ? blankFolderNameMessage : undefined}
         />
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => dialogRef.current?.close()}>
+          <Button variant="secondary" onClick={() => dialogActions.current?.close()}>
             Cancel
           </Button>
           <Button type="submit">Create folder</Button>
         </div>
       </form>
-    </ModalDialog>
+    </Dialog>
   )
 }
