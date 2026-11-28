@@ -1,7 +1,7 @@
 import type { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { useRef, useState, type FormEvent } from "react"
 import { Button } from "../../ui/button"
-import { Dialog } from "../../ui/dialog"
+import { OpenOnMountDialog } from "../../ui/dialog"
 import { TextField } from "../../ui/text-field"
 import { blankFolderNameMessage } from "./blank-folder-name-message"
 
@@ -29,7 +29,7 @@ export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
   }
 
   return (
-    <Dialog title="New folder" actionsRef={dialogActions} onClosed={onClose}>
+    <OpenOnMountDialog title="New folder" actionsRef={dialogActions} onClosed={onClose}>
       <form onSubmit={create} className="flex flex-col gap-4">
         <TextField
           label="Name"
@@ -44,6 +44,6 @@ export function NewFolderDialog({ onCreate, onClose }: NewFolderDialogProps) {
           <Button type="submit">Create folder</Button>
         </div>
       </form>
-    </Dialog>
+    </OpenOnMountDialog>
   )
 }

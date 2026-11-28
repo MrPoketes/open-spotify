@@ -502,10 +502,11 @@ name is edited, the field is the row's tab stop. Focus returns to the row when `
 `Escape` ends the rename, or when a click on the row outside the field does. It stays on the
 control the user moved to when they leave the field for another one.
 
-Delete… opens a confirmation dialog (see Dialogs), with Cancel and Delete folder, that says how many items
-go with the folder, counting everything inside the folders in it, and that nothing leaves the
-Spotify library. After a delete, focus goes to the row that takes its place (or the last row), or
-to the New folder button when no folder is left.
+Delete… opens a confirmation dialog (see Dialogs), with Cancel and Delete folder, that says how
+many items go with the folder, counting everything inside the folders in it, and that nothing
+leaves the Spotify library. The folder is deleted once the dialog has closed and given focus back
+to its row. After a delete, focus goes to the row that takes its place (or the last row), or to
+the New folder button when no folder is left; Cancel leaves focus on the row.
 
 The status message says what a change did ("Created New folder", "Renamed to Running", "Deleted
 Running"). When the folder is gone because the tree changed elsewhere, the tree is read again

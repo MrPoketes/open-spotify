@@ -73,6 +73,16 @@ describe("ShortcutsDialog", () => {
     expect(screen.getByRole("button", { name: "Play" })).toHaveFocus()
   })
 
+  it("closes when the backdrop around it is clicked", async () => {
+    await openShortcutsDialog(false)
+
+    await userEvent.click(screen.getByRole("presentation"))
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument(),
+    )
+  })
+
   it("stays closed when ? is typed in a text field", async () => {
     render(<ShortcutsDialog />)
     render(<input aria-label="Notes" />)

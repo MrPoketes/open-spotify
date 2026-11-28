@@ -41,7 +41,7 @@ export function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props
   )
 }
 
-interface DialogProps {
+interface OpenOnMountDialogProps {
   readonly title: string
   // Its buttons close it through these.
   readonly actionsRef: RefObject<DialogPrimitive.Root.Actions | null>
@@ -51,7 +51,12 @@ interface DialogProps {
 
 // A 320 px dialog that opens as it mounts. Its owner unmounts it from
 // onClosed, once it has faded out and given focus back.
-export function Dialog({ title, actionsRef, onClosed, children }: DialogProps) {
+export function OpenOnMountDialog({
+  title,
+  actionsRef,
+  onClosed,
+  children,
+}: OpenOnMountDialogProps) {
   return (
     <DialogPrimitive.Root
       defaultOpen
