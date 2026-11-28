@@ -16,15 +16,17 @@ export function DialogContent({ className, ...props }: DialogPrimitive.Popup.Pro
         data-slot="dialog-overlay"
         className="fixed inset-0 isolate z-50 bg-canvas/60 transition-opacity duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0"
       />
-      <DialogPrimitive.Popup
-        data-slot="dialog-content"
-        className={cn(
-          "fixed inset-4 z-50 m-auto h-fit max-h-full overflow-y-auto rounded-large bg-surface-overlay text-foreground shadow-overlay",
-          "transition-[opacity,translate] duration-200 ease-out data-ending-style:translate-y-2 data-ending-style:opacity-0 data-starting-style:translate-y-2 data-starting-style:opacity-0",
-          className,
-        )}
-        {...props}
-      />
+      <DialogPrimitive.Viewport className="fixed inset-0 isolate z-50 flex items-center justify-center p-4">
+        <DialogPrimitive.Popup
+          data-slot="dialog-content"
+          className={cn(
+            "max-h-full overflow-y-auto rounded-large bg-surface-overlay text-foreground shadow-overlay",
+            "transition-[opacity,translate] duration-200 ease-out data-ending-style:translate-y-2 data-ending-style:opacity-0 data-starting-style:translate-y-2 data-starting-style:opacity-0",
+            className,
+          )}
+          {...props}
+        />
+      </DialogPrimitive.Viewport>
     </DialogPrimitive.Portal>
   )
 }
