@@ -103,8 +103,11 @@ export function Slider({
       className="group/slider w-full"
     >
       {/* The pointer rests on the control and the focus on the thumb inside
-          it, so the control is what the tooltip opens from. */}
-      <Tooltip label={label} details={unavailableReason}>
+          it, so the control is what the tooltip opens from. It shows only the
+          reason a slider is off: the seek bar sits just under the playback
+          buttons, which its tooltip would cover, and what is beside a slider
+          (the times, the speaker icon, the token's name) already names it. */}
+      <Tooltip label={label} details={unavailableReason} disabled={!isUnavailable}>
         <SliderPrimitive.Control
           className={cn(
             "relative flex h-4 w-full cursor-pointer touch-none items-center select-none",
@@ -128,9 +131,11 @@ export function Slider({
           />
         </SliderPrimitive.Control>
       </Tooltip>
-      <span id={reasonId} hidden>
-        {unavailableReason}
-      </span>
+      {isUnavailable && (
+        <span id={reasonId} hidden>
+          {unavailableReason}
+        </span>
+      )}
     </SliderPrimitive.Root>
   )
 }

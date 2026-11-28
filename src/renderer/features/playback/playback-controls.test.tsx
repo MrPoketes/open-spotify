@@ -300,20 +300,32 @@ describe("NowPlayingBar seek bar", () => {
 
   // Focus lands on the range input inside the slider, not on the element the
   // tooltip opens from.
-  it("shows the seek bar's tooltip on keyboard focus", async () => {
+  it("shows why the seek bar is off in a tooltip when it has focus", async () => {
     await renderNowPlayingBarAlone(
       spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })),
     )
     await screen.findByText("No device is playing")
     const slider = await seekBar()
 
-    while (document.activeElement !== slider) {
-      await userEvent.tab()
-    }
+    slider.focus()
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Playback positionChoose a device to control playback.",
     )
+  })
+
+  // The seek bar sits just under the playback buttons, which a tooltip above
+  // it would cover.
+  it("shows no tooltip while the seek bar can be used", async () => {
+    await renderNowPlayingBarAlone(pausedPlayback)
+    const slider = await seekBar()
+    await showsPosition(slider, "0:42 of 2:30")
+
+    slider.focus()
+    await userEvent.keyboard("{ArrowRight}")
+    await showsPosition(slider, "0:47 of 2:30")
+
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument()
   })
 
   // Spotify reports no item while an ad plays, and there is nothing to seek in.

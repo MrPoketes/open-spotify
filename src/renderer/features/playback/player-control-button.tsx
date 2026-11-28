@@ -66,9 +66,11 @@ export function PlayerControlButton({
           )}
         </button>
       </Tooltip>
-      <span id={reasonId} hidden>
-        {unavailableReason}
-      </span>
+      {isUnavailable && (
+        <span id={reasonId} hidden>
+          {unavailableReason}
+        </span>
+      )}
     </>
   )
 }

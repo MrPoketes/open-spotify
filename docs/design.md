@@ -315,9 +315,11 @@ trigger and a 16 px `Check` beside it; its rows are menu rows (see Menus).
 
 A tooltip (`src/renderer/ui/tooltip.tsx`, on shadcn's Tooltip) names a control that shows no text:
 every icon button and icon link (`IconButton`, `MenuButton`, the top bar's Home and Settings), the
-playback controls, every slider (the seek bar, the volume, and the theme editor's opacities), the
-sidebar's pin buttons, the theme picker's delete buttons, and the rows of the sidebar rail. Controls
-never use the native `title`, which the operating system draws outside the theme.
+playback controls, the sidebar's pin buttons, the theme picker's delete buttons, and the rows of the
+sidebar rail. A slider shows one only while it cannot be used, to say why: the seek bar sits just
+under the playback buttons, which a tooltip above it would cover, and what is beside a slider (the
+times, the speaker icon, the token's name) already names it. Controls never use the native `title`,
+which the operating system draws outside the theme.
 
 It is an Overlay panel (`surface-overlay`, `shadow-overlay`, `rounded-small`, 8 px by 4 px inside,
 at most 256 px wide) set in `text-xs`: the name in 600, then, when there is one, a `muted` line
