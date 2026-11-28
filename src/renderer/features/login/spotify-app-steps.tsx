@@ -33,7 +33,7 @@ export function SpotifyAppSteps() {
       <SetupStep number={2}>
         <p>Add this Redirect URI:</p>
         <span className="flex max-w-full items-center gap-2 rounded-medium bg-surface-raised py-1 pr-1 pl-3">
-          <code className="min-w-0 font-body font-semibold break-all">{spotifyRedirectUri}</code>
+          <code className="min-w-0 font-semibold break-all">{spotifyRedirectUri}</code>
           <CopyButton text={spotifyRedirectUri} subject="Redirect URI" />
         </span>
       </SetupStep>

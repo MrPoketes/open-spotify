@@ -130,7 +130,10 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
         </p>
       )}
       <footer className="border-t border-border pt-4">
-        <Link to="/onboarding" className="text-sm text-muted underline hover:text-foreground">
+        <Link
+          to="/onboarding"
+          className="text-sm text-muted underline transition-colors duration-120 ease-out hover:text-foreground"
+        >
           Change Client ID
         </Link>
       </footer>

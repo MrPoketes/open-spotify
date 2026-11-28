@@ -132,8 +132,7 @@ unofficial client sits under the sheet as `text-xs` `muted` small print, on both
   list in `text-sm`, ruled above, below, and between steps with `border` hairlines. Each number
   is written out in a 16 px `muted` 600 `tabular-nums` column, since a flex list item drops the
   browser's list marker; it is hidden from screen readers, which announce the list position.
-  The Redirect URI sits in a `surface-raised` strip with its Copy button, in the body font at
-  600, so the theme sets it like every other text.
+  The Redirect URI sits in a `surface-raised` strip with its Copy button, at 600 weight.
 - **Actions.** The sheet's one primary action is a default Button; secondary actions are
   secondary Buttons or muted links (see Buttons). Login's Log in fills the sheet's width, and
   Change Client ID sits under a hairline at the bottom as a `muted` link that turns `foreground`
@@ -167,7 +166,9 @@ default). Use only these steps:
 The default typeface is Schibsted Grotesk, a grotesk with the compact build of newspaper and
 sleeve typography. It ships with the app (`@fontsource-variable/schibsted-grotesk`, SIL Open Font
 License), so the app looks the same on every platform; the system UI font behind it covers the
-scripts it lacks. A theme sets its own families with `font-body` and `font-display`. Use only
+scripts it lacks. A theme sets its own families with `font-body` and `font-display`; `code` and
+`kbd` use `font-body` too (`--default-mono-font-family` in `app.css`), so no text falls back to a
+platform monospace the theme cannot change. Use only
 these sizes:
 
 | Class       | Size  | Use                                                                        |
