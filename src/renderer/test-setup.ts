@@ -20,31 +20,6 @@ Object.defineProperty(window, "MediaMetadata", { value: FakeMediaMetadata })
 
 Object.assign(HTMLMediaElement.prototype, fakeMediaElementMethods)
 
-// jsdom has no modal dialogs. These do the part the app relies on: showing
-// the dialog, giving focus back to the element that had it before the dialog
-// opened, as a browser does when that element is still on the page, and firing
-// close when it closes.
-const focusedBeforeDialogOpened = new WeakMap<HTMLDialogElement, Element | null>()
-
-Object.defineProperties(HTMLDialogElement.prototype, {
-  showModal: {
-    value(this: HTMLDialogElement) {
-      focusedBeforeDialogOpened.set(this, document.activeElement)
-      this.open = true
-    },
-  },
-  close: {
-    value(this: HTMLDialogElement) {
-      this.open = false
-      const focusedBefore = focusedBeforeDialogOpened.get(this)
-      if (focusedBefore instanceof HTMLElement && focusedBefore.isConnected) {
-        focusedBefore.focus()
-      }
-      this.dispatchEvent(new Event("close"))
-    },
-  },
-})
-
 // jsdom has no pointer capture, and Base UI's slider asks whether its control
 // holds the pointer when a drag ends. The tests never capture one.
 Object.defineProperty(Element.prototype, "hasPointerCapture", { value: () => false })

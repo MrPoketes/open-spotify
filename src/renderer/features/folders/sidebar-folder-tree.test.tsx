@@ -65,6 +65,21 @@ const focusTreeItem = async (name: string) => {
 
 const renameField = () => screen.findByRole("textbox", { name: "Folder name" })
 
+// jsdom runs no CSS transitions, so Base UI would finish closing a popup at
+// once. In the app a dialog fades out for 200 ms before it gives focus back.
+const giveClosingPopupsATransition = () => {
+  Object.defineProperty(Element.prototype, "getAnimations", {
+    configurable: true,
+    value(this: Element) {
+      if (!this.hasAttribute("data-ending-style")) return []
+      return [{ finished: new Promise((resolve) => setTimeout(resolve, 200)) }]
+    },
+  })
+  onTestFinished(() => {
+    Reflect.deleteProperty(Element.prototype, "getAnimations")
+  })
+}
+
 describe("SidebarFolderTree", () => {
   it("opens an entry's page when it is activated", async () => {
     const router = await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
@@ -221,12 +236,13 @@ describe("SidebarFolderTree", () => {
   })
 
   it("deletes a folder after saying how many items go with it, and focuses the next row", async () => {
+    giveClosingPopupsATransition()
     await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
     await focusTreeItem("Running")
 
     await userEvent.keyboard("{Shift>}{F10}{/Shift}")
     await userEvent.click(await screen.findByRole("menuitem", { name: "Delete…" }))
-    const dialog = screen.getByRole("dialog", { name: "Delete Running?" })
+    const dialog = await screen.findByRole("dialog", { name: "Delete Running?" })
     expect(dialog).toHaveTextContent("the 3 items in it")
     await userEvent.click(screen.getByRole("button", { name: "Delete folder" }))
 
@@ -234,6 +250,19 @@ describe("SidebarFolderTree", () => {
       expect(screen.queryByRole("treeitem", { name: /^Running/ })).not.toBeInTheDocument(),
     )
     expect(await treeItem("Focus")).toHaveFocus()
+  })
+
+  it("keeps the folder and gives focus back to its row when Delete is cancelled", async () => {
+    giveClosingPopupsATransition()
+    await renderScreen(sidebarFolderTree, fakeMainProcess({ folderTree }))
+    await focusTreeItem("Running")
+
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}")
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Delete…" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Cancel" }))
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    expect(await treeItem("Running")).toHaveFocus()
   })
 
   it("moves focus to the New folder button when the last folder is deleted", async () => {

@@ -332,6 +332,20 @@ tree's inline rename and the theme editor's token fields use the bare input. The
 off autocomplete and spell check, since it is not a word. The search field and the library's name
 filter use the same input, the search field as a pill with a search icon.
 
+#### Dialogs
+
+A dialog (`src/renderer/ui/dialog.tsx`, on shadcn's Dialog) is an Overlay (`surface-overlay`,
+`shadow-overlay`, `rounded-large`) centered in the window over a `canvas` backdrop at 60 %
+opacity, with a `font-display` `text-xl` 700 title that names it. It keeps a 16 px margin from
+every window edge and scrolls when it is taller than that. It opens and closes like a menu: the
+dialog fades and rises 8 px as it opens and sinks back as it closes, while the backdrop fades, in
+200 ms `ease-out` (see Motion). It is modal: focus moves to its first control, `Tab` stays inside
+it, the page behind it neither scrolls nor takes clicks, and `Escape` or a click on the backdrop
+closes it. When it closes, focus goes back to where it was when it opened; for a dialog opened
+from a menu item, that is the menu's opener (see Menus). The folder dialogs are 320 px wide with
+16 px inside and their buttons at the bottom right, Cancel (a secondary button) before the action
+(a default button).
+
 ### Library rows
 
 Sidebar entries are 48 px rows: 40 px artwork, the name in `text-sm`, and a `text-xs` `muted` line
@@ -488,10 +502,11 @@ name is edited, the field is the row's tab stop. Focus returns to the row when `
 `Escape` ends the rename, or when a click on the row outside the field does. It stays on the
 control the user moved to when they leave the field for another one.
 
-Delete… opens a confirmation dialog, styled like the New folder dialog, that says how many items
-go with the folder, counting everything inside the folders in it, and that nothing leaves the
-Spotify library. After a delete, focus goes to the row that takes its place (or the last row), or
-to the New folder button when no folder is left.
+Delete… opens a confirmation dialog (see Dialogs), with Cancel and Delete folder, that says how
+many items go with the folder, counting everything inside the folders in it, and that nothing
+leaves the Spotify library. The folder is deleted once the dialog has closed and given focus back
+to its row. After a delete, focus goes to the row that takes its place (or the last row), or to
+the New folder button when no folder is left; Cancel leaves focus on the row.
 
 The status message says what a change did ("Created New folder", "Renamed to Running", "Deleted
 Running"). When the folder is gone because the tree changed elsewhere, the tree is read again
@@ -950,12 +965,11 @@ folders inside it. The status message says what happened: "Added to Running", "R
 Running", or why it failed. Until the folders load, the item says so in the status message instead
 of opening a submenu, and after a failed load it loads them again.
 
-"New folder…" opens a modal dialog (`surface-overlay`, `shadow-overlay`, `rounded-large`, 320 px
-wide, over a `canvas` backdrop at 60 % opacity) with a Name field, then Cancel (a secondary
-button) and Create folder (a default button). Create folder makes a top-level folder with
-the item in it. A blank name keeps the dialog open and marks the field invalid with "Enter a
-name for the folder.", until the name is no longer blank. Focus starts in the field, stays in the
-dialog, and returns to the menu's opener when the dialog closes; `Escape` closes it.
+"New folder…" opens a dialog (see Dialogs) with a Name field, then Cancel and Create folder.
+Create folder makes a top-level folder with the item in it. A blank name keeps the dialog open
+and marks the field invalid with "Enter a name for the folder.", until the name is no longer
+blank. Focus starts in the field, stays in the dialog, and returns to the menu's opener when the
+dialog closes; `Escape` closes it.
 
 The sidebar's folder menu sits beside the "Your library" heading. What an action did is said
 under the heading: a success in `muted` text inside an `output`, a failure in `danger` text
@@ -1008,9 +1022,8 @@ A playback shortcut whose control cannot be used says why in the status message,
 control's tooltip may never have been seen. A held volume shortcut says it once, not on every
 repeat.
 
-`?` opens the shortcuts dialog: a modal Overlay (`surface-overlay`, `shadow-overlay`,
-`rounded-large`) at most 448 px wide with 24 px of padding, over a `canvas` backdrop at 60 %
-opacity, with a `font-display` `text-xl` "Keyboard shortcuts" heading and a Close icon button.
+`?` opens the shortcuts dialog (see Dialogs), at most 448 px wide with 24 px inside, with a
+"Keyboard shortcuts" title and a Close icon button.
 Below them come a Playback, a General, and a Focused row section, each with a `text-sm` 600
 `muted` heading and one row per shortcut: the action in `text-sm` and its keys as `kbd` chips
 (`surface-raised`, `rounded-small`, `text-xs` 600). `Escape` closes it and focus returns to where

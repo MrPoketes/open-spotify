@@ -1,4 +1,4 @@
-import { act, screen, within } from "@testing-library/react"
+import { act, screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Effect, Stream } from "effect"
 import type { ReactNode } from "react"
@@ -199,15 +199,18 @@ describe("Add to folder", () => {
 
   // Keyboard users continue from the row they opened the menu on, so focus
   // must not end up on the page itself.
-  it("gives focus back to the row when the New folder dialog is cancelled", async () => {
+  it("starts the New folder dialog in its Name field and gives focus back to the row", async () => {
     const user = await renderWithFolders(trackList)
     const row = await trackRow()
     const folderSubmenu = await openFolderSubmenu(user, row)
     await user.click(within(folderSubmenu).getByRole("menuitem", { name: "New folder…" }))
     const dialog = await screen.findByRole("dialog", { name: "New folder" })
-    await user.click(within(dialog).getByRole("button", { name: "Cancel" }))
 
-    expect(row).toHaveFocus()
+    await waitFor(() => expect(within(dialog).getByRole("textbox", { name: "Name" })).toHaveFocus())
+    await user.keyboard("{Escape}")
+
+    await waitFor(() => expect(row).toHaveFocus())
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
   it("asks for a name instead of creating a folder with a blank one", async () => {

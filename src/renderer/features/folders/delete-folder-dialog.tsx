@@ -1,8 +1,9 @@
+import type { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { useRef } from "react"
 import type { Folder } from "../../../shared/folders"
 import { Button } from "../../ui/button"
+import { OpenOnMountDialog } from "../../ui/dialog"
 import { formatCount } from "../../ui/format-count"
-import { ModalDialog } from "../../ui/modal-dialog"
 
 // Everything a delete takes with it: the folders inside, and everything in
 // them.
@@ -25,24 +26,36 @@ interface DeleteFolderDialogProps {
   readonly onClose: () => void
 }
 
+// The delete waits until the dialog has closed and given focus back to the
+// row. Started any earlier, it removes the row while focus is still in the
+// closing dialog, and focus falls to the page instead of the next row.
 export function DeleteFolderDialog({ folder, onDelete, onClose }: DeleteFolderDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
+  const dialogActions = useRef<DialogPrimitive.Root.Actions>(null)
+  const isDeleteChosen = useRef(false)
+  const closeAndDeleteIfChosen = () => {
+    if (isDeleteChosen.current) onDelete()
+    onClose()
+  }
   return (
-    <ModalDialog heading={`Delete ${folder.name}?`} ref={dialogRef} onClose={onClose}>
+    <OpenOnMountDialog
+      title={`Delete ${folder.name}?`}
+      actionsRef={dialogActions}
+      onClosed={closeAndDeleteIfChosen}
+    >
       <p className="text-sm">{describeDeletion(folder)}</p>
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={() => dialogRef.current?.close()}>
+        <Button variant="secondary" onClick={() => dialogActions.current?.close()}>
           Cancel
         </Button>
         <Button
           onClick={() => {
-            onDelete()
-            dialogRef.current?.close()
+            isDeleteChosen.current = true
+            dialogActions.current?.close()
           }}
         >
           Delete folder
         </Button>
       </div>
-    </ModalDialog>
+    </OpenOnMountDialog>
   )
 }
