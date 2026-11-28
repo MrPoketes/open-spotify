@@ -1,6 +1,7 @@
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { use, type Ref } from "react"
 import { Button } from "../../ui/button"
+import { Tooltip } from "../../ui/tooltip"
 import { IsMacContext } from "../shortcuts/is-mac-context"
 import { ariaKeyShortcut, keyComboLabels } from "../shortcuts/key-combo"
 import { shortcutKeys, windowShortcuts } from "../shortcuts/keyboard-shortcuts"
@@ -19,16 +20,17 @@ export function SidebarToggleButton({ isCollapsed, onToggle, ref }: SidebarToggl
   const label = isCollapsed ? "Expand sidebar" : "Collapse sidebar"
   const Icon = isCollapsed ? PanelLeftOpen : PanelLeftClose
   return (
-    <Button
-      ref={ref}
-      variant="ghost"
-      size="icon"
-      aria-label={label}
-      title={`${label} (${keyComboLabels(keys, isMac).join("+")})`}
-      aria-keyshortcuts={ariaKeyShortcut(keys, isMac)}
-      onClick={onToggle}
-    >
-      <Icon aria-hidden size={20} />
-    </Button>
+    <Tooltip label={label} shortcut={keyComboLabels(keys, isMac).join("+")}>
+      <Button
+        ref={ref}
+        variant="ghost"
+        size="icon"
+        aria-label={label}
+        aria-keyshortcuts={ariaKeyShortcut(keys, isMac)}
+        onClick={onToggle}
+      >
+        <Icon aria-hidden size={20} />
+      </Button>
+    </Tooltip>
   )
 }

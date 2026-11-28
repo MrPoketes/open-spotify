@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest"
-import { cleanup } from "@testing-library/react"
+import { cleanup, configure } from "@testing-library/react"
 import { afterEach } from "vitest"
 import { fakeMediaElementMethods } from "./lib/fake-media-elements"
 import { FakeMediaMetadata, fakeMediaSession } from "./lib/fake-media-session"
@@ -8,6 +8,11 @@ import { FakeResizeObserver } from "./lib/fake-resize-observer"
 // Testing Library only unmounts rendered components by itself when Vitest
 // globals are enabled, and they are not.
 afterEach(cleanup)
+
+// A hidden element's text is never on screen. It is there only to describe a
+// control to screen readers, such as why a playback control is off, so text
+// queries skip it as a user's eyes would.
+configure({ defaultIgnore: "script, style, [hidden]" })
 
 // The router scrolls to the top after each navigation, and jsdom does not
 // implement scrolling.

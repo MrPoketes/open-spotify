@@ -61,7 +61,7 @@ export function LibraryEntryRow({ entry, pinned, rovingProps, actions }: Library
       className={`group flex items-center ${sidebarRowClassNames.surface} ${isDragging ? "opacity-50" : ""}`}
     >
       <ContextMenu menu={entryMenu}>
-        <Tooltip label={entry.name} details={entry.details} disabled={!isRail}>
+        <Tooltip label={entry.name} details={entry.details} side="right" disabled={!isRail}>
           <Link
             {...entry.page}
             {...rovingProps}
@@ -110,15 +110,16 @@ interface PinButtonProps {
 function PinButton({ entry, pinned, shortcutLabel, onToggle }: PinButtonProps) {
   const pinLabel = pinned ? `Unpin ${entry.name}` : `Pin ${entry.name} to the top`
   return (
-    <button
-      type="button"
-      tabIndex={-1}
-      aria-label={pinLabel}
-      title={`${pinLabel} (${shortcutLabel})`}
-      onClick={onToggle}
-      className={`mr-2 ${rowActionClassName}`}
-    >
-      {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}
-    </button>
+    <Tooltip label={pinLabel} shortcut={shortcutLabel}>
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label={pinLabel}
+        onClick={onToggle}
+        className={`mr-2 ${rowActionClassName}`}
+      >
+        {pinned ? <PinOff aria-hidden size={20} /> : <Pin aria-hidden size={20} />}
+      </button>
+    </Tooltip>
   )
 }

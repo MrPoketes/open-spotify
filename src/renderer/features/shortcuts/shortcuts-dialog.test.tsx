@@ -74,7 +74,11 @@ describe("ShortcutsDialog", () => {
   })
 
   it("closes when the backdrop around it is clicked", async () => {
-    await openShortcutsDialog(false)
+    const dialog = await openShortcutsDialog(false)
+    // Focus starts on the Close button, and its open tooltip is a presentation
+    // element too.
+    dialog.focus()
+    await waitFor(() => expect(screen.queryByRole("tooltip")).not.toBeInTheDocument())
 
     await userEvent.click(screen.getByRole("presentation"))
 
