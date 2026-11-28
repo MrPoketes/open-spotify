@@ -85,27 +85,26 @@ function isFixedLength(expression: ESTree.Expression, resolver: Resolver): boole
   if (unwrapped.type === "Identifier") {
     return isFixedVariable(findVariable(resolver.scope, unwrapped.name), resolver)
   }
-  if (unwrapped.type === "ConditionalExpression") {
-    return [unwrapped.consequent, unwrapped.alternate].some((branch) =>
-      isFixedLength(branch, resolver),
-    )
-  }
-  if (unwrapped.type === "LogicalExpression" || unwrapped.type === "BinaryExpression") {
-    return [unwrapped.left, unwrapped.right].some((operand) => isFixedOperand(operand, resolver))
-  }
-  return false
+  return lengthOperands(unwrapped).some(
+    (operand) => operand.type !== "PrivateIdentifier" && isFixedLength(operand, resolver),
+  )
 }
 
-// A bare number beside a variable, as in `level - 1`, is a count or a factor
-// rather than a length, so only a named length makes a sum or product fixed.
-function isFixedOperand(
-  operand: ESTree.Expression | ESTree.PrivateIdentifier,
-  resolver: Resolver,
-): boolean {
-  if (operand.type === "PrivateIdentifier" || operand.type === "Literal") {
-    return false
+// The parts that end up in the length. Any number among them is a length, so
+// `(level - 1) * 16` is as fixed as `(level - 1) * levelIndent`.
+function lengthOperands(
+  expression: ESTree.Expression,
+): ReadonlyArray<ESTree.Expression | ESTree.PrivateIdentifier> {
+  if (expression.type === "ConditionalExpression") {
+    return [expression.consequent, expression.alternate]
   }
-  return isFixedLength(operand, resolver)
+  if (expression.type === "LogicalExpression" || expression.type === "BinaryExpression") {
+    return [expression.left, expression.right]
+  }
+  if (expression.type === "UnaryExpression" && ["-", "+"].includes(expression.operator)) {
+    return [expression.argument]
+  }
+  return []
 }
 
 function isFixedVariable(variable: Variable | undefined, resolver: Resolver): boolean {

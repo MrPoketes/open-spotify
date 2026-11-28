@@ -22,13 +22,28 @@ const validCases = [
   "<div style={{ padding: 0 }} />",
   "<div style={{ opacity: 0.5, zIndex: 10, flexGrow: 1 }} />",
   "const coverSize = 224; <img width={coverSize} />",
-  "function Row({ level }) { const indent = level - 1; return <div style={{ paddingLeft: indent }} /> }",
   "<div style={layout.style} />",
   "<div style={{ left: `${dragOffset}px`, width: `calc(100% - ${dragOffset}px)` }} />",
   "const layout = { height: 56 }",
 ]
 
 const invalidCases = [
+  {
+    code: "function Row({ level }) { const indent = level - 1; return <div style={{ paddingLeft: indent }} /> }",
+    errors: [{ messageId: "fixedStyleLength" }],
+  },
+  {
+    code: "<div style={{ paddingLeft: (level - 1) * 16 }} />",
+    errors: [{ messageId: "fixedStyleLength" }],
+  },
+  {
+    code: "const topBarHeight = 56; <div style={{ marginTop: -8, marginBottom: -topBarHeight }} />",
+    errors: [{ messageId: "fixedStyleLength" }, { messageId: "fixedStyleLength" }],
+  },
+  {
+    code: "<div style={{ height: total + 8 }} />",
+    errors: [{ messageId: "fixedStyleLength" }],
+  },
   {
     code: "const coverSize = 224; <div style={{ width: coverSize, height: coverSize }} />",
     errors: [{ messageId: "fixedStyleLength" }, { messageId: "fixedStyleLength" }],
