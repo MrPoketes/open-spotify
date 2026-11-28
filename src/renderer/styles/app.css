@@ -84,12 +84,14 @@
 @layer base {
   /*
    * The top bar floats over the top of the main view (docs/design.md, Layout
-   * grid). Both lengths follow the theme's spacing step, like the controls in
-   * the bar.
+   * grid). These lengths follow the theme's spacing step, like the controls in
+   * the bar. The theme editor's sticky save bar reaches down through the
+   * bottom padding to the sheet's edge.
    */
   :root {
     --top-bar-height: calc(var(--theme-spacing) * 14);
     --main-view-content-top: calc(var(--top-bar-height) + var(--theme-spacing) * 4);
+    --main-view-content-bottom: calc(var(--theme-spacing) * 12);
   }
 
   body {

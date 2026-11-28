@@ -12,15 +12,19 @@ const swatchProperties = (theme: Theme) =>
     ),
   )
 
+// A miniature of the app in the theme: a strip of canvas where the sidebar
+// sits, and the raised sheet with a heading and the accent on it.
 export function ThemeSwatch({ theme }: { readonly theme: Theme }) {
   return (
     <div
       aria-hidden
       style={swatchProperties(theme)}
-      className="flex h-10 w-16 shrink-0 flex-col justify-between rounded-small bg-surface p-2 text-foreground ring-1 ring-border"
+      className="flex h-10 w-16 shrink-0 rounded-small bg-canvas py-1 pr-1 pl-3 ring-1 ring-border"
     >
-      <span className="font-display text-xs leading-none font-bold">Aa</span>
-      <span className="h-1 w-6 rounded-full bg-accent" />
+      <div className="flex flex-1 flex-col justify-between rounded-small bg-surface p-1.5 text-foreground shadow-raised">
+        <span className="font-display text-xs leading-none font-bold">Aa</span>
+        <span className="h-1 w-5 rounded-full bg-accent" />
+      </div>
     </div>
   )
 }

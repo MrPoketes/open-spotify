@@ -1,6 +1,7 @@
 import { Check, Trash2 } from "lucide-react"
 import type { KeyboardEvent } from "react"
 import type { Theme } from "../../../shared/theme"
+import { cn } from "../../ui/class-names"
 import { rowActionClassName } from "../../ui/row-action-class-name"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
@@ -22,12 +23,13 @@ interface ThemeOptionProps {
   readonly onDelete: ((trigger: DeleteTrigger) => void) | null
 }
 
-// The delete button stays out of the tab order, so the list remains one tab
-// stop (docs/design.md); keyboard users delete the focused row with a shortcut.
+// The chosen row is marked like a pressed toggle, by lightness and weight
+// rather than the accent (docs/design.md, Color roles). The delete button
+// stays out of the tab order, so the list remains one tab stop; keyboard users
+// delete the focused row with a shortcut.
 export function ThemeOption(props: ThemeOptionProps) {
   const { theme, isChosen, rovingProps, onKeyDown, onHover, onUnhover, onFocus, onBlur } = props
   const { onChoose, onDelete } = props
-  const chosenStyle = isChosen ? "bg-accent/15 font-semibold" : "hover:bg-surface-raised"
   const deleteLabel = `Delete ${theme.name}`
   const deleteShortcut = useRowShortcut("deleteTheme")
 
@@ -46,7 +48,7 @@ export function ThemeOption(props: ThemeOptionProps) {
     <div
       onMouseEnter={onHover}
       onMouseLeave={onUnhover}
-      className={`group flex items-center rounded-small transition-colors duration-120 ease-out ${chosenStyle}`}
+      className="group flex items-center rounded-small transition-colors duration-120 ease-out hover:bg-surface-raised"
     >
       <button
         type="button"
@@ -63,10 +65,13 @@ export function ThemeOption(props: ThemeOptionProps) {
         onClick={onChoose}
         className="flex min-w-0 flex-1 items-center gap-3 rounded-small p-3 text-left text-sm"
       >
-        <ThemeSwatch theme={theme} />
+        {/* The ring sits outside the swatch, which draws its own theme's colors. */}
+        <span className={cn("rounded-small", isChosen && "ring-2 ring-foreground")}>
+          <ThemeSwatch theme={theme} />
+        </span>
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate">{theme.name}</span>
-          <span className="truncate text-xs font-normal text-muted">by {theme.author}</span>
+          <span className={cn("truncate", isChosen && "font-semibold")}>{theme.name}</span>
+          <span className="truncate text-xs text-muted">by {theme.author}</span>
         </span>
         {isChosen && <Check aria-hidden size={16} />}
       </button>

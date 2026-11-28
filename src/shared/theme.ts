@@ -16,7 +16,7 @@ export const CssLength = Schema.String.check(
 
 const CssValue = Schema.String.check(Schema.isNonEmpty({ expected: "a value" }))
 
-const Opacity = Schema.String.check(
+export const Opacity = Schema.String.check(
   Schema.isPattern(/^(0(\.\d+)?|1(\.0+)?)$/, { expected: "an opacity from 0 to 1, like 0.4" }),
 )
 

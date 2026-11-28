@@ -23,13 +23,17 @@ const isKeyForOpenMenu = (event: KeyboardEvent) =>
   event.target.closest("[role=menu]") !== null &&
   !hasShortcutModifier(event)
 
-// Space presses a focused button, so a shortcut on Space gives way to it. On
-// a link Space only scrolls, and a focused radio button is already checked, so
-// there the shortcut runs.
+// Space presses a focused button, flips a switch, and chooses a select's
+// option, so a shortcut on Space gives way to them. Base UI draws switches and
+// options as spans, so they are found by role. On a link Space only scrolls,
+// and a focused radio button is already checked, so there the shortcut runs.
+const isPressedBySpace = (target: EventTarget | null) =>
+  target instanceof Element && target.matches("button, [role=switch], [role=option]")
+
 const isKeyForFocusedElement = (event: KeyboardEvent) =>
   isTextEntry(event.target) ||
   isKeyForOpenMenu(event) ||
-  (event.key === " " && event.target instanceof HTMLButtonElement)
+  (event.key === " " && isPressedBySpace(event.target))
 
 // Runs the action when the user presses the shortcut's keys anywhere in the
 // window, except while typing. Holding the keys down runs the action once,

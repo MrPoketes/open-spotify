@@ -153,8 +153,8 @@ these sizes:
 | `text-sm`   | 14 px | List rows, sidebar items, buttons, inputs                                  |
 | `text-base` | 16 px | Body text                                                                  |
 | `text-xl`   | 20 px | Section headings                                                           |
-| `text-3xl`  | 30 px | Titles of Settings, login, onboarding, and not-found pages                 |
-| `text-5xl`  | 48 px | Home's greeting; search's title; the header of an album, artist, etc.      |
+| `text-3xl`  | 30 px | Titles of login, onboarding, and not-found pages                           |
+| `text-5xl`  | 48 px | Home's greeting; the titles of search and Settings; a page header's title  |
 
 Weights: 400 for body, 500 for resting toggle options, 600 for emphasis, buttons, and active
 items, 700 for headings. Headings from `text-xl` up use `font-display` (lint enforces it) and
@@ -187,8 +187,8 @@ two apart at a glance.
 | Artwork | the image         | `shadow-raised`  | Covers in grids, headers, and the bar; play buttons |
 | Overlay | `surface-overlay` | `shadow-overlay` | Menus, dialogs, the command palette, toasts         |
 
-Hovered and selected list rows change color (`surface-raised`, or `accent` at 15 % opacity
-when selected) but never gain a shadow.
+Hovered list rows take `surface-raised` but never gain a shadow. A chosen row is marked like a
+pressed toggle (see Color roles), never with the accent.
 
 ### Color roles
 
@@ -271,6 +271,22 @@ filters stay at the top of the pane while the list scrolls. When the filters mat
 says so instead of going blank. The sidebar folders sit above the filters and scroll away first,
 since the filters apply only to the library.
 
+#### Switches
+
+An on/off setting is a switch (`src/renderer/ui/switch.tsx`): a 40 × 24 px rail with a 16 px
+thumb. On, the rail is `accent` and the thumb `on-accent`, on the right; off, the rail is `muted`
+and the thumb `surface`, on the left, so the off rail still stands out from the surface. It dims
+on hover and press. It sits at the right end of a setting row (see Settings and the theme
+picker), whose label also toggles it.
+
+#### Selects
+
+A short list of fixed values, such as the theme editor's units, is a select
+(`src/renderer/ui/select.tsx`). Its trigger looks like an input (`surface-raised`, 36 px,
+`rounded-medium`, `text-sm`) with a 16 px `muted` `ChevronDown`. The list opens as an Overlay
+panel (`surface-overlay`, `shadow-overlay`, `rounded-large`) with the chosen option over the
+trigger and a 16 px `Check` beside it; its rows are menu rows (see Menus).
+
 #### Tooltips
 
 A tooltip (`src/renderer/ui/tooltip.tsx`) names a control that shows no text, such as a row in the
@@ -288,9 +304,9 @@ corners, 36 px tall with 12 px inside, and `text-sm` text; it turns `surface-ove
 invalid field gets a `danger` ring and a `text-xs` `danger` message in an `alert` under it, which
 also describes it (`aria-describedby`). The onboarding Client ID, the theme editor's Name and
 Author, and the New folder dialog's Name use it (`src/renderer/ui/text-field.tsx`); the folder
-tree's inline rename uses the bare input. The Client ID turns off autocomplete and spell check,
-since it is not a word. The search field and the library's name filter use the same input, the
-search field as a pill with a search icon.
+tree's inline rename and the theme editor's token fields use the bare input. The Client ID turns
+off autocomplete and spell check, since it is not a word. The search field and the library's name
+filter use the same input, the search field as a pill with a search icon.
 
 ### Library rows
 
@@ -633,13 +649,21 @@ pane asks the user to choose one in the bar, and a queue with nothing in it says
 ### Settings and the theme picker
 
 Settings is a page in the main view, opened from the gear icon at the right end of the top bar.
-Its sections (Appearance first) sit in one column at most 576 px wide.
+It opens with a `text-5xl` "Settings" title like search's, then its sections, 48 px apart, in one
+column at most 672 px wide: Appearance, Playback, and Account, each a page section (see Page
+sections). The app's version and platform close the page in `text-xs` `muted`.
+
+A setting is a row (`src/renderer/ui/setting-row.tsx`): on the left its label in `text-sm` at 600
+and a `text-xs` `muted` description of what it changes, which also describes the control; on the
+right its control, vertically centered. Clicking the label works a switch.
 
 The theme picker is a list of 64 px rows, one per theme: a 64 × 40 px swatch, the theme's name
-in `text-sm`, and "by author" in `text-xs` `muted`. The swatch sets the theme's own token
-properties on itself, so it shows that theme's `surface`, `foreground`, and `accent` without
-applying it. The chosen row is `accent` at 15 % opacity, 600 weight, and has a 16 px `Check`
-icon.
+in `text-sm`, and "by author" in `text-xs` `muted`. The swatch is a miniature of the app in that
+theme: a strip of `canvas` where the sidebar sits and a raised `surface` sheet with "Aa" in the
+theme's display font and an `accent` bar. It sets the theme's own token properties on itself, so
+it shows that theme's colors, display font, radius, and shadow without applying it. The chosen
+row is marked like a pressed toggle, by lightness and weight rather than the accent: a 2 px
+`foreground` ring around its swatch, its name at 600, and a 16 px `Check` at the row's end.
 
 Hovering or focusing a row previews its theme across the whole app at once. The pointer wins
 over focus, so a mouse user can compare themes while keyboard focus stays on one row. The saved
@@ -657,23 +681,21 @@ theme applies and saves the default theme. A row deleted from the keyboard hands
 that takes its place; a row deleted with the pointer leaves focus alone, so no other row is left
 previewing. Built-in themes have no delete button.
 
-Below the list, "Edit a copy" opens the theme editor on a copy of the chosen theme, and
-"Import theme…" and "Export current theme…" are secondary buttons
-that open the operating system's file dialogs. A result is reported in `muted` text inside an
-`output` element; a rejected file shows the reason in `danger` text inside an `alert`. The dialogs are
-modal to the app window.
+Below the list, one row of secondary buttons: "Edit a copy" opens the theme editor on a copy of
+the chosen theme, and "Import theme…" and "Export current theme…" open the operating system's
+file dialogs. A result is reported in `muted` text inside an `output` element; a rejected file
+shows the reason in `danger` text inside an `alert`. The dialogs are modal to the app window.
 
-Below them, "Track list rows" offers Comfortable and Dense in a segmented control, with a
-`text-xs` `muted` line that says what Dense changes. The choice applies to every track
-list at once.
+Below them, under a `border` hairline, the "Track list rows" setting offers Comfortable and Dense
+in a segmented control. The choice applies to every track list at once.
 
-A Playback section follows Appearance. Its "Play on this computer" switch, on by default, sits at
-the right end of a row whose `text-sm` 600-weight label and `text-xs` `muted` description name it.
-The switch is a 40 × 24 px `button` with `role="switch"`: an `accent` rail with an `on-accent`
-thumb on the right when on, a `muted` rail with a `surface` thumb on the left when off. It dims
-on hover and press, and clicking its label toggles it too. Turning
-it off disconnects the Web Playback SDK's player and takes "This computer" out of the device
-picker at once; turning it on connects the player again.
+The Playback section holds "Play on this computer", a switch (see Switches), on by default.
+Turning it off disconnects the Web Playback SDK's player and takes "This computer" out of the
+device picker at once; turning it on connects the player again.
+
+The Account section's "Log out of Spotify" row ends in an outline Log out button. Logging out
+forgets the session but keeps the Client ID; a failure shows in `danger` text inside an `alert`
+under the button.
 
 ### Theme editor
 
@@ -682,15 +704,21 @@ hovered row cannot preview over the theme being edited. Focus moves to its Name 
 opens and back to "Edit a copy" when it closes. A built-in or imported theme is never edited in
 place: the editor starts from a copy named "<theme> (copy)".
 
-From the top: Name and Author fields side by side, a "Color scheme" radio group (Dark, Light), then
-one `fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows, Artwork) with a field
-for every token. The fields come from the `Theme` Schema, so a new token appears without changes to
-the editor. Each field is labelled with its token name, and its control fits the value:
+From the top: a `text-base` 600 "Edit a copy of <theme>" heading, Name and Author fields side by
+side, a "Color scheme" setting row with Dark and Light in a segmented control, then one
+`fieldset` per token group (Colors, Typography, Radii, Spacing, Shadows, Artwork) with a field
+for every token. Each group's legend is a credits label (see Type) over a `border` hairline, and
+its fields sit in two columns when the column is at least 448 px wide. The fields come from the
+`Theme` Schema, so a new token appears without changes to the editor. Each field is labelled with
+its token name in `text-xs` at 600, and its control fits the value:
 
-- **Colors:** the native color picker beside a hex text field. Both edit the same value.
-- **Radii and spacing:** a number field and a unit list (`px`, `rem`, `em`).
-- **Fonts and shadows:** a text field for the CSS value.
-- **Artwork wash:** a text field for the opacity, from 0 to 1.
+- **Colors:** the native color picker, drawn as a 36 px swatch of the color on `surface-raised`,
+  beside a hex input. Both edit the same value.
+- **Radii and spacing:** a number input without the browser's spin buttons (the arrow keys still
+  step it) and a select of units (`px`, `rem`, `em`).
+- **Fonts and shadows:** an input for the CSS value, spanning both columns.
+- **Artwork wash:** a slider from 0 to 1 in steps of 0.05, spanning both columns, with the value
+  beside it as a percentage, or "Off" at 0, since 0 turns the wash off.
 
 Every valid change applies to the whole app at once. An invalid value gets a `danger` ring and a
 `text-xs` `danger` message under its field that describes it (`aria-describedby`), and the app
@@ -703,11 +731,12 @@ reads as meeting the target. The warnings sit in an `output` live region, so a s
 announces them as they appear, and they also describe the field. They follow every valid change
 and never block saving.
 
-Save theme (a default button) stores the copy as an imported theme and chooses it; with a field
-still invalid or the name or author empty, it says so in an `alert` instead. A theme the main
-process refuses, such as one named like a built-in theme, shows its reason in the same `alert`.
-Cancel (a secondary button), or leaving the page, discards the changes and restores the
-saved theme.
+Save theme (a default button) and Cancel sit in a bar at the bottom of the form, above a `border`
+hairline on `surface`, that sticks to the bottom of the main view while the form scrolls, so they
+stay in reach among dozens of fields. Save theme stores the copy as an imported theme and chooses
+it; with a field still invalid or the name or author empty, it says so in an `alert` instead. A
+theme the main process refuses, such as one named like a built-in theme, shows its reason in the
+same `alert`. Cancel, or leaving the page, discards the changes and restores the saved theme.
 
 ### Home page
 
@@ -943,8 +972,8 @@ types no Latin letter, as on a Cyrillic layout or with macOS Option, the key in 
 position works instead.
 
 No shortcut fires while focus is in a text field, and only shortcuts held with `Ctrl`, `Alt`, or
-`Cmd` fire while a menu has focus (see Menus). `Space` leaves a focused button to press itself.
-On a focused link, which `Space` would only scroll past, or a focused radio button, which is
+`Cmd` fire while a menu has focus (see Menus). `Space` leaves a focused button to press itself,
+a focused switch to flip itself, and a focused select option to be chosen. On a focused link, which `Space` would only scroll past, or a focused radio button, which is
 already checked, it plays or pauses. Holding the keys down runs a shortcut once, except for the
 volume, which keeps stepping like a volume key. Quick presses add up: each seek starts from where
 the last one moved the seek bar, before Spotify reports it, and the volume slider shows each step
@@ -1062,7 +1091,9 @@ Native controls that the browser partly draws (`<input type="range">`, `<input t
 only part of them, leaving the rest in browser colors from `color-scheme`. Give each one
 `appearance-none` and style its parts (such as a range input's rail through
 `::-webkit-slider-runnable-track` and its thumb through `::-webkit-slider-thumb`) with theme
-tokens.
+tokens. `<input type="color">` gets the same treatment: its frame goes, and its swatch is styled
+through `::-webkit-color-swatch`. A number input's spin buttons are hidden
+(`::-webkit-inner-spin-button`), since Chromium draws them in its own colors.
 
 The full list of tokens, with the class each one drives and what it is for, is the
 [token reference in themes.md](themes.md#token-reference). Use each token only for the purpose

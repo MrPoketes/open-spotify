@@ -81,6 +81,16 @@ describe("PlayOnThisComputerSetting", () => {
     expect(within(picker).queryByRole("button", { name: /^This computer/ })).not.toBeInTheDocument()
   })
 
+  // The label is the larger target, as with any form control.
+  it("turns off when its label is clicked", async () => {
+    const sdk = await launchApp(fakeMainProcess())
+    await waitFor(() => expect(sdk.sdkPlayer.isConnected).toBe(true))
+
+    await userEvent.click(screen.getByText("Play on this computer", { selector: "label" }))
+
+    expect(playOnThisComputerSwitch()).not.toBeChecked()
+  })
+
   it("keeps this computer off after a restart once turned off", async () => {
     const mainProcess = fakeMainProcess()
     await launchApp(mainProcess)
