@@ -116,13 +116,36 @@ lands, it keeps its earlier styling inside the new shell, and its section below 
 
 ### Before login
 
-Onboarding and login come before the app exists, so they skip the pane layout: one `surface`
-panel with `radius-large` corners, centered on the `canvas`, 24 px from the window edge. The
-panel's one primary action is a default Button; secondary actions are secondary Buttons or muted
-links (see Buttons). An action that waits, such as logging in in the browser, says what it waits
-for, disables the button that started it, and offers Cancel beside it. Focus moves to Cancel and
-back when the wait ends, and a double-click cannot cancel what its first click started.
-Onboarding's Client ID uses the shared text field (see Text fields).
+Onboarding and login come before the app exists, so they skip the pane layout: one sheet
+(`surface`, `radius-large` corners, `shadow-raised`) centered on the `canvas`, 24 px from the
+window edge, 576 px wide for onboarding and 448 px for login
+(`src/renderer/features/login/before-login-sheet.tsx`). The disclaimer that Open Spotify is an
+unofficial client sits under the sheet as `text-xs` `muted` small print, on both screens.
+
+- **The app's own warmth.** The sheet opens with a lockup: the app icon's open ring and play
+  triangle (`app-mark.tsx`), drawn without its tile in `accent` and `foreground` so a theme
+  restyles it, 40 px beside the `text-3xl` title. No artwork exists yet, so a blurred `accent`
+  disc colors the sheet's top-left corner where a page's artwork wash would, at the same
+  `artwork-wash` opacity, and a theme that turns the wash off turns this off too. A `muted` line
+  under the title says what comes next.
+- **Steps set like a tracklist.** Onboarding's steps for creating a Spotify app are a numbered
+  list in `text-sm`, ruled above, below, and between steps with `border` hairlines. Each number
+  is written out in a 16 px `muted` 600 `tabular-nums` column, since a flex list item drops the
+  browser's list marker; it is hidden from screen readers, which announce the list position.
+  The Redirect URI sits in a `surface-raised` strip with its Copy button, in the body font at
+  600, so the theme sets it like every other text.
+- **Actions.** The sheet's one primary action is a default Button; secondary actions are
+  secondary Buttons or muted links (see Buttons). Login's Log in fills the sheet's width, and
+  Change Client ID sits under a hairline at the bottom as a `muted` link that turns `foreground`
+  on hover. Onboarding's Client ID uses the shared text field (see Text fields), with Save and
+  continue under it.
+- **Waiting.** An action that waits, such as logging in in the browser, says what it waits for,
+  disables the button that started it, and offers Cancel beside it. The wait is a
+  `surface-raised` note with a 16 px `muted` `Globe` icon in place of the line under the title,
+  inside an `output` so screen readers announce it. Focus moves to Cancel and back when the wait
+  ends, and a double-click cannot cancel what its first click started. No spinner.
+- **Failure.** A failed login or Cancel is a `text-sm` `danger` line in an `alert` under the
+  buttons, saying what went wrong and what to do.
 
 ### Spacing
 

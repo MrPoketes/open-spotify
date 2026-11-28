@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { Option } from "effect"
 import { describe, expect, it } from "vitest"
@@ -80,6 +80,21 @@ describe("OnboardingScreen", () => {
     await userEvent.click(saveButton)
 
     expect(screen.getByRole("alert")).toHaveTextContent("Paste the Client ID")
+  })
+
+  // The steps are followed in order; a step that lost its number once made five steps read as four.
+  it("numbers every step of creating the Spotify app", async () => {
+    await renderScreen(<OnboardingScreen initialClientId="" />, fakeMainProcess())
+
+    const steps = within(await screen.findByRole("list")).getAllByRole("listitem")
+
+    expect(steps.map((step) => step.textContent.match(/^\d+/)?.[0])).toStrictEqual([
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+    ])
   })
 
   // A new user must not mistake Open Spotify for the official app, before they set anything up.

@@ -7,6 +7,7 @@ import { DesktopBridge } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
 import { Button } from "../../ui/button"
 import { TextField } from "../../ui/text-field"
+import { BeforeLoginSheet } from "./before-login-sheet"
 import { SpotifyAppSteps } from "./spotify-app-steps"
 
 const saveClientId = Effect.fn("saveClientId")(function* (clientId: string) {
@@ -42,41 +43,37 @@ export function OnboardingScreen({ initialClientId }: { readonly initialClientId
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <section className="flex w-full max-w-xl flex-col gap-6 rounded-large bg-surface p-8">
-        <div className="flex flex-col gap-2">
-          <h1 className="font-display text-3xl font-bold">Connect Open Spotify</h1>
-          <p className="text-muted">
-            Open Spotify talks to Spotify through an app you create in your own Spotify account. It
-            takes about five minutes, once.
-          </p>
-        </div>
-        <SpotifyAppSteps />
-        <form onSubmit={save} noValidate className="flex flex-col gap-2">
-          <TextField
-            label="Client ID"
-            value={clientId}
-            onChange={setClientId}
-            autoComplete="off"
-            spellCheck={false}
-            errorMessage={
-              isClientIdInvalid ? "Paste the Client ID from your Spotify app." : undefined
-            }
-          />
-          <div className="mt-2">
-            <Button type="submit">Save and continue</Button>
-          </div>
-          {saveFailed && (
-            <p role="alert" className="text-sm text-danger">
-              Could not save the Client ID. Try again.
-            </p>
-          )}
-        </form>
-        <p className="text-xs text-muted">
-          Open Spotify is an unofficial client. It is not affiliated with, endorsed by, or sponsored
-          by Spotify.
+    <BeforeLoginSheet
+      width="wide"
+      title="Connect Open Spotify"
+      description={
+        <p className="text-pretty text-muted">
+          Open Spotify talks to Spotify through an app you create in your own Spotify account. It
+          takes about five minutes, once.
         </p>
-      </section>
-    </main>
+      }
+    >
+      <SpotifyAppSteps />
+      <form onSubmit={save} noValidate className="flex flex-col gap-4">
+        <TextField
+          label="Client ID"
+          value={clientId}
+          onChange={setClientId}
+          autoComplete="off"
+          spellCheck={false}
+          errorMessage={
+            isClientIdInvalid ? "Paste the Client ID from your Spotify app." : undefined
+          }
+        />
+        <Button type="submit" className="self-start">
+          Save and continue
+        </Button>
+        {saveFailed && (
+          <p role="alert" className="text-sm text-danger">
+            Could not save the Client ID. Try again.
+          </p>
+        )}
+      </form>
+    </BeforeLoginSheet>
   )
 }

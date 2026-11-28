@@ -1,10 +1,12 @@
 import { Link, useNavigate } from "@tanstack/react-router"
 import { Effect } from "effect"
+import { Globe } from "lucide-react"
 import { use, useEffect, useRef, useState } from "react"
 import type { LogInError } from "../../../shared/spotify-auth-replies"
 import { attemptNavigation } from "../../lib/attempt-navigation"
 import { DesktopBridge, type DesktopBridgeError } from "../../lib/desktop-bridge"
 import { RendererRuntimeContext } from "../../lib/renderer-runtime"
+import { BeforeLoginSheet } from "./before-login-sheet"
 import { LoginButtons } from "./login-buttons"
 import { loginErrorText } from "./login-error-text"
 
@@ -27,6 +29,32 @@ const cancelLogIn = Effect.gen(function* () {
   const bridge = yield* DesktopBridge
   yield* bridge.cancelLogIn
 })
+
+// The line under the title says what the login waits for, so the user knows
+// why their browser opened and that the app is still listening for it.
+function LoginStatusLine({
+  status,
+  sessionExpired,
+}: {
+  readonly status: LoginStatus
+  readonly sessionExpired: boolean
+}) {
+  if (status._tag === "WaitingForBrowser") {
+    return (
+      <output className="flex items-start gap-3 rounded-medium bg-surface-raised p-3 text-sm">
+        <Globe aria-hidden size={16} className="mt-0.5 shrink-0 text-muted" />
+        Finish logging in in your browser. Open Spotify continues when Spotify sends you back.
+      </output>
+    )
+  }
+  return (
+    <p className="text-pretty text-muted">
+      {sessionExpired && status._tag === "Ready"
+        ? "Your Spotify session has expired. Log in again to continue."
+        : "Spotify's login page opens in your browser."}
+    </p>
+  )
+}
 
 export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boolean }) {
   const runtime = use(RendererRuntimeContext)
@@ -81,37 +109,31 @@ export function LoginScreen({ sessionExpired }: { readonly sessionExpired: boole
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <section className="flex w-full max-w-md flex-col gap-4 rounded-large bg-surface p-8">
-        <h1 className="font-display text-3xl font-bold">Log in to Spotify</h1>
-        {sessionExpired && status._tag === "Ready" && (
-          <p>Your Spotify session has expired. Log in again to continue.</p>
-        )}
-        {status._tag === "WaitingForBrowser" && (
-          <output>
-            Finish logging in in your browser. Open Spotify continues when Spotify sends you back.
-          </output>
-        )}
-        <LoginButtons
-          isWaiting={status._tag === "WaitingForBrowser"}
-          onLogIn={logIn}
-          onCancel={cancel}
-        />
-        {status._tag === "WaitingForBrowser" && status.cancelFailed && (
-          <p role="alert" className="text-danger">
-            Open Spotify could not cancel the login. Try again, or finish logging in in your
-            browser.
-          </p>
-        )}
-        {status._tag === "Failed" && (
-          <p role="alert" className="text-danger">
-            {status.explanation}
-          </p>
-        )}
-        <Link to="/onboarding" className="self-start text-sm text-muted underline">
+    <BeforeLoginSheet
+      width="narrow"
+      title="Log in to Spotify"
+      description={<LoginStatusLine status={status} sessionExpired={sessionExpired} />}
+    >
+      <LoginButtons
+        isWaiting={status._tag === "WaitingForBrowser"}
+        onLogIn={logIn}
+        onCancel={cancel}
+      />
+      {status._tag === "WaitingForBrowser" && status.cancelFailed && (
+        <p role="alert" className="text-sm text-danger">
+          Open Spotify could not cancel the login. Try again, or finish logging in in your browser.
+        </p>
+      )}
+      {status._tag === "Failed" && (
+        <p role="alert" className="text-sm text-danger">
+          {status.explanation}
+        </p>
+      )}
+      <footer className="border-t border-border pt-4">
+        <Link to="/onboarding" className="text-sm text-muted underline hover:text-foreground">
           Change Client ID
         </Link>
-      </section>
-    </main>
+      </footer>
+    </BeforeLoginSheet>
   )
 }
