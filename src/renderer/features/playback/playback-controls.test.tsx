@@ -137,6 +137,24 @@ describe("NowPlayingBar controls", () => {
     expect(await control("Next")).toHaveAttribute("aria-disabled", "false")
     expect(await seekBar()).toHaveAttribute("aria-disabled", "true")
   })
+
+  // A pointer user has no screen reader to read the description, so the
+  // tooltip is where they learn why the control does nothing.
+  it("shows why a control is off in its tooltip on hover", async () => {
+    await renderNowPlayingBarAlone(
+      spotifyApiFakeWithPlayback((playback) => ({
+        ...playback,
+        actions: { disallows: { skippingPrev: true } },
+      })),
+    )
+    await screen.findByText(fakeTrack(0).name)
+
+    await userEvent.hover(await control("Previous"))
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "PreviousSpotify doesn't allow this right now.",
+    )
+  })
 })
 
 describe("NowPlayingBar seek bar", () => {
@@ -147,7 +165,7 @@ describe("NowPlayingBar seek bar", () => {
     // The slider starts unavailable while playback loads, and must say it is
     // available once it has loaded.
     expect(slider).toHaveAttribute("aria-disabled", "false")
-    expect(slider).toHaveAccessibleDescription("Playback position")
+    expect(slider).not.toHaveAccessibleDescription()
 
     slider.focus()
     await userEvent.keyboard("{ArrowRight}")
@@ -278,6 +296,36 @@ describe("NowPlayingBar seek bar", () => {
     const slider = await seekBar()
     expect(slider).toHaveAttribute("aria-disabled", "true")
     expect(slider).toHaveAccessibleDescription("Choose a device to control playback.")
+  })
+
+  // Focus lands on the range input inside the slider, not on the element the
+  // tooltip opens from.
+  it("shows why the seek bar is off in a tooltip when it has focus", async () => {
+    await renderNowPlayingBarAlone(
+      spotifyApiFakeWith(() => ({ getPlaybackState: Effect.succeedNone })),
+    )
+    await screen.findByText("No device is playing")
+    const slider = await seekBar()
+
+    slider.focus()
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Playback positionChoose a device to control playback.",
+    )
+  })
+
+  // The seek bar sits just under the playback buttons, which a tooltip above
+  // it would cover.
+  it("shows no tooltip while the seek bar can be used", async () => {
+    await renderNowPlayingBarAlone(pausedPlayback)
+    const slider = await seekBar()
+    await showsPosition(slider, "0:42 of 2:30")
+
+    slider.focus()
+    await userEvent.keyboard("{ArrowRight}")
+    await showsPosition(slider, "0:47 of 2:30")
+
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument()
   })
 
   // Spotify reports no item while an ad plays, and there is nothing to seek in.

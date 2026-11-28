@@ -15,7 +15,7 @@ const expandHint = "Expand the sidebar to see why."
 export function RailFailure({ message, rail }: RailFailureProps) {
   return (
     <div role="alert" className="flex justify-center py-1">
-      <Tooltip label={message} details={expandHint} disabled={false}>
+      <Tooltip label={message} details={expandHint} side="right">
         <Button
           variant="ghost"
           size="icon"

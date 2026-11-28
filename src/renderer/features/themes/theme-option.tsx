@@ -3,6 +3,7 @@ import type { KeyboardEvent } from "react"
 import type { Theme } from "../../../shared/theme"
 import { cn } from "../../ui/class-names"
 import { rowActionClassName } from "../../ui/row-action-class-name"
+import { Tooltip } from "../../ui/tooltip"
 import type { RovingRowProps } from "../../ui/use-roving-focus"
 import { useRowShortcut } from "../shortcuts/use-row-shortcut"
 import { ThemeSwatch } from "./theme-swatch"
@@ -76,16 +77,17 @@ export function ThemeOption(props: ThemeOptionProps) {
         {isChosen && <Check aria-hidden size={16} />}
       </button>
       {onDelete !== null && (
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-label={deleteLabel}
-          title={`${deleteLabel} (${deleteShortcut.label})`}
-          onClick={() => onDelete("pointer")}
-          className={`mr-3 ${rowActionClassName}`}
-        >
-          <Trash2 aria-hidden size={20} />
-        </button>
+        <Tooltip label={deleteLabel} shortcut={deleteShortcut.label}>
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={deleteLabel}
+            onClick={() => onDelete("pointer")}
+            className={`mr-3 ${rowActionClassName}`}
+          >
+            <Trash2 aria-hidden size={20} />
+          </button>
+        </Tooltip>
       )}
     </div>
   )

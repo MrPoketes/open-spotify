@@ -1,7 +1,8 @@
 import type { LucideIcon } from "lucide-react"
-import type { Ref } from "react"
+import { useId, type Ref } from "react"
 import { buttonVariants } from "../../ui/button-variants"
 import { cn } from "../../ui/class-names"
+import { Tooltip } from "../../ui/tooltip"
 
 interface PlayerControlButtonProps {
   readonly label: string
@@ -29,7 +30,8 @@ const appearance = (isOn: boolean | undefined, isPrimary: boolean | undefined) =
 
 // aria-disabled instead of disabled keeps an unavailable control focusable,
 // so keyboard and screen reader users can still find out why it is off. The
-// title carries the reason, which also makes it the accessible description.
+// tooltip shows the reason, and a hidden copy describes the control, since
+// Base UI does not tie the tooltip to its element.
 export function PlayerControlButton({
   label,
   icon: Icon,
@@ -40,25 +42,35 @@ export function PlayerControlButton({
   ref,
 }: PlayerControlButtonProps) {
   const isUnavailable = unavailableReason !== null
+  const reasonId = useId()
   return (
-    <button
-      ref={ref}
-      type="button"
-      aria-label={label}
-      title={unavailableReason ?? label}
-      aria-pressed={isOn}
-      aria-disabled={isUnavailable}
-      onClick={isUnavailable ? undefined : onPress}
-      className={cn(
-        buttonVariants({ variant: isPrimary === true ? "default" : "ghost", size: "icon" }),
-        "relative",
-        appearance(isOn, isPrimary),
+    <>
+      <Tooltip label={label} details={unavailableReason}>
+        <button
+          ref={ref}
+          type="button"
+          aria-label={label}
+          aria-describedby={isUnavailable ? reasonId : undefined}
+          aria-pressed={isOn}
+          aria-disabled={isUnavailable}
+          onClick={isUnavailable ? undefined : onPress}
+          className={cn(
+            buttonVariants({ variant: isPrimary === true ? "default" : "ghost", size: "icon" }),
+            "relative",
+            appearance(isOn, isPrimary),
+          )}
+        >
+          <Icon aria-hidden size={isPrimary === true ? 18 : 20} />
+          {isOn === true && (
+            <span aria-hidden className="absolute bottom-0.5 size-1 rounded-full bg-accent" />
+          )}
+        </button>
+      </Tooltip>
+      {isUnavailable && (
+        <span id={reasonId} hidden>
+          {unavailableReason}
+        </span>
       )}
-    >
-      <Icon aria-hidden size={isPrimary === true ? 18 : 20} />
-      {isOn === true && (
-        <span aria-hidden className="absolute bottom-0.5 size-1 rounded-full bg-accent" />
-      )}
-    </button>
+    </>
   )
 }

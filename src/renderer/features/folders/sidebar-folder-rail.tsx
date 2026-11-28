@@ -53,7 +53,7 @@ function FolderRailButton({ folder, rovingProps }: FolderRailButtonProps) {
   return (
     // Not modal, like the sidebar's other menus: the page keeps scrolling.
     <MenuPrimitive.Root modal={false}>
-      <Tooltip label={name} details={details} disabled={false}>
+      <Tooltip label={name} details={details} side="right">
         <MenuPrimitive.Trigger
           {...rovingProps}
           ref={(button: HTMLButtonElement | null) => {

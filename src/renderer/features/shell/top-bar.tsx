@@ -2,6 +2,7 @@ import { Link, useRouter } from "@tanstack/react-router"
 import { ChevronLeft, ChevronRight, House, Settings } from "lucide-react"
 import { buttonVariants } from "../../ui/button-variants"
 import { IconButton } from "../../ui/icon-button"
+import { Tooltip } from "../../ui/tooltip"
 import { SearchField } from "../search/search-field"
 
 const iconLinkClassName = buttonVariants({ variant: "ghost", size: "icon" })
@@ -11,17 +12,21 @@ export function TopBar() {
 
   return (
     <header className="absolute inset-x-0 top-0 z-10 flex h-(--top-bar-height) items-center gap-1 px-4 solid-once-scrolled">
-      <Link to="/" aria-label="Home" title="Home" className={iconLinkClassName}>
-        <House aria-hidden size={20} />
-      </Link>
+      <Tooltip label="Home">
+        <Link to="/" aria-label="Home" className={iconLinkClassName}>
+          <House aria-hidden size={20} />
+        </Link>
+      </Tooltip>
       <IconButton label="Go back" icon={ChevronLeft} onClick={() => router.history.back()} />
       <IconButton label="Go forward" icon={ChevronRight} onClick={() => router.history.forward()} />
       <div className="ml-3 flex min-w-0 flex-1">
         <SearchField />
       </div>
-      <Link to="/settings" aria-label="Settings" title="Settings" className={iconLinkClassName}>
-        <Settings aria-hidden size={20} />
-      </Link>
+      <Tooltip label="Settings">
+        <Link to="/settings" aria-label="Settings" className={iconLinkClassName}>
+          <Settings aria-hidden size={20} />
+        </Link>
+      </Tooltip>
     </header>
   )
 }

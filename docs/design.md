@@ -313,12 +313,32 @@ trigger and a 16 px `Check` beside it; its rows are menu rows (see Menus).
 
 #### Tooltips
 
-A tooltip (`src/renderer/ui/tooltip.tsx`) names a control that shows no text, such as a row in the
-sidebar rail. It opens to the right of its element on hover after 300 ms, or at once on keyboard
-focus, and closes when the pointer or focus leaves. It is a `surface-overlay` panel with
-`shadow-overlay` and `rounded-small` corners: the name in `text-xs` 600, and a `muted` line under
-it that says what the item is. The element keeps its own accessible name; the tooltip only shows
-it. Icon buttons elsewhere keep their native `title`.
+A tooltip (`src/renderer/ui/tooltip.tsx`, on shadcn's Tooltip) names a control that shows no text:
+every icon button and icon link (`IconButton`, `MenuButton`, the top bar's Home and Settings), the
+playback controls, the sidebar's pin buttons, the theme picker's delete buttons, and the rows of the
+sidebar rail. A slider shows one only while it cannot be used, to say why: the seek bar sits just
+under the playback buttons, which a tooltip above it would cover, and what is beside a slider (the
+times, the speaker icon, the token's name) already names it. Controls never use the native `title`,
+which the operating system draws outside the theme.
+
+It is an Overlay panel (`surface-overlay`, `shadow-overlay`, `rounded-small`, 8 px by 4 px inside,
+at most 256 px wide) set in `text-xs`: the name in 600, then, when there is one, a `muted` line
+under it that says what a rail entry is or why a control cannot be used. A control with a key of its
+own, such as the pin button's `P` or the sidebar toggle's `Ctrl+B`, shows that key in `muted` after
+the name.
+
+It opens 8 px above its control (to the right of a sidebar rail row), flips to the opposite side at
+a window edge, and stays 8 px inside the window, so it never covers the control it names. It opens
+on hover after 300 ms, or at once on keyboard focus, fades in 120 ms (see Motion), and closes when
+the pointer or focus leaves or the control is pressed. `Escape` closes it and also whatever it sits
+in, so a dialog whose Close button shows its tooltip still closes with one press. Inside the app
+shell, once one tooltip is open, the next one the pointer reaches opens without the delay, so moving
+along the now-playing bar reads each name in turn.
+
+The control keeps its own accessible name; the tooltip only shows it, since Base UI does not tie the
+two together. The reason an `aria-disabled` control cannot be used is also its accessible
+description, through `aria-describedby` on a hidden copy of the reason, so a screen reader reads
+what the tooltip shows.
 
 #### Text fields
 
@@ -552,8 +572,8 @@ way and for one second after Spotify accepts it, because Spotify can report the 
 moment; after that, the polled state wins again. If Spotify rejects the command, the control
 goes back and a `text-xs` `danger` alert under the controls says what failed. A control that cannot be used (no active device,
 a device that other apps cannot control, or an action Spotify disallows right now) is
-`aria-disabled` at 50 % opacity and keeps its focus, and its `title` says why, which also
-makes it the accessible description.
+`aria-disabled` at 50 % opacity and keeps its focus, and its tooltip and accessible description
+say why (see Tooltips).
 
 The bar's right end holds the queue button (`ListMusic`, a toggle drawn like shuffle) and always
 the device picker button, labelled with the playing device ("Playing on Kitchen Speaker") or
@@ -572,7 +592,7 @@ slider, which overlays the bar's bottom edge so the controls beside it stay put.
 turns the volume down to zero and becomes Unmute (`VolumeX`), which restores the last volume
 above zero, or 50 % when Spotify has reported none since the app opened. Both are unavailable
 whenever the playback controls are, and also when the device does not let Spotify change its
-volume; like the controls, they stay focusable and their `title` says why.
+volume; like the controls, they stay focusable and their tooltip says why.
 
 The picker is a non-modal popover 12 px above its button: `surface-overlay`, `shadow-overlay`,
 `rounded-large`, 320 px wide with 8 px inside. It fades in and rises 8 px like a menu. Its heading,

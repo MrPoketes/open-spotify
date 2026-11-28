@@ -1,3 +1,4 @@
+import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 import { useCallback, useState, type ReactNode } from "react"
 import type { TrackListDensity } from "../../../shared/track-list-density"
 import { StatusMessageProvider } from "../../ui/status-message-provider"
@@ -31,7 +32,11 @@ interface AppShellProps {
 export function AppShell({ platform, ...layoutProps }: AppShellProps) {
   return (
     <IsMacContext value={platform === "darwin"}>
-      <AppShellLayout {...layoutProps} />
+      {/* Once one tooltip is open, the next one the pointer reaches opens at
+          once, so moving along a row of icon buttons reads each name. */}
+      <TooltipPrimitive.Provider>
+        <AppShellLayout {...layoutProps} />
+      </TooltipPrimitive.Provider>
     </IsMacContext>
   )
 }
